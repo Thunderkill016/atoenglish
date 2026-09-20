@@ -1,8 +1,0 @@
-TASK-170 — Autopilot maintenance sweep #170
-Date: 2026-07-02
-PHASE1: read AGENTS.md (ALWAYS), BACKLOG/PLAN/ROADMAP, CONTENT_STYLE.md §6–7; grep TASK-170 + sweeps + logs; search_memory via logs/grep (prior prompt 20260701 + clean sweeps); confirmed 4 ready >=2 skip refill.
-PHASE2: BACKLOG in_progress; PLAN focus + full section added (no refill); 
-PHASE3: rm tsbuildinfo; tsc --noEmit=0; npm run lint=0 (clean); npm run test=170/170 pass; test:content-standard=50/50; audit-lesson-content.sh=50/50 clean. NO first failure. No src edit. No feature. Doc sync only.
-Gates: all clean.
-Log created + BACKLOG done + PLAN sync + commit/push.
-Autonomous, no human.

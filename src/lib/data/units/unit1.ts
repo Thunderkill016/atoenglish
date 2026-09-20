@@ -358,8 +358,9 @@ export const unit1: UnitData = {
     level1Prompt: "Hello! My name is {input}.",
     level1Placeholder: "Ví dụ: Minh, Lan, Nam...",
     level2Situation:
-      "Bạn vừa gặp đồng nghiệp mới tên Alex tại văn phòng. Hãy tự giới thiệu và hỏi thăm Alex.",
-    level2Hint: "Hello! My name is [tên bạn]. Nice to meet you! Where are you from?",
+      "Bạn vừa gặp đồng nghiệp mới tên Alex tại văn phòng. Hãy thực hiện một cuộc hội thoại ngắn: chào hỏi, tự giới thiệu, trả lời thông tin cá nhân, hỏi thăm Alex và kết thúc lịch sự.",
+    level2Hint:
+      "Bạn sẽ nói theo từng lượt với Alex. Không cần đọc thuộc một đoạn dài; hãy nghe câu của Alex rồi trả lời đúng mục đích giao tiếp của lượt đó.",
   },
 
   grammar: {

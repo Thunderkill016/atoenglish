@@ -1,8 +1,14 @@
 "use server";
 
 import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import { z } from "zod";
+
+import { seedUnitVocabToSRS } from "@/app/actions/cards";
+import { completeUnit } from "@/app/actions/unit";
+import {
+  compileLegacyAttemptRpcArgs,
+  type LegacyAttemptRpcArgs,
+} from "@/lib/learning/legacy-attempt-adapter";
 import {
   LearningAttemptBatchSchema,
   type LearningAttemptBatchInput,
@@ -12,16 +18,31 @@ import {
   scoreTrialCheckpoint,
 } from "@/lib/lessons/trial-checkpoint";
 import { GOLD_MISSION_01 } from "@/lib/missions/gold-mission-01";
-import { seedUnitVocabToSRS } from "@/app/actions/cards";
-import { completeUnit } from "@/app/actions/unit";
-import { z } from "zod";
+import { createRateLimiter } from "@/lib/security/rate-limit";
+import { createClient } from "@/lib/supabase/server";
 
 const attemptLimiter = createRateLimiter(60, 60_000, "learning-attempts");
 
+type RpcError = { message: string } | null;
+type RpcClient = {
+  rpc: (
+    fn: "record_learning_attempt",
+    args: LegacyAttemptRpcArgs,
+  ) => Promise<{ data: unknown; error: RpcError }>;
+};
+
+/**
+ * Compatibility boundary for legacy mission/checkpoint callers.
+ *
+ * The September learning-core migration replaced the old lesson/activity/score table shape with
+ * the canonical Attempt → Evidence → LearnerSkillState model and revoked direct authenticated
+ * inserts. Legacy callers do not carry enough canonical semantic identity to create trustworthy
+ * mastery evidence, so we preserve them as attempt-only history through the canonical RPC.
+ */
 export async function recordLearningAttempts(input: LearningAttemptBatchInput) {
   const parsed = LearningAttemptBatchSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false as const, error: "Dữ liệu lần học không hợp lệ." };
+    return { success: false as const, error: "Dữ liệu lần học không hợp lệ.", inserted: 0 };
   }
 
   const requestHeaders = await headers();
@@ -33,6 +54,7 @@ export async function recordLearningAttempts(input: LearningAttemptBatchInput) {
     return {
       success: false as const,
       error: "Quá nhiều lần ghi nhận. Vui lòng thử lại sau.",
+      inserted: 0,
     };
   }
 
@@ -42,30 +64,32 @@ export async function recordLearningAttempts(input: LearningAttemptBatchInput) {
     error: authError,
   } = await supabase.auth.getUser();
   if (authError || !user) {
-    return { success: false as const, error: "Bạn cần đăng nhập để lưu tiến độ." };
+    return { success: false as const, error: "Bạn cần đăng nhập để lưu tiến độ.", inserted: 0 };
   }
 
-  const { error } = await supabase.from("learning_attempts").insert(
-    parsed.data.attempts.map((attempt) => ({
-      user_id: user.id,
-      session_id: parsed.data.sessionId,
-      lesson_id: parsed.data.lessonId,
-      activity_id: attempt.activityId,
-      modality: attempt.modality,
-      status: attempt.status,
-      score: attempt.score,
-      error_tags: attempt.errorTags,
-      evaluator: attempt.evaluator,
-      evaluator_version: attempt.evaluatorVersion,
-      latency_ms: attempt.latencyMs,
-    })),
-  );
+  const rpcClient = supabase as unknown as RpcClient;
+  let inserted = 0;
 
-  if (error) {
-    return { success: false as const, error: "Không thể lưu bằng chứng học tập." };
+  // Compatibility attempts are intentionally evidence-free. Sequential writes make any partial
+  // failure explicit to the caller; a partial failure cannot mutate canonical learner state.
+  for (const attempt of parsed.data.attempts) {
+    const args = compileLegacyAttemptRpcArgs({
+      sessionId: parsed.data.sessionId,
+      lessonId: parsed.data.lessonId,
+      attempt,
+    });
+    const { error } = await rpcClient.rpc("record_learning_attempt", args);
+    if (error) {
+      return {
+        success: false as const,
+        error: `Không thể lưu attempt tương thích (${inserted}/${parsed.data.attempts.length}): ${error.message}`,
+        inserted,
+      };
+    }
+    inserted += 1;
   }
 
-  return { success: true as const, inserted: parsed.data.attempts.length };
+  return { success: true as const, inserted };
 }
 
 const trialCheckpointClaimSchema = z
@@ -132,8 +156,8 @@ export async function claimTrialCheckpoint(input: unknown) {
     };
   }
 
-  // Reuse the existing FSRS deck for communicative chunks after mastery is verified.
-  // Raw audio and transcripts are not persisted here.
+  // Reuse the existing FSRS deck for communicative chunks after the legacy checkpoint gate passes.
+  // This remains separate from canonical capability mastery evidence.
   const reviewSeed = await seedUnitVocabToSRS({
     vocab: GOLD_MISSION_01.targetChunks.map((chunk) => ({
       word: chunk.english,

@@ -1,45 +1,38 @@
-/**
- * Chuẩn nội dung bài học (SDL — Self-Directed Learning).
- * Mọi unit phải đạt trước khi ship. Kiểm tra: curriculum-quality.test.ts + audit-lesson-content.sh
- *
- * Tham chiếu mẫu: src/lib/data/units/unit1.ts
- * Blueprint (nội dung + cách học): src/lib/lessons/lesson-blueprint.ts
- */
+import {
+  CEFR_ACTION_CONTRACT_REQUIRED_UNIT_IDS,
+  getCefrActionContract,
+  validateCefrActionContract,
+} from "@/lib/lessons/cefr-action-contracts";
 
+/**
+ * Chuẩn nội dung bài học hiện tại.
+ *
+ * Các ngưỡng số lượng bên dưới chỉ là legacy content-health checks còn cần thiết để
+ * tránh bài học rỗng. Chúng KHÔNG tự chứng minh một bài học đạt CEFR.
+ *
+ * Chỉ giữ các gate trực tiếp phục vụ học ngôn ngữ. Các product-focus cũ như
+ * Job/Career, gamification hay engagement mechanics không được biến thành chuẩn
+ * bắt buộc của curriculum.
+ */
 export const LESSON_CONTENT_STANDARD = {
-  /** Hook đầu bài — bắt buộc mọi unit */
   situationMinChars: 30,
   learningOutcomesMin: 2,
   learningOutcomesMax: 5,
   culturalNoteMinChars: 40,
   warmupGreetingsMin: 3,
 
-  /** Vocab — cognitive load Nation & Webb */
-  vocabMin: 8,
-  vocabMax: 20,
-
-  /** L1 interference (người Việt) — % từ có ghi chú lỗi thường gặp */
   l1MinRatioByLevel: {
     A0: 0.5,
     A1: 1,
     A2: 1,
     B1: 0.5,
-    /** Mục tiêu 0.5 — TASK-058 (B2 L1 >=50% per center-ref VN CLT + §7) */
     B2: 0.5,
   } as Record<string, number>,
 
   l1NoteMinChars: 15,
-
-  /** Output & review — TASK-153 raise for world-class (Babbel real convos + VN job) */
   fluencyDrillItemsMin: 5,
-  /** shadowing via fluency/activate drill target 5+ */
-  shadowingMin: 5,
   dialoguesMin: 2,
-  /** job focused scenarios target ≥1 per unit (adult VN career needs) */
-  jobScenariosMin: 1,
-  /** Mục tiêu đạt 3 — TASK-059 (spiral review, Nation + center ref) */
   cumulativeReviewMin: 3,
-  /** Mục tiêu 3 — TASK-057 đã nâng: mọi unit ≥3 practiceTranslate */
   practiceTranslateMin: 3,
   listenAndChooseMin: 5,
   finalQuizMin: 5,
@@ -51,6 +44,7 @@ export interface ContentStandardViolation {
 }
 
 export interface UnitLike {
+  unitId?: string;
   level: string;
   situation?: string;
   learningOutcomes?: string[];
@@ -63,7 +57,6 @@ export interface UnitLike {
   practiceTranslate?: unknown[];
   listenAndChoose?: unknown[];
   quiz?: unknown[];
-  jobScenarios?: unknown[];
 }
 
 export function l1CoverageRatio(unit: UnitLike): number {
@@ -125,14 +118,9 @@ export function validateLessonContentStandard(
     tag("quiz", `quiz phải ≥ ${s.finalQuizMin} câu`);
   }
 
-  const dialoguesLen = (unit.dialogues?.length ?? 0);
+  const dialoguesLen = unit.dialogues?.length ?? 0;
   if (dialoguesLen < s.dialoguesMin) {
-    tag("dialogues", `dialogues phải ≥ ${s.dialoguesMin} (Babbel-like real convos + job)`);
-  }
-
-  const jobLen = (unit.jobScenarios?.length ?? 0);
-  if (jobLen < s.jobScenariosMin) {
-    tag("jobScenarios", `jobScenarios phải ≥ ${s.jobScenariosMin} (VN adult career/job contexts)`);
+    tag("dialogues", `dialogues phải ≥ ${s.dialoguesMin}`);
   }
 
   const minL1 = s.l1MinRatioByLevel[unit.level] ?? 0.5;
@@ -142,6 +130,16 @@ export function validateLessonContentStandard(
       "l1_interference_vn",
       `L1 notes ${Math.round(ratio * 100)}% < ${Math.round(minL1 * 100)}% yêu cầu level ${unit.level}`
     );
+  }
+
+  if (
+    unit.unitId &&
+    (CEFR_ACTION_CONTRACT_REQUIRED_UNIT_IDS as readonly string[]).includes(unit.unitId)
+  ) {
+    const contractViolations = validateCefrActionContract(getCefrActionContract(unit.unitId));
+    for (const violation of contractViolations) {
+      tag("cefrActionContract", `${unit.unitId}: ${violation}`);
+    }
   }
 
   return violations;

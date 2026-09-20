@@ -12,7 +12,6 @@ interface UnitCardProps {
     completed: boolean;
     route: string;
     tags: string[];
-    xp: number;
   };
 }
 
@@ -21,14 +20,12 @@ export default function UnitCard({ currentUnitData }: UnitCardProps) {
 
   return (
     <div className="relative rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/60 dark:bg-zinc-900/25 backdrop-blur-sm p-6 sm:p-8 flex flex-col justify-between overflow-hidden group hover:border-emerald-500/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300">
-      {/* Background decorative */}
       <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 via-transparent to-teal-500/5 -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <div className="absolute -top-8 -right-8 opacity-[0.04] dark:opacity-[0.06] text-emerald-600 group-hover:scale-105 transition-transform duration-500">
         <BookOpen className="size-48" />
       </div>
 
       <div className="space-y-5 relative z-10">
-        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 px-3 py-1 rounded-full">
             Bài học đang học
@@ -38,7 +35,6 @@ export default function UnitCard({ currentUnitData }: UnitCardProps) {
           </span>
         </div>
 
-        {/* Title + description */}
         <div className="space-y-2">
           <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-50 leading-tight tracking-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
             {currentUnitData.title}
@@ -48,7 +44,6 @@ export default function UnitCard({ currentUnitData }: UnitCardProps) {
           </p>
         </div>
 
-        {/* Skill tags */}
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (
             <span
@@ -61,45 +56,27 @@ export default function UnitCard({ currentUnitData }: UnitCardProps) {
         </div>
       </div>
 
-      {/* Progress + CTA */}
       <div className="mt-6 pt-5 border-t border-zinc-200/50 dark:border-zinc-800/50 relative z-10 space-y-5">
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-xs">
             <span className="text-zinc-500 dark:text-zinc-400 font-semibold flex items-center gap-1.5">
               <TrendingUp className="size-3.5 text-emerald-500" />
-              Tiến trình
+              Tiến trình bài học
             </span>
             <span className="text-zinc-900 dark:text-zinc-50 font-black font-mono">{currentUnitData.progress}%</span>
           </div>
           <div className="h-2.5 w-full bg-zinc-100 dark:bg-zinc-800/80 rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700 ease-out relative overflow-hidden"
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700 ease-out"
               style={{ width: `${currentUnitData.progress}%` }}
-            >
-              <div className="absolute inset-0 bg-white/20 animate-pulse" />
-            </div>
+            />
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex flex-col gap-0.5">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Hoàn thành để nhận <strong className="text-zinc-700 dark:text-zinc-300 font-bold">{currentUnitData.xp} XP</strong>
-            </p>
-            {/* FutureStateHint — forward-looking progress nudge */}
-            {currentUnitData.progress < 100 && (() => {
-              const next = currentUnitData.progress >= 75
-                ? "sắp hoàn thành unit này! 🎉"
-                : currentUnitData.progress >= 50
-                  ? `${Math.min(currentUnitData.progress + 25, 100)}% qua bài này sau hôm nay ✨`
-                  : `${currentUnitData.progress + 20}% sau bài học hôm nay 🚀`;
-              return (
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                  Tiếp tục → {next}
-                </p>
-              );
-            })()}
-          </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Tiếp tục từ phần đang học và hoàn thành nhiệm vụ giao tiếp của bài.
+          </p>
           <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto">
             <Link href={`${currentUnitData.route}?mini=1`} className="w-full sm:w-auto">
               <Button
@@ -112,7 +89,7 @@ export default function UnitCard({ currentUnitData }: UnitCardProps) {
             </Link>
             <Link href={currentUnitData.route} className="w-full sm:w-auto">
               <Button className="w-full sm:w-auto h-11 px-7 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-extrabold rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/30 active:scale-[0.97]">
-                <span>Tiếp tục học ngay</span>
+                <span>Tiếp tục học</span>
                 <ArrowRight className="size-4" />
               </Button>
             </Link>

@@ -1,31 +1,21 @@
 /**
- * store-memory — Supabase Edge Function
- * Uses Supabase built-in AI (gte-small, 384 dims) — ZERO cost, no API keys
- *
- * POST body:
- * {
- *   "content": "Decided to use FSRS v6 for spaced repetition",
- *   "category": "decision",       // decision|architecture|context|bug|feature|rule|task
- *   "project": "atoenglish",      // optional
- *   "metadata": {"importance": 8} // optional
- * }
+ * store-memory — privileged Supabase Edge Function.
+ * Requires: Authorization: Bearer $PROJECT_MEMORY_ADMIN_TOKEN
  */
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { authorizeBearer, jsonResponse } from "../_shared/privileged-auth.ts";
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, content-type",
-      },
-    });
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
-  }
+  const authError = authorizeBearer(
+    req,
+    Deno.env.get("PROJECT_MEMORY_ADMIN_TOKEN"),
+  );
+  if (authError) return authError;
 
   let body: {
     content: string;
@@ -37,29 +27,23 @@ Deno.serve(async (req: Request) => {
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400, headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Invalid JSON body" }, 400);
   }
 
   if (!body.content?.trim()) {
-    return new Response(JSON.stringify({ error: "content is required" }), {
-      status: 400, headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "content is required" }, 400);
   }
 
   try {
-    // 1. Generate embedding using Supabase built-in AI (free, no API key needed)
     const model = new Supabase.ai.Session("gte-small");
     const embedding = await model.run(body.content.trim(), {
       mean_pool: true,
       normalize: true,
     }) as number[];
 
-    // 2. Insert into DB using service role (bypasses RLS for agent writes)
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
     const { data, error } = await supabase
@@ -78,16 +62,12 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (error) throw error;
-
-    return new Response(
-      JSON.stringify({ success: true, memory: data }),
-      { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
-    );
+    return jsonResponse({ success: true, memory: data });
   } catch (err) {
     console.error("[store-memory]", err);
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+    return jsonResponse(
+      { error: err instanceof Error ? err.message : String(err) },
+      500,
     );
   }
 });
