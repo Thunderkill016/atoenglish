@@ -5,7 +5,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import PilotLifecycleTracker from "@/components/analytics/PilotLifecycleTracker";
 import { cn } from "@/lib/utils";
 
 import "./globals.css";
@@ -33,7 +32,7 @@ export const metadata: Metadata = {
     template: "%s | AtoEnglish",
   },
   description:
-    "Hành trình luyện nói 28 ngày cho người Việt mất gốc: mỗi ngày 10–15 phút để luyện giới thiệu bản thân và công việc bằng tiếng Anh.",
+    "Luyện tiếng Anh thực dụng cho người Việt với các bài học tập trung vào khả năng sử dụng tiếng Anh trong tình huống thực tế.",
   keywords: [
     "học tiếng Anh",
     "luyện nói tiếng Anh",
@@ -74,13 +73,13 @@ export const metadata: Metadata = {
     siteName: "AtoEnglish",
     title: "AtoEnglish — Học tiếng Anh để nói được, không chỉ để biết",
     description:
-      "Hành trình luyện nói 28 ngày, mỗi ngày 10–15 phút, dành cho người Việt bắt đầu từ mất gốc.",
+      "Luyện tiếng Anh thực dụng cho người Việt, tập trung vào khả năng sử dụng tiếng Anh trong tình huống thực tế.",
     images: [
       {
         url: "https://atoenglish.vercel.app/og-image.png",
         width: 1200,
         height: 630,
-        alt: "AtoEnglish — Học tiếng Anh thông minh hơn",
+        alt: "AtoEnglish — Học tiếng Anh để nói được",
       },
     ],
   },
@@ -88,7 +87,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "AtoEnglish — Học tiếng Anh để nói được",
     description:
-      "Luyện giới thiệu bản thân và công việc bằng tiếng Anh trong hành trình 28 ngày.",
+      "Luyện tiếng Anh thực dụng cho người Việt, tập trung vào khả năng sử dụng trong tình huống thực tế.",
     creator: "@atoenglish",
     images: ["https://atoenglish.vercel.app/og-image.png"],
   },
@@ -105,7 +104,6 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning className={cn("font-sans", sansFont.variable)}>
       <head>
-        {/* Preconnect to external origins for faster resource loading */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {supabaseOrigin && (
@@ -116,7 +114,6 @@ export default function RootLayout({
         )}
       </head>
       <body className="min-h-screen">
-        {/* Skip to main content — keyboard / screen reader accessibility */}
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-emerald-600 focus:text-white focus:font-bold focus:text-sm focus:shadow-lg"
@@ -130,7 +127,6 @@ export default function RootLayout({
           storageKey="ato-ui-white"
           disableTransitionOnChange
         >
-          <PilotLifecycleTracker />
           {children}
           <Toaster richColors position="top-center" closeButton />
           <SpeedInsights />

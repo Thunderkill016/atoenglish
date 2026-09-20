@@ -1,14 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ArrowRight,
-  Zap,
-  BookOpen,
-  Star,
-  CheckCircle2,
-  Circle,
-} from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Circle } from "lucide-react";
 
 import {
   countCompletedMissions,
@@ -21,27 +14,27 @@ interface TodayMissionProps {
 }
 
 /**
- * Unified daily mission hub — all completion flags synced from server.
+ * Focused daily learning hub. Completion comes from server-side learning evidence.
  */
 export default function TodayMission({ missions }: TodayMissionProps) {
-  const primary = missions.find((m) => m.kind === "primary");
-  const tasks = missions.filter((m) => m.kind !== "primary");
+  const primary = missions.find((mission) => mission.kind === "primary");
+  const tasks = missions.filter((mission) => mission.kind !== "primary");
   const completedCount = countCompletedMissions(missions);
   const progressPct = missions.length
     ? Math.round((completedCount / missions.length) * 100)
     : 0;
-  const allDone = completedCount === missions.length;
+  const allDone = missions.length > 0 && completedCount === missions.length;
 
   return (
     <div className="rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-sm overflow-hidden">
       <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-amber-500/10">
-              <Zap className="size-4 text-amber-500 fill-amber-500" />
+            <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10">
+              <BookOpen className="size-4 text-emerald-600 dark:text-emerald-400" />
             </span>
             <p className="text-xs font-black text-zinc-900 dark:text-zinc-50 uppercase tracking-wider">
-              Nhiệm vụ hôm nay
+              Kế hoạch học hôm nay
             </p>
           </div>
           <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
@@ -50,7 +43,7 @@ export default function TodayMission({ missions }: TodayMissionProps) {
         </div>
         <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-700"
+            className="h-full bg-emerald-500 rounded-full transition-all duration-500"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -66,7 +59,7 @@ export default function TodayMission({ missions }: TodayMissionProps) {
               href={primary.href}
               id="today-mission-primary"
               className={cn(
-                "flex items-center gap-3 p-3 rounded-xl border transition-all duration-150 group",
+                "flex items-center gap-3 p-3 rounded-xl border transition-colors duration-150 group",
                 primary.completed
                   ? "border-emerald-500/30 bg-emerald-500/5"
                   : "border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/30",
@@ -74,7 +67,7 @@ export default function TodayMission({ missions }: TodayMissionProps) {
             >
               <div
                 className={cn(
-                  "size-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                  "size-8 rounded-full border-2 flex items-center justify-center shrink-0",
                   primary.completed
                     ? "border-emerald-500 bg-emerald-500"
                     : "border-emerald-400 dark:border-emerald-600",
@@ -103,22 +96,16 @@ export default function TodayMission({ missions }: TodayMissionProps) {
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
-                  <Star className="size-2.5 fill-current" />
-                  +{primary.xp} XP
-                </span>
-                {!primary.completed && (
-                  <ArrowRight className="size-3.5 text-zinc-400 group-hover:text-emerald-500 transition-colors" />
-                )}
-              </div>
+              {!primary.completed && (
+                <ArrowRight className="size-3.5 shrink-0 text-zinc-400 group-hover:text-emerald-500 transition-colors" />
+              )}
             </Link>
           </div>
         )}
 
         <div>
           <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">
-            Danh sách — tự động cập nhật từ tiến độ
+            Các bước còn lại
           </p>
           <div className="space-y-1">
             {tasks.map((mission) => (
@@ -127,12 +114,10 @@ export default function TodayMission({ missions }: TodayMissionProps) {
                 href={mission.href}
                 id={`today-mission-${mission.id}`}
                 className={cn(
-                  "flex items-center gap-3 py-2.5 px-3 rounded-xl border transition-all duration-150",
+                  "flex items-center gap-3 py-2.5 px-3 rounded-xl border transition-colors duration-150",
                   mission.completed
                     ? "border-zinc-200/40 dark:border-zinc-800/40 bg-zinc-50/50 dark:bg-zinc-900/20 opacity-80"
-                    : mission.kind === "bonus"
-                      ? "border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/8 hover:border-amber-500/30"
-                      : "border-zinc-200/50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/40",
+                    : "border-zinc-200/50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/40",
                 )}
               >
                 <span className="shrink-0 text-emerald-600 dark:text-emerald-400">
@@ -159,9 +144,6 @@ export default function TodayMission({ missions }: TodayMissionProps) {
                     </p>
                   )}
                 </div>
-                <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-lg border border-emerald-500/15 font-mono shrink-0">
-                  +{mission.xp} XP
-                </span>
               </Link>
             ))}
           </div>
@@ -169,7 +151,7 @@ export default function TodayMission({ missions }: TodayMissionProps) {
 
         {allDone && (
           <p className="text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 pt-1">
-            Tuyệt vời! Đã hoàn thành mọi nhiệm vụ hôm nay.
+            Đã hoàn thành kế hoạch học hôm nay.
           </p>
         )}
       </div>

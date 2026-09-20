@@ -1,5 +1,0 @@
-PHASE1: search_memory sim via logs/grep (prior 169 prompt existed 0b log) + read AGENTS.md (ALWAYS), AGENT_BACKLOG/PLAN/ROADMAP, CONTENT_STYLE.md §6–7 (blueprint+SDL standards) + grep TASK-169 + recent daemon/logs + unit edits in git status; confirmed 6 ready (169+170) >=2; investigated M unit37/38/42 (L1 additions, not touched as no-fail); files only AGENT* + log.
-PHASE2: BACKLOG in_p; PLAN header + full TASK-169 section (goals/steps/risks incl unit investigate) updated; skip refill (6>=2); .next-task points to 169.
-PHASE3: rm -f tsconfig.tsbuildinfo; npx tsc --noEmit → 0; npm run lint → 0; npm run test → 170/170 pass; npm run test:content-standard → 50/50 pass; bash scripts/audit-lesson-content.sh → 50/50 ĐẠT CHUẨN. No first failure, no fix, no src edit (unrelated unit changes left uncommitted).
-Gates all clean. Log + BACKLOG/PLAN/nhật ký synced; commit + push via git-push.sh main.
-Autonomous per query (no human).

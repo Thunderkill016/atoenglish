@@ -10,7 +10,6 @@ const baseInput = {
     title: "Unit 1: Greetings",
     progress: 40,
     route: "/learn/unit-1",
-    xp: 80,
   },
   dueCardsCount: 5,
   lessonCompletedToday: false,
@@ -20,6 +19,18 @@ const baseInput = {
 };
 
 describe("buildDailyMissions", () => {
+  it("keeps only the four learning-core missions", () => {
+    const missions = buildDailyMissions(baseInput);
+
+    expect(missions.map((mission) => mission.id)).toEqual([
+      "lesson",
+      "srs",
+      "quiz",
+      "speaking",
+    ]);
+    expect(missions.every((mission) => !("xp" in mission))).toBe(true);
+  });
+
   it("marks SRS done when no cards are due", () => {
     const missions = buildDailyMissions({ ...baseInput, dueCardsCount: 0 });
     const srs = missions.find((m) => m.id === "srs");
@@ -42,13 +53,11 @@ describe("buildDailyMissions", () => {
       lessonCompletedToday: true,
       quizDoneToday: true,
       speakingDoneToday: true,
-      challengeDoneToday: true,
     });
 
     expect(missions.find((m) => m.id === "lesson")?.completed).toBe(true);
     expect(missions.find((m) => m.id === "quiz")?.completed).toBe(true);
     expect(missions.find((m) => m.id === "speaking")?.completed).toBe(true);
-    expect(missions.find((m) => m.id === "challenge")?.completed).toBe(true);
-    expect(countCompletedMissions(missions)).toBe(5);
+    expect(countCompletedMissions(missions)).toBe(4);
   });
 });

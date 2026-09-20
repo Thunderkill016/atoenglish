@@ -1,42 +1,29 @@
 # AtoEnglish 🇻🇳→🇬🇧
 
-> Học tiếng Anh và luyện phản xạ nói dành cho người Việt.
->
-> **Repository entry point.** Project governance lives in the
-> [constitution](.specify/memory/constitution.md); use the [documentation map](docs/README.md) to
-> find active specs, durable references, and history.
+> Ứng dụng học tiếng Anh dành cho người Việt.
 
-[![Live](https://img.shields.io/badge/live-atoenglish.vercel.app-emerald)](https://atoenglish.vercel.app)
+## Trạng thái dự án
 
-AtoEnglish is the existing Vietnamese-first web client and research surface for the core-first Nếp
-English Intelligence Engine. The web runtime remains intact while versioned core contracts become
-the owner of learning semantics.
+AtoEnglish đã được dọn lại source-of-truth ngày 2026-09-06. Repository hiện **không có product roadmap tự động**; hướng sản phẩm tiếp theo phải được quyết định từ trạng thái code hiện tại và bằng chứng người học, không từ các roadmap/R&D lịch sử.
 
-## Current stack
+- Trạng thái hiện tại: [`docs/project/PROJECT_STATE.md`](docs/project/PROJECT_STATE.md)
+- Quy tắc source-of-truth: [`docs/project/SOURCE_OF_TRUTH.md`](docs/project/SOURCE_OF_TRUTH.md)
+- Quy tắc cho coding agents: [`AGENTS.md`](AGENTS.md)
+- Chính sách bảo mật: [`SECURITY.md`](SECURITY.md)
 
-- Next.js 16 with App Router
-- React 19 and TypeScript 6
-- Tailwind CSS v4 and Framer Motion
-- Supabase Auth and PostgreSQL
-- FSRS scheduling through `ts-fsrs`
-- Vitest and Playwright
-- Sentry, Vercel Analytics, and Speed Insights
-- Upstash Redis rate limiting
+Các tài liệu Nếp, 28-day pilot, Real Talk, YouTube-to-Curriculum, CycleWarden, OpenPronounce, learner-model và các roadmap/spec cũ đã được bỏ khỏi working tree. Lịch sử của chúng vẫn tồn tại trong Git/PR/issue history nếu cần tra cứu.
 
-Exact versions are defined in `package.json` and `package-lock.json`.
+## Stack
 
-## Main product areas
+- Next.js 16 / React 19 / TypeScript
+- Tailwind CSS v4
+- Supabase Auth + PostgreSQL
+- Vitest + Playwright
+- Vercel
 
-- CEFR-oriented roadmap from A0 foundation through B2
-- 50 lesson units stored as TypeScript curriculum data
-- vocabulary, grammar, dialogue, translation, shadowing, speaking, and quiz sections
-- speaking practice with Vietnamese-specific feedback
-- FSRS flashcard review
-- XP, streak, progress, and league features
-- guest progress through browser storage where supported
-- Supabase-backed progress for authenticated users
+Phiên bản chính xác nằm trong `package.json` và `package-lock.json`.
 
-## Quick start
+## Chạy local
 
 ```bash
 git clone https://github.com/Thunderkill016/AtoEnglish.git
@@ -46,121 +33,47 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The development server normally runs at `http://localhost:3000`.
-
-## Environment
-
-At minimum, local authenticated flows require:
+Các flow dùng Supabase cần tối thiểu:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 ```
 
-Optional production integrations use variables for Upstash, Sentry, VAPID push notifications, Resend, and deployment tooling. Use `.env.example` and the relevant integration code as the source of truth. Never commit `.env.local` or secrets.
+Không commit secret hoặc `.env.local`.
 
-## Commands
-
-```bash
-npm run dev                    # development server
-npx tsc --noEmit               # TypeScript validation
-npm run lint                   # ESLint
-npm run test                   # unit tests
-npm run test:content-standard  # curriculum content gate
-npm run test:integration       # Supabase integration tests; requires environment
-npm run e2e                    # Playwright; requires environment and app runtime
-npm run build                  # production compilation check
-npm run audit                  # project-specific static checks
-npm run inventory              # conservative cleanup inventory; no file deletion
-npm run inventory -- --write   # write generated inventory report
-npm run check:source-of-truth  # governance/source-of-truth validation
-```
-
-Test totals are intentionally not written into this README because they change as the suite evolves. The test runner and CI output are the source of truth.
-
-## Project structure
-
-```text
-src/
-├── app/
-│   ├── page.tsx
-│   ├── login/
-│   ├── auth/
-│   ├── actions/
-│   └── (main)/
-│       ├── dashboard/
-│       ├── learn/[unitSlug]/
-│       ├── flashcards/
-│       ├── speaking/
-│       ├── progress/
-│       └── roadmap/
-├── components/
-│   ├── landing/
-│   ├── layout/
-│   ├── learn/
-│   └── ui/
-├── features/
-├── lib/
-│   ├── data/units/
-│   ├── lessons/
-│   ├── security/
-│   ├── srs/
-│   └── supabase/
-├── types/
-└── proxy.ts
-```
-
-### Known architecture debt
-
-`src/components/learn/UnitTemplate.tsx` is active and central to the lesson experience, but it currently owns too many responsibilities. It must be split gradually with behavior-preserving commits and passing lesson checks; it must not be rewritten or deleted in one change.
-
-The cleanup inventory and evidence are documented in `reports/codebase-cleanup-inventory.md`.
-
-## Curriculum implementation
-
-The active lesson route imports the A0–B2 unit data from `src/lib/data/units/` and registers it for `/learn/[unitSlug]`.
-
-When editing curriculum data:
-
-1. follow `docs/reference/product/CONTENT_STYLE.md`
-2. preserve the lesson blueprint and learning-flow order
-3. run `npm run test:content-standard`
-4. run `bash scripts/audit-lesson-content.sh`
-
-## Database source of truth
-
-Do not maintain a partial table list in this README. The authoritative sources are:
-
-- `supabase/migrations/`
-- generated database types in `src/types/supabase.ts`
-- server actions and queries under `src/app/actions/` and `src/lib/`
-
-All schema changes must be made through migrations. Regenerate types with:
+## Các lệnh chính
 
 ```bash
-npm run db:types
+npm run dev
+npx tsc --noEmit
+npm run lint
+npm run test
+npm run test:content-standard
+npm run test:integration
+npm run e2e
+npm run build
+npm run audit
+npm run inventory
 ```
 
-Never disable RLS to work around an application bug.
+Không ghi số lượng test cố định vào tài liệu; output CI/test runner là nguồn đúng.
 
-## Cleanup policy
+## Source kỹ thuật
 
-- Use a dedicated branch and reviewed pull request.
-- Do not push automated cleanup directly to `main`.
-- Do not create commits only to record successful checks.
-- Do not remove a file or dependency from an import-only guess.
-- Verify framework conventions, dynamic imports, scripts, config, migrations, and operational usage.
-- Delete one candidate or one tightly related group per commit.
-- Run typecheck, lint, tests, and the relevant smoke/E2E checks after each source cleanup.
+- Runtime: `src/`
+- Curriculum đang tồn tại: `src/lib/data/units/`
+- Database migrations: `supabase/migrations/`
+- Generated DB types: `src/types/supabase.ts`
+- CI chính: `.github/workflows/verify.yml`
 
-## Deployment and CI
+Code, migrations, config và tests mô tả hệ thống đang chạy; tài liệu không được phép ghi đè thực tế đó.
 
-The repository contains local CI scripts, GitLab CI configuration, Vercel deployment checks, and Git push helper scripts. Deployment behavior depends on the configured repository remotes and environment. Treat these executable files as the source of truth rather than duplicating their implementation details here:
+## Release consistency
 
-- `scripts/ci-local.sh`
-- `.gitlab-ci.yml`
-- `scripts/check-vercel-deploy.sh`
-- `scripts/git-push.sh`
+GitHub + Supabase đã được đồng bộ lại trong đợt reset 2026-09-06. Vercel production vẫn phải được đối chiếu với exact `main` trước lần release tiếp theo; theo dõi tại issue #152.
+
+Không coi preview deployment hoặc CI xanh là bằng chứng production đã đồng bộ.
 
 ## License
 

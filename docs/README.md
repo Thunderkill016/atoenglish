@@ -1,19 +1,13 @@
 # Documentation Map
 
-> **Document status:** canonical repository navigation
-> **Governing authority:** [Nếp / AtoEnglish Constitution](../.specify/memory/constitution.md)
+> Repository navigation. Governance lives in `docs/project/`; this file is a pointer, not an authority.
 
-- Project invariants and conflict rules: [constitution](../.specify/memory/constitution.md).
-- Active bounded changes: `specs/**/spec.md`; the checked-out feature pointer is machine-local
-  `.specify/feature.json`.
-- Technical approach and execution: the matching `plan.md`, `tasks.md`, and `checklists/**` under
-  the feature directory.
-- Durable domain and research material: `docs/core/**`, `docs/nep/**`, `docs/learning-system/**`,
-  `docs/architecture/**`, and `docs/reference/**`. These are reference material, not governance.
-- Superseded decisions and execution records: `docs/history/**`.
-- Repository entry and commands: [README](../README.md). Security disclosure and operational
-  security policy: [SECURITY](../SECURITY.md).
+- **Product direction and scope:** [docs/project/PROJECT_STATE.md](project/PROJECT_STATE.md) — the single active direction, minimum active surface, closed scope and direction lock.
+- **Source-of-truth rules:** [docs/project/SOURCE_OF_TRUTH.md](project/SOURCE_OF_TRUTH.md) — which source is authoritative for each kind of question.
+- **Core reference material:** `docs/core/**` — vendor-independent learning-core contracts and reference flows. Reference, not governance.
+- **Bounded feature specs:** `specs/**` — optional Spec Kit artifacts. `specs/001-spec-kit-brownfield-adoption/` records the tooling adoption.
+- **Spec Kit tooling:** `.specify/` templates and scripts; `.agents/skills/speckit-*` and `.gemini/commands/` integrations. Optional tooling, not an authority source.
+- **Repository entry and commands:** [README](../README.md). Security policy: [SECURITY](../SECURITY.md).
+- **Agent operating contract:** [AGENTS](../AGENTS.md).
 
-On conflict, the constitution wins. Within a bounded change, `spec.md` owns WHAT/WHY, `plan.md`
-owns HOW, and `tasks.md` owns executable progress. GitHub issues authorize work and PRs review it;
-neither silently overrides committed governance.
+Historical documents are intentionally absent from the working tree. Use Git history and closed PRs/issues when a current task explicitly needs them.

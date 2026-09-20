@@ -1,7 +1,7 @@
 # Nếp Core Research & Source Registry v1
 
 > **Document status:** reference
-> **Governing authority:** [constitution](../../.specify/memory/constitution.md)
+> **Governing authority:** [SOURCE_OF_TRUTH](../project/SOURCE_OF_TRUTH.md)
 
 This registry prevents attractive external technology from silently becoming product authority. Every artifact must be pinned and reviewed again at adoption time; licenses for code, weights and training data are separate questions.
 

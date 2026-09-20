@@ -11,11 +11,6 @@ const actionMocks = vi.hoisted(() => ({
   scheduleWrongWordsForReview: vi.fn(),
 }));
 
-const streakMocks = vi.hoisted(() => ({
-  checkMilestone: vi.fn(),
-  dismissMilestone: vi.fn(),
-}));
-
 const toastMocks = vi.hoisted(() => ({
   success: vi.fn(),
   error: vi.fn(),
@@ -32,8 +27,6 @@ vi.mock("@/app/actions/cards", () => ({
   seedUnitVocabToSRS: actionMocks.seedUnitVocabToSRS,
   scheduleWrongWordsForReview: actionMocks.scheduleWrongWordsForReview,
 }));
-
-vi.mock("canvas-confetti", () => ({ default: vi.fn() }));
 
 vi.mock("sonner", () => ({
   toast: toastMocks,
@@ -79,19 +72,6 @@ vi.mock("framer-motion", async () => {
   };
 });
 
-vi.mock("@/features/streak/hooks/useStreakMilestone", () => ({
-  useStreakMilestone: () => ({
-    showOverlay: false,
-    pendingMilestone: null,
-    checkMilestone: streakMocks.checkMilestone,
-    dismissMilestone: streakMocks.dismissMilestone,
-  }),
-}));
-
-vi.mock("@/features/streak/components/StreakMilestoneOverlay", () => ({
-  default: () => null,
-}));
-
 interface SectionMockProps {
   unit: UnitData;
   goNext: () => void;
@@ -100,7 +80,6 @@ interface SectionMockProps {
   isSubmitting?: boolean;
   effectiveScore?: number;
   effectiveStarCount?: number;
-  xpToEarn?: number;
 }
 
 vi.mock("./sections/WarmupSection", async () => {
@@ -192,7 +171,6 @@ vi.mock("./sections/QuizSection", async () => {
       isSubmitting,
       effectiveScore,
       effectiveStarCount,
-      xpToEarn,
     }: SectionMockProps) =>
       React.createElement(
         "button",
@@ -200,7 +178,6 @@ vi.mock("./sections/QuizSection", async () => {
           "data-testid": "section-quiz",
           "data-effective-score": effectiveScore,
           "data-star-count": effectiveStarCount,
-          "data-xp-to-earn": xpToEarn,
           disabled: Boolean(isCompleted || isSubmitting),
           onClick: () => void handleCompleteUnit?.(),
         },
@@ -268,8 +245,6 @@ describe("UnitTemplate behavior foundation", () => {
     actionMocks.getDueWarmupCards.mockReset();
     actionMocks.seedUnitVocabToSRS.mockReset();
     actionMocks.scheduleWrongWordsForReview.mockReset();
-  streakMocks.checkMilestone.mockReset();
-  streakMocks.dismissMilestone.mockReset();
   toastMocks.success.mockReset();
   toastMocks.error.mockReset();
   toastMocks.promise.mockReset();
@@ -462,7 +437,6 @@ it.each([
     unit: makeUnit({ xp: 100, quiz: [], listenAndChoose: [] }),
     score: "100",
     stars: "3",
-    xp: "100",
   },
   {
     name: "two stars at the 60-point threshold",
@@ -473,7 +447,6 @@ it.each([
     }),
     score: "60",
     stars: "2",
-    xp: "85",
   },
   {
     name: "one star below 60 points",
@@ -484,29 +457,21 @@ it.each([
     }),
     score: "30",
     stars: "1",
-    xp: "70",
   },
-])("derives $name and preserves the completeUnit action contract", async ({ unit, score, stars, xp }) => {
+])("derives $name and preserves the completeUnit action contract", async ({ unit, score, stars }) => {
   await renderUnit(unit);
   const quiz = await reachQuiz();
 
   expect(quiz).toHaveAttribute("data-effective-score", score);
   expect(quiz).toHaveAttribute("data-star-count", stars);
-  expect(quiz).toHaveAttribute("data-xp-to-earn", xp);
 
   await click(quiz);
   expect(actionMocks.completeUnit).toHaveBeenCalledWith("unit-test", Number(stars));
 });
 
-it("coordinates authenticated completion data, streak checks, XP sync, vocab seeding, and nextRoute", async () => {
-  const xpEvent = vi.fn();
-  window.addEventListener("ato:xp-earned", xpEvent as EventListener);
+it("coordinates authenticated completion data, vocab seeding, and nextRoute", async () => {
   actionMocks.completeUnit.mockResolvedValue({
     success: true,
-    xpEarned: 123,
-    newStreak: 7,
-    completedCount: 5,
-    newTotalXp: 500,
     leveledUp: true,
     newLevel: "A2",
   });
@@ -517,15 +482,11 @@ it("coordinates authenticated completion data, streak checks, XP sync, vocab see
   await renderUnit(unit, "/learn/next-unit");
   await click(await reachQuiz());
 
-  expect(streakMocks.checkMilestone).toHaveBeenCalledWith(7);
   expect(actionMocks.seedUnitVocabToSRS).toHaveBeenCalledTimes(1);
   expect(JSON.parse(localStorage.getItem("pending-level-up") ?? "null")).toEqual({ prev: null, next: "A2" });
-  expect(localStorage.getItem(`ato_xp_sync_${new Date().toDateString()}`)).toBe("123");
-  expect(xpEvent).toHaveBeenCalled();
   expect(localStorage.getItem("guest_completed_units")).toBeNull();
   expect(container.textContent).toContain("Xuất sắc! 🏆");
   expect(container.querySelector('a[href="/learn/next-unit"]')).not.toBeNull();
-  window.removeEventListener("ato:xp-earned", xpEvent as EventListener);
 });
 
 it("keeps non-authenticated server failures out of guest fallback", async () => {
@@ -537,7 +498,6 @@ it("keeps non-authenticated server failures out of guest fallback", async () => 
   expect(localStorage.getItem("guest_completed_units")).toBeNull();
   expect(container.textContent).not.toContain("Xuất sắc! 🏆");
   expect(toastMocks.error).toHaveBeenCalledWith("Database unavailable");
-  expect(streakMocks.checkMilestone).not.toHaveBeenCalled();
 });
 
 it("loads authenticated completion status and disables duplicate completion after the status resolves", async () => {
