@@ -1,9 +1,8 @@
 export type DailyMission = {
   id: string;
-  kind: "primary" | "task" | "bonus";
+  kind: "primary" | "task";
   label: string;
   detail?: string;
-  xp: number;
   href: string;
   completed: boolean;
 };
@@ -13,14 +12,12 @@ export type DailyMissionInput = {
     title: string;
     progress: number;
     route: string;
-    xp: number;
   };
   dueCardsCount: number;
   lessonCompletedToday: boolean;
   srsReviewedToday: boolean;
   quizDoneToday: boolean;
   speakingDoneToday: boolean;
-  challengeDoneToday?: boolean;
 };
 
 export function buildDailyMissions(input: DailyMissionInput): DailyMission[] {
@@ -32,7 +29,6 @@ export function buildDailyMissions(input: DailyMissionInput): DailyMission[] {
       kind: "primary",
       label: input.currentUnit.title,
       detail: `${input.currentUnit.progress}% tiến độ`,
-      xp: input.currentUnit.xp,
       href: input.currentUnit.route,
       completed: input.lessonCompletedToday,
     },
@@ -43,7 +39,6 @@ export function buildDailyMissions(input: DailyMissionInput): DailyMission[] {
         input.dueCardsCount > 0
           ? `Ôn tập ${input.dueCardsCount} thẻ SRS`
           : "Ôn tập SRS (đã xong hôm nay!)",
-      xp: 15,
       href: "/flashcards",
       completed: srsDone,
     },
@@ -53,7 +48,6 @@ export function buildDailyMissions(input: DailyMissionInput): DailyMission[] {
       label: input.quizDoneToday
         ? "Quiz từ vựng (đã xong!)"
         : "Quiz từ vựng — 5 câu",
-      xp: 15,
       href: "/quiz",
       completed: input.quizDoneToday,
     },
@@ -63,22 +57,12 @@ export function buildDailyMissions(input: DailyMissionInput): DailyMission[] {
       label: input.speakingDoneToday
         ? "Luyện nói (đã xong!)"
         : "Luyện nói — 5 phút",
-      xp: 15,
       href: "/speaking",
       completed: input.speakingDoneToday,
-    },
-    {
-      id: "challenge",
-      kind: "bonus",
-      label: "Thử thách hàng ngày — 5 câu từ vựng",
-      detail: "Hoàn thành daily challenge",
-      xp: 50,
-      href: "/challenge",
-      completed: input.challengeDoneToday ?? false,
     },
   ];
 }
 
 export function countCompletedMissions(missions: DailyMission[]): number {
-  return missions.filter((m) => m.completed).length;
+  return missions.filter((mission) => mission.completed).length;
 }

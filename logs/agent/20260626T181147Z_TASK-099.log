@@ -1,6 +1,0 @@
-=== TASK-099 PHASE summary ===
-Date: 2026-06-27
-PHASE1: read AGENTS BACKLOG PLAN ROADMAP CONTENT§6-7 + MINIMAL_V2 + grep (styles=30 but targeted0 post V2; zinc canvas only in lesson shell; design-system in 47 files; speaking PrimaryRow subs; login no panel; cert/place/pron clean; globals no legacy); sim search_memory via logs/grep (empty prior 099 impl)
-PHASE2: PLAN updated (focus+full spec); BACKLOG in_p; ready=2 skip refill
-PHASE3: set in_p; minimal doc sync §2 (shipped list 081-098, rating ~80% minimal, note canvas+styles reality) + §9 (all [x] except time-to-lesson ~); gates: lint0 + 170t pass + tsc0; no src change
-Gates clean. Will commit + push via git-push.sh; update done+log

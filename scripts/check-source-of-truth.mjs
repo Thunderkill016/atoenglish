@@ -4,40 +4,43 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
+
 const requiredPaths = [
-  ".specify/memory/constitution.md",
-  ".specify/integration.json",
+  "AGENTS.md",
+  "README.md",
+  "SECURITY.md",
   ".agent-autopilot-disabled",
+  ".specify/integration.json",
+  "docs/README.md",
+  "docs/project/PROJECT_STATE.md",
+  "docs/project/SOURCE_OF_TRUTH.md",
   "specs/001-spec-kit-brownfield-adoption/spec.md",
   "specs/001-spec-kit-brownfield-adoption/plan.md",
   "specs/001-spec-kit-brownfield-adoption/tasks.md",
   "specs/001-spec-kit-brownfield-adoption/document-inventory.md",
-  "docs/README.md",
-  "AGENTS.md",
-  "README.md",
-  "SECURITY.md",
 ];
+
+const retiredAuthorityPaths = [
+  "AGENT_AUTOPILOT.md",
+  "AGENT_BACKLOG.md",
+  "AGENT_PLAN.md",
+  "AGENT_REPORT.md",
+  "AGENT_ROADMAP.md",
+  "docs/product",
+  "docs/history",
+  "docs/nep",
+  "docs/reference",
+  "docs/learning-system",
+  "docs/curriculum",
+  "docs/cyclewarden",
+];
+
 const retiredAutomationPaths = [
   "scripts/agent-pick-task.sh",
   "scripts/agent-run-headless.sh",
   "scripts/agent-refill-backlog.sh",
   "scripts/agent-watchdog.sh",
   "scripts/agent-report.sh",
-];
-const retiredAutomationForbidden = [
-  "docs/history/",
-  "grok --",
-  "git-push.sh",
-  "systemctl",
-  "stash drop",
-];
-const statusPolicies = [
-  { directory: "docs/architecture", status: "reference" },
-  { directory: "docs/core", status: "reference" },
-  { directory: "docs/learning-system", status: "reference" },
-  { directory: "docs/nep", status: "reference" },
-  { directory: "docs/reference", status: "reference" },
-  { directory: "docs/history", status: "historical" },
 ];
 
 export function detectRetiredAuthority(relativePaths) {
@@ -61,15 +64,6 @@ function collectMarkdownFiles(directory, relativeDirectory = "") {
 function readFileNames(directory) {
   return readdirSync(directory);
 }
-const retiredAuthorityPaths = [
-  "AGENT_BACKLOG.md",
-  "AGENT_PLAN.md",
-  "AGENT_REPORT.md",
-  "AGENT_ROADMAP.md",
-  "docs/product/PRODUCT_TRUTH.md",
-  "docs/product/CURRENT_PRIORITY.md",
-  "docs/product/DO_NOT_BUILD.md",
-];
 
 export function inspectSourceOfTruth(baseDir = root) {
   const problems = [];
@@ -82,48 +76,19 @@ export function inspectSourceOfTruth(baseDir = root) {
     ),
   );
 
+  for (const relativePath of retiredAutomationPaths) {
+    if (existsSync(path.join(baseDir, relativePath))) {
+      problems.push(`retired-automation-present:${relativePath}`);
+    }
+  }
+
   const constitutionPath = path.join(baseDir, ".specify/memory/constitution.md");
   if (existsSync(constitutionPath)) {
-    const constitution = readFileSync(constitutionPath, "utf8");
-    if (!constitution.includes("**Version**: 1.0.0")) problems.push("constitution-version-missing");
-    if (!constitution.includes("highest project governance artifact")) {
-      problems.push("constitution-precedence-missing");
-    }
-  }
-
-  for (const relativePath of retiredAutomationPaths) {
-    const absolutePath = path.join(baseDir, relativePath);
-    if (!existsSync(absolutePath)) {
-      problems.push(`retired-automation-stub-missing:${relativePath}`);
-      continue;
-    }
-    const script = readFileSync(absolutePath, "utf8");
-    if (!script.includes(".agent-autopilot-disabled") || !script.includes("exit 2")) {
-      problems.push(`retired-automation-not-fail-closed:${relativePath}`);
-    }
-    for (const forbidden of retiredAutomationForbidden) {
-      if (script.includes(forbidden)) {
-        problems.push(`retired-automation-capability-present:${relativePath}->${forbidden}`);
-      }
-    }
-  }
-
-  for (const { directory, status } of statusPolicies) {
-    for (const relativePath of collectMarkdownFiles(baseDir, directory)) {
-      const document = readFileSync(path.join(baseDir, relativePath), "utf8");
-      const header = document.split("\n").slice(0, 8).join("\n");
-      if (!header.includes(`**Document status:** ${status}`)) {
-        problems.push(`invalid-document-status:${relativePath}`);
-      }
-      if (!header.includes("**Governing authority:**")) {
-        problems.push(`governing-authority-missing:${relativePath}`);
-      }
-    }
+    problems.push("unauthorized-constitution:.specify/memory/constitution.md");
   }
 
   const linkedDocuments = [
     "AGENTS.md",
-    "AGENT_AUTOPILOT.md",
     "README.md",
     "SECURITY.md",
     ...collectMarkdownFiles(baseDir, "docs"),

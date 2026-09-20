@@ -1,7 +1,7 @@
 # Provenance Authority Registry V1
 
 > **Document status:** reference inherited from merged PR #132
-> **Governing authority:** [constitution](../../.specify/memory/constitution.md)
+> **Governing authority:** [SOURCE_OF_TRUTH](../project/SOURCE_OF_TRUTH.md)
 
 ## 1. Executive Summary & Problem Addressed
 

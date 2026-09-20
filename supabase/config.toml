@@ -1,7 +1,25 @@
-# Local-only Supabase CLI configuration used by database migration/RLS tests.
+# Local Supabase CLI configuration used by database migration/RLS tests.
 # Remote project linkage is intentionally absent: CI must never depend on production credentials.
 project_id = "atoenglish-local"
 
 [db]
 # Keep local migration behavior aligned with the hosted AtoEnglish database (Postgres 17).
 major_version = 17
+
+# These privileged functions enforce their own server-only bearer secrets in code.
+# `verify_jwt = false` allows those non-JWT scheduler/admin secrets to reach the
+# function; authorization is then mandatory before service-role access is created.
+[functions.list-memories]
+verify_jwt = false
+
+[functions.search-memories]
+verify_jwt = false
+
+[functions.store-memory]
+verify_jwt = false
+
+[functions.manage-memory]
+verify_jwt = false
+
+[functions.streak-reminder]
+verify_jwt = false

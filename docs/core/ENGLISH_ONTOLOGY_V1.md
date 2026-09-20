@@ -1,7 +1,7 @@
 # Nếp English Ontology v1
 
 > **Document status:** reference
-> **Governing authority:** [constitution](../../.specify/memory/constitution.md)
+> **Governing authority:** [SOURCE_OF_TRUTH](../project/SOURCE_OF_TRUTH.md)
 
 **Purpose:** canonical schema for describing English knowledge, communication capability and learnable performance without reducing the learner to four skills or one level.
 
