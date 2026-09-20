@@ -12,6 +12,12 @@
 # testing
 /coverage
 
+# benchmark datasets / raw research artifacts
+/.cache/benchmarks/
+
+# generated gitlab-ci-local cache and build worktrees
+/.gitlab-ci-local/
+
 # next.js
 /.next/
 /.next-dev/

@@ -1,0 +1,6 @@
+# Research-only dependency lock for CORE-REALITY-001.
+# Keep this environment isolated from the production Next.js runtime.
+numpy==2.2.3
+scipy==1.15.2
+scikit-learn==1.6.1
+rfc8785==0.1.4
