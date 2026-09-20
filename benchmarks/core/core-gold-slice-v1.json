@@ -1,0 +1,255 @@
+{
+  "artifactId": "core-gold-slice-v1",
+  "artifactClass": "deterministic-reference-flow",
+  "authorityScope": "repository-reference-only",
+  "promotionDecision": "not-production-authority",
+  "targetId": "strategy.repair.request-repetition",
+  "resolvedTargetIds": [
+    "strategy.repair.request-repetition"
+  ],
+  "stateModel": "ema-routing-v1",
+  "stateCalibration": "provisional-routing-only",
+  "transitions": [
+    {
+      "step": "initial",
+      "reasonCodes": [
+        "state-unknown"
+      ],
+      "certification": "not-attempted",
+      "production": {
+        "estimate": null,
+        "evidenceCount": 0,
+        "status": "unknown",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      },
+      "transfer": {
+        "estimate": null,
+        "evidenceCount": 0,
+        "status": "unknown",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      }
+    },
+    {
+      "step": "unavailable",
+      "reasonCodes": [
+        "evaluator-unavailable",
+        "no-evidence-created"
+      ],
+      "certification": "not-attempted",
+      "production": {
+        "estimate": null,
+        "evidenceCount": 0,
+        "status": "unknown",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      },
+      "transfer": {
+        "estimate": null,
+        "evidenceCount": 0,
+        "status": "unknown",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      }
+    },
+    {
+      "step": "supported-success",
+      "reasonCodes": [
+        "deterministic-target-match",
+        "reference-evidence-validated",
+        "routing-state-updated:production"
+      ],
+      "certification": "reference-validated",
+      "production": {
+        "estimate": 0.315,
+        "evidenceCount": 1,
+        "status": "observed",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      },
+      "transfer": {
+        "estimate": null,
+        "evidenceCount": 0,
+        "status": "unknown",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      }
+    },
+    {
+      "step": "independent-failure",
+      "reasonCodes": [
+        "deterministic-target-missing",
+        "reference-evidence-validated",
+        "routing-state-updated:production"
+      ],
+      "certification": "reference-validated",
+      "production": {
+        "estimate": 0.1575,
+        "evidenceCount": 2,
+        "status": "observed",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      },
+      "transfer": {
+        "estimate": null,
+        "evidenceCount": 0,
+        "status": "unknown",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      }
+    },
+    {
+      "step": "independent-retry-success",
+      "reasonCodes": [
+        "deterministic-target-match",
+        "reference-evidence-validated",
+        "routing-state-updated:production"
+      ],
+      "certification": "reference-validated",
+      "production": {
+        "estimate": 0.45237499999999997,
+        "evidenceCount": 3,
+        "status": "observed",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      },
+      "transfer": {
+        "estimate": null,
+        "evidenceCount": 0,
+        "status": "unknown",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      }
+    },
+    {
+      "step": "changed-context-transfer",
+      "reasonCodes": [
+        "deterministic-target-match",
+        "reference-evidence-validated",
+        "routing-state-updated:transfer"
+      ],
+      "certification": "reference-validated",
+      "production": {
+        "estimate": 0.45237499999999997,
+        "evidenceCount": 3,
+        "status": "observed",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      },
+      "transfer": {
+        "estimate": 0.35,
+        "evidenceCount": 1,
+        "status": "observed",
+        "confidence": null,
+        "modelVersion": "ema-routing-v1",
+        "decisionScope": "routing"
+      }
+    }
+  ],
+  "feedback": {
+    "claims": [
+      {
+        "code": "target-not-observed",
+        "targetId": "strategy.repair.request-repetition"
+      }
+    ],
+    "retry": {
+      "required": true,
+      "reasonCode": "independent-target-missing"
+    }
+  },
+  "retryAttemptId": "independent-retry-success",
+  "retrievalSchedule": {
+    "status": "scheduled",
+    "schedulerBoundary": "declarative-retrieval-adapter",
+    "calibrationState": "provisional",
+    "dueAt": "2026-09-05T00:03:00.000Z",
+    "reasonCode": "independent-declarative-success"
+  },
+  "transferPlan": {
+    "selectedCandidateId": "gold-near-transfer-probe",
+    "reasonCodes": [
+      "evidence-unknown:transfer",
+      "importance:1",
+      "staleness:0.071",
+      "transfer-value:1"
+    ],
+    "contextChanged": true
+  },
+  "finalState": {
+    "recognition": {
+      "estimate": null,
+      "evidenceCount": 0,
+      "status": "unknown",
+      "confidence": null,
+      "modelVersion": "ema-routing-v1",
+      "decisionScope": "routing"
+    },
+    "retrieval": {
+      "estimate": null,
+      "evidenceCount": 0,
+      "status": "unknown",
+      "confidence": null,
+      "modelVersion": "ema-routing-v1",
+      "decisionScope": "routing"
+    },
+    "listening": {
+      "estimate": null,
+      "evidenceCount": 0,
+      "status": "unknown",
+      "confidence": null,
+      "modelVersion": "ema-routing-v1",
+      "decisionScope": "routing"
+    },
+    "production": {
+      "estimate": 0.45237499999999997,
+      "evidenceCount": 3,
+      "status": "observed",
+      "confidence": null,
+      "modelVersion": "ema-routing-v1",
+      "decisionScope": "routing"
+    },
+    "repair": {
+      "estimate": null,
+      "evidenceCount": 0,
+      "status": "unknown",
+      "confidence": null,
+      "modelVersion": "ema-routing-v1",
+      "decisionScope": "routing"
+    },
+    "transfer": {
+      "estimate": 0.35,
+      "evidenceCount": 1,
+      "status": "observed",
+      "confidence": null,
+      "modelVersion": "ema-routing-v1",
+      "decisionScope": "routing"
+    },
+    "retention": {
+      "estimate": null,
+      "evidenceCount": 0,
+      "status": "unknown",
+      "confidence": null,
+      "modelVersion": "ema-routing-v1",
+      "decisionScope": "routing"
+    }
+  },
+  "residualUnknowns": [
+    "routing-state EMA weights are provisional",
+    "one-day retrieval delay is a fixture input, not an empirically optimized interval",
+    "reference answer matching does not validate spontaneous learner transfer",
+    "repository execution does not grant production authority"
+  ]
+}

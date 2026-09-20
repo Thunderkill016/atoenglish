@@ -1,0 +1,162 @@
+{
+  "schemaVersion": "nep.authority-registry-fixtures.v1",
+  "generatedAt": "2026-09-04T10:15:00.000Z",
+  "benchmarks": [
+    {
+      "benchmarkId": "vi-adult-minpair-v1",
+      "version": "1.0.0",
+      "immutableFingerprint": "sha256-synthetic-minpair-fixture-v1-hash-abc01",
+      "evidenceLayer": "layer0-repository-reference",
+      "productionAuthorityEligible": false,
+      "sourceReferences": [
+        {
+          "sourceId": "synthetic-fixture-l1-vi-phonology-v1",
+          "version": "1.0.0",
+          "locator": "synthetic://fixtures/phonology/minimal-pairs-l1-vi-v1.json"
+        }
+      ],
+      "sampleSize": 0,
+      "adjudicationProtocol": "synthetic-test-fixture-no-production-validity",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "benchmarkId": "vi-adult-repetition-v1",
+      "version": "1.0.0",
+      "immutableFingerprint": "sha256-synthetic-repetition-fixture-v1-hash-def02",
+      "evidenceLayer": "layer0-repository-reference",
+      "productionAuthorityEligible": false,
+      "sourceReferences": [
+        {
+          "sourceId": "synthetic-fixture-l1-vi-written-v1",
+          "version": "1.0.0",
+          "locator": "synthetic://fixtures/written/repetition-request-l1-vi-v1.json"
+        }
+      ],
+      "sampleSize": 0,
+      "adjudicationProtocol": "synthetic-test-fixture-no-production-validity",
+      "createdAt": "2026-09-02T00:00:00.000Z"
+    }
+  ],
+  "grants": [
+    {
+      "grantId": "grant-minpair-active-v1",
+      "grantVersion": "1.0.0",
+      "status": "active",
+      "benchmarkArtifactId": "vi-adult-minpair-v1",
+      "expectedBenchmarkFingerprint": "sha256-synthetic-minpair-fixture-v1-hash-abc01",
+      "expectedBenchmarkVersion": "1.0.0",
+      "productionAuthorityEligible": false,
+      "evaluatorBinding": {
+        "evaluatorId": "binary-answer-key",
+        "evaluatorKind": "deterministic",
+        "modelFingerprint": "deterministic-choice@v1",
+        "runtimeFingerprint": "node-runtime@v22",
+        "configurationId": "cfg-choice-binary-exact"
+      },
+      "scope": {
+        "activity": "listening-reception",
+        "construct": "listen-ih-vs-iy",
+        "requiredPopulationTags": ["l1-vi", "adult", "a1"],
+        "allowedNoiseClasses": ["clean", "office"],
+        "minimumSnrDb": 15
+      },
+      "decision": "assessment",
+      "authority": "assessment-candidate",
+      "validFrom": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "grantId": "grant-minpair-revoked-v1",
+      "grantVersion": "1.0.0",
+      "status": "revoked",
+      "benchmarkArtifactId": "vi-adult-minpair-v1",
+      "expectedBenchmarkFingerprint": "sha256-synthetic-minpair-fixture-v1-hash-abc01",
+      "expectedBenchmarkVersion": "1.0.0",
+      "productionAuthorityEligible": false,
+      "evaluatorBinding": {
+        "evaluatorId": "binary-answer-key",
+        "evaluatorKind": "deterministic",
+        "modelFingerprint": "deterministic-choice@v1"
+      },
+      "scope": {
+        "activity": "listening-reception",
+        "construct": "listen-ih-vs-iy",
+        "requiredPopulationTags": ["l1-vi", "adult", "a1"]
+      },
+      "decision": "assessment",
+      "authority": "assessment-candidate",
+      "validFrom": "2026-01-01T00:00:00.000Z",
+      "revokedAt": "2026-09-03T00:00:00.000Z",
+      "revocationReason": "audit-found-uncontrolled-acoustic-leakage"
+    },
+    {
+      "grantId": "grant-minpair-superseded-v1",
+      "grantVersion": "0.9.0",
+      "status": "superseded",
+      "benchmarkArtifactId": "vi-adult-minpair-v1",
+      "expectedBenchmarkFingerprint": "sha256-synthetic-minpair-fixture-v1-hash-abc01",
+      "expectedBenchmarkVersion": "1.0.0",
+      "productionAuthorityEligible": false,
+      "supersededByGrantId": "grant-minpair-active-v1",
+      "evaluatorBinding": {
+        "evaluatorId": "binary-answer-key",
+        "evaluatorKind": "deterministic",
+        "modelFingerprint": "deterministic-choice@v0.9"
+      },
+      "scope": {
+        "activity": "listening-reception",
+        "construct": "listen-ih-vs-iy",
+        "requiredPopulationTags": ["l1-vi", "adult", "a1"]
+      },
+      "decision": "assessment",
+      "authority": "assessment-candidate",
+      "validFrom": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "grantId": "grant-minpair-expired-v1",
+      "grantVersion": "1.0.0",
+      "status": "expired",
+      "benchmarkArtifactId": "vi-adult-minpair-v1",
+      "expectedBenchmarkFingerprint": "sha256-synthetic-minpair-fixture-v1-hash-abc01",
+      "expectedBenchmarkVersion": "1.0.0",
+      "productionAuthorityEligible": false,
+      "evaluatorBinding": {
+        "evaluatorId": "binary-answer-key",
+        "evaluatorKind": "deterministic",
+        "modelFingerprint": "deterministic-choice@v1"
+      },
+      "scope": {
+        "activity": "listening-reception",
+        "construct": "listen-ih-vs-iy",
+        "requiredPopulationTags": ["l1-vi", "adult", "a1"]
+      },
+      "decision": "assessment",
+      "authority": "assessment-candidate",
+      "validFrom": "2025-01-01T00:00:00.000Z",
+      "validUntil": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "grantId": "grant-repetition-active-v1",
+      "grantVersion": "1.0.0",
+      "status": "active",
+      "benchmarkArtifactId": "vi-adult-repetition-v1",
+      "expectedBenchmarkFingerprint": "sha256-synthetic-repetition-fixture-v1-hash-def02",
+      "expectedBenchmarkVersion": "1.0.0",
+      "productionAuthorityEligible": false,
+      "evaluatorBinding": {
+        "evaluatorId": "written-production-exact",
+        "evaluatorKind": "deterministic",
+        "modelFingerprint": "repetition-written@v1",
+        "configurationId": "cfg-case-insensitive-trim"
+      },
+      "scope": {
+        "activity": "written-production",
+        "construct": "pragmatic.interaction.repetition-request",
+        "requiredPopulationTags": ["l1-vi", "adult", "a2"],
+        "allowedPromptContexts": ["polite-classroom", "workplace-inquiry"]
+      },
+      "decision": "assessment",
+      "authority": "assessment-candidate",
+      "validFrom": "2026-01-01T00:00:00.000Z"
+    }
+  ]
+}
