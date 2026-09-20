@@ -21,7 +21,6 @@ interface PracticeSectionProps {
   playCorrectSound: () => void;
   playWrongSound: () => void;
   goNext: () => void;
-  addSessionXp?: (amount?: number) => void; // S2-3: live XP counter
 }
 
 export default function PracticeSection({
@@ -31,7 +30,6 @@ export default function PracticeSection({
   playCorrectSound,
   playWrongSound,
   goNext,
-  addSessionXp,
 }: PracticeSectionProps) {
   // Practice quiz: use dedicated practiceQuiz if provided, else first 3 of quiz
   const PRACTICE_QS: QuizQuestion[] = unit.practiceQuiz ?? unit.quiz.slice(0, 3);
@@ -163,7 +161,6 @@ export default function PracticeSection({
         });
         setMatchLeft(null);
         playCorrectSound();
-        addSessionXp?.(3); // S2-3: +3 XP per matched pair
         recordAttempt(unit.unitId, "matching", true); // S3-3
       } else {
         setWrongMatch(value);
@@ -476,7 +473,6 @@ export default function PracticeSection({
                           .replace(/\s+/g, " ");
                       if (normalize(built.join(" ")) === normalize(ex.answer)) {
                         playCorrectSound();
-                        addSessionXp?.(5); // S2-3: +5 XP for correct scramble
                         recordAttempt(unit.unitId, "scramble", true); // S3-3
                       } else {
                         playWrongSound();
@@ -511,7 +507,7 @@ export default function PracticeSection({
               key={ex.id}
               exercise={ex}
               onComplete={(correct) => {
-                if (correct) { playCorrectSound(); addSessionXp?.(5); }
+                if (correct) playCorrectSound();
                 else playWrongSound();
                 recordAttempt(unit.unitId, "correction", correct); // S3-3
                 setCorrectionsDone(p => { const n = new Set(p); n.add(ex.id); return n; });
@@ -538,7 +534,6 @@ export default function PracticeSection({
             playWrongSound={playWrongSound}
             onCorrect={() => {
               setArrangeScore(s => s + 1);
-              addSessionXp?.(8); // S2-3: +8 XP per audio arrangement
               recordAttempt(unit.unitId, "listen-arrange", true);
               const next = arrangeIndex + 1;
               if (next >= arrangeItems.length) setArrangeDone(true);
@@ -576,7 +571,7 @@ export default function PracticeSection({
             key={unit.wordBankExercises[wordBankIndex]?.id}
             question={unit.wordBankExercises[wordBankIndex]!}
             onAnswer={(correct) => {
-              if (correct) { playCorrectSound(); addSessionXp?.(5); } // S2-3
+              if (correct) playCorrectSound();
               else playWrongSound();
               recordAttempt(unit.unitId, "wordbank", correct); // S3-3
               setWordBankScore(s => s + (correct ? 1 : 0));
@@ -618,7 +613,7 @@ export default function PracticeSection({
               hint_vn: "Nghe thật kỹ từng từ!",
             }}
             onAnswer={(correct) => {
-              if (correct) { playCorrectSound(); addSessionXp?.(5); } // S2-3
+              if (correct) playCorrectSound();
               else playWrongSound();
               recordAttempt(unit.unitId, "dictation", correct); // S3-3
               setDictationScore((s) => s + (correct ? 1 : 0));
@@ -652,7 +647,6 @@ export default function PracticeSection({
             setPracticeSubmitted(true);
             if (practiceScore >= Math.ceil(PRACTICE_QS.length * 0.7)) {
               playCorrectSound();
-              addSessionXp?.(10); // S2-3: +10 XP for passing quiz
             } else playWrongSound();
           }}
         >

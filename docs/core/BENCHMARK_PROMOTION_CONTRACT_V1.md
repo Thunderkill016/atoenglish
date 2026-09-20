@@ -1,7 +1,7 @@
 # Nếp Core Benchmark & Promotion Contract v1
 
 > **Document status:** reference
-> **Governing authority:** [constitution](../../.specify/memory/constitution.md)
+> **Governing authority:** [SOURCE_OF_TRUTH](../project/SOURCE_OF_TRUTH.md)
 
 No subsystem is "good" because it runs, and no model is "best" because a paper reports a high score on another population. Promotion is construct-, population-, task- and runtime-specific.
 

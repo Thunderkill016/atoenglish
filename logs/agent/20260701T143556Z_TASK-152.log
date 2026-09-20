@@ -1,7 +1,0 @@
-=== TASK-152 log 20260701T143556Z ===
-PHASE1: memory sim empty + read AGENTS/BACKLOG/ROADMAP/PLAN + web research VN L1 final cons/tones/linking (citations from searches) + code inspect all speaking+dashboard+analysis.
-PHASE2: BACKLOG in_progress + PLAN header+full section.
-PHASE3: minimal edits: +6 L1 patterns + vn normalize enhance (final/tones/linking); local guest save in 3 speaking clients + hydrate in SpeakingClient + DashboardClient (lazy); added l1Note to 3+ job scenarios + display + fallback polish; glass/vibrant preserved.
-Gates: rm tsbuild; tsc --noEmit (0); lint (0 after 1 disable); npm test (170/170 pass). No first failure.
-Commit: feat(speaking): TASK-152 ... ; push via script.
-Nhật ký: followed exact 1-task autopilot; vibrant zinc+glass; guest local first; richer free VN L1 coach.

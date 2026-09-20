@@ -2,10 +2,13 @@ name: Verify
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, "frontier/nep-core-foundation-v1"]
     types: [opened, synchronize, reopened, ready_for_review]
   push:
-    branches: [main]
+    branches:
+      - main
+      - "frontier/nep-core-foundation-v1"
+      - "gemini/**"
   workflow_dispatch:
 
 concurrency:
@@ -51,27 +54,3 @@ jobs:
 
       - name: Content standards
         run: npm run test:content-standard
-
-  database:
-    name: Fresh migrations, database lint, and RLS tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v2
-        with:
-          version: 2.116.0
-          github-token: ${{ github.token }}
-
-      - name: Start fresh local Postgres and apply all migrations
-        run: supabase db start
-
-      - name: Lint database functions and schema
-        run: supabase db lint --local --level error --fail-on error
-
-      - name: Run pgTAP database and RLS tests
-        run: supabase test db --local

@@ -6,12 +6,9 @@ import {
   TrendingUp,
   Mic,
   PenLine,
-  Trophy,
-  Briefcase,
   User,
   Settings,
   Play,
-  Target,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -110,25 +107,13 @@ export const desktopMoreItems: NavItem[] = [
     title: "Tiến độ",
     href: "/progress",
     icon: TrendingUp,
-    description: "Thống kê và thành tích",
-  },
-  {
-    title: "Bảng xếp hạng",
-    href: "/leaderboard",
-    icon: Trophy,
-    description: "Top học viên theo XP",
+    description: "Theo dõi quá trình học",
   },
   {
     title: "Lộ trình",
     href: "/roadmap",
     icon: Map,
     description: "Lộ trình A0 → C1",
-  },
-  {
-    title: "Business",
-    href: "/business",
-    icon: Briefcase,
-    description: "Tiếng Anh công sở",
   },
 ];
 
@@ -147,15 +132,13 @@ export const mobilePanelGroups: NavGroup[] = [
   {
     label: "THEO DÕI",
     items: [
-      { title: "Tiến độ", href: "/progress", icon: TrendingUp, description: "Stats & XP" },
-      { title: "Bảng xếp hạng", href: "/leaderboard", icon: Trophy, description: "Top learners" },
+      { title: "Tiến độ", href: "/progress", icon: TrendingUp, description: "Quá trình học" },
       { title: "Lộ trình", href: "/roadmap", icon: Map, description: "A0 → C1" },
     ],
   },
   {
     label: "KHÁC",
     items: [
-      { title: "Business English", href: "/business", icon: Briefcase, description: "Công sở & sự nghiệp" },
       { title: "Cài đặt", href: "/settings", icon: Settings, description: "Tài khoản" },
     ],
   },
@@ -171,12 +154,6 @@ export function getDashboardExploreActions(unitRoute: string): NavItem[] {
       description: "Tiếp tục bài đang học",
     },
     {
-      title: "Thử Thách",
-      href: "/challenge",
-      icon: Target,
-      description: "Daily vocab challenge",
-    },
-    {
       title: "Viết & Cải thiện",
       href: "/writing",
       icon: PenLine,
@@ -187,12 +164,6 @@ export function getDashboardExploreActions(unitRoute: string): NavItem[] {
       href: "/pronunciation",
       icon: Mic,
       description: "IPA drills",
-    },
-    {
-      title: "Bảng xếp hạng",
-      href: "/leaderboard",
-      icon: Trophy,
-      description: "XP leaderboard",
     },
   ];
 }

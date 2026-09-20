@@ -1,0 +1,84 @@
+name: Native Evidence N2
+
+on:
+  push:
+    branches:
+      - "frontier/native-evidence-n2-v1"
+  workflow_dispatch:
+
+concurrency:
+  group: native-evidence-n2-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-harness:
+    name: Synthetic contract and leakage checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: true
+      HUSKY: 0
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --prefer-offline
+
+      - name: Verify documentation governance
+        run: npm run check:source-of-truth
+
+      - name: Lint native harness
+        run: npx eslint benchmarks/native-evidence-v1
+
+      - name: Type-check repository
+        run: npx tsc --noEmit
+
+      - name: Run focused N2 tests
+        run: npx vitest run benchmarks/native-evidence-v1/*.test.ts
+
+  predictor-plumbing:
+    name: Frozen predictor and metric checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: benchmarks/native-evidence-v1/requirements.lock
+
+      - name: Install isolated research dependencies
+        run: python -m pip install --disable-pip-version-check -r benchmarks/native-evidence-v1/requirements.lock
+
+      - name: Compile predictor scripts
+        run: python -m compileall -q benchmarks/native-evidence-v1/scripts benchmarks/native-evidence-v1/tests
+
+      - name: Run predictor contract tests
+        run: python -m unittest discover -v -s benchmarks/native-evidence-v1/tests -p 'test_*.py'
+
+      - name: Emit synthetic pyBKT diagnostic report
+        run: python benchmarks/native-evidence-v1/scripts/emit_bkt_diagnostics.py --output "$RUNNER_TEMP/native-bkt-diagnostics.json"
+
+      - name: Upload synthetic pyBKT diagnostic report
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-bkt-diagnostics-${{ github.sha }}
+          path: ${{ runner.temp }}/native-bkt-diagnostics.json
+          if-no-files-found: error
+          retention-days: 14

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import confetti from "canvas-confetti";
 import {
   Volume2,
   Layers,
@@ -174,12 +173,6 @@ export default function FlashcardsPage() {
           setCurrentIndex((prev) => prev + 1);
         } else {
           setShowFinished(true);
-          confetti({
-            particleCount: 150,
-            spread: 80,
-            origin: { y: 0.5 },
-            colors: ["#10b981", "#3b82f6", "#f59e0b"]
-          });
           // Record session stats
           const finalLog = [...responseLog, { word: currentCard.word, score: scoreLabel }];
           recordFlashcardSession(finalLog.length).then(res => {

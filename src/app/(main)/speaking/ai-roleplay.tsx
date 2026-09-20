@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
 import { saveSpeakingSession, generateRoleplayTurn, evaluateSpeakingSession } from "@/app/actions/speaking";
 import { SpeechRecognitionFallback } from "@/lib/utils/speech-fallback";
 
@@ -712,11 +711,6 @@ export function AIRoleplay() {
   // Helper hoàn thành và đánh giá hội thoại bằng AI
   const handleRoleplayCompletion = async (finalHistory: ChatMessage[], lastText: string) => {
     setIsCompleted(true);
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
     toast.success("Tuyệt vời! Bạn đã hoàn thành buổi hội thoại nhập vai này.");
 
     // eslint-disable-next-line react-hooks/purity
@@ -758,7 +752,7 @@ export function AIRoleplay() {
     });
     if (!isMountedRef.current) return;
     if (saveRes.success && saveRes.xpEarned) {
-      toast.success(`+${saveRes.xpEarned} XP — buổi hội thoại đã được lưu!`);
+      toast.success("Buổi hội thoại đã được lưu.");
     } else if (saveRes.success) {
       // Guest: persist local history for viz in dashboard/speaking (TASK-152)
       try {

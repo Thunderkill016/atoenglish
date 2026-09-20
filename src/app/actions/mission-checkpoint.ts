@@ -4,8 +4,8 @@ import { z } from "zod";
 
 import { seedUnitVocabToSRS } from "@/app/actions/cards";
 import { recordLearningAttempts } from "@/app/actions/learning-attempts";
-import { completeUnit } from "@/app/actions/unit";
 import { getMissionForLesson } from "@/lib/missions/mission-catalog";
+import { createClient } from "@/lib/supabase/server";
 
 const missionCheckpointClaimSchema = z
   .object({
@@ -14,6 +14,26 @@ const missionCheckpointClaimSchema = z
     answers: z.record(z.string(), z.string()),
   })
   .strict();
+
+interface TrustedCheckpointResult {
+  success: boolean;
+  passed: boolean;
+  correct_count: number;
+  total_count: number;
+  mastery_recorded: boolean;
+  already_completed?: boolean;
+  xp_earned?: number;
+  stars?: number;
+}
+
+type RpcFn = (
+  name: "claim_unit_checkpoint_transaction",
+  args: {
+    p_user_id: string;
+    p_unit_id: string;
+    p_answers: Record<string, string>;
+  },
+) => Promise<{ data: unknown; error: { message: string } | null }>;
 
 export async function claimMissionCheckpoint(input: unknown) {
   const parsed = missionCheckpointClaimSchema.safeParse(input);
@@ -36,11 +56,6 @@ export async function claimMissionCheckpoint(input: unknown) {
     };
   }
 
-  const correctCount = mission.checkpoint.questions.filter(
-    (question) => parsed.data.answers[question.id] === question.answer,
-  ).length;
-  const passed = correctCount >= mission.checkpoint.passThreshold;
-
   const attemptResult = await recordLearningAttempts({
     sessionId: parsed.data.sessionId,
     lessonId: mission.lessonId,
@@ -53,7 +68,7 @@ export async function claimMissionCheckpoint(input: unknown) {
         score: correct ? 100 : 0,
         errorTags: correct ? [] : ["answer_mismatch"],
         evaluator: "deterministic-answer-key",
-        evaluatorVersion: "2.0.0",
+        evaluatorVersion: "2.1.0",
         latencyMs: null,
       };
     }),
@@ -61,23 +76,40 @@ export async function claimMissionCheckpoint(input: unknown) {
 
   if (!attemptResult.success) return attemptResult;
 
-  if (!passed) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return { success: false as const, error: "Bạn cần đăng nhập để ghi nhận mastery." };
+  }
+
+  const { data, error } = await (supabase.rpc as unknown as RpcFn)(
+    "claim_unit_checkpoint_transaction",
+    {
+      p_user_id: user.id,
+      p_unit_id: mission.lessonId,
+      p_answers: parsed.data.answers,
+    },
+  );
+
+  if (error) {
     return {
-      success: true as const,
-      passed: false,
-      correctCount,
-      totalCount: mission.checkpoint.questions.length,
-      masteryRecorded: false,
-      reviewTargetsAdded: 0,
+      success: false as const,
+      error: `Không thể xác minh checkpoint: ${error.message}`,
     };
   }
 
-  const perfect = correctCount === mission.checkpoint.questions.length;
-  const completion = await completeUnit(mission.lessonId, perfect ? 3 : 2);
-  if (!completion.success) {
+  const trusted = data as TrustedCheckpointResult;
+  if (!trusted.passed) {
     return {
-      success: false as const,
-      error: completion.error || "Không thể ghi nhận mastery.",
+      success: true as const,
+      passed: false,
+      correctCount: trusted.correct_count,
+      totalCount: trusted.total_count,
+      masteryRecorded: false,
+      reviewTargetsAdded: 0,
     };
   }
 
@@ -95,9 +127,9 @@ export async function claimMissionCheckpoint(input: unknown) {
   return {
     success: true as const,
     passed: true,
-    correctCount,
-    totalCount: mission.checkpoint.questions.length,
-    masteryRecorded: true,
+    correctCount: trusted.correct_count,
+    totalCount: trusted.total_count,
+    masteryRecorded: trusted.mastery_recorded,
     reviewTargetsAdded: reviewSeed.success ? reviewSeed.added : 0,
   };
 }

@@ -1,7 +1,7 @@
 # Security Policy
 
 > **Document status:** canonical security disclosure and operational policy
-> **Governing authority:** [.specify/memory/constitution.md](.specify/memory/constitution.md)
+> **Governing authority:** [docs/project/SOURCE_OF_TRUTH.md](docs/project/SOURCE_OF_TRUTH.md)
 
 ## Supported Versions
 

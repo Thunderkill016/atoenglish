@@ -1,0 +1,1 @@
+Only sanitized, small benchmark cards may be intentionally committed here after review. Raw predictions, gold labels, corpus excerpts, feature caches, upstream starter code, and learner-level artifacts stay under the ignored `.cache/benchmarks/` tree and are not committed.

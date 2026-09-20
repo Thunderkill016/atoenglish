@@ -1,0 +1,30 @@
+{
+  "activationIssue": 143,
+  "auditMode": "schema-level-no-corpus-bytes",
+  "benchmarkContract": "nep.reality-benchmark.v1",
+  "claimBoundary": "Compatibility disposition only; no predictive score, efficacy result, mastery claim, retention result, or transfer result.",
+  "decision": "not-applicable",
+  "eligibleTrackCount": 0,
+  "frontierLearnerStateMerge": "ef42f2cf96f9aa079505ad73c83c0555a470bfab",
+  "learnerStateContract": "nep.learner-evidence-state.v1",
+  "metrics": null,
+  "reasonCode": "b3-not-applicable-on-slam",
+  "scoringExecuted": false,
+  "tracks": {
+    "en_es": {
+      "eligibleForB3": false,
+      "ontologyLanguageCompatible": true,
+      "targetLanguage": "English"
+    },
+    "es_en": {
+      "eligibleForB3": false,
+      "ontologyLanguageCompatible": false,
+      "targetLanguage": "Spanish"
+    },
+    "fr_en": {
+      "eligibleForB3": false,
+      "ontologyLanguageCompatible": false,
+      "targetLanguage": "French"
+    }
+  }
+}

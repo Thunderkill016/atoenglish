@@ -1,27 +1,21 @@
 /**
- * manage-memory — Supabase Edge Function
- * Handles DELETE and UPDATE operations on project_memories
- *
- * POST body:
- * { "action": "delete", "id": 5 }
- * { "action": "update", "id": 5, "content": "new content", "category": "bug", "metadata": {} }
+ * manage-memory — privileged Supabase Edge Function.
+ * Requires: Authorization: Bearer $PROJECT_MEMORY_ADMIN_TOKEN
  */
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, content-type",
-};
+import { authorizeBearer, jsonResponse } from "../_shared/privileged-auth.ts";
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: CORS });
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
-  }
+  const authError = authorizeBearer(
+    req,
+    Deno.env.get("PROJECT_MEMORY_ADMIN_TOKEN"),
+  );
+  if (authError) return authError;
 
   let body: {
     action: "delete" | "update";
@@ -34,20 +28,16 @@ Deno.serve(async (req: Request) => {
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400, headers: { "Content-Type": "application/json", ...CORS },
-    });
+    return jsonResponse({ error: "Invalid JSON body" }, 400);
   }
 
   if (!body.id || !body.action) {
-    return new Response(JSON.stringify({ error: "id and action are required" }), {
-      status: 400, headers: { "Content-Type": "application/json", ...CORS },
-    });
+    return jsonResponse({ error: "id and action are required" }, 400);
   }
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
 
   try {
@@ -56,23 +46,15 @@ Deno.serve(async (req: Request) => {
         .from("project_memories")
         .delete()
         .eq("id", body.id);
-
       if (error) throw error;
-
-      return new Response(
-        JSON.stringify({ success: true, deleted_id: body.id }),
-        { headers: { "Content-Type": "application/json", ...CORS } }
-      );
+      return jsonResponse({ success: true, deleted_id: body.id });
     }
 
     if (body.action === "update") {
       if (!body.content?.trim()) {
-        return new Response(JSON.stringify({ error: "content is required for update" }), {
-          status: 400, headers: { "Content-Type": "application/json", ...CORS },
-        });
+        return jsonResponse({ error: "content is required for update" }, 400);
       }
 
-      // Re-embed the updated content
       const model = new Supabase.ai.Session("gte-small");
       const embedding = await model.run(body.content.trim(), {
         mean_pool: true,
@@ -97,23 +79,15 @@ Deno.serve(async (req: Request) => {
         .eq("id", body.id)
         .select("id, content, category, created_at")
         .single();
-
       if (error) throw error;
-
-      return new Response(
-        JSON.stringify({ success: true, memory: data }),
-        { headers: { "Content-Type": "application/json", ...CORS } }
-      );
+      return jsonResponse({ success: true, memory: data });
     }
 
-    return new Response(JSON.stringify({ error: `Unknown action: ${body.action}` }), {
-      status: 400, headers: { "Content-Type": "application/json", ...CORS },
-    });
-
+    return jsonResponse({ error: `Unknown action: ${body.action}` }, 400);
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
-      { status: 500, headers: { "Content-Type": "application/json", ...CORS } }
+    return jsonResponse(
+      { error: err instanceof Error ? err.message : String(err) },
+      500,
     );
   }
 });
