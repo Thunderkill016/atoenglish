@@ -60,7 +60,6 @@ interface QuizSectionProps {
   retryBonusPct: number;
   effectiveScore: number;
   effectiveStarCount: number;
-  xpToEarn: number;
   nextRoute: string;
 }
 
@@ -107,7 +106,6 @@ export default function QuizSection({
   retryBonusPct,
   effectiveScore,
   effectiveStarCount,
-  xpToEarn,
   nextRoute,
 }: QuizSectionProps) {
   const FINAL_QS = unit.quiz;
@@ -202,19 +200,7 @@ export default function QuizSection({
     setRecallChecked(p => ({ ...p, [qId]: typed === correct }));
   }, [recallInputs]);
 
-  const handleShare = async () => {
-    const text = `Tôi vừa hoàn thành "${unit.title}" trên AtoEnglish! 🎉\nCùng học tiếng Anh miễn phí: https://atoenglish.vercel.app`;
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({ title: "AtoEnglish", text });
-      } catch {
-        /* user cancelled */
-      }
-    } else {
-      await navigator.clipboard.writeText(text);
-      toast.success("Đã sao chép link chia sẻ!");
-    }
-  };
+
 
   return (
     <motion.div
@@ -228,7 +214,7 @@ export default function QuizSection({
         sectionId={8}
         sectionOrderIdx={sectionOrderIdx}
         totalSections={TOTAL_SECTIONS}
-        subtitle="Hoàn thành để nhận XP"
+        subtitle="Hoàn thành bài và xem kết quả học tập"
       />
 
       {/* Spaced Cumulative Review */}
@@ -817,7 +803,7 @@ export default function QuizSection({
                 ? "Đang lưu..."
                 : !readingDone
                 ? "Hoàn thành Đọc hiểu để tiếp tục ↑"
-                : `🎉 Hoàn thành bài học (+${xpToEarn} XP)`}
+                : "Hoàn thành bài học"}
             </LessonContinueButton>
           ) : (
             <div className="text-center">
@@ -825,12 +811,6 @@ export default function QuizSection({
                 <p className="text-emerald-600 font-bold">✅ Bạn đã hoàn thành chương học này!</p>
               </div>
               <div className="flex flex-wrap gap-3 justify-center">
-                <button
-                  onClick={handleShare}
-                  className="inline-flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 font-bold rounded-xl px-5 py-3 transition-colors text-sm"
-                >
-                  🔗 Chia sẻ thành tích
-                </button>
                 <Link
                   href="/quiz"
                   className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-foreground font-bold rounded-xl px-5 py-3 transition-colors text-sm"

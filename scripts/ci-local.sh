@@ -1,28 +1,29 @@
 #!/usr/bin/env bash
-# CI chạy trên máy local — thay GitHub Actions (0 phút quota).
-# Orchestrator gọi script này TRƯỚC mỗi agent session.
+# Optional local verification helper for developers.
+# GitHub Actions `.github/workflows/verify.yml` is the repository CI source of truth.
+# This script is not an orchestrator hook and does not replace GitHub verification.
 #
 # Usage:
-#   bash scripts/ci-local.sh           # lint + tsc + test
-#   CI_LOCAL_BUILD=1 bash scripts/ci-local.sh   # + build (chậm, ~2 phút)
+#   bash scripts/ci-local.sh                  # lint + tsc + unit tests
+#   CI_LOCAL_BUILD=1 bash scripts/ci-local.sh # + local production build
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "🔍 CI local — lint..."
+echo "🔍 Local verify — lint..."
 npm run lint --silent
 
-echo "🔍 CI local — typecheck..."
+echo "🔍 Local verify — typecheck..."
 npx tsc --noEmit
 
-echo "🔍 CI local — unit tests..."
+echo "🔍 Local verify — unit tests..."
 npm run test --silent
 
 if [[ "${CI_LOCAL_BUILD:-0}" == "1" ]]; then
-  echo "🔍 CI local — build..."
+  echo "🔍 Local verify — build..."
   npm run build
 fi
 
-echo "✅ CI local pass"
+echo "✅ Local verification pass"

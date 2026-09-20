@@ -64,7 +64,7 @@ export const meHubAccount: MeHubItem[] = [
   {
     href: "/settings",
     label: "Cài đặt",
-    description: "Thông báo, tài khoản",
+    description: "Học tập, ôn tập và giao diện",
     icon: Settings,
   },
 ];
