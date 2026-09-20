@@ -114,6 +114,55 @@ export type DiscoursePragmaticDiagnosticPayload = {
   }>;
 };
 
+export type AsrDiagnosticToken = {
+  token: string;
+  startMs: number;
+  endMs: number;
+  confidence: number;
+};
+
+export type AsrDiagnosticPayload = {
+  kind: "asr-transcription";
+  text: string;
+  durationMs: number;
+  tokens: AsrDiagnosticToken[] | readonly AsrDiagnosticToken[];
+  noSpeechProbability: number;
+  engine: string;
+};
+
+export type VadDiagnosticInterval = {
+  startMs: number;
+  endMs: number;
+};
+
+export type VadDiagnosticPayload = {
+  kind: "vad-speech";
+  isSpeech: boolean;
+  speechProbability: number;
+  intervals: VadDiagnosticInterval[] | readonly VadDiagnosticInterval[];
+  totalDurationMs: number;
+  speechDurationMs: number;
+  engine: string;
+};
+
+export type BktComparatorDiagnosticPayload = {
+  kind: "bkt-comparator";
+  constructId: string;
+  priorMastery: number;
+  posteriorMastery: number;
+  pNextState: number;
+  predictedCorrectProbability: number;
+  correct: boolean;
+  parameters: {
+    pInit: number;
+    pTransit: number;
+    pGuess: number;
+    pSlip: number;
+    pForget?: number;
+  };
+  engine: string;
+};
+
 /**
  * Only explicitly modeled diagnostic payloads may cross the core boundary.
  * New model families must add a new discriminated member instead of falling back to unknown maps.
@@ -124,4 +173,7 @@ export type DiagnosticPayload =
   | LexicalDiagnosticPayload
   | ComprehensionDiagnosticPayload
   | ControlledResponseDiagnosticPayload
-  | DiscoursePragmaticDiagnosticPayload;
+  | DiscoursePragmaticDiagnosticPayload
+  | AsrDiagnosticPayload
+  | VadDiagnosticPayload
+  | BktComparatorDiagnosticPayload;
