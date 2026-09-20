@@ -1,6 +1,9 @@
 # Nếp Core Truth v1
 
-**Status:** active engineering direction  
+> **Document status:** reference
+> **Governing authority:** [SOURCE_OF_TRUTH](../project/SOURCE_OF_TRUTH.md)
+
+**Prior status:** active engineering direction before Spec Kit migration
 **Owner decision:** 2026-09-04  
 **Primary issue:** #109
 

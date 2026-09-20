@@ -1,5 +1,8 @@
 # ChatGPT × Gemini Core Collaboration Protocol v1
 
+> **Document status:** reference
+> **Governing authority:** [SOURCE_OF_TRUTH](../project/SOURCE_OF_TRUTH.md)
+
 **Purpose:** use two independent frontier systems to improve Nếp Core quality without duplicating mistakes, losing context, or letting either model become an unreviewed authority.
 
 ## Shared truth

@@ -1,5 +1,8 @@
 # Provenance Authority Registry V1
 
+> **Document status:** reference inherited from merged PR #132
+> **Governing authority:** [SOURCE_OF_TRUTH](../project/SOURCE_OF_TRUTH.md)
+
 ## 1. Executive Summary & Problem Addressed
 
 In Nếp English Intelligence Engine, durable learner assessment cannot be minted by an evaluator, task context, or observation. PR #131 established the first executable capability slice and introduced `CalibrationAuthorityGrant` as a typed boundary. However, it intentionally left one residual: `CalibrationAuthorityGrant` was only a typed shape, allowing ad-hoc object literals to be passed without verifying independent provenance.
@@ -187,4 +190,3 @@ export function isResolvedCalibrationAuthority(
 2. **Dynamic Recalibration Trigger**: When an upstream model weights digest changes, the registry currently fails closed. An automated pipeline to trigger re-benchmarking against frozen gold sets is not yet implemented.
 3. **Calibrated Score Mapping Policies**: Mapping continuous GOP/acoustic scores or edit distances to discrete CEFR/binary pass/fail remains an open research task requiring double-rater empirical calibration on Vietnamese-English learners.
 4. **Zero Empirical Claims from Repository Fixtures**: All checked-in fixtures in `benchmarks/core/` are synthetic contract fixtures (`evidenceLayer: "layer0-repository-reference"`) used solely to test resolver mechanics in CI. They provide zero empirical, psychometric, or pedagogical validity evidence for Nếp learner measurement.
-

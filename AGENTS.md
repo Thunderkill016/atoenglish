@@ -121,3 +121,11 @@ Never claim a check passed unless it ran against the exact committed state being
 The single active product direction is defined only in `docs/project/PROJECT_STATE.md`.
 
 Agents may refine execution inside that direction, but may not create or activate another one.
+
+## Spec-kit tooling (optional)
+
+`.specify/` (templates, scripts) and `.agents/skills/speckit-*` / `.gemini/commands/` provide optional Spec Kit tooling for bounded feature work under `specs/**`. `specs/001-spec-kit-brownfield-adoption/` records the adoption spec.
+
+This tooling is not an authority source. `docs/project/PROJECT_STATE.md`, `docs/project/SOURCE_OF_TRUTH.md` and explicit owner decisions govern; no spec, template or generated artifact overrides them. There is no project constitution file; create one only through an explicit owner decision.
+
+`npm run check:source-of-truth` lints the governance surface (required files present, retired artifacts absent, markdown links resolve).

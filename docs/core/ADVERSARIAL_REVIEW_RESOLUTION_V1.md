@@ -1,5 +1,8 @@
 # Nếp Core Adversarial Review Resolution v1
 
+> **Document status:** reference
+> **Governing authority:** [SOURCE_OF_TRUTH](../project/SOURCE_OF_TRUTH.md)
+
 **Review date:** 2026-09-04  
 **Target:** Draft PR #128 / `frontier/nep-core-foundation-v1`  
 **Decision:** keep PR draft; accept structural criticisms that survive primary-source verification; reject unsupported benchmark inflation.

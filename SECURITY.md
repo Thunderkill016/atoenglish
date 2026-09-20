@@ -1,5 +1,8 @@
 # Security Policy
 
+> **Document status:** canonical security disclosure and operational policy
+> **Governing authority:** [docs/project/SOURCE_OF_TRUTH.md](docs/project/SOURCE_OF_TRUTH.md)
+
 ## Supported Versions
 
 | Version | Supported |
