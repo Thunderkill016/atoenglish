@@ -49,7 +49,7 @@ function languageSystemNode(family: LanguageSystemFamily): LanguageSystemOntolog
     modalities: ["multimodal"],
     taskConstraints: [],
     contextConstraints: [],
-    allowedEvidenceRoles: ["meaning-recognition", "free-recall", "near-transfer"],
+    allowedEvidenceRoles: ["meaning-recognition", "free-recall", "near-transfer", "far-transfer"],
     sources: [],
   };
 }
@@ -79,42 +79,42 @@ export const CANONICAL_ACTIVITY_PROFILES: Record<CommunicationActivity, Canonica
   "spoken-production": {
     kind: "production",
     modalities: ["speech-output"],
-    allowedEvidenceRoles: ["controlled-production", "free-production", "near-transfer"],
+    allowedEvidenceRoles: ["controlled-production", "free-production", "near-transfer", "far-transfer"],
   },
   "written-production": {
     kind: "production",
     modalities: ["text-output"],
-    allowedEvidenceRoles: ["controlled-production", "free-production", "near-transfer"],
+    allowedEvidenceRoles: ["controlled-production", "free-production", "near-transfer", "far-transfer"],
   },
   "spoken-interaction": {
     kind: "interaction",
     modalities: ["live-interaction"],
-    allowedEvidenceRoles: ["free-production", "interactional-repair", "near-transfer"],
+    allowedEvidenceRoles: ["free-production", "interactional-repair", "near-transfer", "far-transfer"],
   },
   "written-interaction": {
     kind: "interaction",
     modalities: ["text-input", "text-output"],
-    allowedEvidenceRoles: ["free-production", "interactional-repair", "near-transfer"],
+    allowedEvidenceRoles: ["free-production", "interactional-repair", "near-transfer", "far-transfer"],
   },
   "multimodal-interaction": {
     kind: "interaction",
     modalities: ["multimodal"],
-    allowedEvidenceRoles: ["free-production", "interactional-repair", "near-transfer"],
+    allowedEvidenceRoles: ["free-production", "interactional-repair", "near-transfer", "far-transfer"],
   },
   "text-mediation": {
     kind: "mediation",
     modalities: ["text-input", "text-output"],
-    allowedEvidenceRoles: ["controlled-production", "free-production", "near-transfer"],
+    allowedEvidenceRoles: ["controlled-production", "free-production", "near-transfer", "far-transfer"],
   },
   "concept-mediation": {
     kind: "mediation",
     modalities: ["multimodal"],
-    allowedEvidenceRoles: ["controlled-production", "free-production", "near-transfer"],
+    allowedEvidenceRoles: ["controlled-production", "free-production", "near-transfer", "far-transfer"],
   },
   "communication-mediation": {
     kind: "mediation",
     modalities: ["multimodal"],
-    allowedEvidenceRoles: ["controlled-production", "free-production", "near-transfer"],
+    allowedEvidenceRoles: ["controlled-production", "free-production", "near-transfer", "far-transfer"],
   },
 };
 

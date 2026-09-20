@@ -2,10 +2,13 @@ name: Verify
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, "frontier/nep-core-foundation-v1"]
     types: [opened, synchronize, reopened, ready_for_review]
   push:
-    branches: [main]
+    branches:
+      - main
+      - "frontier/nep-core-foundation-v1"
+      - "gemini/**"
   workflow_dispatch:
 
 concurrency:
