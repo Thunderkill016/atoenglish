@@ -1,7 +1,7 @@
 # Nếp Core Truth v1
 
-> **Document status:** reference; normative invariants migrated to the constitution
-> **Governing authority:** [constitution](../../.specify/memory/constitution.md)
+> **Document status:** reference
+> **Governing authority:** [SOURCE_OF_TRUTH](../project/SOURCE_OF_TRUTH.md)
 
 **Prior status:** active engineering direction before Spec Kit migration
 **Owner decision:** 2026-09-04  

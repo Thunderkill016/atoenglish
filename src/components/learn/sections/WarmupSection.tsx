@@ -57,44 +57,13 @@ export default function WarmupSection({
       <HowToLearnCard />
 
       {unit.situation && (
-        <SituationCard situation={unit.situation} outcomes={unit.learningOutcomes} />
+        <SituationCard
+          unitId={unit.unitId}
+          situation={unit.situation}
+          outcomes={unit.learningOutcomes}
+        />
       )}
 
-      {/* ── Job / Career Focus (TASK-153 world-class VN adult job content) ── */}
-      {unit.jobScenarios && unit.jobScenarios.length > 0 && (
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg">💼</span>
-            <p className="text-sm font-bold text-primary">Job / Career Focus — Ứng dụng thực tế công việc</p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {unit.jobScenarios.map((js, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl border border-border/60 bg-card p-4 shadow-md hover:border-primary/40 transition-colors"
-              >
-                <div className="font-bold text-foreground text-sm mb-1">{js.title}</div>
-                <div className="text-xs text-muted-foreground mb-1">
-                  🎯 {js.focus}
-                </div>
-                <div className="text-xs text-muted-foreground/80 mb-2">{js.context}</div>
-                {js.l1Note && (
-                  <div className="mt-2 rounded-xl bg-amber-950/30 border border-amber-900/50 p-2 text-[11px] text-amber-300">
-                    {js.l1Note}
-                  </div>
-                )}
-                {js.example && (
-                  <div className="mt-2 text-[11px] font-mono bg-black/30 rounded-lg px-2 py-1 text-emerald-300/90">
-                    {js.example}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Interaction Row */}
       <div className="grid grid-cols-2 gap-4 mb-8">
         {unit.warmupGreetings.map((g, i) => (
           <motion.button
@@ -105,21 +74,16 @@ export default function WarmupSection({
             transition={{ type: "spring", stiffness: 450, damping: 15 }}
             className="flex flex-col items-center text-center gap-3 p-5 border border-border/60 bg-card rounded-2xl transition-all duration-200 group hover:shadow-lg"
           >
-            <span className="text-4xl group-hover:scale-110 transition-transform duration-200">
-              {g.emoji}
-            </span>
+            <span className="text-4xl group-hover:scale-110 transition-transform duration-200">{g.emoji}</span>
             <div>
               <p className="font-bold text-foreground text-sm leading-tight">{g.en}</p>
               <p className="text-[11px] text-muted-foreground mt-0.5">{g.vn}</p>
             </div>
-            <span className="text-[9px] text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-              ▶ Nghe
-            </span>
+            <span className="text-[9px] text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">▶ Nghe</span>
           </motion.button>
         ))}
       </div>
 
-      {/* ── Vocab Self-Check ── */}
       <div className="mb-6 rounded-2xl border border-border/60 bg-card p-4 shadow-md">
         <div className="flex items-center justify-between mb-3">
           <div>
@@ -127,8 +91,7 @@ export default function WarmupSection({
             <p className="text-xs text-muted-foreground mt-0.5">Tự đánh giá trước khi học — không ảnh hưởng điểm số</p>
           </div>
           <span className="text-xs font-bold text-emerald-400">
-            {Object.values(warmupRated).filter((v) => v === "known").length}/
-            {Math.min(5, unit.vocab.length)}
+            {Object.values(warmupRated).filter((v) => v === "known").length}/{Math.min(5, unit.vocab.length)}
           </span>
         </div>
         <div className="space-y-2">
@@ -181,18 +144,16 @@ export default function WarmupSection({
         {Object.keys(warmupRated).length === Math.min(5, unit.vocab.length) && (
           <p className="text-xs text-muted-foreground mt-3 text-center italic">
             {Object.values(warmupRated).filter((v) => v === "known").length >= 3
-              ? "🎉 Bạn đã biết nhiều rồi — bài học này giúp bạn dùng thành thạo hơn!"
-              : "💪 Bình thường thôi! Sau bài học bạn sẽ nhớ hết."}
+              ? "Bạn đã biết nhiều rồi — bài học này giúp bạn dùng thành thạo hơn."
+              : "Tiếp tục học và kiểm tra lại ở phần thực hành."
+            }
           </p>
         )}
       </div>
 
-      {/* ── Vietnamese Learner Alert ── */}
       {unit.grammar?.vnNote && (
         <div className="mb-6 rounded-2xl bg-red-500/10 border border-red-500/40 p-4">
-          <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2">
-            ⚠️ Bẫy ngữ pháp của người Việt trong bài này
-          </p>
+          <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2">⚠️ Bẫy ngữ pháp của người Việt trong bài này</p>
           <p className="text-muted-foreground text-sm leading-relaxed">
             {unit.grammar.vnNote.length > 150
               ? unit.grammar.vnNote.slice(0, 150) + "... (chi tiết ở phần Ngữ pháp)"
@@ -201,7 +162,6 @@ export default function WarmupSection({
         </div>
       )}
 
-      {/* SRS Warm-up — due cards from previous lessons */}
       {warmupCards.length > 0 && !warmupDone && (
         <div className="bg-amber-950/20 border border-amber-900/50 rounded-2xl p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -257,7 +217,6 @@ export default function WarmupSection({
             <button
               onClick={() => {
                 setWarmupDone(true);
-                // Silently mark flipped cards as "Good" in SRS (fire-and-forget)
                 warmupCards.forEach((card, wi) => {
                   if (warmupFlipped.has(wi)) {
                     reviewCard(card.id, "Good").catch(() => {
@@ -268,18 +227,17 @@ export default function WarmupSection({
               }}
               className="mt-3 w-full bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-xl py-2 text-sm transition-colors border border-primary/30"
             >
-              ✅ Đã ôn xong ({warmupCards.length} thẻ)
+              Đã ôn xong ({warmupCards.length} thẻ)
             </button>
           )}
         </div>
       )}
 
-      {/* Cultural Note */}
       {unit.culturalNote && (
         <div className="border-l-4 border-primary bg-muted/30 rounded-r-2xl p-5 mb-8">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg">🇻🇳</span>
-            <p className="text-sm font-bold text-primary">Ghi chú văn hóa</p>
+            <span className="text-lg">🌐</span>
+            <p className="text-sm font-bold text-primary">Ghi chú sử dụng ngôn ngữ</p>
           </div>
           <p
             className="text-muted-foreground text-sm leading-relaxed"

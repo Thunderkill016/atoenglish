@@ -3,18 +3,10 @@
   "buildCommand": "npm run build",
   "git": {
     "deploymentEnabled": {
-      "**": false,
-      "preview/**": true
+      "main": true,
+      "preview/**": true,
+      "**": false
     }
   },
-  "crons": [
-    {
-      "path": "/api/cron/daily-reminder",
-      "schedule": "0 13 * * *"
-    },
-    {
-      "path": "/api/cron/weekly-summary",
-      "schedule": "0 1 * * 1"
-    }
-  ]
+  "crons": []
 }

@@ -1,34 +1,14 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Star, GraduationCap, BookOpen, Clock, ChevronDown, ChevronUp, ChevronRight, ExternalLink, Target, Zap, TrendingUp, Mic } from "lucide-react";
-import { toast } from "sonner";
-import { updateDailyXpGoal } from "@/app/actions/stats";
-import { useStreakFreeze as freezeStreakAction } from "@/app/actions/gamification";
-import { getPhaseForLevel, DAILY_TIPS } from "@/lib/constants/study-plan";
+import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 
 import UnitCard from "./UnitCard";
 import SrsCard from "./SrsCard";
-
-import QuickActions from "./QuickActions";
 import WordOfDayCard from "./WordOfDayCard";
-import LeagueCard from "./LeagueCard";
 import SpeakingFeedCard from "./SpeakingFeedCard";
-import LevelUpModal from "@/components/learn/LevelUpModal";
 import { WidgetErrorBoundary } from "@/components/ui/widget-error-boundary";
-import { StreakShieldWidget } from "@/components/gamification/StreakShieldWidget";
-import StreakCounter from "@/features/streak/components/StreakCounter";
-import StreakAtRiskBanner from "@/features/streak/components/StreakAtRiskBanner";
-import StreakMilestoneOverlay from "@/features/streak/components/StreakMilestoneOverlay";
-import StreakBrokenModal from "@/features/streak/components/StreakBrokenModal";
-import WeeklyActivityChart from "@/features/streak/components/WeeklyActivityChart";
-import StreakCalendar from "@/features/streak/components/StreakCalendar";
-import { useStreakStatus } from "@/features/streak/hooks/useStreakStatus";
-import WeeklyRecapCard from "./WeeklyRecapCard";
-import EfSetGoalTracker from "./EfSetGoalTracker";
 import TodayPlanWidget from "./TodayPlanWidget";
 import TodayMission from "./TodayMission";
 import {
@@ -37,26 +17,9 @@ import {
 } from "@/lib/dashboard/daily-missions";
 import DashboardHubNav from "./DashboardHubNav";
 import LevelProgressBar from "./LevelProgressBar";
-import StreakFreezeCard from "@/features/streak/components/StreakFreezeCard";
-
-// Dynamic import — PushPermissionCard uses browser APIs (Notification, PushManager)
-const PushPermissionCard = dynamic(
-  () => import("@/features/notifications/components/PushPermissionCard"),
-  { ssr: false }
-);
-
-// Dynamic import — NotificationBell uses browser APIs (navigator, ServiceWorker)
-const NotificationBell = dynamic(
-  () => import("@/components/notifications/NotificationBell"),
-  { ssr: false, loading: () => null }
-);
 
 interface DashboardClientProps {
   userName: string;
-  currentStreak: number;
-  bestStreak: number;
-  lastActiveDate: string | null;
-  totalXp: number;
   userLevel: string;
   completedUnits: number;
   dueCardsCount: number;
@@ -71,9 +34,7 @@ interface DashboardClientProps {
     tags: string[];
     xp: number;
   };
-  initialXpCurrent: number;
   dailyMissions: DailyMission[];
-  dailyXpGoal: number;
   wordOfDay: {
     word: string;
     phonetic: string;
@@ -83,9 +44,6 @@ interface DashboardClientProps {
     level: "A0" | "A1" | "A2" | "B1" | "B2" | "C1";
   } | null;
   completedUnitIds: string[];
-  streakFreezeCount: number;
-  weeklyData: Array<{ day: string; label: string; xp: number; pct: number }>;
-  calendarData: Array<{ date: string; xp: number }>;
   allUnits: Array<{ id: string; title: string; level: string; route: string; xp: number }>;
   recentSpeakingSessions: Array<{
     id: string;
@@ -117,95 +75,63 @@ const getLevelBadgeStyles = (level: string) => {
 const getLevelProgressStyles = (level: string) => {
   switch (level) {
     case "A0":
-      return "bg-gradient-to-r from-zinc-500 to-slate-500";
+      return "bg-zinc-500";
     case "A1":
-      return "bg-gradient-to-r from-emerald-500 to-teal-500";
+      return "bg-emerald-500";
     case "A2":
-      return "bg-gradient-to-r from-blue-500 to-violet-500";
+      return "bg-blue-500";
     case "B1":
-      return "bg-gradient-to-r from-purple-500 to-indigo-500";
+      return "bg-purple-500";
     case "B2":
-      return "bg-gradient-to-r from-amber-500 to-orange-500";
+      return "bg-amber-500";
     default:
-      return "bg-gradient-to-r from-zinc-500 to-slate-500";
+      return "bg-zinc-500";
   }
 };
 
 export default function DashboardClient({
   userName,
-  currentStreak,
-  bestStreak,
-  lastActiveDate,
-  totalXp,
   userLevel,
   completedUnits,
   dueCardsCount,
   currentUnitData,
-  initialXpCurrent,
   dailyMissions,
-  dailyXpGoal,
   wordOfDay,
   completedUnitIds,
   allUnits,
-  streakFreezeCount,
-  weeklyData,
-  calendarData,
   recentSpeakingSessions,
 }: DashboardClientProps) {
-  const [xpCurrent, setXpCurrent] = useState(initialXpCurrent);
   const [greeting, setGreeting] = useState("Chào bạn");
-  // Guest local history for speaking viz (TASK-152, minimal) — lazy init avoids set-in-effect
-  const [localSpeaking, setLocalSpeaking] = useState(() => {
+  const [showPlacementBanner, setShowPlacementBanner] = useState(true);
+  const [expandProgressGrid, setExpandProgressGrid] = useState(false);
+  const [showDetailedProgress, setShowDetailedProgress] = useState(false);
+  const [localSpeaking] = useState(() => {
     if (typeof window === "undefined") return recentSpeakingSessions;
     try {
       const local = JSON.parse(localStorage.getItem("guest_speaking_sessions") || "[]");
-      return (Array.isArray(local) && local.length) ? local : recentSpeakingSessions;
-    } catch { return recentSpeakingSessions; }
+      return Array.isArray(local) && local.length ? local : recentSpeakingSessions;
+    } catch {
+      return recentSpeakingSessions;
+    }
   });
 
-  // Parse short level label (e.g. "B1 Intermediate" → "B1")
   const shortLevel = userLevel.split(" ")[0] ?? userLevel;
-
-  // — Streak state machine (psychology-driven) —
-  const streakState = useStreakStatus({
-    streak: currentStreak,
-    bestStreak,
-    lastActiveDate,
-    freezeCount: streakFreezeCount,
-  });
-  // Banner dismiss persists until midnight (sessionStorage keyed on today's VN date)
-  const todayBannerKey = `ato_streak_banner_dismissed_${new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" })}`;
-  const [bannerDismissed, setBannerDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return sessionStorage.getItem(todayBannerKey) === "1";
-  });
-  const handleBannerDismiss = () => {
-    sessionStorage.setItem(todayBannerKey, "1");
-    setBannerDismissed(true);
-  };
-  const [milestoneDismissed, setMilestoneDismissed] = useState(false);
-  // StreakBrokenModal: only shown once per session using sessionStorage
-  const [brokenModalDismissed, setBrokenModalDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return sessionStorage.getItem("ato_broken_modal_dismissed") === "1";
-  });
-  const handleBrokenModalDismiss = () => {
-    sessionStorage.setItem("ato_broken_modal_dismissed", "1");
-    setBrokenModalDismissed(true);
-  };
-
-  const [showPlacementBanner, setShowPlacementBanner] = useState(true);
-  const [expandProgressGrid, setExpandProgressGrid] = useState(false);
-  const [showDetailedStats, setShowDetailedStats] = useState(false);
 
   useEffect(() => {
     const hidden = localStorage.getItem("ato_hide_placement_banner") === "true";
-    const isNotA0 = shortLevel !== "A0";
-    if (hidden || isNotA0) {
+    if (hidden || shortLevel !== "A0") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowPlacementBanner(false);
     }
   }, [shortLevel]);
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (hour < 12) setGreeting("Chào buổi sáng");
+    else if (hour < 18) setGreeting("Chào buổi chiều");
+    else setGreeting("Chào buổi tối");
+  }, []);
 
   const handleDismissPlacementBanner = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -214,686 +140,213 @@ export default function DashboardClient({
     setShowPlacementBanner(false);
   };
 
-  // Animated count-up for total XP on mount
-  const [displayXp, setDisplayXp] = useState(0);
-  useEffect(() => {
-    if (totalXp === 0) return;
-    const steps = 40;
-    const duration = 900;
-    const increment = totalXp / steps;
-    let current = 0;
-    const timer = setInterval(() => {
-      current = Math.min(current + increment, totalXp);
-       
-      setDisplayXp(Math.round(current));
-      if (current >= totalXp) clearInterval(timer);
-    }, duration / steps);
-    return () => clearInterval(timer);
-  }, [totalXp]);
-
-  const [xpTarget, setXpTarget] = useState(() => {
-    if (typeof window === "undefined") return dailyXpGoal;
-    const stored = localStorage.getItem("ato_daily_xp_goal");
-    if (stored) {
-      const parsed = parseInt(stored, 10);
-      if (!isNaN(parsed) && parsed > 0) return parsed;
-    }
-    return dailyXpGoal;
-  });
-  const [showGoalSelector, setShowGoalSelector] = useState(false);
-  const [updatingGoal, setUpdatingGoal] = useState(false);
-  const [hoursLeft, setHoursLeft] = useState<number | null>(null);
-
-  // Level-up detection: check localStorage for pending level-up from UnitTemplate
-  const [levelUpModal, setLevelUpModal] = useState<{ prev: string; next: string } | null>(null);
-  useEffect(() => {
-    const pending = localStorage.getItem("pending-level-up");
-    if (pending) {
-      try {
-        const { prev, next } = JSON.parse(pending) as { prev: string; next: string };
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        if (prev && next && prev !== next) setLevelUpModal({ prev, next });
-      } catch { /* ignore */ }
-      localStorage.removeItem("pending-level-up");
-    }
-  }, []);
-
-  useEffect(() => {
-    const now = new Date();
-    const hour = now.getHours();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (hour < 12) setGreeting("Chào buổi sáng");
-     
-    else if (hour < 18) setGreeting("Chào buổi chiều");
-     
-    else setGreeting("Chào buổi tối");
-    // Hours left until midnight for streak countdown
-    const midnight = new Date(now);
-    midnight.setHours(24, 0, 0, 0);
-    const minsLeft = Math.round((midnight.getTime() - now.getTime()) / 60000);
-     
-    setHoursLeft(Math.ceil(minsLeft / 60));
-  }, []);
-
-  // ─── XP sync: listen for lesson-completion events from UnitTemplate ───────
-  useEffect(() => {
-    const handleXpEarned = (e: Event) => {
-      const xp = (e as CustomEvent<{ xp: number }>).detail.xp;
-      setXpCurrent(prev => Math.min(prev + xp, xpTarget));
-    };
-    window.addEventListener("ato:xp-earned", handleXpEarned);
-    return () => window.removeEventListener("ato:xp-earned", handleXpEarned);
-  }, [xpTarget]);
-
-  const handleUpdateGoal = async (newGoal: number) => {
-    setUpdatingGoal(true);
-    try {
-      const res = await updateDailyXpGoal(newGoal);
-      if (res.success) {
-        setXpTarget(newGoal);
-        toast.success(res.message);
-        setShowGoalSelector(false);
-      } else {
-        toast.error(res.error || "Không thể cập nhật mục tiêu.");
-      }
-    } catch {
-      toast.error("Có lỗi xảy ra khi cập nhật mục tiêu.");
-    } finally {
-      setUpdatingGoal(false);
-    }
-  };
-
-  const todayKey = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
-  const xpPercent = Math.round((xpCurrent / xpTarget) * 100);
   const pendingMissions = dailyMissions.length - countCompletedMissions(dailyMissions);
-  const xpRemaining = Math.max(0, xpTarget - xpCurrent);
   const hubBadges = {
     "dash-today": pendingMissions,
     "dash-practice": dueCardsCount,
-    "dash-progress": xpRemaining > 0 ? xpRemaining : 0,
+    "dash-progress": 0,
   };
 
+  const levelUnits = allUnits.filter((unit) => unit.level === shortLevel);
+  const levelUnitsDone = levelUnits.filter((unit) => completedUnitIds.includes(unit.id)).length;
+
   return (
-    <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 min-h-screen overflow-x-hidden pb-20 sm:pb-0">
-      {/* Ambient glow — CSS only, no JS */}
-      <div className="pointer-events-none absolute top-0 right-0 -z-10 h-[300px] w-[50vw] max-w-[400px] rounded-full bg-emerald-500/6 dark:bg-emerald-500/4 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-0 left-0 -z-10 h-[300px] w-[300px] rounded-full bg-teal-500/5 dark:bg-teal-500/3 blur-[100px]" />
-
-      {/* — Streak at-risk fixed banner — */}
-      {!bannerDismissed && (
-        <StreakAtRiskBanner
-          state={streakState}
-          onActivateFreeze={async () => {
-            const result = await freezeStreakAction();
-            if (!result.success) throw new Error(result.error ?? "Failed");
-          }}
-          onDismiss={handleBannerDismiss}
-        />
-      )}
-
-      {/* — Milestone celebration overlay — */}
-      {!milestoneDismissed && (
-        <StreakMilestoneOverlay
-          state={streakState}
-          onDismiss={() => setMilestoneDismissed(true)}
-        />
-      )}
-
+    <div className="mx-auto min-h-screen max-w-6xl px-4 py-8 pb-20 sm:px-6 sm:pb-8 lg:px-8">
       <div className="space-y-6">
-        {/* ── 1. Greeting row ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-          <div>
-            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-0.5 whitespace-nowrap">
-              Chào mừng trở lại
-            </p>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
-              {greeting},{" "}
-              <span className="bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-500 bg-clip-text text-transparent dark:from-emerald-400 dark:via-teal-400 dark:to-emerald-300">
-                {userName}
-              </span>
-              !
-            </h1>
-            <p data-testid="pilot-promise" className="mt-1 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium">
-              Mỗi ngày 10–15 phút: tiến thêm một bước trong hành trình nói 28 ngày.
-            </p>
-          </div>
-          {/* Guest persistence notice — vibrant glass + motion polish (TASK-151) */}
-          {(() => {
-            const g = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("guest_completed_units") || "[]") : [];
-            const s = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("guest_speaking_sessions") || "[]") : [];
-            if ((Array.isArray(g) && g.length > 0) || (Array.isArray(s) && s.length > 0)) {
-              return (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                  className="mt-2 p-3 sm:p-3.5 rounded-2xl border border-emerald-500/20 bg-white/5 dark:bg-white/5 backdrop-blur-md text-[11px] sm:text-xs text-emerald-700 dark:text-emerald-300 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2"
-                >
-                  <span>Tiến độ tự học (bài + nói) được giữ an toàn ngay trên trình duyệt này. Đăng nhập để tiếp tục mượt mà trên mọi thiết bị.</span>
-                </motion.div>
-              );
-            }
-            return null;
-          })()}
-          {/* Streak badge (new StreakCounter) + Notification Bell */}
-            <div className="flex items-center gap-2 shrink-0">
-              <StreakCounter state={streakState} compact />
-              <NotificationBell />
-            </div>
-        </div>
+        <header className="space-y-1">
+          <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+            Tiếp tục học
+          </p>
+          <h1 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-3xl">
+            {greeting}, {userName}!
+          </h1>
+          <p data-testid="pilot-promise" className="text-sm text-zinc-500 dark:text-zinc-400">
+            Tập trung vào bài học, luyện tập, phản hồi và ôn lại những gì cần nhớ.
+          </p>
+        </header>
 
         <DashboardHubNav badges={hubBadges} />
 
-        {/* ── Section: Hôm nay ── */}
-        <div id="dash-today" className="space-y-6 scroll-mt-28">
-        {/* Streak Shield Widget — shown when user has freeze charges or streak ≥ 5 */}
-        {(streakFreezeCount > 0 || currentStreak >= 5) && (
-          <WidgetErrorBoundary name="StreakShield">
-            <StreakShieldWidget
-              currentStreak={currentStreak}
-              freezeCount={streakFreezeCount}
-              onUseFreeze={async () => {
-                const result = await freezeStreakAction();
-                if (!result.success) throw new Error(result.error ?? 'Failed');
-                toast.success('🛡️ Lá chắn streak đã được dùng!', { description: `Còn lại ${result.freezesRemaining} lá chắn.` });
-              }}
-            />
-          </WidgetErrorBoundary>
-        )}
-
-
-        {/* ── 2. Stats strip ── */}
-        <div className="grid grid-cols-3 gap-3">
-          {/* XP today */}
-          <div
-            onClick={() => setShowGoalSelector(true)}
-            className="rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-sm p-4 space-y-2 hover:border-emerald-500/30 transition-colors duration-200 cursor-pointer relative overflow-hidden group"
-            title="Nhấn để thay đổi mục tiêu daily XP"
-          >
-            {showGoalSelector && (
-              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-zinc-950/95 border border-zinc-800 p-2.5 space-y-1.5 rounded-2xl">
-                <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Mục tiêu XP mới</p>
-                <div className="grid grid-cols-2 gap-1 w-full">
-                  {[30, 50, 80, 100].map((val) => (
-                    <button
-                      key={val}
-                      disabled={updatingGoal}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUpdateGoal(val);
-                      }}
-                      className={`py-1 rounded-lg text-[9px] font-extrabold transition-all border ${
-                        xpTarget === val
-                          ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-emerald-400 shadow-sm"
-                          : "bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-emerald-500/30"
-                      }`}
-                    >
-                      {val} XP
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowGoalSelector(false);
-                  }}
-                  className="text-[8px] text-zinc-500 hover:text-zinc-300 font-bold uppercase transition-colors"
-                >
-                  Đóng
-                </button>
-              </div>
-            )}
-
-            {/* Label — changes based on mode */}
-            <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Star className="size-3.5 fill-current" />
-              </span>
-              <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider group-hover:text-emerald-500 transition-colors">
-                {xpCurrent === 0 ? "Mục tiêu hôm nay ⚙️" : "XP hôm nay ⚙️"}
-              </span>
-            </div>
-
-            {xpCurrent === 0 ? (
-              /* ── Opportunity mode: no XP yet today ── */
-              <div className="space-y-1.5">
-                <p className="text-xl font-black text-zinc-900 dark:text-zinc-50 leading-none">
-                  {xpTarget} <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500">XP</span>
-                </p>
-                <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 leading-tight">
-                  Học bài đầu tiên →
-                </p>
-              </div>
-            ) : (
-              /* ── Progress mode: already earned XP today ── */
-              <div className="space-y-1.5">
-                <p className="text-xl font-black text-zinc-900 dark:text-zinc-50 leading-none">
-                  {xpCurrent}<span className="text-xs font-bold text-zinc-400 dark:text-zinc-500">/{xpTarget}</span>
-                </p>
-                {/* Mini progress bar — only shown when progress > 0 */}
-                <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-700"
-                    style={{ width: `${Math.min(xpPercent, 100)}%` }}
-                  />
-                </div>
-                <p className="text-[9px] text-emerald-600/80 dark:text-emerald-400/80 font-medium">Nhỏ đều &gt; burst — giữ thói quen nói mỗi ngày.</p>
-              </div>
-            )}
+        <section id="dash-today" className="space-y-5 scroll-mt-28">
+          <div>
+            <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-50">Hôm nay</h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Làm phần học quan trọng nhất trước.</p>
           </div>
 
-          {/* Level */}
-          {(() => {
-            const levelUnitsAll = allUnits.filter(u => u.level === shortLevel);
-            const levelUnitsDone = completedUnitIds.filter(id =>
-              allUnits.find(u => u.id === id)?.level === shortLevel
-            ).length;
-            const levelProgress = levelUnitsAll.length > 0
-              ? Math.round((levelUnitsDone / levelUnitsAll.length) * 100)
-              : 0;
-            const NEXT: Record<string, string> = { A0: "A1", A1: "A2", A2: "B1", B1: "B2", B2: "C1" };
-            const nextLevel = NEXT[shortLevel] ?? "";
-            const unitsLeft = Math.max(0, levelUnitsAll.length - levelUnitsDone);
-            return (
+          <UnitCard currentUnitData={currentUnitData} />
+          <TodayMission missions={dailyMissions} />
+        </section>
+
+        <section id="dash-practice" className="space-y-5 scroll-mt-28">
+          <div>
+            <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-50">Luyện tập</h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Ôn lại và dùng tiếng Anh thay vì chạy theo điểm thưởng.</p>
+          </div>
+
+          {showPlacementBanner && (
+            <div className="relative">
               <Link
-                href="/roadmap"
-                className="rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-sm p-4 space-y-2 hover:border-blue-500/30 transition-colors duration-200 cursor-pointer block"
+                href="/placement-test"
+                className="flex items-center gap-3 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 transition-colors hover:bg-violet-500/10"
               >
-                <div className="flex items-center gap-2">
-                  <span className="flex size-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                    <GraduationCap className="size-3.5" />
-                  </span>
-                  <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Trình độ</span>
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-xl">🎯</span>
+                <div className="min-w-0 flex-1 pr-6">
+                  <p className="text-xs font-black uppercase tracking-widest text-violet-500">CEFR Placement Test</p>
+                  <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50">Xác định điểm bắt đầu phù hợp</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Reading + vocabulary + language use</p>
                 </div>
-                <p className="text-xl font-black text-zinc-900 dark:text-zinc-50 leading-none">{shortLevel}</p>
-                {nextLevel && levelUnitsAll.length > 0 ? (
-                  <>
-                    <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full transition-all duration-700"
-                        style={{ width: `${levelProgress}%` }}
-                      />
-                    </div>
-                    <p className="text-[9px] text-blue-500 dark:text-blue-400 font-bold">
-                      {unitsLeft > 0 ? `Còn ${unitsLeft} bài → ${nextLevel}` : `Sẵn sàng lên ${nextLevel}! 🎉`}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium tabular-nums">{displayXp} XP tích lũy</p>
-                )}
+                <ChevronRight className="size-5 shrink-0 text-violet-400" />
               </Link>
-            );
-          })()}
-
-          {/* Card 3: Chuỗi học (streak days) — more motivating than raw unit count */}
-          <Link
-            href="/progress"
-            className="rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-sm p-4 space-y-2 hover:border-orange-500/30 transition-colors duration-200 cursor-pointer block"
-          >
-            <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400">
-                <Flame className="size-3.5" />
-              </span>
-              <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Chuỗi học</span>
+              <button
+                onClick={handleDismissPlacementBanner}
+                className="absolute right-3 top-3 rounded-full p-1 text-zinc-400 hover:bg-zinc-200/50 hover:text-zinc-700 dark:hover:bg-zinc-800"
+                aria-label="Đóng gợi ý placement test"
+              >
+                ×
+              </button>
             </div>
-            <p className="text-xl font-black text-zinc-900 dark:text-zinc-50 leading-none">
-              {currentStreak}<span className="text-xs font-bold text-zinc-400 dark:text-zinc-500"> ngày</span>
-            </p>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">
-              {currentStreak === 0
-                ? "Bắt đầu hôm nay →"
-                : currentStreak < 7
-                ? "🌱 Đang xây dựng!"
-                : currentStreak < 30
-                ? "🔥 Giữ vững nhé!"
-                : "⚡ Siêu kiên trì!"}
-            </p>
-          </Link>
-        </div>
+          )}
 
-        {/* ── 4. Hero Continue Learning UnitCard (Promoted to Top) ── */}
-        <UnitCard currentUnitData={currentUnitData} />
-
-        {/* ── 5. TODAY'S MISSION — Unified daily task hub (replaces "Học nhanh 10 phút") ── */}
-        <TodayMission missions={dailyMissions} />
-        </div>
-
-        {/* ── Section: Luyện tập ── */}
-        <div id="dash-practice" className="space-y-6 scroll-mt-28">
-        {/* ── 3. Placement Test Banner ── */}
-        {showPlacementBanner && (
-          <div className="relative group">
-            <Link
-              href="/placement-test"
-              className="flex items-center gap-3 p-4 rounded-2xl border border-violet-500/20 bg-violet-500/5 hover:bg-violet-500/10 hover:border-violet-500/30 transition-all duration-200"
-            >
-              <span className="flex size-10 items-center justify-center rounded-xl bg-violet-500/15 text-xl shrink-0">🎯</span>
-              <div className="flex-1 min-w-0 pr-6">
-                <p className="text-xs font-black text-violet-400 uppercase tracking-widest mb-0.5">CEFR Placement Test</p>
-                <p className="text-sm font-bold text-foreground">Xác Định Trình Độ Chính Xác</p>
-                <p className="text-xs text-muted-foreground">40 câu · Reading + Vocab + Language Use · ~20 phút</p>
-              </div>
-              <ChevronRight className="size-5 text-violet-400/60 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </Link>
-            <button
-              onClick={handleDismissPlacementBanner}
-              className="absolute top-3 right-3 p-1 rounded-full text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40 transition-colors"
-              title="Đóng banner"
-            >
-              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
-
-        {/* ── 7. Bento grid for study plan, progress card, and secondary details ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Left: Study Plan Checklist and EF SET Goal Tracker */}
-          <div className="lg:col-span-7 space-y-5">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <TodayPlanWidget userLevel={shortLevel} />
-            <EfSetGoalTracker userLevel={shortLevel} completedUnits={completedUnits} />
-          </div>
-
-          {/* Right: SRS review card, Weekly League Card, Word of Day */}
-          <div className="lg:col-span-5 space-y-5">
             <WidgetErrorBoundary name="SrsCard">
               <SrsCard dueCardsCount={dueCardsCount} />
             </WidgetErrorBoundary>
-
-            {/* Streak Freeze Card — shown when streak ≥ 3 (worth protecting) or has freezes */}
-            {(currentStreak >= 3 || streakFreezeCount > 0) && (
-              <WidgetErrorBoundary name="StreakFreezeCard">
-                <StreakFreezeCard
-                  freezesAvailable={streakFreezeCount}
-                  isAtRisk={streakState.status === "at_risk"}
-                  onFreezeActivated={() => {
-                    void freezeStreakAction();
-                  }}
-                />
-              </WidgetErrorBoundary>
-            )}
-
-            <WidgetErrorBoundary name="LeagueCard">
-              <LeagueCard />
-            </WidgetErrorBoundary>
-            {wordOfDay && (
-              <WidgetErrorBoundary name="WordOfDay">
-                <WordOfDayCard
-                  word={wordOfDay.word}
-                  phonetic={wordOfDay.phonetic}
-                  meaning_vn={wordOfDay.meaning_vn}
-                  example_en={wordOfDay.example_en}
-                  topic={wordOfDay.topic}
-                  level={wordOfDay.level}
-                />
-              </WidgetErrorBoundary>
-            )}
-
-            {/* Push Permission soft-ask — fires after first lesson completion */}
-            <PushPermissionCard
-              completedLessons={completedUnits}
-              showAfterLessons={1}
-            />
           </div>
-        </div>
 
-        <WidgetErrorBoundary name="QuickActions">
-          <QuickActions currentUnitRoute={currentUnitData.route} />
-        </WidgetErrorBoundary>
-        </div>
+          {wordOfDay && (
+            <WidgetErrorBoundary name="WordOfDay">
+              <WordOfDayCard
+                word={wordOfDay.word}
+                phonetic={wordOfDay.phonetic}
+                meaning_vn={wordOfDay.meaning_vn}
+                example_en={wordOfDay.example_en}
+                topic={wordOfDay.topic}
+                level={wordOfDay.level}
+              />
+            </WidgetErrorBoundary>
+          )}
 
-        {/* ── Section: Tiến độ ── */}
-        <div id="dash-progress" className="space-y-6 scroll-mt-28">
-        {/* Collapsible Detailed Stats Panel */}
-        <div className="rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-sm overflow-hidden">
-          <button
-            onClick={() => setShowDetailedStats((prev) => !prev)}
-            className="w-full flex items-center justify-between px-5 py-4 text-sm font-bold text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              📊 Thống kê chi tiết & Lịch sử học
-            </span>
-            <span className="text-zinc-500 dark:text-zinc-400">
-              {showDetailedStats ? (
-                <ChevronUp className="size-4" />
-              ) : (
-                <ChevronDown className="size-4" />
-              )}
-            </span>
-          </button>
+          {localSpeaking.length > 0 && (
+            <WidgetErrorBoundary name="SpeakingFeed">
+              <SpeakingFeedCard sessions={localSpeaking} />
+            </WidgetErrorBoundary>
+          )}
+        </section>
 
-          <AnimatePresence initial={false}>
-            {showDetailedStats && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="border-t border-zinc-200/40 dark:border-zinc-800/40 divide-y divide-zinc-200/40 dark:divide-zinc-800/40"
-              >
-                {weeklyData && weeklyData.length > 0 && (
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Lịch chuỗi học tuần này</p>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Luyện tập đều đặn để giữ streak!</span>
-                    </div>
-                    <div className="flex justify-between items-center gap-1">
-                      {weeklyData.map((d, idx) => {
-                        const isToday = d.day === todayKey;
-                        const hasLearned = d.xp > 0;
-                        return (
-                          <div key={idx} className="flex-1 flex flex-col items-center gap-1.5">
-                            <div className={`relative flex size-8 sm:size-10 items-center justify-center rounded-full border transition-all ${
-                              hasLearned
-                                ? "bg-gradient-to-br from-orange-500 to-amber-500 border-orange-400 text-white shadow-sm shadow-orange-500/20"
-                                : isToday
-                                  ? "bg-zinc-100 dark:bg-zinc-800 border-emerald-500/50 text-zinc-400 dark:text-zinc-500 ring-2 ring-emerald-500/20"
-                                  : "bg-zinc-50 dark:bg-zinc-950/40 border-zinc-200 dark:border-zinc-800/60 text-zinc-300 dark:text-zinc-700"
-                            }`}>
-                              {hasLearned ? (
-                                <Flame className="size-4 fill-current animate-pulse text-orange-200" />
-                              ) : (
-                                <span className="text-xs font-black">·</span>
-                              )}
-                              {isToday && !hasLearned && (
-                                <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 animate-ping" />
-                              )}
-                            </div>
-                            <span className={`text-[10px] font-bold ${
-                              isToday ? "text-emerald-600 dark:text-emerald-400 font-black" : "text-zinc-400 dark:text-zinc-500"
-                            }`}>
-                              {d.label}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+        <section id="dash-progress" className="space-y-5 scroll-mt-28">
+          <div>
+            <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-50">Tiến độ học</h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Theo dõi nội dung đã hoàn thành, không dùng XP hay streak làm thước đo năng lực.</p>
+          </div>
 
-                {calendarData.length > 0 && (
-                  <div className="p-4">
-                    <StreakCalendar
-                      dailyXp={calendarData}
-                      currentStreak={currentStreak}
-                    />
-                  </div>
-                )}
+          <div className="rounded-2xl border border-zinc-200/60 bg-white/60 p-5 dark:border-zinc-800/60 dark:bg-zinc-900/30">
+            <button
+              onClick={() => setShowDetailedProgress((prev) => !prev)}
+              className="flex w-full items-center justify-between text-left"
+            >
+              <div>
+                <p className="text-sm font-black text-zinc-900 dark:text-zinc-50">Trình độ hiện tại: {shortLevel}</p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  {levelUnitsDone}/{levelUnits.length || 0} bài của mức này đã hoàn thành
+                </p>
+              </div>
+              {showDetailedProgress ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+            </button>
 
-                {(() => {
-                  const levelUnitsAll = allUnits.filter(u => u.level === shortLevel);
-                  const levelUnitsDone = completedUnitIds.filter(id =>
-                    allUnits.find(u => u.id === id)?.level === shortLevel
-                  ).length;
-                  return (
-                    <div className="p-4">
-                      <LevelProgressBar
-                        userLevel={shortLevel}
-                        levelUnitsDone={levelUnitsDone}
-                        levelUnitsTotal={levelUnitsAll.length}
+            {showDetailedProgress && (
+              <div className="mt-4 border-t border-zinc-200/60 pt-4 dark:border-zinc-800/60">
+                <LevelProgressBar
+                  userLevel={shortLevel}
+                  levelUnitsDone={levelUnitsDone}
+                  levelUnitsTotal={levelUnits.length}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200/60 bg-white/60 p-5 dark:border-zinc-800/60 dark:bg-zinc-900/30">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">Nội dung khoá học</h3>
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                {completedUnitIds.length}/{allUnits.length} bài
+              </span>
+            </div>
+
+            {(expandProgressGrid ? ["A0", "A1", "A2", "B1", "B2"] : [shortLevel]).map((level) => {
+              const units = allUnits.filter((unit) => unit.level === level);
+              const doneCount = units.filter((unit) => completedUnitIds.includes(unit.id)).length;
+              if (units.length === 0) return null;
+
+              return (
+                <div key={level} className="mb-4 last:mb-0">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${getLevelBadgeStyles(level)}`}>{level}</span>
+                    <span className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">{doneCount}/{units.length} hoàn thành</span>
+                    <div className="h-1 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                      <div
+                        className={`h-full rounded-full ${getLevelProgressStyles(level)}`}
+                        style={{ width: `${units.length ? (doneCount / units.length) * 100 : 0}%` }}
                       />
                     </div>
-                  );
-                })()}
+                  </div>
 
-                <div className="p-4 bg-zinc-50/50 dark:bg-zinc-900/10">
-                  <WeeklyRecapCard
-                    currentStreak={currentStreak}
-                    totalXp={totalXp}
-                    completedUnits={completedUnits}
-                    userLevel={shortLevel}
-                    dueCardsCount={dueCardsCount}
-                    weeklyData={weeklyData}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                  <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6 lg:grid-cols-12">
+                    {units.map((unit) => {
+                      const done = completedUnitIds.includes(unit.id);
+                      const isCurrent = unit.id === currentUnitData.unitId;
+                      const displayNum = unit.id.split("-").pop();
 
-        {/* ── 8. Bottom utility sections ── */}
-        <Link
-          href="/business"
-          id="business-track-cta"
-          className="flex items-center gap-3 p-4 rounded-2xl border border-blue-500/15 bg-blue-500/3 dark:bg-blue-500/5 hover:bg-blue-500/8 hover:border-blue-500/25 transition-all group"
-        >
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-lg">💼</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-black text-zinc-900 dark:text-zinc-50 leading-tight">Business English Track</p>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400">10 bài thiết yếu cho sự nghiệp — email, họp, thuyết trình</p>
-          </div>
-          <ChevronRight className="size-4 text-blue-400/60 shrink-0 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
-        </Link>
-
-        {/* ── Speaking Activity Feed ── */}
-        {localSpeaking.length > 0 && (
-          <WidgetErrorBoundary name="SpeakingFeed">
-            <SpeakingFeedCard sessions={localSpeaking} />
-          </WidgetErrorBoundary>
-        )}
-
-        {/* ── Checkpoint Test CTA — appears at 5/10/15/20 unit milestones ── */}
-        {[5, 10, 15, 20].includes(completedUnits) && (
-          <Link
-            href="/placement-test"
-            id="checkpoint-test-cta"
-            className="flex items-center gap-3 p-4 rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-500/5 to-purple-500/5 hover:from-violet-500/10 hover:to-purple-500/10 hover:border-violet-500/30 transition-all group"
-          >
-            <span className="flex size-10 items-center justify-center rounded-xl bg-violet-500/15 text-xl shrink-0">🏆</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-black text-violet-400 uppercase tracking-widest mb-0.5">Kiểm tra đột phá!</p>
-              <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-                Checkpoint Test — {completedUnits} units hoàn thành!
-              </p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                Đánh giá trình độ của bạn sau {completedUnits} bài học · ~10 phút
-              </p>
-            </div>
-            <Mic className="size-5 text-violet-400/60 group-hover:text-violet-400 group-hover:scale-110 transition-all shrink-0" />
-          </Link>
-        )}
-
-        {/* WeeklyRecapCard moved to Collapsible Detailed Stats Panel */}
-
-        {/* ── 9. Collapsible Curriculum Progress Grid ── */}
-        <div className="rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/60 dark:bg-zinc-900/25 backdrop-blur-sm p-5 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">Tiến độ khoá học</h2>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold">{completedUnitIds.length}/{allUnits.length} units</span>
-          </div>
-
-          {/* Group by level */}
-          {(expandProgressGrid ? ["A0", "A1", "A2", "B1", "B2"] : [shortLevel]).map(level => {
-            const levelUnits = allUnits.filter(u => u.level === level);
-            const levelDone = levelUnits.filter(u => completedUnitIds.includes(u.id)).length;
-            if (levelUnits.length === 0) return null;
-            return (
-              <div key={level} className="mb-4 last:mb-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${getLevelBadgeStyles(level)}`}>
-                    {level}
-                  </span>
-                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-semibold">{levelDone}/{levelUnits.length} hoàn thành</span>
-                  <div className="flex-1 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${getLevelProgressStyles(level)}`}
-                      style={{ width: `${levelUnits.length ? (levelDone / levelUnits.length) * 100 : 0}%` }}
-                    />
+                      return (
+                        <a
+                          key={unit.id}
+                          href={unit.route}
+                          title={unit.title}
+                          className={`relative flex h-9 items-center justify-center rounded-xl border text-xs font-black transition-colors ${
+                            done
+                              ? "border-emerald-400/70 bg-emerald-500 text-white"
+                              : isCurrent
+                                ? "border-zinc-700 bg-zinc-900 text-white dark:border-zinc-200 dark:bg-zinc-50 dark:text-zinc-900"
+                                : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-emerald-500/40 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400"
+                          }`}
+                        >
+                          {done ? "✓" : displayNum}
+                          {isCurrent && !done && (
+                            <span className="absolute -right-1 -top-1 size-2.5 rounded-full border-2 border-white bg-amber-400 dark:border-zinc-900" />
+                          )}
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-1.5">
-                  {levelUnits.map((unit) => {
-                    const done = completedUnitIds.includes(unit.id);
-                    const isCurrent = unit.id === currentUnitData.unitId;
-                    const displayNum = unit.id.split("-").pop();
-                    return (
-                      <a
-                        key={unit.id}
-                        href={unit.route}
-                        title={unit.title}
-                        className={`relative flex items-center justify-center h-9 rounded-xl text-xs font-black transition-all duration-200 border ${
-                          done
-                            ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-400/70 shadow-sm shadow-emerald-500/25 hover:from-emerald-400 hover:to-teal-500 active:scale-95"
-                            : isCurrent
-                              ? "bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 border-zinc-700 dark:border-zinc-200 shadow-sm"
-                              : "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-emerald-500/40 hover:text-emerald-600 dark:hover:text-emerald-400"
-                        }`}
-                      >
-                        {done ? (
-                          <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          displayNum
-                        )}
-                        {isCurrent && !done && (
-                          <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-amber-400 border-2 border-white dark:border-zinc-900" />
-                        )}
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800/60 flex justify-center">
-            <button
-              onClick={() => setExpandProgressGrid(prev => !prev)}
-              className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
-            >
-              {expandProgressGrid ? (
-                <>Thu gọn lộ trình</>
-              ) : (
-                <>Xem toàn bộ lộ trình (A0–B2)</>
-              )}
-            </button>
+            <div className="mt-4 flex justify-center border-t border-zinc-100 pt-3 dark:border-zinc-800/60">
+              <button
+                onClick={() => setExpandProgressGrid((prev) => !prev)}
+                className="text-xs font-bold text-emerald-600 hover:underline dark:text-emerald-400"
+              >
+                {expandProgressGrid ? "Thu gọn" : "Xem toàn bộ A0–B2"}
+              </button>
+            </div>
           </div>
-        </div>
-        </div>
+
+          {completedUnits > 0 && completedUnits % 5 === 0 && (
+            <Link
+              href="/placement-test"
+              className="flex items-center gap-3 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 transition-colors hover:bg-violet-500/10"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-xl">📝</span>
+              <div className="flex-1">
+                <p className="text-xs font-black uppercase tracking-widest text-violet-500">Checkpoint</p>
+                <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50">Kiểm tra lại sau {completedUnits} bài</p>
+              </div>
+              <ChevronRight className="size-5 text-violet-400" />
+            </Link>
+          )}
+        </section>
       </div>
-
-      {/* Level-Up Celebration Modal */}
-      {levelUpModal && (
-        <LevelUpModal
-          isOpen={!!levelUpModal}
-          previousLevel={levelUpModal.prev}
-          newLevel={levelUpModal.next}
-          onClose={() => setLevelUpModal(null)}
-        />
-      )}
-
-      {/* Streak Broken / Comeback Modal */}
-      {!brokenModalDismissed && (
-        <StreakBrokenModal
-          state={streakState}
-          totalXp={totalXp}
-          onDismiss={handleBrokenModalDismiss}
-          onRepaired={handleBrokenModalDismiss}
-        />
-      )}
     </div>
   );
 }
-

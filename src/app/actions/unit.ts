@@ -8,24 +8,22 @@ import { getNextUnitFromProgress, getNextUnitRoute } from "@/lib/placement/start
 import { headers } from "next/headers";
 import { createRateLimiter } from "@/lib/security/rate-limit";
 import { CompleteUnitSchema } from "@/lib/security/validation";
-import { updateLeagueXp } from "@/app/actions/leagues";
 
 const completeUnitLimiter = createRateLimiter(10, 60 * 1000, "complete-unit");
 
-// CEFR level order — used for no-regression check
 const CEFR_LEVEL_ORDER = ["A0", "A1", "A2", "B1", "B2", "C1"] as const;
 type CEFRAutoLevel = (typeof CEFR_LEVEL_ORDER)[number];
-
-// Suppress unused variable warning — kept for type narrowing in callers
 void CEFR_LEVEL_ORDER;
 
 /**
- * Server Action xử lý khi người dùng hoàn thành một Unit học tập.
- * Cộng XP (theo unit.xp), cập nhật streak, lưu từ vựng vào SRS.
+ * Authoritative unit completion boundary.
+ *
+ * The database still owns the trusted completion transaction and its legacy
+ * XP/streak compatibility fields. This server action no longer runs retired
+ * league, achievement, streak-reward, or freeze side effects after completion.
  */
 export async function completeUnit(unitId: string, starCount: number = 3) {
   try {
-    // Rate Limiting
     const reqHeaders = await headers();
     const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
     const rateLimitCheck = await completeUnitLimiter.check(ip);
@@ -36,7 +34,6 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
       };
     }
 
-    // Input Validation
     const validated = CompleteUnitSchema.safeParse({ unitId, starCount });
     if (!validated.success) {
       return {
@@ -47,8 +44,6 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
     const cleanParams = validated.data;
 
     const supabase = await createClient();
-
-    // 1. Kiểm tra trạng thái đăng nhập
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return {
@@ -57,10 +52,10 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
       };
     }
 
-    // Lấy ngày hôm nay dưới dạng YYYY-MM-DD theo múi giờ Việt Nam
     const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
-    // 2. Chạy giao dịch hoàn thành unit thông qua RPC để đảm bảo tính nguyên tử (Atomicity) và hiệu năng tối ưu
+    // Keep the trusted transaction contract intact for now. The database still
+    // validates authoritative completion and derives legacy compatibility data.
     const unitDef = UNITS.find(u => u.id === cleanParams.unitId);
     const BASE_XP = unitDef?.xp ?? 80;
     const xpMultiplier = cleanParams.starCount === 3 ? 1.0 : cleanParams.starCount === 2 ? 0.85 : 0.70;
@@ -101,11 +96,10 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
       };
     }
 
-    const nextStreak   = resultData.new_streak ?? 1;
-    const newLevel     = (resultData.current_level || "A0") as CEFRAutoLevel;
-    const leveledUp    = resultData.leveled_up ?? false;
+    const nextStreak = resultData.new_streak ?? 1;
+    const newLevel = (resultData.current_level || "A0") as CEFRAutoLevel;
+    const leveledUp = resultData.leveled_up ?? false;
 
-    // 3. Bulk upsert tất cả từ vựng vào bảng cards (1 query thay vì N+1)
     const vocabList = UNIT_VOCABULARY[cleanParams.unitId] || [];
     let addedCount = 0;
 
@@ -137,91 +131,14 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
       if (!upsertError) addedCount = upserted?.length ?? 0;
     }
 
-    // 4. Revalidate cache
     revalidatePath("/dashboard");
     revalidatePath("/learn");
     revalidatePath("/flashcards");
     revalidatePath("/progress");
 
-    // 5. Fire-and-forget: check and award achievements (non-blocking)
-    // We do NOT await — achievement failure must never break lesson completion
-    void updateLeagueXp(xpEarned); // S2-1: bump weekly league XP (fire-and-forget)
-    void (async () => {
-      try {
-        const totalCompleted = (resultData.completed_count ?? 1);
-        const totalXp = resultData.new_total_xp ?? 0;
-        const streak = nextStreak;
-
-        // Run all achievement checks in parallel
-        await Promise.allSettled([
-          // Lesson count achievements
-          (supabase as unknown as { from: (t: string) => { select: (c: string) => { order: (c: string, o: Record<string, boolean>) => Promise<{ data: Array<{ id: string; threshold: number | null }> | null }> } } })
-            .from("achievements").select("id, threshold").order("threshold", { ascending: true })
-            .then(async () => {
-              // Simplified: upsert lesson milestone achievements
-              const lessonMilestones: Record<number, string> = { 1: "first_lesson", 5: "lessons_5", 10: "lessons_10", 25: "lessons_25", 50: "lessons_50" };
-              const toAward = Object.entries(lessonMilestones)
-                .filter(([threshold]) => totalCompleted >= Number(threshold))
-                .map(([, id]) => ({ user_id: user.id, achievement_id: id }));
-              if (toAward.length > 0) {
-                await (supabase as unknown as { from: (t: string) => { upsert: (d: unknown[], o: Record<string, unknown>) => Promise<unknown> } })
-                  .from("user_achievements").upsert(toAward, { onConflict: "user_id,achievement_id", ignoreDuplicates: true });
-              }
-            }),
-
-          // XP achievements
-          (async () => {
-            const xpMilestones: Record<number, string> = { 100: "xp_100", 500: "xp_500", 1000: "xp_1000", 5000: "xp_5000" };
-            const toAward = Object.entries(xpMilestones)
-              .filter(([threshold]) => totalXp >= Number(threshold))
-              .map(([, id]) => ({ user_id: user.id, achievement_id: id }));
-            if (toAward.length > 0) {
-              await (supabase as unknown as { from: (t: string) => { upsert: (d: unknown[], o: Record<string, unknown>) => Promise<unknown> } })
-                .from("user_achievements").upsert(toAward, { onConflict: "user_id,achievement_id", ignoreDuplicates: true });
-            }
-          })(),
-
-          // Streak achievements + freeze grant
-          (async () => {
-            if (streak <= 0) return;
-            const streakMilestones: Record<number, string> = { 3: "streak_3", 7: "streak_7", 14: "streak_14", 30: "streak_30", 100: "streak_100" };
-            const toAward = Object.entries(streakMilestones)
-              .filter(([threshold]) => streak >= Number(threshold))
-              .map(([, id]) => ({ user_id: user.id, achievement_id: id }));
-            if (toAward.length > 0) {
-              await (supabase as unknown as { from: (t: string) => { upsert: (d: unknown[], o: Record<string, unknown>) => Promise<unknown> } })
-                .from("user_achievements").upsert(toAward, { onConflict: "user_id,achievement_id", ignoreDuplicates: true });
-            }
-            // Grant a streak freeze on milestone streaks (7, 14, 30 days)
-            if ([7, 14, 30].includes(streak)) {
-              type RpcFn = (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
-              await (supabase.rpc as unknown as RpcFn)("grant_streak_freeze", { p_user_id: user.id, p_count: 1 });
-            }
-          })(),
-
-          // CEFR level-up achievement
-          leveledUp
-            ? (async () => {
-                const levelAchievements: Record<string, string> = { A1: "level_a1", A2: "level_a2", B1: "level_b1" };
-                const achievementId = levelAchievements[newLevel];
-                if (achievementId) {
-                  await (supabase as unknown as { from: (t: string) => { upsert: (d: unknown[], o: Record<string, unknown>) => Promise<unknown> } })
-                    .from("user_achievements").upsert(
-                      [{ user_id: user.id, achievement_id: achievementId }],
-                      { onConflict: "user_id,achievement_id", ignoreDuplicates: true }
-                    );
-                }
-              })()
-            : Promise.resolve(),
-        ]);
-      } catch {
-        // Achievement failure is completely non-blocking — lesson is already saved
-      }
-    })();
-
     return {
       success: true,
-      message: `Hoàn thành bài học thành công! Bạn nhận được ${xpEarned} XP (${cleanParams.starCount}⭐).`,
+      message: "Hoàn thành bài học thành công!",
       xpEarned,
       newStreak: nextStreak,
       newTotalXp: resultData.new_total_xp ?? 0,
@@ -230,7 +147,6 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
       leveledUp: leveledUp ? newLevel : null,
       newLevel,
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
@@ -352,7 +268,6 @@ export async function resetUnitProgress(unitId: string) {
       };
     }
 
-    // 1. Xóa tiến trình unit
     const { error: deleteProgressError } = await supabase
       .from("user_lesson_progress")
       .delete()
@@ -366,7 +281,6 @@ export async function resetUnitProgress(unitId: string) {
       };
     }
 
-    // 2. Xóa card_reviews liên quan đến unit này
     const vocabList = UNIT_VOCABULARY[unitId] || [];
     if (vocabList.length > 0) {
       const wordList = vocabList.map(v => v.word.toLowerCase().trim());
@@ -375,10 +289,8 @@ export async function resetUnitProgress(unitId: string) {
         .delete()
         .eq("user_id", user.id)
         .in("word", wordList);
-      // Non-critical: SRS card cleanup failure doesn't block progress reset
     }
 
-    // 3. Revalidate cache
     revalidatePath("/dashboard");
     revalidatePath("/learn");
     revalidatePath("/flashcards");
@@ -387,7 +299,6 @@ export async function resetUnitProgress(unitId: string) {
       success: true,
       message: `Đã reset thành công toàn bộ tiến trình bài học ${unitId}.`
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
@@ -406,7 +317,6 @@ export async function getCurrentUnit() {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    // Đối với người dùng chưa đăng nhập, mặc định hiển thị Unit 1 với progress 0%
     if (authError || !user) {
       const u1 = UNITS[0];
       return {
@@ -425,7 +335,6 @@ export async function getCurrentUnit() {
       (UNIT_VOCABULARY[unit.id] || []).map(v => v.word.toLowerCase().trim())
     );
 
-    // Parallel: progress (starting index) + completed lessons + user cards
     const [progressRes, completedRes, cardsRes] = await Promise.all([
       supabase
         .from("user_progress")
@@ -482,9 +391,6 @@ export async function getCurrentUnit() {
       };
     });
 
-    // Use canonical getNextUnitFromProgress + getNextUnitRoute (same as roadmap)
-    // so ContinueCard gets the next incomplete full lesson (no ?mini).
-    // Unifies "Học tiếp" CTA across dashboard + roadmap; reduces learn/roadmap confusion.
     const nextMeta = getNextUnitFromProgress(completedUnitIds, startingUnitIndex);
     const canonicalRoute = getNextUnitRoute(completedUnitIds, startingUnitIndex);
     let activeUnit = nextMeta
@@ -495,14 +401,12 @@ export async function getCurrentUnit() {
     }
     if (!activeUnit) activeUnit = unitStatuses[unitStatuses.length - 1];
 
-    // Ensure route for ContinueCard is always the canonical full lesson from getNextUnitRoute
     const route = canonicalRoute || activeUnit?.route || "/learn";
     return {
       success: true,
       ...(activeUnit || {}),
       route
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {

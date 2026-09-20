@@ -3,14 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, Star, BookOpen, Zap, Flame, ChevronRight } from "lucide-react";
+import { ChevronLeft, Star, BookOpen, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
 
 import { completeUnit, getUnitCompletionStatus } from "@/app/actions/unit";
 import { getDueWarmupCards, seedUnitVocabToSRS, scheduleWrongWordsForReview } from "@/app/actions/cards";
-import { useStreakMilestone } from "@/features/streak/hooks/useStreakMilestone";
-import StreakMilestoneOverlay from "@/features/streak/components/StreakMilestoneOverlay";
 
 import WarmupSection from "./sections/WarmupSection";
 import VocabSection from "./sections/VocabSection";
@@ -83,34 +80,10 @@ interface UnitTemplateProps {
 }
 
 interface CompletionData {
-  xpEarned: number;
   starCount: 1 | 2 | 3;
   effectiveScore: number;
-  newStreak: number;
   vocabPreview: Array<{ word: string; meaning: string }>;
   nextRoute: string;
-}
-
-// ── Animated XP counter (counts 0 → target in 1.2 s) ──────────────────────
-function XpCounter({ target }: { target: number }) {
-  const [value, setValue] = useState(0);
-  useEffect(() => {
-    const duration = 1200;
-    const start = performance.now();
-    const step = (now: number) => {
-      const elapsed = Math.min(now - start, duration);
-      const progress = 1 - Math.pow(1 - elapsed / duration, 3); // ease-out cubic
-      setValue(Math.round(progress * target));
-      if (elapsed < duration) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [target]);
-  return (
-    <p className="text-2xl font-black text-emerald-300 tabular-nums leading-none">
-      +{value}
-      <span className="text-sm font-bold text-emerald-500 ml-0.5">XP</span>
-    </p>
-  );
 }
 
 // ── Video Shadowing Card (lite-embed: thumbnail click → iframe) ──────────────
@@ -198,19 +171,6 @@ export default function UnitTemplate({ unit, nextRoute = "/dashboard" }: UnitTem
   const [miniSession, setMiniSession] = useState(false);
   const [sessionBreak, setSessionBreak] = useState(false); // mid-lesson break after Practice
   const [completionData, setCompletionData] = useState<CompletionData | null>(null);
-
-  // Streak milestone checker (Phase B — research doc)
-  const streakMilestoneCheck = useStreakMilestone();
-
-  // S2-3: Live in-lesson XP counter (Duolingo real-time reinforcement)
-  const [sessionXp, setSessionXp] = useState(0);
-  const [xpPopup, setXpPopup] = useState<{ id: number; value: number } | null>(null);
-  const addSessionXp = (amount = 5) => {
-    setSessionXp(p => p + amount);
-    const id = Date.now();
-    setXpPopup({ id, value: amount });
-    setTimeout(() => setXpPopup(p => p?.id === id ? null : p), 1200);
-  };
 
   // Shared orchestrator states needed for results calculations
   const [seenCards, setSeenCards] = useState<Set<number>>(new Set());
@@ -496,27 +456,19 @@ useLessonProgress({
 
   const effectiveScore = Math.min(100, overallScore + retryBonusPct);
   const effectiveStarCount: 1 | 2 | 3 = effectiveScore >= 85 ? 3 : effectiveScore >= 60 ? 2 : 1;
-  const xpToEarn =
-    effectiveStarCount === 3
-      ? normalizedUnit.xp
-      : effectiveStarCount === 2
-      ? Math.round(normalizedUnit.xp * 0.85)
-      : Math.round(normalizedUnit.xp * 0.7);
+
 
   const handleCompleteUnit = async () => {
     setIsSubmitting(true);
-    confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
     const res = await completeUnit(normalizedUnit.unitId, effectiveStarCount);
     if (res.success) {
       setIsCompleted(true);
-      toast.success(`🎉 Chúc mừng! Bạn nhận được ${res.xpEarned ?? xpToEarn} XP!`);
+      toast.success("Đã hoàn thành bài học.");
 
       // ── Rich completion overlay data ──
       setCompletionData({
-        xpEarned: res.xpEarned ?? xpToEarn,
         starCount: effectiveStarCount,
         effectiveScore,
-        newStreak: res.newStreak ?? 0,
         vocabPreview: normalizedUnit.vocab.slice(0, 5).map(v => ({ word: v.word, meaning: v.meaning })),
         nextRoute,
       });
@@ -527,58 +479,6 @@ useLessonProgress({
         starCount: effectiveStarCount,
         passed: true,
       });
-
-      // ── Achievement milestone toasts (staggered, zero extra DB queries) ──
-      const totalCompleted = res.completedCount ?? 0;
-      const streak = res.newStreak ?? 0;
-      const totalXp = res.newTotalXp ?? 0;
-      const prevXp = totalXp - (res.xpEarned ?? 0);
-      let delay = 1200;
-
-      // Lesson count milestones
-      const lessonToasts: Record<number, string> = {
-        1:  "🎯 Thành tích: Bước Đầu Tiên — Hoàn thành bài học đầu tiên!",
-        5:  "📚 Thành tích: Học Viên Nhiệt Tình — 5 bài học hoàn thành!",
-        10: "🎓 Thành tích: Học Viên Chăm Chỉ — 10 bài học!",
-        25: "⭐ Thành tích: Chuyên Gia Tiến Bộ — 25 bài học!",
-        50: "🏅 Thành tích: Học Giả — Hoàn thành tất cả 50 bài học!",
-      };
-      if (lessonToasts[totalCompleted]) {
-        setTimeout(() => toast.success(lessonToasts[totalCompleted]!), delay);
-        delay += 1200;
-      }
-
-      // Streak milestones
-      const streakToasts: Record<number, string> = {
-        3:  "🔥 Thành tích: Bắt Đầu Chuỗi — 3 ngày học liên tiếp!",
-        7:  "🔥🔥 Thành tích: Một Tuần Kiên Trì — 7 ngày!",
-        14: "💪 Thành tích: Hai Tuần Bất Bại — 14 ngày!",
-        30: "🏆 Thành tích: Học Viên Tháng — 30 ngày!",
-        100:"👑 Thành tích: Huyền Thoại — 100 ngày streak!",
-      };
-      if (streakToasts[streak]) {
-        setTimeout(() => toast.success(streakToasts[streak]!), delay);
-        delay += 1200;
-      }
-
-      // Check streak milestone — triggers full-screen overlay if this is a milestone day
-      if (streak > 0) {
-        streakMilestoneCheck.checkMilestone(streak);
-      }
-
-      // XP milestones (check if we crossed a threshold this session)
-      const xpThresholds: [number, string][] = [
-        [100,  "✨ Thành tích: Tích Lũy XP — 100 XP!"],
-        [500,  "💎 Thành tích: XP Hunter — 500 XP!"],
-        [1000, "🌟 Thành tích: Nghìn Điểm — 1,000 XP!"],
-        [5000, "🎖️ Thành tích: Bậc Thầy XP — 5,000 XP!"],
-      ];
-      for (const [threshold, msg] of xpThresholds) {
-        if (prevXp < threshold && totalXp >= threshold) {
-          setTimeout(() => toast.success(msg), delay);
-          delay += 1200;
-        }
-      }
 
       if (res.leveledUp && res.newLevel) {
         localStorage.setItem(
@@ -620,11 +520,6 @@ useLessonProgress({
           level: unitLevel,
         });
       }
-      const earnedXp = res.xpEarned ?? xpToEarn;
-      const xpSyncKey = `ato_xp_sync_${new Date().toDateString()}`;
-      const prev = Number(localStorage.getItem(xpSyncKey) ?? 0);
-      localStorage.setItem(xpSyncKey, String(prev + earnedXp));
-      window.dispatchEvent(new CustomEvent("ato:xp-earned", { detail: { xp: earnedXp } }));
     } else if (res.error && res.error.includes("đăng nhập")) {
       // guest fallback from rolled best version
       setIsCompleted(true);
@@ -634,7 +529,7 @@ useLessonProgress({
         localStorage.setItem(k, JSON.stringify(Array.isArray(a) ? [...new Set([...a, normalizedUnit.unitId])] : [normalizedUnit.unitId]));
       } catch {}
       toast.success("🎉 Hoàn thành! (guest mode - local only)");
-      setCompletionData({ xpEarned: xpToEarn, starCount: effectiveStarCount, effectiveScore, newStreak: 0, vocabPreview: normalizedUnit.vocab.slice(0,5).map(v=>({word:v.word,meaning:v.meaning})), nextRoute });
+      setCompletionData({ starCount: effectiveStarCount, effectiveScore, vocabPreview: normalizedUnit.vocab.slice(0,5).map(v=>({word:v.word,meaning:v.meaning})), nextRoute });
       trackPilotEventPersistentlyOnce("unit_completed", normalizedUnit.unitId, {
         source: "lesson",
         unitId: normalizedUnit.unitId,
@@ -671,20 +566,6 @@ useLessonProgress({
               </div>
             </div>
             <div className="text-right shrink-0 flex items-center gap-2">
-              {/* S2-3: Live session XP counter */}
-              {sessionXp > 0 && (
-                <div className="relative flex items-center gap-1 text-[11px] font-black px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                  ⚡ {sessionXp} XP
-                  {xpPopup && (
-                    <span
-                      key={xpPopup.id}
-                      className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-black text-emerald-300 animate-bounce pointer-events-none"
-                    >
-                      +{xpPopup.value}
-                    </span>
-                  )}
-                </div>
-              )}
               {/* S3-2: Mini-session toggle / active indicator */}
               {miniSession ? (
                 <div className="flex items-center gap-1 text-[11px] font-black px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300">
@@ -784,7 +665,6 @@ useLessonProgress({
               playCorrectSound={playCorrectSound}
               playWrongSound={playWrongSound}
               goNext={goNext}
-              addSessionXp={addSessionXp}
             />
           )}
 
@@ -889,7 +769,6 @@ useLessonProgress({
               retryBonusPct={retryBonusPct}
               effectiveScore={effectiveScore}
               effectiveStarCount={effectiveStarCount}
-              xpToEarn={xpToEarn}
               nextRoute={nextRoute}
             />
           )}
@@ -963,35 +842,6 @@ useLessonProgress({
                   <p className="text-zinc-400 text-sm">{normalizedUnit.title}</p>
                 </div>
 
-                {/* XP + Streak stats row */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.55 }}
-                  className="grid grid-cols-2 gap-3"
-                >
-                  {/* XP Card */}
-                  <div className="bg-emerald-950/50 border border-emerald-700/40 rounded-2xl p-4 text-center">
-                    <div className="flex items-center justify-center gap-1.5 mb-1">
-                      <Zap size={14} className="text-emerald-400" />
-                      <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">XP kiếm được</span>
-                    </div>
-                    <XpCounter target={completionData.xpEarned} />
-                  </div>
-
-                  {/* Streak Card */}
-                  <div className="bg-orange-950/40 border border-orange-700/40 rounded-2xl p-4 text-center">
-                    <div className="flex items-center justify-center gap-1.5 mb-1">
-                      <Flame size={14} className="text-orange-400" />
-                      <span className="text-xs font-bold text-orange-400 uppercase tracking-widest">Streak</span>
-                    </div>
-                    <p className="text-2xl font-black text-white tabular-nums">
-                      {completionData.newStreak}
-                    </p>
-                    <p className="text-xs text-orange-300/70 mt-0.5">ngày liên tiếp</p>
-                  </div>
-                </motion.div>
-
                 {/* Vocab recap */}
                 {completionData.vocabPreview.length > 0 && (
                   <motion.div
@@ -1057,23 +907,6 @@ useLessonProgress({
         )}
       </AnimatePresence>
 
-      {/* Streak Milestone Overlay — fires after lesson completes on milestone days */}
-      {streakMilestoneCheck.showOverlay && streakMilestoneCheck.pendingMilestone && (
-        <StreakMilestoneOverlay
-          state={{
-            status: "growing",
-            current: streakMilestoneCheck.pendingMilestone,
-            best: streakMilestoneCheck.pendingMilestone,
-            freezesAvailable: 0,
-            hoursUntilMidnight: 12,
-            studiedToday: true,
-            daysSinceLastStudy: 0,
-            isMilestoneDay: true,
-            milestone: streakMilestoneCheck.pendingMilestone,
-          }}
-          onDismiss={() => { void streakMilestoneCheck.dismissMilestone(); }}
-        />
-      )}
     </div>
   );
 }

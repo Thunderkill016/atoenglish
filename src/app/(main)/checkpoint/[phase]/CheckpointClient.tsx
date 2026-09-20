@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import confetti from "canvas-confetti";
 import {
   Trophy, Lock, BookOpen, CheckCircle2, XCircle,
   ArrowRight, RotateCcw, Zap, Star
@@ -176,12 +175,6 @@ export default function CheckpointClient({
       setFinished(true);
     }
   }, [current, questions.length, submitTrialClaim]);
-
-  useEffect(() => {
-    if (finished && passed) {
-      confetti({ particleCount: 200, spread: 90, origin: { y: 0.5 }, colors: ["#10b981", "#3b82f6", "#f59e0b"] });
-    }
-  }, [finished, passed]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {

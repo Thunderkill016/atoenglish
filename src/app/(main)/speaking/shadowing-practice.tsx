@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
 import { saveSpeakingSession } from "@/app/actions/speaking";
 import { SpeechRecognitionFallback } from "@/lib/utils/speech-fallback";
 import { analyzeSpeaking, type SpeechAnalysisResult } from "@/lib/utils/speech-analysis";
@@ -463,11 +462,6 @@ export function ShadowingPractice() {
             setMissingCodas(omissions);
             
             if (score >= 80) {
-              confetti({
-                particleCount: 80,
-                spread: 60,
-                origin: { y: 0.7 }
-              });
               if (omissions.length > 0) {
                 toast.warning(`Tuyệt vời! ${score}%. Lưu ý: ${omissions[0]}`);
               } else {
@@ -498,7 +492,7 @@ export function ShadowingPractice() {
             });
             if (!isMountedRef.current) return;
             if (saveRes.success && saveRes.xpEarned) {
-              toast.success(`+${saveRes.xpEarned} XP — tiếp tục luyện hàng ngày!`);
+              toast.success("Buổi luyện nói đã được lưu.");
             } else if (saveRes.success) {
               // Guest: persist local history for viz (TASK-152)
               try {

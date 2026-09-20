@@ -1,6 +1,0 @@
-[PHASE1] search_memory("TASK-164 maintenance sweep") sim via logs/grep (prior 163 clean no fix); read AGENTS.md (ALWAYS), BACKLOG/PLAN/ROADMAP, CONTENT_STYLE §6–7; grep TASK-164 + sweeps + maintenance patterns (common: tsbuildinfo, unit syntax, UnitLike.jobScenarios); 4 ready >=2 skip refill; files: only docs + log (no src).
-[PHASE2] BACKLOG set in_progress; PLAN updated with mục tiêu/bước/rủi ro for #164 + phiên focus; ran bash scripts/agent-refill-backlog.sh (3r OK, skip); read ROADMAP.
-[PHASE3] rm -f tsconfig.tsbuildinfo; tsc --noEmit: clean 0; npm run lint: clean 0; npm run test: 170 passed; test:content-standard: 50/50; bash scripts/audit-lesson-content.sh: 50/50 clean. NO first failure → no fix. Pure doc-sync + gates.
-Log written; no src edit. Will commit + push + mark done.
-Gates: tsc0+lint0+170t+cs50/50+audit50/50.
-Autonomous per rules: 1-task, no feature, follow process.
