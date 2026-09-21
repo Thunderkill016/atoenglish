@@ -37,7 +37,7 @@ import type { EvidenceType } from "../learning/evidence";
 
 const ACTIVITY_NODE_PREFIX = "nep.en.v1.communication-activity." as const;
 
-type ZeroPathClaimId =
+export type ZeroPathClaimId =
   | "understand_written"
   | "recognize_audio"
   | "retrieve_form"
