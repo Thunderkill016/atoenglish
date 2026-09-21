@@ -1,15 +1,14 @@
 import type { ReferenceCoreEvidence } from "../core/certified-evidence";
-import {
-  projectLearnerState,
-  type LearnerStateProjection,
-} from "../core/learner-state";
+import type { LearnerStateProjection } from "../core/learner-state";
 import type { OntologyGraph } from "../core/ontology";
 import { buildEnglishOntologyV1 } from "../core/ontology-seed";
-import {
-  readConstructFromLearnerState,
-  type LearnerConstructRead,
-} from "../learning/learner-state-read";
 import type { NếpEvaluationResult } from "./evaluator";
+import {
+  buildSessionReadModel,
+  projectSessionEvidence,
+  type SessionConstructRead,
+  type ZeroPathSessionReadModel,
+} from "./session-read-model";
 import {
   toLearnerStateEvidence,
   type ZeroPathClaimId,
@@ -60,25 +59,7 @@ export type SessionSubmissionOutcome =
       readonly feedback: string;
     };
 
-export type SessionConstructRead = {
-  readonly targetId: string;
-  readonly read: LearnerConstructRead;
-  readonly claims: readonly ZeroPathClaimId[];
-};
-
-/**
- * Learner-safe session read model. Reports evidence counts and sufficiency
- * status only — never a mastery/proficiency claim, never raw responses.
- */
-export type ZeroPathSessionReadModel = {
-  readonly sessionId: string;
-  readonly modelVersion: "nep.learner-evidence-state.v1";
-  readonly submissions: number;
-  readonly evidenceMinted: number;
-  readonly skippedAttemptOnly: number;
-  readonly rejectedCount: number;
-  readonly constructs: readonly SessionConstructRead[];
-};
+export type { SessionConstructRead, ZeroPathSessionReadModel } from "./session-read-model";
 
 export type ZeroPathSessionRunner = {
   readonly sessionId: string;
@@ -149,27 +130,19 @@ export function createZeroPathSession(options: ZeroPathSessionOptions): ZeroPath
   }
 
   function projection(): LearnerStateProjection {
-    return projectLearnerState(ontology, accepted);
+    return projectSessionEvidence(ontology, accepted);
   }
 
   function readModel(): ZeroPathSessionReadModel {
-    const projected = projection();
-    const constructs: SessionConstructRead[] = Object.keys(projected.constructs)
-      .sort()
-      .map((targetId) => ({
-        targetId,
-        read: readConstructFromLearnerState(projected, targetId),
-        claims: [...(claimsByTarget.get(targetId) ?? [])].sort(),
-      }));
-    return {
+    return buildSessionReadModel({
       sessionId: options.sessionId,
-      modelVersion: "nep.learner-evidence-state.v1",
       submissions,
-      evidenceMinted: accepted.length,
       skippedAttemptOnly,
-      rejectedCount: rejectedEvidence.length + projected.rejectedEvents.length,
-      constructs,
-    };
+      rejectedBeforeProjection: rejectedEvidence.length,
+      accepted,
+      claimsByTarget,
+      ontology,
+    });
   }
 
   return { sessionId: options.sessionId, recordSubmission, projection, readModel };
