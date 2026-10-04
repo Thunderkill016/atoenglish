@@ -15,7 +15,9 @@ export default function NotFound() {
       >
         <div className="text-8xl mb-6">📚</div>
         <h1 className="text-4xl font-black text-white mb-3">404</h1>
-        <p className="text-xl font-bold text-emerald-400 mb-2">Trang không tìm thấy</p>
+        <p className="text-xl font-bold text-emerald-400 mb-2">
+          Trang không tìm thấy
+        </p>
         <p className="text-zinc-400 text-sm mb-8">
           Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.
         </p>
@@ -24,7 +26,7 @@ export default function NotFound() {
             href="/learn"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold rounded-xl px-6 py-3 transition-all shadow-md active:scale-95"
           >
-            <Home size={18} /> Về Dashboard
+            <Home size={18} /> Về Học
           </Link>
           <Link
             href="/learn"
