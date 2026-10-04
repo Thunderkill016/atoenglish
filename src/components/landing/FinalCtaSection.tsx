@@ -47,7 +47,7 @@ export default function FinalCtaSection() {
 
           <ScrollReveal delayMs={150} className="flex flex-col items-center gap-4">
             <Link
-              href={isLoggedIn ? "/dashboard" : "/learn"}
+              href={isLoggedIn ? "/learn" : "/learn"}
               prefetch={false}
               onClick={() =>
                 trackPilotEventOnce("pilot_started", "pilot", {

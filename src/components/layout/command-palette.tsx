@@ -3,32 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Search,
-  X,
-  HelpCircle,
-  Target,
-  BookMarked,
-  Mic,
-  Settings,
-} from "lucide-react";
+import { Search, X } from "lucide-react";
 
 import {
-  bottomNavItems,
   desktopMoreItems,
   desktopPrimaryNav,
-  mobilePanelGroups,
   type NavItem,
 } from "@/lib/constants/navigation";
 import { cn } from "@/lib/utils";
-
-const EXTRA_ROUTES: NavItem[] = [
-  { title: "Quiz từ vựng", href: "/quiz", icon: HelpCircle, description: "Luyện quiz" },
-  { title: "Thử thách ngày", href: "/challenge", icon: Target, description: "5 câu mỗi ngày" },
-  { title: "Ngữ pháp", href: "/grammar", icon: BookMarked, description: "Chủ đề grammar" },
-  { title: "Phát âm IPA", href: "/pronunciation", icon: Mic, description: "44 âm IPA" },
-  { title: "Cài đặt", href: "/settings", icon: Settings, description: "Tài khoản" },
-];
 
 function collectRoutes(): NavItem[] {
   const seen = new Set<string>();
@@ -40,9 +22,8 @@ function collectRoutes(): NavItem[] {
     items.push(item);
   };
 
-  [...desktopPrimaryNav, ...desktopMoreItems, ...bottomNavItems].forEach(add);
-  mobilePanelGroups.forEach((g) => g.items.forEach(add));
-  EXTRA_ROUTES.forEach(add);
+  // Canonical route model: 4 primary tabs + TÔI secondary surfaces.
+  [...desktopPrimaryNav, ...desktopMoreItems].forEach(add);
 
   return items.sort((a, b) => a.title.localeCompare(b.title, "vi"));
 }
@@ -155,7 +136,7 @@ export default function CommandPalette() {
             )}
             onClick={() => {
               close();
-              router.push("/dashboard");
+              router.push("/learn");
             }}
           >
             Về Trang chủ

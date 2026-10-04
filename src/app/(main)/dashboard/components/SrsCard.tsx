@@ -43,7 +43,7 @@ export default function SrsCard({ dueCardsCount }: SrsCardProps) {
           : "Không có thẻ đến hạn. Hãy tiếp tục học bài mới để mở thẻ SRS."}
       </p>
 
-      <Link href="/flashcards" className="block">
+      <Link href="/review" className="block">
         <Button
           className={`w-full h-10 font-bold rounded-xl text-xs flex items-center justify-between px-4 transition-all duration-200 active:scale-[0.98] ${
             hasDue

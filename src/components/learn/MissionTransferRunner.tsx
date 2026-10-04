@@ -51,9 +51,7 @@ interface SpeechRecognitionLike {
 }
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
-type StartRecognition = (
-  onTranscript: (transcript: string) => void,
-) => void;
+type StartRecognition = (onTranscript: (transcript: string) => void) => void;
 type MissionLesson = LessonSpecV1 & { mission: MissionSpecV1 };
 type TransferStage = "scenario" | "roleplay" | "feedback" | "retry" | "done";
 
@@ -117,8 +115,8 @@ function TransferSpeechInput({
       <div className="flex gap-2 text-sm text-amber-700 dark:text-amber-200">
         <AlertTriangle className="mt-0.5 size-4 shrink-0" />
         <p>
-          Hãy tự nói thành tiếng rồi nhập lại điều vừa nói. Nội dung nhập chỉ kiểm tra mục tiêu
-          giao tiếp, không phải điểm phát âm.
+          Hãy tự nói thành tiếng rồi nhập lại điều vừa nói. Nội dung nhập chỉ
+          kiểm tra mục tiêu giao tiếp, không phải điểm phát âm.
         </p>
       </div>
       <textarea
@@ -155,7 +153,9 @@ export default function MissionTransferRunner({
   const [transcripts, setTranscripts] = useState<string[]>([]);
   const [fallbackText, setFallbackText] = useState("");
   const [isListening, setIsListening] = useState(false);
-  const [evaluation, setEvaluation] = useState<MissionEvaluationResult | null>(null);
+  const [evaluation, setEvaluation] = useState<MissionEvaluationResult | null>(
+    null,
+  );
   const [evidenceState, setEvidenceState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -273,7 +273,7 @@ export default function MissionTransferRunner({
   };
 
   return (
-    <main className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
           <button
@@ -316,8 +316,8 @@ export default function MissionTransferRunner({
               </ul>
             </div>
             <p className="text-sm text-muted-foreground">
-              Không xem lại chunks. Cả {turns.length} lượt hội thoại đã được đổi để kiểm tra
-              transfer, không chỉ thay câu mở đầu.
+              Không xem lại chunks. Cả {turns.length} lượt hội thoại đã được đổi
+              để kiểm tra transfer, không chỉ thay câu mở đầu.
             </p>
             <MinimalButton fullWidth onClick={() => setStage("roleplay")}>
               Bắt đầu kiểm tra <ArrowRight className="size-4" />
@@ -404,8 +404,8 @@ export default function MissionTransferRunner({
             <div className="flex gap-2 rounded-xl border border-border/60 bg-muted/30 p-4 text-xs text-muted-foreground">
               <ShieldCheck className="size-4 shrink-0 text-primary" />
               <p>
-                Transfer score chỉ dựa trên mục tiêu giao tiếp trong transcript; không có điểm
-                phát âm hoặc độ dễ hiểu giả.
+                Transfer score chỉ dựa trên mục tiêu giao tiếp trong transcript;
+                không có điểm phát âm hoặc độ dễ hiểu giả.
               </p>
             </div>
             <MinimalButton fullWidth onClick={() => setStage("retry")}>
@@ -446,11 +446,13 @@ export default function MissionTransferRunner({
                 <RotateCcw className="size-8 text-amber-500" />
               )}
               <h1 className="mt-3 text-2xl font-black">
-                {evaluation.taskCompleted ? "Transfer đã đạt" : "Transfer chưa đạt"}
+                {evaluation.taskCompleted
+                  ? "Transfer đã đạt"
+                  : "Transfer chưa đạt"}
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Retry cuối: {evaluation.taskScore ?? 0}%. Chỉ kết quả retry trong cùng phiên
-                mới được dùng để xác nhận hoàn tất.
+                Retry cuối: {evaluation.taskScore ?? 0}%. Chỉ kết quả retry
+                trong cùng phiên mới được dùng để xác nhận hoàn tất.
               </p>
             </div>
             <p className="text-center text-xs text-muted-foreground">
@@ -468,6 +470,6 @@ export default function MissionTransferRunner({
           </section>
         )}
       </div>
-    </main>
+    </div>
   );
 }

@@ -128,8 +128,8 @@ export async function saveCardToSRS(params: SaveCardParams) {
 
     if (insertError) return { success: false, error: `Lỗi khi lưu thẻ mới: ${insertError.message}` };
 
-    revalidatePath("/dashboard");
-    revalidatePath("/flashcards");
+    revalidatePath("/learn");
+    revalidatePath("/review");
     revalidatePath("/learn");
     return {
       success: true,
@@ -258,8 +258,8 @@ export async function reviewCard(
       return { success: false, error: `Không thể lưu review FSRS: ${persisted.error}` };
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath("/flashcards");
+    revalidatePath("/learn");
+    revalidatePath("/review");
     return {
       success: true,
       message: `Đã đánh giá "${cleanParams.rating}". Lên lịch ôn tiếp theo sau ${fsrsUpdates.interval} ngày.`,
@@ -360,8 +360,8 @@ export async function seedUnitVocabToSRS(params: {
       .upsert(rows, { onConflict: "user_id,word", ignoreDuplicates: true });
 
     if (error) return { success: false, added: 0 };
-    revalidatePath("/flashcards");
-    revalidatePath("/dashboard");
+    revalidatePath("/review");
+    revalidatePath("/learn");
     return { success: true, added: rows.length };
   } catch {
     return { success: false, added: 0 };
@@ -407,7 +407,7 @@ export async function scheduleWrongWordsForReview(words: string[]) {
     const updated = results.filter((result) => result.success).length;
     if (updated !== results.length) return { success: false, updated };
 
-    revalidatePath("/flashcards");
+    revalidatePath("/review");
     return { success: true, updated };
   } catch {
     return { success: false, updated: 0 };

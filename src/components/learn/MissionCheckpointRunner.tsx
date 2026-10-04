@@ -72,7 +72,7 @@ export default function MissionCheckpointRunner({
 
   if (result) {
     return (
-      <main className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-24">
         <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
           <div
             className={`rounded-2xl border p-6 ${
@@ -90,7 +90,9 @@ export default function MissionCheckpointRunner({
               Checkpoint · {mission.titleVi}
             </p>
             <h1 className="mt-2 text-2xl font-black">
-              {result.passed ? "Mastery đã được ghi nhận" : "Chưa đủ bằng chứng mastery"}
+              {result.passed
+                ? "Mastery đã được ghi nhận"
+                : "Chưa đủ bằng chứng mastery"}
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
               Bạn trả lời đúng {result.correctCount}/{result.totalCount} câu.
@@ -110,7 +112,9 @@ export default function MissionCheckpointRunner({
                   className="rounded-xl border border-border/60 bg-card p-4"
                 >
                   <p className="text-sm font-bold">{question.questionVi}</p>
-                  <p className={`mt-2 text-sm ${correct ? "text-emerald-500" : "text-amber-500"}`}>
+                  <p
+                    className={`mt-2 text-sm ${correct ? "text-emerald-500" : "text-amber-500"}`}
+                  >
                     {correct
                       ? `Đúng: ${question.answer}`
                       : `Đáp án đúng: ${question.answer}`}
@@ -126,8 +130,8 @@ export default function MissionCheckpointRunner({
           <div className="flex gap-2 rounded-xl border border-border/60 bg-muted/30 p-4 text-xs text-muted-foreground">
             <ShieldCheck className="size-4 shrink-0 text-primary" />
             <p>
-              Checkpoint này xác nhận kiến thức hỗ trợ cho cùng can-do outcome. Spoken mission
-              evidence và checkpoint evidence được lưu tách biệt.
+              Checkpoint này xác nhận kiến thức hỗ trợ cho cùng can-do outcome.
+              Spoken mission evidence và checkpoint evidence được lưu tách biệt.
             </p>
           </div>
 
@@ -156,12 +160,12 @@ export default function MissionCheckpointRunner({
             </div>
           )}
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
           <button
@@ -173,10 +177,13 @@ export default function MissionCheckpointRunner({
           </button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-black">Checkpoint</p>
-            <p className="truncate text-xs text-muted-foreground">{mission.titleVi}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {mission.titleVi}
+            </p>
           </div>
           <span className="text-xs font-bold text-primary">
-            Cần {mission.checkpoint.passThreshold}/{mission.checkpoint.questions.length}
+            Cần {mission.checkpoint.passThreshold}/
+            {mission.checkpoint.questions.length}
           </span>
         </div>
       </header>
@@ -188,8 +195,9 @@ export default function MissionCheckpointRunner({
           </p>
           <h1 className="mt-2 text-2xl font-black">{mission.canDoVi}</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Chọn đáp án không xem lại chunks. Checkpoint không thay thế spoken evidence;
-            nó kiểm tra các quyết định ngôn ngữ cốt lõi của cùng nhiệm vụ.
+            Chọn đáp án không xem lại chunks. Checkpoint không thay thế spoken
+            evidence; nó kiểm tra các quyết định ngôn ngữ cốt lõi của cùng nhiệm
+            vụ.
           </p>
         </div>
 
@@ -241,6 +249,6 @@ export default function MissionCheckpointRunner({
           {!submitting && <ArrowRight className="size-4" />}
         </MinimalButton>
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { UNITS } from "@/lib/constants/units";
 import CheckpointClient from "./CheckpointClient";
@@ -8,48 +8,25 @@ interface Props {
   params: Promise<{ phase: string }>;
 }
 
-// Phase definitions: which CEFR levels each phase covers
-const PHASE_CONFIG: Record<string, {
-  label: string;
-  levels: string[];
-  nextPhase: string | null;
-  description: string;
-}> = {
+// Phase definitions: which CEFR levels each phase covers.
+// Only `trial` is live — CEFR checkpoints (a0–b2) are removed until real
+// item banks exist (blueprint Phase 1 decision); they previously ran as
+// self-checks that never persisted evidence.
+const PHASE_CONFIG: Record<
+  string,
+  {
+    label: string;
+    levels: string[];
+    nextPhase: string | null;
+    description: string;
+  }
+> = {
   trial: {
     label: "Sau Bài Học Thử",
     levels: ["A0"],
     nextPhase: null,
-    description: "Ba câu kiểm tra nhanh trước khi ghi nhận kết quả bài A0 đầu tiên",
-  },
-  a0: {
-    label: "Nền Tảng A0",
-    levels: ["A0"],
-    nextPhase: "a1",
-    description: "Kiểm tra bảng chữ cái, số đếm, chào hỏi và từ vựng cơ bản",
-  },
-  a1: {
-    label: "Sơ Cấp A1",
-    levels: ["A1"],
-    nextPhase: "a2",
-    description: "Kiểm tra thì hiện tại, câu hỏi Wh-, danh từ và cấu trúc câu cơ bản",
-  },
-  a2: {
-    label: "Tiền Trung Cấp A2",
-    levels: ["A2"],
-    nextPhase: "b1",
-    description: "Kiểm tra thì quá khứ, so sánh, liên từ và từ vựng hàng ngày",
-  },
-  b1: {
-    label: "Trung Cấp B1",
-    levels: ["B1"],
-    nextPhase: "b2",
-    description: "Kiểm tra thì hoàn thành, điều kiện và giao tiếp công việc",
-  },
-  b2: {
-    label: "Trên Trung Cấp B2",
-    levels: ["B2"],
-    nextPhase: null,
-    description: "Kiểm tra cấu trúc nâng cao, idioms và văn phong học thuật",
+    description:
+      "Ba câu kiểm tra nhanh trước khi ghi nhận kết quả bài A0 đầu tiên",
   },
 };
 
@@ -68,10 +45,12 @@ export default async function CheckpointPage({ params }: Props) {
   const { phase } = await params;
   const cfg = PHASE_CONFIG[phase];
 
-  if (!cfg) redirect("/learn");
+  if (!cfg) notFound();
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   // Get completed units for this phase
@@ -79,7 +58,7 @@ export default async function CheckpointPage({ params }: Props) {
     phase === "trial"
       ? UNITS.filter((unit) => unit.id === "unit-a0-1")
       : UNITS.filter((unit) => cfg.levels.includes(unit.level));
-  const phaseUnitIds = phaseUnits.map(u => u.id);
+  const phaseUnitIds = phaseUnits.map((u) => u.id);
 
   const { data: completedRows } = await supabase
     .from("user_lesson_progress")
@@ -87,7 +66,7 @@ export default async function CheckpointPage({ params }: Props) {
     .eq("user_id", user.id)
     .in("unit_id", phaseUnitIds);
 
-  const completedUnitIds = new Set((completedRows ?? []).map(r => r.unit_id));
+  const completedUnitIds = new Set((completedRows ?? []).map((r) => r.unit_id));
   const completedCount = completedUnitIds.size;
   const totalCount = phaseUnitIds.length;
   const isUnlocked = phase === "trial" || completedCount === totalCount;

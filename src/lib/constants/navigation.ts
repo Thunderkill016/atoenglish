@@ -1,6 +1,5 @@
 import {
   BookOpen,
-  LayoutDashboard,
   Layers,
   Map,
   TrendingUp,
@@ -8,8 +7,8 @@ import {
   PenLine,
   User,
   Settings,
-  Play,
-  Zap,
+  BookMarked,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -33,114 +32,95 @@ export type DashboardSection = {
 };
 
 export const dashboardSections: DashboardSection[] = [
-  { id: "dash-today", label: "Hôm nay", icon: Zap },
+  { id: "dash-today", label: "Hôm nay", icon: BookOpen },
   { id: "dash-practice", label: "Luyện tập", icon: Layers },
   { id: "dash-progress", label: "Tiến độ", icon: TrendingUp },
 ];
 
-// ─── Tier 1 — Bottom Nav (mobile) — 3-tab Hick-compliant shell (P1) ────────
-// Học (home + continue) · Ôn (SRS) · Tôi (settings/profile)
+/**
+ * Session-runner boundaries where the shell hides all chrome (focus mode).
+ * Covers unit lessons, the trial checkpoint and placement attempts.
+ */
+const SESSION_PATH_RE = /^(\/learn\/unit|\/checkpoint|\/placement)/;
+
+export function isSessionPath(pathname: string): boolean {
+  return SESSION_PATH_RE.test(pathname);
+}
+
+// ─── Tier 1 — 4-tab shell (redesign IA: HỌC / ÔN / LỘ TRÌNH / TÔI) ─────────
 export const bottomNavItems: NavItem[] = [
   {
     title: "Học",
-    href: "/dashboard",
-    icon: BookOpen,
-    description: "Tiếp tục bài học",
-  },
-  {
-    title: "Ôn",
-    href: "/flashcards",
-    icon: Layers,
-    description: "Ôn tập flashcard SRS",
-  },
-  {
-    title: "Tôi",
-    href: "/me",
-    icon: User,
-    description: "Tiến độ, luyện tập & cài đặt",
-  },
-];
-
-// ─── Tier 2 — Desktop Primary Nav — matches 3-tab shell ─────────────────────
-export const desktopPrimaryNav: NavItem[] = [
-  {
-    title: "Học",
-    href: "/dashboard",
-    icon: BookOpen,
-    description: "Tiếp tục bài học",
-  },
-  {
-    title: "Ôn",
-    href: "/flashcards",
-    icon: Layers,
-    description: "Ôn tập flashcard SRS",
-  },
-  {
-    title: "Tôi",
-    href: "/me",
-    icon: User,
-    description: "Tiến độ, luyện tập & cài đặt",
-  },
-];
-
-/** @deprecated V2 — links live on /me hub; kept for command palette / legacy */
-export const desktopMoreItems: NavItem[] = [
-  {
-    title: "Bài học",
     href: "/learn",
     icon: BookOpen,
-    description: "Danh sách 50 unit",
+    description: "Hôm nay & danh sách bài học",
   },
   {
-    title: "Luyện nói",
-    href: "/speaking",
-    icon: Mic,
-    description: "Shadowing & AI Roleplay",
-  },
-  {
-    title: "Viết",
-    href: "/writing",
-    icon: PenLine,
-    description: "Viết & cải thiện với AI",
-  },
-  {
-    title: "Tiến độ",
-    href: "/progress",
-    icon: TrendingUp,
-    description: "Theo dõi quá trình học",
+    title: "Ôn",
+    href: "/review",
+    icon: Layers,
+    description: "Hàng ôn tập đến hạn",
   },
   {
     title: "Lộ trình",
     href: "/roadmap",
     icon: Map,
-    description: "Lộ trình A0 → C1",
+    description: "Lộ trình trình độ",
+  },
+  {
+    title: "Tôi",
+    href: "/me",
+    icon: User,
+    description: "Tiến độ, luyện tập & cài đặt",
   },
 ];
 
-// ─── Mobile slide panel (grouped drawer) ─────────────────────────────────────
-export const mobilePanelGroups: NavGroup[] = [
+// ─── Tier 2 — Desktop Primary Nav — matches 4-tab shell ─────────────────────
+export const desktopPrimaryNav: NavItem[] = bottomNavItems;
+
+/** Secondary surfaces under TÔI — used by the command palette. */
+export const desktopMoreItems: NavItem[] = [
   {
-    label: "HỌC TẬP",
-    items: [
-      { title: "Trang chủ", href: "/dashboard", icon: LayoutDashboard, description: "Tổng quan hôm nay" },
-      { title: "Bài học", href: "/learn", icon: BookOpen, description: "IPOR lessons" },
-      { title: "Luyện nói", href: "/speaking", icon: Mic, description: "Shadowing & AI" },
-      { title: "Viết văn", href: "/writing", icon: PenLine, description: "AI feedback" },
-      { title: "Ôn tập", href: "/flashcards", icon: Layers, description: "Flashcard SRS" },
-    ],
+    title: "Bài tập nói",
+    href: "/me/speaking",
+    icon: Mic,
+    description: "Shadowing & AI Roleplay",
   },
   {
-    label: "THEO DÕI",
-    items: [
-      { title: "Tiến độ", href: "/progress", icon: TrendingUp, description: "Quá trình học" },
-      { title: "Lộ trình", href: "/roadmap", icon: Map, description: "A0 → C1" },
-    ],
+    title: "Viết",
+    href: "/me/writing",
+    icon: PenLine,
+    description: "Viết & cải thiện",
   },
   {
-    label: "KHÁC",
-    items: [
-      { title: "Cài đặt", href: "/settings", icon: Settings, description: "Tài khoản" },
-    ],
+    title: "Ngữ pháp",
+    href: "/me/grammar",
+    icon: BookMarked,
+    description: "Chủ đề grammar",
+  },
+  {
+    title: "Phát âm IPA",
+    href: "/me/pronunciation",
+    icon: Mic,
+    description: "44 âm IPA",
+  },
+  {
+    title: "Quiz từ vựng",
+    href: "/quiz",
+    icon: HelpCircle,
+    description: "Luyện quiz",
+  },
+  {
+    title: "Tiến độ",
+    href: "/me/progress",
+    icon: TrendingUp,
+    description: "Báo cáo học tập",
+  },
+  {
+    title: "Cài đặt",
+    href: "/me/settings",
+    icon: Settings,
+    description: "Tài khoản",
   },
 ];
 
@@ -150,26 +130,20 @@ export function getDashboardExploreActions(unitRoute: string): NavItem[] {
     {
       title: "Học 10 phút",
       href: unitRoute,
-      icon: Play,
+      icon: BookOpen,
       description: "Tiếp tục bài đang học",
     },
     {
       title: "Viết & Cải thiện",
-      href: "/writing",
+      href: "/me/writing",
       icon: PenLine,
       description: "AI writing feedback",
     },
     {
       title: "Phát âm IPA",
-      href: "/pronunciation",
+      href: "/me/pronunciation",
       icon: Mic,
       description: "IPA drills",
     },
   ];
 }
-
-// ─── Legacy export — backward compat for components importing mainNavItems ────
-export const mainNavItems: NavItem[] = [
-  ...desktopPrimaryNav,
-  ...desktopMoreItems,
-];

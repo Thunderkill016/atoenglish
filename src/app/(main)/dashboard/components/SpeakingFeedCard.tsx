@@ -27,21 +27,21 @@ const TYPE_META: Record<
     icon: "🎧",
     color: "text-teal-600 dark:text-teal-400",
     bg: "bg-teal-500/10 border-teal-500/20",
-    href: "/speaking",
+    href: "/me/speaking",
   },
   roleplay: {
     label: "AI Roleplay",
     icon: "🤖",
     color: "text-violet-600 dark:text-violet-400",
     bg: "bg-violet-500/10 border-violet-500/20",
-    href: "/speaking",
+    href: "/me/speaking",
   },
   journal: {
     label: "Journal",
     icon: "📓",
     color: "text-blue-600 dark:text-blue-400",
     bg: "bg-blue-500/10 border-blue-500/20",
-    href: "/speaking",
+    href: "/me/speaking",
   },
 };
 
@@ -223,7 +223,7 @@ export default function SpeakingFeedCard({ sessions }: SpeakingFeedCardProps) {
 
           {/* CTA */}
           <Link
-            href="/speaking"
+            href="/me/speaking"
             className="mt-1 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 transition-colors"
           >
             <Mic className="size-3.5 text-teal-500" />

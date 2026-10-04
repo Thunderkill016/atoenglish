@@ -139,10 +139,10 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
       if (!upsertError) addedCount = upserted?.length ?? 0;
     }
 
-    revalidatePath("/dashboard");
     revalidatePath("/learn");
-    revalidatePath("/flashcards");
-    revalidatePath("/progress");
+    revalidatePath("/learn");
+    revalidatePath("/review");
+    revalidatePath("/me/progress");
 
     return {
       success: true,
@@ -299,9 +299,9 @@ export async function resetUnitProgress(unitId: string) {
         .in("word", wordList);
     }
 
-    revalidatePath("/dashboard");
     revalidatePath("/learn");
-    revalidatePath("/flashcards");
+    revalidatePath("/learn");
+    revalidatePath("/review");
 
     return {
       success: true,

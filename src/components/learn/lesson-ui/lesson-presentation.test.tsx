@@ -53,7 +53,7 @@ describe("lesson presentation helpers", () => {
 
     expect(container.textContent).toContain("Phần 1 hoàn thành!");
     expect(container.textContent).toContain("Tiếp tục Phần 2 →");
-    expect(container.querySelector('a[href="/dashboard"]')?.textContent).toContain(
+    expect(container.querySelector('a[href="/learn"]')?.textContent).toContain(
       "Lưu và nghỉ ngơi",
     );
 

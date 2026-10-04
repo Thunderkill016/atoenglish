@@ -98,7 +98,7 @@ async function persistPlacementLevel(
     }
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath("/learn");
   revalidatePath("/learn");
   revalidatePath("/roadmap");
 

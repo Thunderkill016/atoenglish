@@ -75,7 +75,7 @@ export default function SessionBreakCard({ onContinue }: SessionBreakCardProps) 
           Tiếp tục Phần 2 →
         </button>
         <a
-          href="/dashboard"
+          href="/learn"
           className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl border border-zinc-200/60 dark:border-zinc-700/60 text-zinc-600 dark:text-zinc-400 font-bold text-sm hover:border-zinc-300 dark:hover:border-zinc-600 transition-all"
         >
           💾 Lưu và nghỉ ngơi

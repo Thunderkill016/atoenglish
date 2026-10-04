@@ -10,23 +10,12 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: ["/", "/login", "/privacy", "/terms"],
         disallow: [
-          "/dashboard",
           "/learn",
-          "/flashcards",
-          "/speaking",
-          "/progress",
+          "/review",
+          "/me",
           "/roadmap",
           "/quiz",
-          "/writing",
-          "/leaderboard",
-          "/grammar",
-          "/business",
-          "/challenge",
-          "/pronunciation",
-          "/placement-test",
-          "/invite",
-          "/certificate",
-          "/settings",
+          "/placement",
           "/checkpoint",
           "/auth/",
           "/api/",
@@ -37,4 +26,3 @@ export default function robots(): MetadataRoute.Robots {
     host: baseUrl,
   };
 }
-

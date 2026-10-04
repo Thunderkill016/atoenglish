@@ -186,7 +186,7 @@ export default function DashboardClient({
           {showPlacementBanner && (
             <div className="relative">
               <Link
-                href="/placement-test"
+                href="/placement"
                 className="flex items-center gap-3 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 transition-colors hover:bg-violet-500/10"
               >
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-xl">🎯</span>
@@ -334,7 +334,7 @@ export default function DashboardClient({
 
           {completedUnits > 0 && completedUnits % 5 === 0 && (
             <Link
-              href="/placement-test"
+              href="/placement"
               className="flex items-center gap-3 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 transition-colors hover:bg-violet-500/10"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-xl">📝</span>

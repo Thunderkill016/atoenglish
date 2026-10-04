@@ -12,7 +12,10 @@ try {
     const eq = trimmed.indexOf("=");
     if (eq === -1) continue;
     const key = trimmed.slice(0, eq).trim();
-    const val = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+    const val = trimmed
+      .slice(eq + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
     if (key && !process.env[key]) process.env[key] = val;
   }
 } catch {
@@ -28,7 +31,7 @@ export const E2E_TEST_PASSWORD =
 export function hasE2EAdminCredentials(): boolean {
   return Boolean(
     process.env.NEON_AUTH_BASE_URL &&
-      (process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL),
+    (process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL),
   );
 }
 
@@ -79,7 +82,8 @@ async function signUpUser(email: string, password: string): Promise<NeonUser> {
 
 /** Ensure persistent E2E user exists (idempotent). */
 export async function ensureE2ETestUser(): Promise<string> {
-  const user = (await findUserByEmail(E2E_TEST_EMAIL)) ??
+  const user =
+    (await findUserByEmail(E2E_TEST_EMAIL)) ??
     (await signUpUser(E2E_TEST_EMAIL, E2E_TEST_PASSWORD));
   return user.id;
 }
@@ -101,7 +105,11 @@ export async function resetE2EPlacementState(userId: string): Promise<void> {
 }
 
 /** Set user to B1+ so /learn/unit-19 is in unlocked range (UI + for test realism). */
-export async function setE2EStartingUnit(userId: string, startingIndex: number, level = "B1"): Promise<void> {
+export async function setE2EStartingUnit(
+  userId: string,
+  startingIndex: number,
+  level = "B1",
+): Promise<void> {
   const today = new Date().toISOString().split("T")[0];
   await db()`
     INSERT INTO user_progress (user_id, current_level, starting_unit_index, total_xp, streak, last_active_date)
@@ -119,19 +127,22 @@ export async function loginAsE2ETestUser(page: Page): Promise<void> {
   await page.goto("/login?mode=login");
   await page.getByPlaceholder("Email của bạn").fill(E2E_TEST_EMAIL);
   await page.getByPlaceholder("Mật khẩu").fill(E2E_TEST_PASSWORD);
-  await page
-    .getByRole("button", { name: /Đăng nhập bằng Email/i })
-    .click();
-  await page.waitForURL(/\/(dashboard|learn)/, { timeout: 20_000 });
+  await page.getByRole("button", { name: /Đăng nhập bằng Email/i }).click();
+  await page.waitForURL(/\/learn/, { timeout: 20_000 });
 }
 
 /** Find user id by email (for post-signup verification). */
-export async function getE2EUserIdByEmail(email: string): Promise<string | null> {
+export async function getE2EUserIdByEmail(
+  email: string,
+): Promise<string | null> {
   return (await findUserByEmail(email))?.id ?? null;
 }
 
 /** Create temp confirmed user via sign-up (avoids client rate limits in E2E). */
-export async function createTempConfirmedE2EUser(email: string, password: string): Promise<string> {
+export async function createTempConfirmedE2EUser(
+  email: string,
+  password: string,
+): Promise<string> {
   await deleteE2EUserByEmail(email);
   const user = await signUpUser(email, password);
   await forceConfirmE2EUserEmail(user.id);
@@ -160,7 +171,12 @@ export async function deleteE2EUserByEmail(email: string): Promise<void> {
 /** Verify the persisted values from signup flow. */
 export async function verifyOnboardingPersistence(
   userId: string,
-  expected: { goal: string; obstacle: string; daily_minutes: number; daily_xp_goal: number },
+  expected: {
+    goal: string;
+    obstacle: string;
+    daily_minutes: number;
+    daily_xp_goal: number;
+  },
 ): Promise<void> {
   const profiles = await db()`
     SELECT goal, obstacle, daily_minutes FROM user_onboarding_profile WHERE user_id = ${userId}

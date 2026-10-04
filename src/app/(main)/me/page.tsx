@@ -20,8 +20,8 @@ export default async function MePage() {
     "Học viên";
 
   return (
-    <main id="main-content">
+    <>
       <MeClient userName={userName} />
-    </main>
+    </>
   );
 }

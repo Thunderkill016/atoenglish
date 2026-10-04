@@ -286,7 +286,7 @@ describe("UnitTemplate behavior foundation", () => {
     container.remove();
   });
 
-  async function renderUnit(unit = makeUnit(), nextRoute = "/dashboard") {
+  async function renderUnit(unit = makeUnit(), nextRoute = "/learn") {
     await act(async () => {
       root.render(<UnitTemplate unit={unit} nextRoute={nextRoute} />);
     });

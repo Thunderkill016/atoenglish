@@ -27,7 +27,7 @@ export default function HeroCTA() {
       {/* CTA links are styled as buttons but remain a single interactive element. */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full">
         <Link
-          href={isLoggedIn ? "/dashboard" : "/learn"}
+          href={isLoggedIn ? "/learn" : "/learn"}
           prefetch={false}
           onClick={() =>
             trackPilotEventOnce("pilot_started", "pilot", { source: "landing_hero" })

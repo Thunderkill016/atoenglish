@@ -288,7 +288,7 @@ export default function VocabQuizClient() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => router.push("/flashcards")}
+            onClick={() => router.push("/review")}
             className="gap-2 rounded-xl h-11 px-5 border-zinc-200 dark:border-zinc-800"
           >
             <Flame className="size-4" />

@@ -39,7 +39,8 @@ function createRequest(pathname: string, search = "") {
     headers: new Headers({ cookie: "neon_auth.session_token=tok" }),
     nextUrl: {
       pathname,
-      searchParams: new URL(`http://localhost${pathname}${search}`).searchParams,
+      searchParams: new URL(`http://localhost${pathname}${search}`)
+        .searchParams,
       clone: () => new URL(`http://localhost${pathname}${search}`),
     },
   };
@@ -91,7 +92,8 @@ describe("updateSession", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEON_AUTH_BASE_URL = "https://auth.example.neon.tech";
-    process.env.NEON_AUTH_COOKIE_SECRET = "test-secret-test-secret-test-secret-01";
+    process.env.NEON_AUTH_COOKIE_SECRET =
+      "test-secret-test-secret-test-secret-01";
 
     nextResponses = [];
     redirectResponses = [];
@@ -124,7 +126,7 @@ describe("updateSession", () => {
   it("passes through without auth work when environment variables are missing", async () => {
     delete process.env.NEON_AUTH_BASE_URL;
     delete process.env.NEON_AUTH_COOKIE_SECRET;
-    const request = createRequest("/progress");
+    const request = createRequest("/me/progress");
 
     const response = await updateSession(request as never);
 
@@ -145,13 +147,13 @@ describe("updateSession", () => {
 
   it("redirects an unauthenticated protected request to login and preserves refreshed cookies", async () => {
     arrangeAuthResult("redirect_login");
-    const request = createRequest("/progress");
+    const request = createRequest("/me/progress");
 
     const response = await updateSession(request as never);
 
     expect(response).toBe(redirectResponses[0]);
     expect(redirectUrls[0]).toBe(
-      "http://localhost/login?mode=login&next=%2Fprogress",
+      "http://localhost/login?mode=login&next=%2Fme%2Fprogress",
     );
     expect(response.headers.append).toHaveBeenCalledWith(
       "set-cookie",
@@ -159,7 +161,7 @@ describe("updateSession", () => {
     );
   });
 
-  it("redirects an authenticated login request to the dashboard", async () => {
+  it("redirects an authenticated login request to /learn", async () => {
     arrangeAuthResult("allow", { cookies: undefined });
     arrangeSession({ id: "user-1" });
     const request = createRequest("/login");
@@ -167,7 +169,7 @@ describe("updateSession", () => {
     const response = await updateSession(request as never);
 
     expect(response).toBe(redirectResponses[0]);
-    expect(redirectUrls[0]).toBe("http://localhost/dashboard");
+    expect(redirectUrls[0]).toBe("http://localhost/learn");
     expect(response.headers.append).toHaveBeenCalledWith(
       "set-cookie",
       "session_data=refreshed; Path=/; HttpOnly",
@@ -176,7 +178,7 @@ describe("updateSession", () => {
 
   it("returns the pass-through response for an authenticated protected request", async () => {
     arrangeAuthResult("allow");
-    const request = createRequest("/settings");
+    const request = createRequest("/me/settings");
 
     const response = await updateSession(request as never);
 

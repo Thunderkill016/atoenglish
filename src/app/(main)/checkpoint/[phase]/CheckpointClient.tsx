@@ -327,7 +327,7 @@ export default function CheckpointClient({
             >
               <RotateCcw className="size-4" /> Làm lại
             </MinimalButton>
-            <MinimalButton variant="ghost" fullWidth onClick={() => router.push("/dashboard")}>
+            <MinimalButton variant="ghost" fullWidth onClick={() => router.push("/learn")}>
               Về Dashboard
             </MinimalButton>
           </div>

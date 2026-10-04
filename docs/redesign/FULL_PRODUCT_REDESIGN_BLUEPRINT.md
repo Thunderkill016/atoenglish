@@ -528,6 +528,8 @@ Strangler pattern, evidence-first:
 | 13  | `/zero-path` promoted as canonical session contract | Most honest surface; already consumes trusted evidence path; avoids third runtime      | Keep frozen (orphan forever); retire (lose reference impl)                             | owner decision                   | hard to reverse — phased merge         |
 | 14  | Checkpoint a0–b2 removed until item banks exist     | Decorative gates presented as progression; F5 label fix was interim                    | Build item banks now (authoring cost); keep mislabeled                                 | owner decision                   | yes — restore when banks exist         |
 | 15  | Units without contracts marked "in build"           | Whitelist open but silent completion counts overstate the catalog                      | Keep invisible wall; remove units (catalog investment lost)                            | owner decision                   | yes                                    |
+| 16  | Legacy routes redirect, not stub pages              | Single compat map in `next.config.mjs`; vinext supports config `redirects()`           | 15 stub `redirect()` pages (scattered, harder to audit)                                | Phase 3 impl                     | yes                                    |
+| 17  | `/dashboard` kept as unreachable merge source       | Phase 5 today-card consumes DashboardClient/daily-missions/word-of-day                 | Delete now (re-derive from git); keep live (split-brain IA)                            | Phase 3 impl                     | yes — delete at Phase 5 merge          |
 
 ## Assumption corrections (per mission rule 24)
 

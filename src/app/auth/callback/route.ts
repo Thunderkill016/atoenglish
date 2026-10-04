@@ -10,7 +10,7 @@ import {
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/learn";
   let destination = next;
 
   // Neon Auth (Better Auth) completes OAuth upstream and redirects here with

@@ -6,17 +6,18 @@ import { usePathname } from "next/navigation";
 import { desktopPrimaryNav } from "@/lib/constants/navigation";
 import { cn } from "@/lib/utils";
 
-/** Desktop 3-tab nav — Hick-compliant, no "Thêm" dropdown (V2) */
+/** Desktop 4-tab nav — matches the mobile bottom nav exactly */
 export function MainNavRow() {
   const pathname = usePathname();
 
   return (
-    <nav className="hidden items-center gap-0.5 md:flex" aria-label="Điều hướng chính">
+    <nav
+      className="hidden items-center gap-0.5 md:flex"
+      aria-label="Điều hướng chính"
+    >
       {desktopPrimaryNav.map((item) => {
         const isActive =
-          pathname === item.href ||
-          (item.href === "/me" && pathname.startsWith("/settings")) ||
-          pathname.startsWith(`${item.href}/`);
+          pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;
 
         return (
@@ -27,7 +28,7 @@ export function MainNavRow() {
               "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--minimal-motion-ms)]",
               isActive
                 ? "bg-primary/10 text-primary font-semibold"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             <Icon className="size-3.5 shrink-0" />

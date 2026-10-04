@@ -170,7 +170,7 @@ export default function EfSetGoalTracker({ userLevel, completedUnits }: EfSetGoa
           {/* Realistic motivation — small consistent daily practice > bursts; link to free speaking (vibrant glass, no hype) */}
           <div className="mt-2 p-2 rounded-xl bg-white/5 dark:bg-zinc-950/30 border border-white/10 text-[10px] text-zinc-600 dark:text-zinc-400 leading-snug">
             Nhỏ đều đặn mỗi ngày &gt; bùng nổ một lần. Thói quen nói ngắn giữ tiến bộ bền vững.
-            <a href="/speaking" className="ml-1 font-medium text-emerald-500 hover:underline">Luyện nói miễn phí →</a>
+            <a href="/me/speaking" className="ml-1 font-medium text-emerald-500 hover:underline">Luyện nói miễn phí →</a>
           </div>
         </div>
       )}

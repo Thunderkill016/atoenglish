@@ -164,7 +164,7 @@ function VideoShadowingCard({ videoId }: { videoId: string }) {
   );
 }
 
-export default function UnitTemplate({ unit, nextRoute = "/dashboard" }: UnitTemplateProps) {
+export default function UnitTemplate({ unit, nextRoute = "/learn" }: UnitTemplateProps) {
   const [section, setSection] = useState<number>(1);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -552,7 +552,7 @@ useLessonProgress({
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 min-w-0">
               <Link
-                href="/dashboard"
+                href="/learn"
                 aria-label="Về Dashboard"
                 className="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
               >
@@ -888,7 +888,7 @@ useLessonProgress({
                   </Link>
                   <div className="flex gap-3">
                     <Link
-                      href="/flashcards"
+                      href="/review"
                       className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 font-bold rounded-2xl py-3 text-sm transition-colors"
                     >
                       <BookOpen size={14} /> Ôn flashcard

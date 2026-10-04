@@ -1,14 +1,12 @@
 // AtoEnglish Service Worker — Web Push + offline caching
 // v4: network-first for API/auth, stale-while-revalidate for app shell + assets
-const CACHE_NAME = "atoenglish-v4";
+const CACHE_NAME = "atoenglish-v5";
 const APP_SHELL = [
   "/",
-  "/dashboard",
-  "/flashcards",
-  "/speaking",
-  "/progress",
+  "/learn",
+  "/review",
+  "/me",
   "/roadmap",
-  "/business",
   "/manifest.webmanifest",
   "/favicon.ico",
   "/icon-192.png",
@@ -21,8 +19,8 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
       // addAll with individual error handling to avoid blocking on missing assets
-      Promise.allSettled(APP_SHELL.map((url) => cache.add(url)))
-    )
+      Promise.allSettled(APP_SHELL.map((url) => cache.add(url))),
+    ),
   );
   self.skipWaiting();
 });
@@ -30,13 +28,15 @@ self.addEventListener("install", (event) => {
 // ── Activate — purge old caches ─────────────────────────
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key)),
+        ),
+      ),
   );
   self.clients.claim();
 });
@@ -64,12 +64,14 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(request);
-        const networkFetch = fetch(request).then((res) => {
-          if (res.ok) cache.put(request, res.clone());
-          return res;
-        }).catch(() => cached);
+        const networkFetch = fetch(request)
+          .then((res) => {
+            if (res.ok) cache.put(request, res.clone());
+            return res;
+          })
+          .catch(() => cached);
         return cached ?? networkFetch;
-      })
+      }),
     );
     return;
   }
@@ -87,22 +89,25 @@ self.addEventListener("fetch", (event) => {
           return res;
         })
         .catch(() =>
-          caches.match(request).then(
-            (cached) =>
-              cached ??
-              caches.match("/").then(
-                (shell) => shell ?? new Response("Offline", { status: 503 })
-              )
-          )
-        )
+          caches
+            .match(request)
+            .then(
+              (cached) =>
+                cached ??
+                caches
+                  .match("/")
+                  .then(
+                    (shell) =>
+                      shell ?? new Response("Offline", { status: 503 }),
+                  ),
+            ),
+        ),
     );
     return;
   }
 
   // 4. Cache-first: static media (images, fonts, audio)
-  if (
-    url.pathname.match(/\.(png|jpg|jpeg|webp|svg|ico|woff2?|mp3|mp4)$/)
-  ) {
+  if (url.pathname.match(/\.(png|jpg|jpeg|webp|svg|ico|woff2?|mp3|mp4)$/)) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(request);
@@ -110,14 +115,18 @@ self.addEventListener("fetch", (event) => {
         const res = await fetch(request).catch(() => null);
         if (res?.ok) cache.put(request, res.clone());
         return res ?? new Response("", { status: 404 });
-      })
+      }),
     );
   }
 });
 
 // ── Push Notification ───────────────────────────────────
 self.addEventListener("push", (event) => {
-  let data = { title: "AtoEnglish", body: "Đừng quên học tiếng Anh hôm nay! 🔥", icon: "/icon-192.png" };
+  let data = {
+    title: "AtoEnglish",
+    body: "Đừng quên học tiếng Anh hôm nay! 🔥",
+    icon: "/icon-192.png",
+  };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch {}
@@ -130,31 +139,36 @@ self.addEventListener("push", (event) => {
       tag: "streak-reminder",
       renotify: true,
       vibrate: [200, 100, 200],
-      data: { url: "/dashboard" },
+      data: { url: "/learn" },
       actions: [
         { action: "learn", title: "🎯 Học ngay" },
         { action: "dismiss", title: "Để sau" },
       ],
-    })
+    }),
   );
 });
 
 // ── Notification Click ──────────────────────────────────
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = event.action === "learn"
-    ? "/learn"
-    : (event.notification.data?.url || "/dashboard");
+  const targetUrl =
+    event.action === "learn"
+      ? "/learn"
+      : event.notification.data?.url || "/learn";
 
   event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      const existing = clientList.find((c) => c.url.includes(self.location.origin) && "focus" in c);
-      if (existing) {
-        existing.focus();
-        existing.navigate(targetUrl);
-      } else {
-        clients.openWindow(targetUrl);
-      }
-    })
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        const existing = clientList.find(
+          (c) => c.url.includes(self.location.origin) && "focus" in c,
+        );
+        if (existing) {
+          existing.focus();
+          existing.navigate(targetUrl);
+        } else {
+          clients.openWindow(targetUrl);
+        }
+      }),
   );
 });

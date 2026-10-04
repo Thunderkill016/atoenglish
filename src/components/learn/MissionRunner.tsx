@@ -54,9 +54,7 @@ interface SpeechRecognitionLike {
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 type MissionLesson = LessonSpecV1 & { mission: MissionSpecV1 };
 
-type StartRecognition = (
-  onTranscript: (transcript: string) => void,
-) => void;
+type StartRecognition = (onTranscript: (transcript: string) => void) => void;
 
 interface MissionRunnerProps {
   lesson: MissionLesson;
@@ -134,8 +132,9 @@ function SpeechInputPanel({
       <div className="flex gap-2 text-sm text-amber-700 dark:text-amber-200">
         <AlertTriangle className="mt-0.5 size-4 shrink-0" />
         <p>
-          Trình duyệt chưa hỗ trợ nhận diện giọng nói. Hãy tự nói thành tiếng rồi nhập lại
-          điều vừa nói. Nội dung nhập chỉ kiểm tra mục tiêu giao tiếp, không phải phát âm.
+          Trình duyệt chưa hỗ trợ nhận diện giọng nói. Hãy tự nói thành tiếng
+          rồi nhập lại điều vừa nói. Nội dung nhập chỉ kiểm tra mục tiêu giao
+          tiếp, không phải phát âm.
         </p>
       </div>
       <textarea
@@ -152,7 +151,10 @@ function SpeechInputPanel({
   );
 }
 
-export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps) {
+export default function MissionRunner({
+  lesson,
+  nextRoute,
+}: MissionRunnerProps) {
   const router = useRouter();
   const mission = lesson.mission;
   const [session, setSession] = useState(() => createMissionSession(mission));
@@ -272,7 +274,10 @@ export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps)
       type: "SUBMIT_RETRY",
       transcript,
     });
-    const evaluation = evaluateMissionTranscript(mission, withRetry.transcripts);
+    const evaluation = evaluateMissionTranscript(
+      mission,
+      withRetry.transcripts,
+    );
     const evaluated = transitionMissionSession(mission, withRetry, {
       type: "RETRY_EVALUATED",
       result: evaluation,
@@ -284,9 +289,7 @@ export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps)
 
   const progress = Math.max(
     1,
-    STAGE_ORDER.indexOf(
-      session.stage as (typeof STAGE_ORDER)[number],
-    ) + 1,
+    STAGE_ORDER.indexOf(session.stage as (typeof STAGE_ORDER)[number]) + 1,
   );
   const currentTurn = mission.roleplayTurns[session.currentTurnIndex];
   const requiredIntentCount = mission.intents.filter(
@@ -301,7 +304,7 @@ export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps)
   };
 
   return (
-    <main className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
           <button
@@ -376,7 +379,8 @@ export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps)
                 {mission.targetChunks.length} cụm dùng ngay
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Nghe, hiểu lúc dùng và chọn cụm phù hợp; không học thuộc danh sách rời rạc.
+                Nghe, hiểu lúc dùng và chọn cụm phù hợp; không học thuộc danh
+                sách rời rạc.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -391,7 +395,10 @@ export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps)
                 >
                   <span className="flex items-center justify-between gap-3">
                     <strong className="text-sm">{chunk.english}</strong>
-                    <Volume2 className="size-4 shrink-0 text-primary" aria-hidden />
+                    <Volume2
+                      className="size-4 shrink-0 text-primary"
+                      aria-hidden
+                    />
                   </span>
                   <span className="mt-1 block text-xs text-muted-foreground">
                     {chunk.vietnamese}
@@ -446,7 +453,10 @@ export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps)
                         <strong className="text-sm">
                           {mission.partnerName}: {turn.partnerLine}
                         </strong>
-                        <Volume2 className="size-4 shrink-0 text-primary" aria-hidden />
+                        <Volume2
+                          className="size-4 shrink-0 text-primary"
+                          aria-hidden
+                        />
                       </button>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {turn.partnerLineVi}
@@ -546,7 +556,8 @@ export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps)
             {session.evaluation.corrections.length > 0 ? (
               <div className="space-y-3">
                 <p className="text-sm font-bold">
-                  Chỉ sửa {session.evaluation.corrections.length} điểm quan trọng nhất
+                  Chỉ sửa {session.evaluation.corrections.length} điểm quan
+                  trọng nhất
                 </p>
                 {session.evaluation.corrections.map((correction, index) => (
                   <div
@@ -579,8 +590,8 @@ export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps)
             <div className="flex gap-2 rounded-xl border border-border/60 bg-muted/30 p-4 text-xs text-muted-foreground">
               <ShieldCheck className="size-4 shrink-0 text-primary" />
               <p>
-                Điểm chỉ đo nội dung giao tiếp trong transcript. Không có điểm phát âm,
-                accent hoặc độ dễ hiểu giả.
+                Điểm chỉ đo nội dung giao tiếp trong transcript. Không có điểm
+                phát âm, accent hoặc độ dễ hiểu giả.
               </p>
             </div>
             <MinimalButton
@@ -627,8 +638,9 @@ export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps)
                 Hoàn thành vòng luyện tập
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                {scoreLabel(session.evaluation)}. Checkpoint tiếp theo mới xác nhận mastery;
-                transfer 1/7/30 ngày sẽ kiểm tra khả năng dùng trong bối cảnh mới.
+                {scoreLabel(session.evaluation)}. Checkpoint tiếp theo mới xác
+                nhận mastery; transfer 1/7/30 ngày sẽ kiểm tra khả năng dùng
+                trong bối cảnh mới.
               </p>
             </div>
             <div className="rounded-xl border border-border/60 bg-card p-4">
@@ -677,6 +689,6 @@ export default function MissionRunner({ lesson, nextRoute }: MissionRunnerProps)
           </section>
         )}
       </div>
-    </main>
+    </div>
   );
 }

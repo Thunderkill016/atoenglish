@@ -11,10 +11,13 @@ import {
 // session refresh Set-Cookie forwarding), while keeping the app's own
 // protected-route list and redirect contract (?next + mode=login).
 const PROTECTED_ROUTES = [
-  // guest self-study on pre-minimal best version
-  // "/dashboard", "/learn", "/flashcards", "/speaking",
-  "/progress", "/roadmap", "/writing", "/leaderboard", "/grammar", "/business",
-  "/challenge", "/pronunciation", "/placement-test", "/invite", "/certificate", "/settings", "/checkpoint", "/quiz",
+  // Guests may self-study the trial lesson surface (/learn, /review stay open).
+  // /me covers progress, speaking, writing, grammar, pronunciation, settings.
+  "/me",
+  "/roadmap",
+  "/placement",
+  "/checkpoint",
+  "/quiz",
 ];
 
 const NEON_AUTH_VERIFIER_PARAM = "neon_auth_session_verifier";
@@ -24,7 +27,11 @@ function appendCookies(response: NextResponse, cookies: string[] | undefined) {
   return response;
 }
 
-function middlewareConfig(request: NextRequest, pathname: string, needsAuth: boolean) {
+function middlewareConfig(
+  request: NextRequest,
+  pathname: string,
+  needsAuth: boolean,
+) {
   return {
     request: request as unknown as Request,
     pathname,
@@ -50,7 +57,9 @@ export async function updateSession(request: NextRequest) {
 
   // Skip auth work for public routes (like the landing page) to minimize TTFB —
   // except OAuth returns, which carry the session verifier and must be exchanged.
-  const hasVerifier = request.nextUrl.searchParams.has(NEON_AUTH_VERIFIER_PARAM);
+  const hasVerifier = request.nextUrl.searchParams.has(
+    NEON_AUTH_VERIFIER_PARAM,
+  );
   if (!isProtectedRoute && !isLoginRoute && !hasVerifier) {
     return NextResponse.next({ request });
   }
@@ -94,7 +103,7 @@ export async function updateSession(request: NextRequest) {
       : null;
     if (session?.user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
+      url.pathname = "/learn";
       url.search = "";
       return appendCookies(
         NextResponse.redirect(url),

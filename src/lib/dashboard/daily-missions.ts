@@ -39,7 +39,7 @@ export function buildDailyMissions(input: DailyMissionInput): DailyMission[] {
         input.dueCardsCount > 0
           ? `Ôn tập ${input.dueCardsCount} thẻ SRS`
           : "Ôn tập SRS (đã xong hôm nay!)",
-      href: "/flashcards",
+      href: "/review",
       completed: srsDone,
     },
     {
@@ -57,7 +57,7 @@ export function buildDailyMissions(input: DailyMissionInput): DailyMission[] {
       label: input.speakingDoneToday
         ? "Luyện nói (đã xong!)"
         : "Luyện nói — 5 phút",
-      href: "/speaking",
+      href: "/me/speaking",
       completed: input.speakingDoneToday,
     },
   ];

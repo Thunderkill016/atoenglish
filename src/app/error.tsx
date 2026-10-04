@@ -36,7 +36,7 @@ export default function RootError({
           Thử lại
         </button>
         <Link
-          href="/dashboard"
+          href="/learn"
           className="rounded-xl bg-zinc-800 px-5 py-2.5 text-sm font-bold text-white hover:bg-zinc-700 transition-colors"
         >
           Về Dashboard

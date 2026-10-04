@@ -16,7 +16,7 @@ interface SheetHeaderProps {
 
 /** Sub-flow header for lessons and feature sheets (V2) */
 export function SheetHeader({
-  backHref = "/dashboard",
+  backHref = "/learn",
   backLabel = "Quay lại",
   eyebrow,
   title,

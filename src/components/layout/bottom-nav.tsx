@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
-import { bottomNavItems } from "@/lib/constants/navigation";
+import { bottomNavItems, isSessionPath } from "@/lib/constants/navigation";
 
 interface BottomNavProps {
   /** Number of SRS cards due for review — shows badge on SRS tab */
@@ -27,9 +27,8 @@ interface BottomNavProps {
 export function BottomNav({ dueCardsCount = 0 }: BottomNavProps) {
   const pathname = usePathname();
 
-  // Hide during lesson pages (full-screen learning UI)
-  const isInLesson = /^\/learn\/unit/.test(pathname);
-  if (isInLesson) return null;
+  // Hide during session-runner pages (full-screen attempt UI)
+  if (isSessionPath(pathname)) return null;
 
   return (
     <nav
@@ -40,11 +39,8 @@ export function BottomNav({ dueCardsCount = 0 }: BottomNavProps) {
       {bottomNavItems.map((item) => {
         const Icon = item.icon;
         const isActive =
-          pathname === item.href ||
-          (item.href === "/me" && pathname.startsWith("/settings")) ||
-          pathname.startsWith(item.href + "/");
-        const isFlashcards = item.href === "/flashcards";
-        const showBadge = isFlashcards && dueCardsCount > 0;
+          pathname === item.href || pathname.startsWith(item.href + "/");
+        const showBadge = item.href === "/review" && dueCardsCount > 0;
 
         return (
           <Link

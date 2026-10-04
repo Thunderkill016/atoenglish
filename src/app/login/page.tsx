@@ -85,7 +85,7 @@ const QUESTIONS = [
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/learn";
   const mode = searchParams.get("mode");
 
   const [email, setEmail] = useState("");

@@ -49,7 +49,7 @@ export default function LearnError({
             Thử lại
           </button>
           <Link
-            href="/dashboard"
+            href="/learn"
             className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-xl border border-border bg-transparent text-foreground text-sm font-bold hover:bg-muted transition-all active:scale-[0.98]"
           >
             <LayoutDashboard className="size-4" />

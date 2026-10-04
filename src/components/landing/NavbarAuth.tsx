@@ -17,7 +17,7 @@ export default function NavbarAuth() {
     <div className="flex items-center gap-3">
       {isLoggedIn ? (
         <Link
-          href="/dashboard"
+          href="/learn"
           prefetch={false}
           className={buttonVariants({
             className:
