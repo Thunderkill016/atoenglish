@@ -16,13 +16,9 @@ export interface SpeechRecognitionEventMock {
  * It never fabricates a transcript or a score.
  */
 export class SpeechRecognitionFallback {
-  /** @deprecated Kept for compatibility. This value is never returned. */
-  static activeTranscript = "";
-
   continuous = false;
   interimResults = false;
   lang = "en-US";
-  activeTranscript?: string;
 
   onstart: ((event: Event) => void) | null = null;
   onresult: ((event: SpeechRecognitionEventMock) => void) | null = null;

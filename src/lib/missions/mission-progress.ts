@@ -5,6 +5,36 @@ export interface TransferAttemptEvidence {
   created_at: string;
 }
 
+interface CanonicalAttemptMetadata {
+  compatibilitySource?: string;
+  activityId?: string;
+  legacyScore?: number | null;
+}
+
+/**
+ * Maps a canonical `learning_attempts` row to the legacy transfer-evidence shape.
+ * Returns null when the row cannot represent a scored transfer attempt
+ * (missing prompt/session ids are not summarizable).
+ */
+export function attemptRowToTransferEvidence(row: {
+  prompt_id: string | null;
+  session_id: string | null;
+  metadata: unknown;
+  created_at: string;
+}): TransferAttemptEvidence | null {
+  if (!row.prompt_id || !row.session_id) return null;
+  const metadata =
+    row.metadata && typeof row.metadata === "object"
+      ? (row.metadata as CanonicalAttemptMetadata)
+      : {};
+  return {
+    activity_id: row.prompt_id,
+    session_id: row.session_id,
+    score: metadata.legacyScore ?? null,
+    created_at: row.created_at,
+  };
+}
+
 export interface TransferEvidenceSummary {
   sessionId: string | null;
   attemptCount: number;

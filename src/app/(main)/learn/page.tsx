@@ -10,7 +10,10 @@ import {
   MISSION_LESSON_IDS,
 } from "@/lib/missions/mission-catalog";
 import { listDueTransferVariants } from "@/lib/missions/mission-evaluator";
-import { summarizeTransferEvidence } from "@/lib/missions/mission-progress";
+import {
+  attemptRowToTransferEvidence,
+  summarizeTransferEvidence,
+} from "@/lib/missions/mission-progress";
 import { createClient } from "@/lib/supabase/server";
 import LearnClient from "./components/LearnClient";
 
@@ -60,15 +63,21 @@ export default async function LearnPage() {
     user
       ? supabase
           .from("learning_attempts")
-          .select("activity_id, session_id, score, created_at")
+          .select("prompt_id, session_id, metadata, created_at")
           .eq("user_id", user.id)
-          .in("lesson_id", MISSION_LESSON_IDS)
-          .like("activity_id", "%:transfer:%")
+          .like("prompt_id", "%:transfer:%")
       : Promise.resolve({ data: null }),
   ]);
 
   const completedLessons = completedLessonsRes.data ?? [];
-  const transferAttempts = transferAttemptsRes.data ?? [];
+  const transferAttempts = (transferAttemptsRes.data ?? [])
+    .map(attemptRowToTransferEvidence)
+    .filter((row): row is NonNullable<typeof row> => row !== null)
+    .filter((row) =>
+      MISSION_LESSON_IDS.some((lessonId) =>
+        row.activity_id.startsWith(`${lessonId}:`),
+      ),
+    );
   const completedUnitIds = completedLessons.map((lesson) => lesson.unit_id);
   const completedXp = new Map(
     completedLessons.map((lesson) => [lesson.unit_id, lesson.xp_earned || 0]),

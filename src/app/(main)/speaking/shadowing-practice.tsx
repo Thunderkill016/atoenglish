@@ -31,7 +31,6 @@ interface SpeechRecognitionMock {
   onresult?: (event: SpeechRecognitionEventMock) => void;
   onend?: () => void;
   onerror?: (event: SpeechRecognitionErrorEventMock) => void;
-  activeTranscript?: string;
 }
 
 interface SpeechRecognitionEventMock {
@@ -434,9 +433,6 @@ export function ShadowingPractice() {
       // Tải và chuẩn bị SpeechRecognition
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
-        if (SpeechRecognition === (SpeechRecognitionFallback as unknown as new () => SpeechRecognitionMock)) {
-          recognition.activeTranscript = activeItem.transcript;
-        }
         recognition.continuous = true;
         recognition.interimResults = false;
         recognition.lang = "en-US";

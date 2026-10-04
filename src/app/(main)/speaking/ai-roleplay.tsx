@@ -28,7 +28,6 @@ interface SpeechRecognitionMock {
   onresult?: (event: SpeechRecognitionEventMock) => void;
   onend?: () => void;
   onerror?: (event: SpeechRecognitionErrorEventMock) => void;
-  activeTranscript?: string;
 }
 
 interface SpeechRecognitionEventMock {
@@ -604,9 +603,6 @@ export function AIRoleplay() {
 
     try {
       const recognition = new SpeechRecognition();
-      if (SpeechRecognition === (SpeechRecognitionFallback as unknown as new () => SpeechRecognitionMock)) {
-        recognition.activeTranscript = displaySuggestion || "";
-      }
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = "en-US";

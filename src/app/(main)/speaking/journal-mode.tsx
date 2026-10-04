@@ -63,7 +63,6 @@ interface SpeechRecognitionInstance {
   }) => void;
   onerror?: () => void;
   onend?: () => void;
-  activeTranscript?: string;
 }
 
 interface SpeechWindow extends Window {
@@ -103,27 +102,6 @@ export function JournalMode() {
 
     const recognition: SpeechRecognitionInstance = new SpeechRecognition();
 
-    if (SpeechRecognition === (SpeechRecognitionFallback as unknown as new () => SpeechRecognitionInstance)) {
-      let mockPhrase = "I would like to speak about this topic. ";
-      if (topic.includes("ngày hôm nay") || topic.includes("routine")) {
-        mockPhrase = "I would like to describe my day today. It was a very productive and interesting day with many activities.";
-      } else if (topic.includes("sở thích")) {
-        mockPhrase = "My favorite hobby is reading books and playing sports because it helps me relax after a long day.";
-      } else if (topic.includes("food")) {
-        mockPhrase = "My favorite food is traditional Vietnamese noodle soup because it is delicious and very popular.";
-      } else if (topic.includes("family")) {
-        mockPhrase = "There are four people in my family. I love my family very much and we support each other.";
-      } else if (topic.includes("hometown")) {
-        mockPhrase = "My hometown is a beautiful and quiet place where people are very friendly and welcoming.";
-      } else if (topic.includes("admire")) {
-        mockPhrase = "I admire my high school teacher because she taught me a lot of valuable life lessons.";
-      } else if (topic.includes("dream job")) {
-        mockPhrase = "My dream job is to become a software engineer so that I can build useful applications.";
-      } else {
-        mockPhrase = `Regarding the topic "${topic}", I believe it is very important and we should pay attention to it.`;
-      }
-      recognition.activeTranscript = mockPhrase;
-    }
     recognition.lang = "en-US";
     recognition.continuous = true;
     recognition.interimResults = true;

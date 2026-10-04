@@ -236,6 +236,11 @@ export default function CheckpointClient({
             <p className="text-muted-foreground text-sm leading-relaxed">
               Bài kiểm tra <span className="font-bold text-foreground">{questions.length} câu hỏi</span> xác nhận kiến thức cốt lõi. Cần đúng <span className="font-bold text-emerald-500">{passThreshold}/{questions.length} câu</span> để tiếp tục.
             </p>
+            {phase !== "trial" && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+                Đây là bài tự kiểm tra — kết quả hiển thị cho bạn, không được ghi vào tiến độ.
+              </p>
+            )}
           </div>
 
           <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-3">
@@ -272,7 +277,9 @@ export default function CheckpointClient({
             <h1 className="text-2xl font-black">{passed ? "🎉 Xuất sắc! Bạn đã pass!" : "Cần ôn thêm một chút!"}</h1>
             <p className="text-muted-foreground text-sm">
               {passed
-                ? `Bạn đúng ${score}/${questions.length} câu và đã đủ điều kiện học tiếp.`
+                ? phase === "trial"
+                  ? `Bạn đúng ${score}/${questions.length} câu và đã đủ điều kiện học tiếp.`
+                  : `Bạn đúng ${score}/${questions.length} câu — tự kiểm tra, không ghi vào tiến độ.`
                 : `Bạn đúng ${score}/${questions.length} câu. Cần ${passThreshold - score} câu nữa để tiếp tục.`}
             </p>
           </div>

@@ -62,7 +62,6 @@ describe("SpeechRecognitionFallback", () => {
   });
 
   it("reports unavailable without fabricating a transcript", async () => {
-    SpeechRecognitionFallback.activeTranscript = "hello fallback world";
     const recognition = new SpeechRecognitionFallback();
     const onresultSpy = vi.fn();
     const onerrorSpy = vi.fn();
@@ -84,7 +83,6 @@ describe("SpeechRecognitionFallback", () => {
   });
 
   it("never emits a default transcript", async () => {
-    SpeechRecognitionFallback.activeTranscript = "";
     const recognition = new SpeechRecognitionFallback();
     const onresultSpy = vi.fn();
 

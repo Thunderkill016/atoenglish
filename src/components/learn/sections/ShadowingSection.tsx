@@ -146,12 +146,6 @@ export default function ShadowingSection({
       return;
     }
 
-    // Set fallback active transcript if using fallback
-    if (SpeechRecognitionAPI === SpeechRecognitionFallback && DIALOGUES.length > 0) {
-      const targetLine = DIALOGUES[shadowDialogueIdx].lines[shadowLineIdx];
-      SpeechRecognitionFallback.activeTranscript = targetLine.text;
-    }
-
     const rec = new SpeechRecognitionAPI();
     rec.lang = "en-US";
     rec.interimResults = false;

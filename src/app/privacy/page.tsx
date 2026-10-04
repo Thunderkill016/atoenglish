@@ -33,7 +33,11 @@ export default function PrivacyPage() {
             <li><strong>Dữ liệu kỹ thuật</strong>: Loại trình duyệt, thiết bị, dữ liệu hiệu suất ẩn danh.</li>
           </ul>
           <p>
-            Chúng tôi <strong>không thu thập</strong> dữ liệu giọng nói — tính năng luyện nói hoạt động hoàn toàn phía trình duyệt của bạn và không gửi lên máy chủ.
+            Tính năng luyện nói nhận diện giọng nói ngay trên trình duyệt của bạn — chúng tôi
+            <strong> không lưu trữ file ghi âm</strong>. Với tài khoản đã đăng nhập,
+            <strong> bản chuyển đổi giọng nói thành văn bản (transcript)</strong> được lưu trong
+            lịch sử luyện tập của bạn và có thể được gửi tới nhà cung cấp AI (Google Gemini)
+            để đánh giá. Khách chưa đăng nhập chỉ lưu lịch sử trong trình duyệt của mình.
           </p>
         </section>
 
