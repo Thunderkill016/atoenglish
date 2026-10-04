@@ -66,18 +66,35 @@ type StepState =
 export function ZeroPathSession({
   lesson,
   mode = "learn",
+  resume = null,
 }: {
   lesson: ZeroPathLessonEnvelope;
   /** Server-bound session mode: "review" marks attempts as delayed re-observation. */
   mode?: "learn" | "review";
+  /**
+   * Durable-session resume: when present the session continues at the first
+   * action without a stored outcome, using the already-minted session id.
+   */
+  resume?: { sessionId: string; completedActionIds: readonly string[] } | null;
 }) {
-  const [started, setStarted] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [index, setIndex] = useState(0);
+  const resumeIndex = resume
+    ? lesson.actions.findIndex(
+        (item) => !resume.completedActionIds.includes(item.actionId),
+      )
+    : 0;
+  const resumedComplete = resume !== null && resumeIndex === -1;
+  const [started, setStarted] = useState(resume !== null);
+  const [sessionId, setSessionId] = useState<string | null>(
+    resume?.sessionId ?? null,
+  );
+  const [index, setIndex] = useState(
+    resumedComplete ? lesson.actions.length - 1 : resumeIndex,
+  );
   const [step, setStep] = useState<StepState>({ phase: "answering" });
   const [response, setResponse] = useState("");
   const [supportLevel, setSupportLevel] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
   const [model, setModel] = useState<ZeroPathSessionReadModel | null>(null);
   const actionStartedAt = useRef(0);
   const idempotencyKey = useRef(crypto.randomUUID());
@@ -87,8 +104,27 @@ export function ZeroPathSession({
     idempotencyKey.current = crypto.randomUUID();
   }, [index]);
 
+  // Resumed sessions that already completed every action skip straight to
+  // the read-model summary rather than replaying the final action.
+  useEffect(() => {
+    if (resumedComplete && sessionId) {
+      void getZeroPathReadModel(sessionId).then((readModel) => {
+        if (readModel) setModel(readModel);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only hydration
+  }, []);
+
   async function start() {
-    const result = await startZeroPathPilotSession(mode === "review" ? "review" : undefined);
+    const result = await startZeroPathPilotSession(
+      lesson.lessonId,
+      mode === "review" ? "review" : undefined,
+    );
+    if (!result.sessionId) {
+      setStartError("Đang có quá nhiều yêu cầu — thử lại sau ít phút nhé.");
+      return;
+    }
+    setStartError(null);
     setSessionId(result.sessionId);
     setStarted(true);
   }
@@ -158,7 +194,9 @@ export function ZeroPathSession({
           <p className="text-xs font-bold uppercase tracking-widest text-sky-600">
             {mode === "review" ? "Buổi ôn tập" : "Buổi học"}
           </p>
-          <h2 className="text-xl font-bold text-foreground">{lesson.mission}</h2>
+          <h2 className="text-xl font-bold text-foreground">
+            {lesson.mission}
+          </h2>
           <p className="text-sm text-muted-foreground">
             Mục tiêu: {lesson.learnerCanDo}
           </p>
@@ -168,6 +206,11 @@ export function ZeroPathSession({
               : `${lesson.actions.length} bước — đáp án luôn ẩn cho đến khi bạn thử, và có thể gõ thay vì nói.`}
           </p>
         </div>
+        {startError ? (
+          <p role="alert" className="text-sm font-medium text-amber-600">
+            {startError}
+          </p>
+        ) : null}
         <button
           type="button"
           onClick={() => void start()}
@@ -188,7 +231,10 @@ export function ZeroPathSession({
   }
 
   return (
-    <section aria-label="Bài học zero-path" className="flex min-h-[68vh] flex-col">
+    <section
+      aria-label="Bài học zero-path"
+      className="flex min-h-[68vh] flex-col"
+    >
       <ProgressBar current={index} total={lesson.actions.length} />
 
       <div className="flex-1 space-y-5 py-6">
@@ -210,14 +256,16 @@ export function ZeroPathSession({
 
         {action.respondable && action.supportSteps.length > 0 ? (
           <div className="space-y-2">
-            {action.supportSteps.slice(0, supportLevel).map((rung, rungIndex) => (
-              <p
-                key={rungIndex}
-                className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100"
-              >
-                {rung}
-              </p>
-            ))}
+            {action.supportSteps
+              .slice(0, supportLevel)
+              .map((rung, rungIndex) => (
+                <p
+                  key={rungIndex}
+                  className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+                >
+                  {rung}
+                </p>
+              ))}
             {supportLevel < action.supportSteps.length ? (
               <button
                 type="button"
@@ -363,18 +411,23 @@ function SessionSummary({ model }: { model: ZeroPathSessionReadModel }) {
               </p>
               <p className="text-sm text-muted-foreground">
                 {construct.read.evidenceCount} bằng chứng ·{" "}
-                {STATUS_LABELS[construct.read.sourceStatus] ?? construct.read.sourceStatus}
+                {STATUS_LABELS[construct.read.sourceStatus] ??
+                  construct.read.sourceStatus}
               </p>
               {construct.claims.length > 0 ? (
                 <p className="mt-1 text-xs font-medium text-muted-foreground">
-                  {construct.claims.map((claim) => CLAIM_LABELS[claim] ?? claim).join(" · ")}
+                  {construct.claims
+                    .map((claim) => CLAIM_LABELS[claim] ?? claim)
+                    .join(" · ")}
                 </p>
               ) : null}
             </li>
           );
         })}
       </ul>
-      {model.skippedAttemptOnly > 0 || model.selfReports > 0 || model.rejectedCount > 0 ? (
+      {model.skippedAttemptOnly > 0 ||
+      model.selfReports > 0 ||
+      model.rejectedCount > 0 ? (
         <p className="text-xs text-muted-foreground">
           {model.skippedAttemptOnly > 0
             ? `${model.skippedAttemptOnly} lượt luyện tập không tạo bằng chứng. `
@@ -382,7 +435,9 @@ function SessionSummary({ model }: { model: ZeroPathSessionReadModel }) {
           {model.selfReports > 0
             ? `${model.selfReports} tự đánh giá đã ghi nhận. `
             : ""}
-          {model.rejectedCount > 0 ? `${model.rejectedCount} bằng chứng bị từ chối.` : ""}
+          {model.rejectedCount > 0
+            ? `${model.rejectedCount} bằng chứng bị từ chối.`
+            : ""}
         </p>
       ) : null}
       <p className="text-xs text-muted-foreground">

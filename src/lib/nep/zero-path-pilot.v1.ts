@@ -9,7 +9,8 @@ import type { LessonAction } from "./lesson-contract";
  * is allowed to see. Canonical recompute happens server-side on submission.
  */
 
-export const ZERO_PATH_PILOT_LESSON_ID = "LESSON-CAP002-FIRST-MEETING-V1" as const;
+export const ZERO_PATH_PILOT_LESSON_ID =
+  "LESSON-CAP002-FIRST-MEETING-V1" as const;
 
 export type ZeroPathActionEnvelope = {
   readonly actionId: string;
@@ -43,6 +44,7 @@ export type ZeroPathLessonEnvelope = {
 
 export type ZeroPathLessonIndexEntry = {
   readonly lessonId: string;
+  readonly lessonVersion: number;
   readonly mission: string;
   readonly learnerCanDo: string;
 };
@@ -51,6 +53,7 @@ export type ZeroPathLessonIndexEntry = {
 export function zeroPathLessonIndex(): readonly ZeroPathLessonIndexEntry[] {
   return nepLessonRegistryV1.map((lesson) => ({
     lessonId: lesson.id,
+    lessonVersion: lesson.version,
     mission: lesson.mission,
     learnerCanDo: lesson.learnerCanDo,
   }));
@@ -77,10 +80,12 @@ export function zeroPathLessonEnvelope(
       model: action.model ?? null,
       choices: [...(action.choices ?? [])],
       supportVi: action.supportVi ?? null,
-      supportSteps: action.supportLadder ?? (action.supportVi ? [action.supportVi] : []),
+      supportSteps:
+        action.supportLadder ?? (action.supportVi ? [action.supportVi] : []),
       revealsAnswer: action.revealsAnswer === true,
       changedContext: action.changedContext === true,
-      respondable: action.assessment != null || action.collectsResponse === true,
+      respondable:
+        action.assessment != null || action.collectsResponse === true,
     })),
   };
 }

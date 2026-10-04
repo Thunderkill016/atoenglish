@@ -41,7 +41,10 @@ export type SessionSubmissionOutcome =
       readonly kind: "duplicate";
       readonly actionId: string;
       /** The outcome the original submission produced; replayed unchanged. */
-      readonly prior: Exclude<SessionSubmissionOutcome, { readonly kind: "duplicate" }>;
+      readonly prior: Exclude<
+        SessionSubmissionOutcome,
+        { readonly kind: "duplicate" }
+      >;
     }
   | {
       readonly kind: "self-report";
@@ -58,6 +61,12 @@ export type SessionSubmissionOutcome =
       readonly kind: "evidence";
       readonly actionId: string;
       readonly claim: ZeroPathClaimId;
+      /**
+       * Server-side only: the minted reference evidence record. Durable
+       * session stores persist its plain JSON fields for hydration; it must
+       * never be serialized through the learner-facing action boundary.
+       */
+      readonly evidence: ReferenceCoreEvidence;
       readonly evaluation: NếpEvaluationResult;
       readonly feedback: string;
     }
@@ -70,7 +79,10 @@ export type SessionSubmissionOutcome =
       readonly feedback: string;
     };
 
-export type { SessionConstructRead, ZeroPathSessionReadModel } from "./session-read-model";
+export type {
+  SessionConstructRead,
+  ZeroPathSessionReadModel,
+} from "./session-read-model";
 
 export type ZeroPathSessionRunner = {
   readonly sessionId: string;
@@ -87,19 +99,57 @@ export type ZeroPathSessionOptions = {
   /** Clock injection for deterministic tests; defaults to the host clock. */
   readonly now?: () => string;
   readonly ontology?: OntologyGraph;
+  /**
+   * Durable-session hydration: plain-data accumulators rebuilt from stored
+   * outcome snapshots. Restored records are projection inputs only — nothing
+   * is re-evaluated, re-certified or re-written on restore.
+   */
+  readonly restored?: {
+    readonly outcomesByKey: ReadonlyMap<
+      string,
+      Exclude<SessionSubmissionOutcome, { kind: "duplicate" }>
+    >;
+    readonly accepted: readonly ReferenceCoreEvidence[];
+    readonly rejectedEvidence: readonly {
+      claim: ZeroPathClaimId;
+      problems: readonly unknown[];
+    }[];
+    readonly claimsByTarget: ReadonlyMap<string, ReadonlySet<ZeroPathClaimId>>;
+    readonly counters: {
+      readonly submissions: number;
+      readonly skippedAttemptOnly: number;
+      readonly selfReports: number;
+      readonly sequence: number;
+    };
+  };
 };
 
-export function createZeroPathSession(options: ZeroPathSessionOptions): ZeroPathSessionRunner {
+export function createZeroPathSession(
+  options: ZeroPathSessionOptions,
+): ZeroPathSessionRunner {
   const now = options.now ?? (() => new Date().toISOString());
   const ontology = options.ontology ?? defaultOntology();
-  const accepted: ReferenceCoreEvidence[] = [];
-  const rejectedEvidence: { claim: ZeroPathClaimId; problems: readonly unknown[] }[] = [];
-  const claimsByTarget = new Map<string, Set<ZeroPathClaimId>>();
-  const outcomesByKey = new Map<string, Exclude<SessionSubmissionOutcome, { kind: "duplicate" }>>();
-  let submissions = 0;
-  let skippedAttemptOnly = 0;
-  let selfReports = 0;
-  let sequence = 0;
+  const accepted: ReferenceCoreEvidence[] = [
+    ...(options.restored?.accepted ?? []),
+  ];
+  const rejectedEvidence: {
+    claim: ZeroPathClaimId;
+    problems: readonly unknown[];
+  }[] = [...(options.restored?.rejectedEvidence ?? [])];
+  const claimsByTarget = new Map<string, Set<ZeroPathClaimId>>(
+    [...(options.restored?.claimsByTarget ?? [])].map(([key, value]) => [
+      key,
+      new Set(value),
+    ]),
+  );
+  const outcomesByKey = new Map<
+    string,
+    Exclude<SessionSubmissionOutcome, { kind: "duplicate" }>
+  >(options.restored?.outcomesByKey);
+  let submissions = options.restored?.counters.submissions ?? 0;
+  let skippedAttemptOnly = options.restored?.counters.skippedAttemptOnly ?? 0;
+  let selfReports = options.restored?.counters.selfReports ?? 0;
+  let sequence = options.restored?.counters.sequence ?? 0;
 
   function recordSubmission(
     submission: NếpPracticeSubmission,
@@ -112,7 +162,10 @@ export function createZeroPathSession(options: ZeroPathSessionOptions): ZeroPath
 
     const compiled = compileCanonicalNếpPracticeAttempt(submission);
     if (!compiled) {
-      const outcome = { kind: "rejected", reason: "unresolvable-submission" } as const;
+      const outcome = {
+        kind: "rejected",
+        reason: "unresolvable-submission",
+      } as const;
       outcomesByKey.set(submission.idempotencyKey, outcome);
       return outcome;
     }
@@ -155,13 +208,25 @@ export function createZeroPathSession(options: ZeroPathSessionOptions): ZeroPath
       outcome = { kind: "attempt-only", ...base };
     } else if (!result.ok) {
       rejectedEvidence.push({ claim: result.claim, problems: result.problems });
-      outcome = { kind: "invalid-evidence", claim: result.claim, problems: result.problems, ...base };
+      outcome = {
+        kind: "invalid-evidence",
+        claim: result.claim,
+        problems: result.problems,
+        ...base,
+      };
     } else {
       accepted.push(result.evidence);
-      const claims = claimsByTarget.get(result.evidence.targetId) ?? new Set<ZeroPathClaimId>();
+      const claims =
+        claimsByTarget.get(result.evidence.targetId) ??
+        new Set<ZeroPathClaimId>();
       claims.add(result.claim);
       claimsByTarget.set(result.evidence.targetId, claims);
-      outcome = { kind: "evidence", claim: result.claim, ...base };
+      outcome = {
+        kind: "evidence",
+        claim: result.claim,
+        evidence: result.evidence,
+        ...base,
+      };
     }
     outcomesByKey.set(submission.idempotencyKey, outcome);
     return outcome;
@@ -184,11 +249,17 @@ export function createZeroPathSession(options: ZeroPathSessionOptions): ZeroPath
     });
   }
 
-  return { sessionId: options.sessionId, recordSubmission, projection, readModel };
+  return {
+    sessionId: options.sessionId,
+    recordSubmission,
+    projection,
+    readModel,
+  };
 }
 
 function defaultOntology(): OntologyGraph {
   const result = buildEnglishOntologyV1();
-  if (!result.ok) throw new Error("canonical English ontology V1 failed to build");
+  if (!result.ok)
+    throw new Error("canonical English ontology V1 failed to build");
   return result.graph;
 }

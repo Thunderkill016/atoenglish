@@ -19,7 +19,9 @@ vi.mock("@/app/actions/zero-path", () => {
     },
     submitZeroPathResponse: async (
       sessionId: string,
-      input: Parameters<ReturnType<typeof createZeroPathSession>["recordSubmission"]>[0],
+      input: Parameters<
+        ReturnType<typeof createZeroPathSession>["recordSubmission"]
+      >[0],
     ) => {
       const runner = runners.get(sessionId);
       if (!runner) return { kind: "no-session" as const };
@@ -30,7 +32,8 @@ vi.mock("@/app/actions/zero-path", () => {
         case "duplicate":
           return {
             kind: "duplicate" as const,
-            evaluation: "evaluation" in outcome.prior ? outcome.prior.evaluation : null,
+            evaluation:
+              "evaluation" in outcome.prior ? outcome.prior.evaluation : null,
             feedback:
               "feedback" in outcome.prior
                 ? outcome.prior.feedback
@@ -39,9 +42,18 @@ vi.mock("@/app/actions/zero-path", () => {
         case "self-report":
           return { kind: "self-report" as const, feedback: outcome.feedback };
         case "attempt-only":
-          return { kind: "attempt-only" as const, evaluation: outcome.evaluation, feedback: outcome.feedback };
+          return {
+            kind: "attempt-only" as const,
+            evaluation: outcome.evaluation,
+            feedback: outcome.feedback,
+          };
         case "evidence":
-          return { kind: "evidence" as const, claim: outcome.claim, evaluation: outcome.evaluation, feedback: outcome.feedback };
+          return {
+            kind: "evidence" as const,
+            claim: outcome.claim,
+            evaluation: outcome.evaluation,
+            feedback: outcome.feedback,
+          };
         case "invalid-evidence":
           return {
             kind: "invalid-evidence" as const,
@@ -52,8 +64,14 @@ vi.mock("@/app/actions/zero-path", () => {
           };
       }
     },
-    getZeroPathReadModel: async (sessionId: string) =>
-      runners.get(sessionId)?.readModel() ?? null,
+    getZeroPathReadModel: async (sessionId: string) => {
+      // Resumed sessions were started by a previous process — the mock mints
+      // a runner on first read, like the real durable store rehydrates one.
+      if (!runners.has(sessionId)) {
+        runners.set(sessionId, createZeroPathSession({ sessionId }));
+      }
+      return runners.get(sessionId)?.readModel() ?? null;
+    },
   };
 });
 
@@ -76,7 +94,10 @@ function clickButton(container: HTMLElement, text: string) {
 
 function typeAndSubmit(container: HTMLElement, text: string) {
   const textarea = container.querySelector("textarea")!;
-  const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
+  const setter = Object.getOwnPropertyDescriptor(
+    HTMLTextAreaElement.prototype,
+    "value",
+  )!.set!;
   setter.call(textarea, text);
   textarea.dispatchEvent(new Event("input", { bubbles: true }));
 }
@@ -140,7 +161,9 @@ describe("ZeroPathSession", () => {
     await flush();
 
     // repair: free text with repair signal.
-    await act(async () => typeAndSubmit(container, "sorry could you say that again"));
+    await act(async () =>
+      typeAndSubmit(container, "sorry could you say that again"),
+    );
     clickButton(container, "Kiểm tra");
     await flush();
     clickButton(container, "Tiếp tục");
@@ -154,7 +177,9 @@ describe("ZeroPathSession", () => {
     await flush();
 
     // transfer: free text.
-    await act(async () => typeAndSubmit(container, "could you say that again my name is hoang"));
+    await act(async () =>
+      typeAndSubmit(container, "could you say that again my name is hoang"),
+    );
     clickButton(container, "Kiểm tra");
     await flush();
     clickButton(container, "Tiếp tục");
@@ -171,6 +196,43 @@ describe("ZeroPathSession", () => {
     expect(container.textContent).toContain("Đọc hiểu");
     expect(container.textContent).toContain("Viết");
     expect(container.textContent).toContain("Tương tác viết");
-    expect(container.textContent).toContain("không phải điểm số hay mức thành thạo");
+    expect(container.textContent).toContain(
+      "không phải điểm số hay mức thành thạo",
+    );
+  });
+
+  it("resumes at the first action without a stored outcome — no replay, no orientation", async () => {
+    const completed = lesson.actions
+      .slice(0, 4)
+      .map((action) => action.actionId);
+    await act(async () => {
+      root.render(
+        <ZeroPathSession
+          lesson={lesson}
+          resume={{ sessionId: "resumed-1", completedActionIds: completed }}
+        />,
+      );
+    });
+    await flush();
+    // Skips orientation entirely and lands on the 5th action (retrieve).
+    expect(container.textContent).not.toContain("Bắt đầu");
+    expect(container.textContent).toContain(
+      lesson.actions[4].instruction ?? "",
+    );
+  });
+
+  it("shows the read-model summary when a resumed session already finished", async () => {
+    const completed = lesson.actions.map((action) => action.actionId);
+    await act(async () => {
+      root.render(
+        <ZeroPathSession
+          lesson={lesson}
+          resume={{ sessionId: "resumed-2", completedActionIds: completed }}
+        />,
+      );
+    });
+    await flush();
+    await flush();
+    expect(container.textContent).toContain("Bằng chứng buổi học");
   });
 });
