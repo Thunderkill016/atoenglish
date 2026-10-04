@@ -16,12 +16,17 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 
 const root = new URL("..", import.meta.url).pathname;
-const workerDir = join(
-  root,
-  ".cloudflare/output/v0/workers/default",
-);
+const workerDir = join(root, ".cloudflare/output/v0/workers/default");
 const configPath = join(workerDir, "worker.config.json");
 const bundleDir = join(workerDir, "bundle");
+
+// --preview: emit Preview Build Output (CLOUDFLARE_PREVIEW_BUILD is the flag
+// the Cloudflare Vite plugin reads) so `cf previews deploy --prebuilt` accepts
+// the manifest instead of rejecting a production-mode build.
+const previewIdx = process.argv.indexOf("--preview");
+if (previewIdx !== -1) {
+  process.env.CLOUDFLARE_PREVIEW_BUILD = "true";
+}
 
 const MODULE_TYPES = new Map([
   [".js", "esm"],
@@ -80,9 +85,16 @@ if (added.length) {
   for (const m of added) console.log(`  + ${m}`);
 }
 
-// 3. Deploy prebuilt Build Output.
+// 3. Deploy prebuilt Build Output — production deploy by default, a Workers
+// Preview (branch/PR environment) when --preview is passed.
 const modeIdx = process.argv.indexOf("--mode");
-const deployArgs = ["deploy", "--prebuilt"];
+const deployArgs =
+  previewIdx !== -1
+    ? ["previews", "deploy", "--prebuilt"]
+    : ["deploy", "--prebuilt"];
+if (previewIdx !== -1 && process.argv[previewIdx + 1]) {
+  deployArgs.push(process.argv[previewIdx + 1]);
+}
 if (modeIdx !== -1 && process.argv[modeIdx + 1]) {
   deployArgs.push("--mode", process.argv[modeIdx + 1]);
 }
