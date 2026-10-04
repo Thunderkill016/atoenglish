@@ -103,7 +103,7 @@ export default function PrivacyPage() {
               Mọi thắc mắc về chính sách bảo mật, vui lòng liên hệ:{" "}
               <a
                 href="mailto:support@atoenglish.com"
-                className="text-emerald-600 dark:text-emerald-400 underline hover:no-underline font-medium"
+                className="text-primary underline hover:no-underline font-medium"
               >
                 support@atoenglish.com
               </a>
@@ -114,7 +114,7 @@ export default function PrivacyPage() {
         <div className="pt-8 border-t border-border/40 flex gap-4 text-sm">
           <Link
             href="/terms"
-            className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+            className="text-primary font-semibold hover:underline"
           >
             Điều khoản Sử dụng →
           </Link>

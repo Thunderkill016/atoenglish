@@ -32,7 +32,7 @@ export function BottomNav({ dueCardsCount = 0 }: BottomNavProps) {
 
   return (
     <nav
-      className="sm:hidden fixed bottom-0 left-0 right-0 z-50 h-16 bg-background/90 backdrop-blur-xl border-t border-border/50 flex items-stretch justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.04)])]"
+      className="sm:hidden fixed bottom-0 left-0 right-0 z-50 h-16 bg-background/90 backdrop-blur-xl border-t border-border/50 flex items-stretch justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.04)]"
       aria-label="Điều hướng chính"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >

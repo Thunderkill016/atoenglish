@@ -31,6 +31,7 @@ import {
   transitionMissionSession,
 } from "@/lib/missions/mission-engine";
 import type { MissionSpecV1 } from "@/lib/missions/mission-spec";
+import { speakEnglish } from "@/lib/speech";
 
 interface SpeechRecognitionEventLike {
   results: ArrayLike<ArrayLike<{ transcript: string }>>;
@@ -92,12 +93,7 @@ function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null 
 }
 
 function speakText(text: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.92;
-  window.speechSynthesis.speak(utterance);
+  speakEnglish(text);
 }
 
 function scoreLabel(result: MissionEvaluationResult | null) {

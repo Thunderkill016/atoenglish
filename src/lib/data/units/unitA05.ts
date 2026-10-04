@@ -1,6 +1,5 @@
 import { UnitData } from "@/lib/lessons/lesson-spec";
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // UNIT-A0-5 — Thông Tin Cá Nhân  (A0)
 // Standardized header + section comments per lesson-blueprint.ts (CONTENT_BLOCK_ORDER)
@@ -24,7 +23,6 @@ export const unitA05: UnitData = {
   badgeName: "Người Tự Tin",
   badgeEmoji: "🪪",
 
-
   // ── HOOK: situation (real VN context) + learningOutcomes (2–5 can-do) + culturalNote (pragmatic VN↔EN)
   situation:
     "Bạn đang ở sân bay quốc tế. Nhân viên hải quan hỏi một loạt câu hỏi bằng tiếng Anh: tên, tuổi, nghề nghiệp, quê quán. Bạn cần trả lời nhanh và chính xác.",
@@ -35,11 +33,9 @@ export const unitA05: UnitData = {
     "Hỏi và trả lời thông tin cá nhân cơ bản",
   ],
 
-
   // ── HOOK (cultural): pragmatic note
   culturalNote:
-    'Tại các nước Anh-Mỹ, việc hỏi tuổi (<span class="text-emerald-400 font-semibold">"How old are you?"</span>) được coi là hơi bất lịch sự với người lạ — chỉ hỏi khi cần thiết (điền form, v.v.). Tuy nhiên tại hải quan, việc hỏi và trả lời trực tiếp là hoàn toàn bình thường.',
-
+    'Tại các nước Anh-Mỹ, việc hỏi tuổi (<span class="text-primary font-semibold">"How old are you?"</span>) được coi là hơi bất lịch sự với người lạ — chỉ hỏi khi cần thiết (điền form, v.v.). Tuy nhiên tại hải quan, việc hỏi và trả lời trực tiếp là hoàn toàn bình thường.',
 
   // ── WARMUP: ≥3 short phrases (SRS + prior knowledge activation)
   warmupGreetings: [
@@ -63,7 +59,6 @@ export const unitA05: UnitData = {
     },
   ],
 
-
   // ── VOCABULARY: 8–20 words, pre-teach BEFORE dialogues; l1_interference_vn (A1 100%, B1+ ≥50%)
   vocab: [
     {
@@ -76,7 +71,8 @@ export const unitA05: UnitData = {
       example2: "What is your age?",
       collocation: "my age is / what age / same age / age group",
       audio: "/audio/unit-a0-5/age.mp3",
-      l1_interference_vn: "⚠️ Hỏi tuổi: 'How old are you?' KHÔNG 'How many years do you have?' (dịch thẳng từ tiếng Việt). Trả lời: 'I'm 25.'",
+      l1_interference_vn:
+        "⚠️ Hỏi tuổi: 'How old are you?' KHÔNG 'How many years do you have?' (dịch thẳng từ tiếng Việt). Trả lời: 'I'm 25.'",
     },
     {
       id: 2,
@@ -88,7 +84,8 @@ export const unitA05: UnitData = {
       example2: "Where do you live?",
       collocation: "I live in / live with / live alone / where do you live",
       audio: "/audio/unit-a0-5/live.mp3",
-      l1_interference_vn: "⚠️ 'Live' /lɪv/ (động từ, sống/ở) vs 'live' /laɪv/ (tính từ, trực tiếp). 'I live in Hanoi' vs 'a live show'.",
+      l1_interference_vn:
+        "⚠️ 'Live' /lɪv/ (động từ, sống/ở) vs 'live' /laɪv/ (tính từ, trực tiếp). 'I live in Hanoi' vs 'a live show'.",
     },
     {
       id: 3,
@@ -100,7 +97,8 @@ export const unitA05: UnitData = {
       example2: "What do you work as?",
       collocation: "I work as / work in / work for / go to work",
       audio: "/audio/unit-a0-5/work.mp3",
-      l1_interference_vn: "⚠️ 'Work' (v, không đếm được) HOẶC 'a job' (n, đếm được). 'I have work to do' vs 'I have a job'. KHÔNG 'I have a work'.",
+      l1_interference_vn:
+        "⚠️ 'Work' (v, không đếm được) HOẶC 'a job' (n, đếm được). 'I have work to do' vs 'I have a job'. KHÔNG 'I have a work'.",
     },
     {
       id: 4,
@@ -112,7 +110,8 @@ export const unitA05: UnitData = {
       example2: "My job is teacher.",
       collocation: "my job is / what's your job / full-time job",
       audio: "/audio/unit-a0-5/job.mp3",
-      l1_interference_vn: "⚠️ 'Job' (đếm được): 'a job', 'two jobs'. 'Work' (không đếm được). 'What's your job?' = 'What do you do (for work)?'",
+      l1_interference_vn:
+        "⚠️ 'Job' (đếm được): 'a job', 'two jobs'. 'Work' (không đếm được). 'What's your job?' = 'What do you do (for work)?'",
     },
     {
       id: 5,
@@ -124,7 +123,8 @@ export const unitA05: UnitData = {
       example2: "Where are you from?",
       collocation: "I'm from / where are you from / come from",
       audio: "/audio/unit-a0-5/from.mp3",
-      l1_interference_vn: "⚠️ 'I'm from Vietnam' KHÔNG 'I'm from of Vietnam'. 'From' không cần thêm 'of'. 'Where are you from?' = câu hỏi chuẩn.",
+      l1_interference_vn:
+        "⚠️ 'I'm from Vietnam' KHÔNG 'I'm from of Vietnam'. 'From' không cần thêm 'of'. 'Where are you from?' = câu hỏi chuẩn.",
     },
     {
       id: 6,
@@ -136,7 +136,8 @@ export const unitA05: UnitData = {
       example2: "Can I have your phone number?",
       collocation: "phone number / my phone / call my phone / phone call",
       audio: "/audio/unit-a0-5/phone.mp3",
-      l1_interference_vn: "⚠️ 'Call/phone someone' — KHÔNG 'phone to someone'. 'My phone number is...' Cả 'call' và 'phone' đều là động từ.",
+      l1_interference_vn:
+        "⚠️ 'Call/phone someone' — KHÔNG 'phone to someone'. 'My phone number is...' Cả 'call' và 'phone' đều là động từ.",
     },
     {
       id: 7,
@@ -148,7 +149,8 @@ export const unitA05: UnitData = {
       example2: "What is your home address?",
       collocation: "home address / email address / what's your address",
       audio: "/audio/unit-a0-5/address.mp3",
-      l1_interference_vn: "⚠️ 'What's your address?' KHÔNG 'Where is your address?' — địa chỉ là thông tin, không phải vị trí.",
+      l1_interference_vn:
+        "⚠️ 'What's your address?' KHÔNG 'Where is your address?' — địa chỉ là thông tin, không phải vị trí.",
     },
     {
       id: 8,
@@ -160,7 +162,8 @@ export const unitA05: UnitData = {
       example2: "Are you single or married?",
       collocation: "I'm single / single person / stay single",
       audio: "/audio/unit-a0-5/single.mp3",
-      l1_interference_vn: "⚠️ 'Single' = độc thân / phòng đơn / một chiều. Ngữ cảnh quyết định nghĩa. 'Are you single?' = bạn có người yêu chưa?",
+      l1_interference_vn:
+        "⚠️ 'Single' = độc thân / phòng đơn / một chiều. Ngữ cảnh quyết định nghĩa. 'Are you single?' = bạn có người yêu chưa?",
     },
     {
       id: 9,
@@ -172,7 +175,8 @@ export const unitA05: UnitData = {
       example2: "Are you married?",
       collocation: "I'm married / get married / married life",
       audio: "/audio/unit-a0-5/married.mp3",
-      l1_interference_vn: "⚠️ 'Married TO someone': 'She's married to a doctor'. KHÔNG 'married with'. 'Get married' = kết hôn (sự kiện).",
+      l1_interference_vn:
+        "⚠️ 'Married TO someone': 'She's married to a doctor'. KHÔNG 'married with'. 'Get married' = kết hôn (sự kiện).",
     },
     {
       id: 10,
@@ -184,10 +188,10 @@ export const unitA05: UnitData = {
       example2: "What is your nationality?",
       collocation: "what nationality / my nationality is / dual nationality",
       audio: "/audio/unit-a0-5/nationality.mp3",
-      l1_interference_vn: "⚠️ Hỏi quốc tịch: 'What nationality are you?' hoặc 'Where are you from?' KHÔNG 'What is your nation?'",
+      l1_interference_vn:
+        "⚠️ Hỏi quốc tịch: 'What nationality are you?' hoặc 'Where are you from?' KHÔNG 'What is your nation?'",
     },
   ],
-
 
   // ── GRAMMAR: Inductive (Meaning→Form→CCQ) + vnNote L1
   grammar: {
@@ -195,17 +199,17 @@ export const unitA05: UnitData = {
     rule: "BE thay đổi theo CHỦ NGỮ — khác hoàn toàn với tiếng Việt!",
 
     conjugation: [
-      { subject: "I",         form: "AM",  example: "I am 25 years old." },
-      { subject: "You",       form: "ARE", example: "You are from Hanoi." },
-      { subject: "He / She",  form: "IS",  example: "She is a doctor." },
+      { subject: "I", form: "AM", example: "I am 25 years old." },
+      { subject: "You", form: "ARE", example: "You are from Hanoi." },
+      { subject: "He / She", form: "IS", example: "She is a doctor." },
       { subject: "We / They", form: "ARE", example: "They are married." },
     ],
 
     examples: [
-      { en: "I am from Vietnam.",         vn: "Tôi đến từ Việt Nam." },
-      { en: "She is a teacher.",          vn: "Cô ấy là giáo viên." },
-      { en: "They are married.",          vn: "Họ đã kết hôn." },
-      { en: "What is your nationality?",  vn: "Quốc tịch của bạn là gì?" },
+      { en: "I am from Vietnam.", vn: "Tôi đến từ Việt Nam." },
+      { en: "She is a teacher.", vn: "Cô ấy là giáo viên." },
+      { en: "They are married.", vn: "Họ đã kết hôn." },
+      { en: "What is your nationality?", vn: "Quốc tịch của bạn là gì?" },
     ],
 
     tip: "Viết tắt: I AM → I'M / You ARE → You'RE / He IS → He'S / She IS → She'S / We ARE → We'RE / They ARE → They'RE. Dạng viết tắt nghe tự nhiên hơn trong hội thoại!",
@@ -240,19 +244,17 @@ export const unitA05: UnitData = {
     },
   },
 
-
   // ── EXERCISES_INPUT: matching
   matchingExercise: {
     title: "Nối chủ ngữ với động từ BE đúng",
     pairs: [
-      { left: "I",        right: "am" },
-      { left: "She",      right: "is" },
-      { left: "They",     right: "are" },
-      { left: "We",       right: "are" },
-      { left: "He",       right: "is" },
+      { left: "I", right: "am" },
+      { left: "She", right: "is" },
+      { left: "They", right: "are" },
+      { left: "We", right: "are" },
+      { left: "He", right: "is" },
     ],
   },
-
 
   // ── EXERCISES_INPUT: practiceQuiz (active recall)
   practiceQuiz: [
@@ -296,7 +298,6 @@ export const unitA05: UnitData = {
     },
   ],
 
-
   // ── OUTPUT: practiceTranslate (VN→EN ≥3) + speaking (level1/2)
   practiceTranslate: [
     {
@@ -316,7 +317,6 @@ export const unitA05: UnitData = {
     },
   ],
 
-
   // ── EXERCISES_INPUT: sentenceCorrection
   sentenceCorrectionExercises: [
     {
@@ -324,18 +324,18 @@ export const unitA05: UnitData = {
       sentence: "What is your name's?",
       errorWord: "name's",
       correction: "name",
-      explanation_vn: "'What is your NAME?' — không thêm sở hữu cách 's' vào đây. 'Name's' là lỗi phổ biến.",
+      explanation_vn:
+        "'What is your NAME?' — không thêm sở hữu cách 's' vào đây. 'Name's' là lỗi phổ biến.",
     },
     {
       id: "sc-A05-2",
       sentence: "I am come from Vietnam.",
       errorWord: "am come",
       correction: "come",
-      explanation_vn: "'I COME from Vietnam' (Simple Present). 'Am come' sai — 'come' không phải present continuous ở đây.",
+      explanation_vn:
+        "'I COME from Vietnam' (Simple Present). 'Am come' sai — 'come' không phải present continuous ở đây.",
     },
   ],
-
-
 
   // ── EXERCISES_INPUT: listenAndArrange
   listenAndArrangeExercises: [
@@ -343,19 +343,44 @@ export const unitA05: UnitData = {
       id: "laA05-1",
       audio_text: "My name is Linh and I am twenty years old.",
       prompt_vn: "Tên tôi là Linh và tôi hai mươi tuổi.",
-      words: ["My", "name", "is", "Linh", "and", "I", "am", "twenty", "years", "old", ".", "are", "have"],
+      words: [
+        "My",
+        "name",
+        "is",
+        "Linh",
+        "and",
+        "I",
+        "am",
+        "twenty",
+        "years",
+        "old",
+        ".",
+        "are",
+        "have",
+      ],
       answer: "My name is Linh and I am twenty years old .",
     },
     {
       id: "laA05-2",
       audio_text: "I come from Vietnam and I live in Hanoi.",
       prompt_vn: "Tôi đến từ Việt Nam và tôi sống ở Hà Nội.",
-      words: ["I", "come", "from", "Vietnam", "and", "I", "live", "in", "Hanoi", ".", "am come", "lives"],
+      words: [
+        "I",
+        "come",
+        "from",
+        "Vietnam",
+        "and",
+        "I",
+        "live",
+        "in",
+        "Hanoi",
+        ".",
+        "am come",
+        "lives",
+      ],
       answer: "I come from Vietnam and I live in Hanoi .",
     },
   ],
-
-
 
   // ── EXERCISES_INPUT: wordBank
   wordBankExercises: [
@@ -368,7 +393,18 @@ export const unitA05: UnitData = {
     {
       id: "wb2",
       prompt_vn: "Cô ấy là bác sĩ và cô ấy đã kết hôn.",
-      words: ["She", "is", "a", "doctor", "and", "she", "is", "married", ".", "are"],
+      words: [
+        "She",
+        "is",
+        "a",
+        "doctor",
+        "and",
+        "she",
+        "is",
+        "married",
+        ".",
+        "are",
+      ],
       answer: "She is a doctor and she is married .",
     },
     {
@@ -378,7 +414,6 @@ export const unitA05: UnitData = {
       answer: "What is your nationality ?",
     },
   ],
-
 
   // ── EXERCISES_INPUT: scramble
   scrambleExercises: [
@@ -401,7 +436,6 @@ export const unitA05: UnitData = {
       answer: "What is your nationality ?",
     },
   ],
-
 
   // ── DIALOGUES: ≥1 dialogue AFTER vocab (98% coverage)
   dialogues: [
@@ -457,7 +491,8 @@ export const unitA05: UnitData = {
           id: "d5-1-8",
           speaker: "Minh",
           text: "I work as a software engineer. I live in Ho Chi Minh City.",
-          translation: "Tôi làm kỹ sư phần mềm. Tôi sống ở thành phố Hồ Chí Minh.",
+          translation:
+            "Tôi làm kỹ sư phần mềm. Tôi sống ở thành phố Hồ Chí Minh.",
         },
         {
           id: "d5-1-9",
@@ -469,7 +504,8 @@ export const unitA05: UnitData = {
           id: "d5-1-10",
           speaker: "Minh",
           text: "I am single. And my phone number is 0912345678. My address is...",
-          translation: "Tôi độc thân. Và số điện thoại của tôi là 0912345678. Địa chỉ của tôi là...",
+          translation:
+            "Tôi độc thân. Và số điện thoại của tôi là 0912345678. Địa chỉ của tôi là...",
         },
       ],
     },
@@ -489,7 +525,8 @@ export const unitA05: UnitData = {
           id: "d5-2-2",
           speaker: "Minh",
           text: "Hi Sara! I'm Minh. I am from Vietnam. And you?",
-          translation: "Xin chào Sara! Tôi là Minh. Tôi đến từ Việt Nam. Còn bạn?",
+          translation:
+            "Xin chào Sara! Tôi là Minh. Tôi đến từ Việt Nam. Còn bạn?",
         },
         {
           id: "d5-2-3",
@@ -507,25 +544,35 @@ export const unitA05: UnitData = {
           id: "d5-2-5",
           speaker: "Sara",
           text: "No, I'm single! My age is twenty-six. Nice to meet you, Minh!",
-          translation: "Không, tôi độc thân! Tuổi tôi là hai mươi sáu. Rất vui được gặp bạn, Minh!",
+          translation:
+            "Không, tôi độc thân! Tuổi tôi là hai mươi sáu. Rất vui được gặp bạn, Minh!",
         },
       ],
     },
   ],
-
 
   // ── EXERCISES_INPUT: listenAndChoose ≥5 (controlled practice)
   listenAndChoose: [
     {
       id: "lac5-1",
       audio_text: "I am from Vietnam",
-      options: ["I is from Vietnam", "I am from Vietnam", "I are from Vietnam", "I from Vietnam"],
+      options: [
+        "I is from Vietnam",
+        "I am from Vietnam",
+        "I are from Vietnam",
+        "I from Vietnam",
+      ],
       answer: "I am from Vietnam",
     },
     {
       id: "lac5-2",
       audio_text: "She is a doctor",
-      options: ["She am a doctor", "She are a doctor", "She is a doctor", "She be a doctor"],
+      options: [
+        "She am a doctor",
+        "She are a doctor",
+        "She is a doctor",
+        "She be a doctor",
+      ],
       answer: "She is a doctor",
     },
     {
@@ -542,23 +589,33 @@ export const unitA05: UnitData = {
     {
       id: "lac5-4",
       audio_text: "I work as a teacher",
-      options: ["Tôi làm giáo viên", "Tôi làm bác sĩ", "Tôi làm kỹ sư", "Tôi làm y tá"],
+      options: [
+        "Tôi làm giáo viên",
+        "Tôi làm bác sĩ",
+        "Tôi làm kỹ sư",
+        "Tôi làm y tá",
+      ],
       answer: "Tôi làm giáo viên",
     },
     {
       id: "lac5-5",
       audio_text: "I am single and I live in Hanoi",
-      options: ["Tôi độc thân và tôi sống ở Hà Nội", "Tôi đã kết hôn và tôi sống ở Hà Nội", "Tôi độc thân và tôi sống ở Đà Nẵng", "Tôi độc thân và tôi sống ở Huế"],
+      options: [
+        "Tôi độc thân và tôi sống ở Hà Nội",
+        "Tôi đã kết hôn và tôi sống ở Hà Nội",
+        "Tôi độc thân và tôi sống ở Đà Nẵng",
+        "Tôi độc thân và tôi sống ở Huế",
+      ],
       answer: "Tôi độc thân và tôi sống ở Hà Nội",
     },
   ],
-
 
   // ── REVIEW: Exit quiz + cumulativeReview (spiral) + reading (B1+)
   cumulativeReviewQuestions: [
     {
       id: "crA05-1",
-      question: "'Tôi cảm thấy mệt' nghĩa là gì trong tiếng Anh? (unitA04 - Cảm xúc)",
+      question:
+        "'Tôi cảm thấy mệt' nghĩa là gì trong tiếng Anh? (unitA04 - Cảm xúc)",
       options: ["I feel tired", "I am happy", "I am fine", "I feel sick"],
       answer: "I feel tired",
       type: "multiple-choice",
@@ -586,36 +643,39 @@ export const unitA05: UnitData = {
     },
   ],
 
-
   // ── FLUENCY: pronunciationFocus
   pronunciationFocus: {
     phoneme: "/ɪ/ vs /iː/",
     description: "Phân biệt SIT /ɪ/ và SEE /iː/",
     examples: [
-      { word: "sit", ipa: "/sɪt/", tip: "Ngắn, thư giãn — KHÔNG kéo dài như 'seat'" },
-      { word: "seat", ipa: "/siːt/", tip: "Kéo dài, môi mỉm cười rộng hơn /ɪ/" },
+      {
+        word: "sit",
+        ipa: "/sɪt/",
+        tip: "Ngắn, thư giãn — KHÔNG kéo dài như 'seat'",
+      },
+      {
+        word: "seat",
+        ipa: "/siːt/",
+        tip: "Kéo dài, môi mỉm cười rộng hơn /ɪ/",
+      },
     ],
-    minimalPairs: [
-      ["sit /ɪ/", "seat /iː/"],
-    ],
+    minimalPairs: [["sit /ɪ/", "seat /iː/"]],
   },
-
 
   // ── FLUENCY: fluencyDrill ≥5 (Nation Strand 4 automaticity)
   fluencyDrill: {
     title: "Luyện nhanh: Verb BE theo ngôi",
     items: [
-      { en: "I AM from Vietnam.",         vn: "Tôi đến từ Việt Nam." },
-      { en: "You ARE twenty years old.",  vn: "Bạn hai mươi tuổi." },
-      { en: "She IS a teacher.",          vn: "Cô ấy là giáo viên." },
-      { en: "He IS married.",             vn: "Anh ấy đã kết hôn." },
-      { en: "We ARE single.",             vn: "Chúng tôi độc thân." },
-      { en: "They ARE from Japan.",       vn: "Họ đến từ Nhật Bản." },
-      { en: "What is your job?",          vn: "Nghề nghiệp của bạn là gì?" },
-      { en: "Where do you live?",         vn: "Bạn sống ở đâu?" },
+      { en: "I AM from Vietnam.", vn: "Tôi đến từ Việt Nam." },
+      { en: "You ARE twenty years old.", vn: "Bạn hai mươi tuổi." },
+      { en: "She IS a teacher.", vn: "Cô ấy là giáo viên." },
+      { en: "He IS married.", vn: "Anh ấy đã kết hôn." },
+      { en: "We ARE single.", vn: "Chúng tôi độc thân." },
+      { en: "They ARE from Japan.", vn: "Họ đến từ Nhật Bản." },
+      { en: "What is your job?", vn: "Nghề nghiệp của bạn là gì?" },
+      { en: "Where do you live?", vn: "Bạn sống ở đâu?" },
     ],
   },
-
 
   // ── OUTPUT: speaking prompts (freer production)
   speaking: {
@@ -623,9 +683,9 @@ export const unitA05: UnitData = {
     level1Placeholder: "Nhập tuổi của bạn (vd: twenty-five)...",
     level2Situation:
       "Đóng vai Minh tại cửa hải quan. Trả lời 5 câu hỏi: tên, quốc tịch, tuổi, nghề nghiệp, tình trạng hôn nhân.",
-    level2Hint: "My name is... / I am from... / I am ... years old / I work as... / I am single/married.",
+    level2Hint:
+      "My name is... / I am from... / I am ... years old / I work as... / I am single/married.",
   },
-
 
   // ── REVIEW: Final quiz ≥5 (retrieval practice)
   quiz: [
@@ -743,10 +803,10 @@ export const unitA05: UnitData = {
       title: "Gọi điện đặt lịch hẹn phỏng vấn hoặc meeting",
       focus: "Phone language: introduce, purpose, confirm time/place (entry)",
       context: "Gọi HR hoặc đối tác khi apply việc",
-      l1Note: "⚠️ 'Hello, this is Minh calling about the interview.' 'Can I confirm the time on Monday at 10am?'",
-      example: "Hi, I'm calling about the sales assistant position. Is 9am on Tuesday okay for the interview?"
-    }
-  ], 
+      l1Note:
+        "⚠️ 'Hello, this is Minh calling about the interview.' 'Can I confirm the time on Monday at 10am?'",
+      example:
+        "Hi, I'm calling about the sales assistant position. Is 9am on Tuesday okay for the interview?",
+    },
+  ],
 };
-
-

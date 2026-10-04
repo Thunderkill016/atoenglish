@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -15,6 +16,7 @@ import type {
   ZeroPathActionEnvelope,
   ZeroPathLessonEnvelope,
 } from "@/lib/nep/zero-path-pilot.v1";
+import { looksEnglish, speakEnglish } from "@/lib/speech";
 
 const ACTIVITY_LABELS: Record<string, string> = {
   "reading-reception": "Đọc hiểu",
@@ -217,7 +219,7 @@ export function ZeroPathSession({
         className="flex min-h-[68vh] flex-col justify-center space-y-5"
       >
         <div className="space-y-3">
-          <p className="text-xs font-bold uppercase tracking-widest text-sky-600">
+          <p className="text-xs font-bold uppercase tracking-widest text-primary">
             {mode === "review" ? "Buổi ôn tập" : "Buổi học"}
           </p>
           <h2 className="text-xl font-bold text-foreground">
@@ -233,14 +235,14 @@ export function ZeroPathSession({
           </p>
         </div>
         {startError ? (
-          <p role="alert" className="text-sm font-medium text-amber-600">
+          <p role="alert" className="text-sm font-medium text-warning">
             {startError}
           </p>
         ) : null}
         <button
           type="button"
           onClick={() => void start()}
-          className="w-full rounded-2xl bg-sky-500 px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-sky-600 active:translate-y-0.5 active:shadow-none"
+          className="w-full rounded-2xl bg-primary px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-primary/90 active:translate-y-0.5 active:shadow-none"
         >
           Bắt đầu
         </button>
@@ -264,21 +266,22 @@ export function ZeroPathSession({
       <ProgressBar current={index} total={lesson.actions.length} />
 
       <div className="flex-1 space-y-5 py-6">
-        <p className="text-xs font-bold uppercase tracking-widest text-sky-600">
+        <p className="text-xs font-bold uppercase tracking-widest text-primary">
           {KIND_LABELS[action.kind] ?? action.kind}
         </p>
         <h2 className="text-xl font-bold text-foreground">{action.title}</h2>
         <p className="text-sm text-muted-foreground">{action.instruction}</p>
         {action.prompt ? (
-          <p className="rounded-2xl border-2 border-border bg-card px-5 py-4 text-lg font-medium text-foreground">
-            {action.prompt}
-          </p>
+          <div className="flex items-center justify-between gap-3 rounded-2xl border-2 border-border bg-card px-5 py-4">
+            <p className="text-lg font-medium text-foreground">
+              {action.prompt}
+            </p>
+            {looksEnglish(action.prompt) ? (
+              <SpeakerButton text={action.prompt} />
+            ) : null}
+          </div>
         ) : null}
-        {action.model ? (
-          <p className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950 px-5 py-4 text-lg font-medium text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
-            {action.model}
-          </p>
-        ) : null}
+        {action.model ? <ModelBlock model={action.model} /> : null}
 
         {action.respondable && action.supportSteps.length > 0 ? (
           <div className="space-y-2">
@@ -287,7 +290,7 @@ export function ZeroPathSession({
               .map((rung, rungIndex) => (
                 <p
                   key={rungIndex}
-                  className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+                  className="rounded-2xl bg-warning/10 px-4 py-3 text-sm text-warning"
                 >
                   {rung}
                 </p>
@@ -296,7 +299,7 @@ export function ZeroPathSession({
               <button
                 type="button"
                 onClick={() => setSupportLevel(supportLevel + 1)}
-                className="text-sm font-semibold text-amber-700 dark:text-amber-300 underline dark:text-amber-400 underline-offset-2"
+                className="text-sm font-semibold text-warning underline underline-offset-2"
               >
                 {supportLevel === 0 ? "Cần gợi ý?" : "Gợi ý thêm"}
               </button>
@@ -304,7 +307,7 @@ export function ZeroPathSession({
           </div>
         ) : null}
         {!action.respondable && action.supportVi ? (
-          <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+          <p className="rounded-2xl bg-warning/10 px-4 py-3 text-sm text-warning">
             {action.supportVi}
           </p>
         ) : null}
@@ -318,7 +321,7 @@ export function ZeroPathSession({
                   type="button"
                   disabled={submitting || !sessionId}
                   onClick={() => void submit(choice)}
-                  className="rounded-2xl border-2 border-border bg-card px-5 py-4 text-left text-base font-semibold text-foreground shadow-[0_2px_0_0_var(--border)] transition hover:border-sky-300 hover:bg-sky-50 active:translate-y-0.5 active:shadow-none disabled:opacity-50"
+                  className="rounded-2xl border-2 border-border bg-card px-5 py-4 text-left text-base font-semibold text-foreground shadow-[0_2px_0_0_var(--border)] transition hover:border-primary/40 hover:bg-primary/10 active:translate-y-0.5 active:shadow-none disabled:opacity-50"
                 >
                   {choice}
                 </button>
@@ -330,7 +333,7 @@ export function ZeroPathSession({
               onChange={(event) => setResponse(event.target.value)}
               rows={2}
               placeholder="Gõ câu tiếng Anh của bạn…"
-              className="w-full rounded-2xl border-2 border-border bg-muted/50 px-5 py-4 text-lg text-foreground focus:border-sky-400 focus:bg-white focus:outline-none"
+              className="w-full rounded-2xl border-2 border-border bg-muted/50 px-5 py-4 text-lg text-foreground focus:border-primary focus:bg-white focus:outline-none"
             />
           )
         ) : null}
@@ -340,20 +343,20 @@ export function ZeroPathSession({
         <div
           className={`sticky bottom-0 -mx-4 space-y-3 border-t-4 px-4 py-5 sm:mx-0 sm:rounded-t-3xl sm:border-x-4 ${
             step.verdict === "correct"
-              ? "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950"
+              ? "border-primary/40 bg-primary/10"
               : step.verdict === "incorrect"
-                ? "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950"
-                : "border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-950"
+                ? "border-warning/40 bg-warning/10"
+                : "border-primary/40 bg-primary/10"
           }`}
           role="status"
         >
           <p
             className={`text-base font-bold ${
               step.verdict === "correct"
-                ? "text-emerald-700 dark:text-emerald-300"
+                ? "text-primary"
                 : step.verdict === "incorrect"
-                  ? "text-amber-700 dark:text-amber-300"
-                  : "text-sky-700 dark:text-sky-300"
+                  ? "text-warning"
+                  : "text-primary"
             }`}
           >
             {step.verdict === "correct"
@@ -368,10 +371,10 @@ export function ZeroPathSession({
             onClick={advance}
             className={`w-full rounded-2xl px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(0,0,0,0.15)] transition active:translate-y-0.5 active:shadow-none ${
               step.verdict === "correct"
-                ? "bg-emerald-500 hover:bg-emerald-600"
+                ? "bg-primary hover:bg-primary/90"
                 : step.verdict === "incorrect"
-                  ? "bg-amber-500 hover:bg-amber-600"
-                  : "bg-sky-500 hover:bg-sky-600"
+                  ? "bg-warning hover:bg-warning/90"
+                  : "bg-primary hover:bg-primary/90"
             }`}
           >
             {isLast ? "Xem bằng chứng buổi học" : "Tiếp tục"}
@@ -382,7 +385,7 @@ export function ZeroPathSession({
           type="button"
           disabled={submitting || !response.trim() || !sessionId}
           onClick={() => void submit(response)}
-          className="w-full rounded-2xl bg-sky-500 px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-sky-600 active:translate-y-0.5 active:shadow-none disabled:opacity-40"
+          className="w-full rounded-2xl bg-primary px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-primary/90 active:translate-y-0.5 active:shadow-none disabled:opacity-40"
         >
           {submitting ? "Đang chấm…" : "Kiểm tra"}
         </button>
@@ -390,12 +393,64 @@ export function ZeroPathSession({
         <button
           type="button"
           onClick={advance}
-          className="w-full rounded-2xl bg-sky-500 px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-sky-600 active:translate-y-0.5 active:shadow-none"
+          className="w-full rounded-2xl bg-primary px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-primary/90 active:translate-y-0.5 active:shadow-none"
         >
           {isLast ? "Xem bằng chứng buổi học" : "Tiếp tục"}
         </button>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * Legacy models mix English targets with Vietnamese glosses on one line
+ * (`word — nghĩa (example)`, `Speaker: line (dịch)`). Voice only the English
+ * head segment; a pure-English line is voiced whole.
+ */
+function speechTextFor(line: string): string | null {
+  const clean = line
+    .replace(/…|\.\.\./g, ",")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (looksEnglish(clean)) return clean;
+  const head = clean.split(/\s+—\s+|\s*\(/)[0].trim();
+  const paren = clean.match(/\(([^)]*)\)/)?.[1]?.trim();
+  const parts = [head, ...(paren && looksEnglish(paren) ? [paren] : [])];
+  const spoken = parts.filter(looksEnglish).join(". ");
+  return spoken || null;
+}
+
+function SpeakerButton({ text }: { text: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => speakEnglish(text)}
+      aria-label={`Nghe: ${text}`}
+      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary transition hover:bg-primary/25"
+    >
+      <Volume2 className="size-4" aria-hidden />
+    </button>
+  );
+}
+
+/** Model lines (authored ` / ` chunks, legacy ` · `/newline rows) with audio. */
+function ModelBlock({ model }: { model: string }) {
+  const lines = model
+    .split(/\n+|\s+·\s+|\s+\/\s+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return (
+    <ul className="space-y-2 rounded-2xl border-2 border-primary/40 bg-primary/10 px-5 py-4">
+      {lines.map((line) => {
+        const spoken = speechTextFor(line);
+        return (
+          <li key={line} className="flex items-center justify-between gap-3">
+            <span className="text-lg font-medium text-primary">{line}</span>
+            {spoken ? <SpeakerButton text={spoken} /> : null}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -406,7 +461,7 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
         <div
           key={i}
           className={`h-2.5 flex-1 rounded-full ${
-            i <= current ? "bg-emerald-400" : "bg-muted"
+            i <= current ? "bg-primary" : "bg-muted"
           }`}
         />
       ))}
@@ -424,7 +479,7 @@ function SessionSummary({
   return (
     <section className="space-y-5" aria-label="Bằng chứng buổi học">
       <h2 className="text-xl font-bold text-foreground">Bằng chứng buổi học</h2>
-      <div className="rounded-3xl bg-emerald-500 px-6 py-8 text-center text-white">
+      <div className="rounded-3xl bg-primary px-6 py-8 text-center text-white">
         <p className="text-3xl font-black">{model.evidenceMinted}</p>
         <p className="mt-1 text-sm font-semibold opacity-90">
           bằng chứng ghi nhận được · {model.submissions} lượt trả lời
@@ -478,7 +533,7 @@ function SessionSummary({
       {nextHref ? (
         <Link
           href={nextHref}
-          className="block w-full rounded-2xl bg-sky-500 px-5 py-3.5 text-center text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-sky-600 active:translate-y-0.5 active:shadow-none"
+          className="block w-full rounded-2xl bg-primary px-5 py-3.5 text-center text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-primary/90 active:translate-y-0.5 active:shadow-none"
         >
           Tiếp tục
         </Link>

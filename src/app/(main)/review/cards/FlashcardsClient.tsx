@@ -719,7 +719,7 @@ export default function FlashcardsPage() {
                           key: "1",
                           desc: "Quên từ",
                           color:
-                            "hover:bg-destructive hover:text-white hover:shadow-destructive/25 text-destructive bg-destructive/5 border-destructive/20 hover:border-destructive",
+                            "hover:bg-destructive/90 hover:text-white hover:shadow-destructive/25 text-destructive bg-destructive/5 border-destructive/20 hover:border-destructive",
                         },
                         {
                           label: "Hard",
@@ -727,7 +727,7 @@ export default function FlashcardsPage() {
                           key: "2",
                           desc: "Mơ hồ",
                           color:
-                            "hover:bg-warning hover:text-white hover:shadow-warning/25 text-warning bg-warning/5 border-warning/20 hover:border-warning",
+                            "hover:bg-warning/90 hover:text-white hover:shadow-warning/25 text-warning bg-warning/5 border-warning/20 hover:border-warning",
                         },
                         {
                           label: "Good",
@@ -735,7 +735,7 @@ export default function FlashcardsPage() {
                           key: "3",
                           desc: "Nhớ tốt",
                           color:
-                            "hover:bg-primary hover:text-white hover:shadow-primary/25 text-primary bg-primary/5 border-primary/20 hover:border-primary",
+                            "hover:bg-primary/90 hover:text-white hover:shadow-primary/25 text-primary bg-primary/5 border-primary/20 hover:border-primary",
                         },
                         {
                           label: "Easy",
@@ -743,7 +743,7 @@ export default function FlashcardsPage() {
                           key: "4",
                           desc: "Rất dễ",
                           color:
-                            "hover:bg-primary hover:text-white hover:shadow-primary/25 text-primary bg-primary/5 border-primary/20 hover:border-primary",
+                            "hover:bg-primary/90 hover:text-white hover:shadow-primary/25 text-primary bg-primary/5 border-primary/20 hover:border-primary",
                         },
                       ].map((btn) => (
                         <button

@@ -213,7 +213,7 @@ describe("legacy HTML markup hygiene", () => {
   it("stripLegacyHtml removes inline tags and decodes entities", () => {
     expect(
       stripLegacyHtml(
-        'Người Việt nói <span class="text-emerald-400">"good morning"</span> &amp; cười.',
+        'Người Việt nói <span class="text-primary">"good morning"</span> &amp; cười.',
       ),
     ).toBe('Người Việt nói "good morning" & cười.');
   });

@@ -21,7 +21,7 @@ export default function NavbarAuth() {
           prefetch={false}
           className={buttonVariants({
             className:
-              "bg-primary hover:bg-primary text-white text-sm font-bold h-9 px-5 rounded-xl active:scale-[0.96] transition-all duration-200 shadow-sm shadow-primary/10",
+              "bg-primary hover:bg-primary/90 text-white text-sm font-bold h-9 px-5 rounded-xl active:scale-[0.96] transition-all duration-200 shadow-sm shadow-primary/10",
           })}
         >
           Vào Dashboard
@@ -44,7 +44,7 @@ export default function NavbarAuth() {
             prefetch={false}
             className={buttonVariants({
               className:
-                "bg-primary hover:bg-primary text-white text-xs sm:text-sm font-bold h-8 sm:h-9 px-3 sm:px-5 rounded-xl active:scale-[0.96] transition-all duration-200 shadow-sm shadow-primary/10",
+                "bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm font-bold h-8 sm:h-9 px-3 sm:px-5 rounded-xl active:scale-[0.96] transition-all duration-200 shadow-sm shadow-primary/10",
             })}
           >
             <span className="hidden sm:inline">Bắt đầu học ngay</span>

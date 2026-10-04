@@ -939,7 +939,7 @@ export function ShadowingPractice() {
             variant={isPlayingNative ? "secondary" : "outline"}
             className={`w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 rounded-2xl sm:rounded-xl font-bold text-xs uppercase tracking-wider gap-2 border-border/60 active:scale-[0.98] transition-all flex items-center justify-center ${
               isPlayingNative
-                ? "bg-primary text-white hover:bg-primary hover:text-white"
+                ? "bg-primary text-white hover:bg-primary/90 hover:text-white"
                 : "bg-card hover:bg-muted/50 text-foreground"
             }`}
           >
@@ -1075,7 +1075,7 @@ export function ShadowingPractice() {
                 onClick={isRecording ? stopRecording : startRecording}
                 className={`w-full sm:w-auto h-12 px-8 rounded-2xl font-bold transition-all duration-300 gap-2 flex items-center justify-center ${
                   isRecording
-                    ? "bg-destructive hover:bg-destructive text-white animate-pulse shadow-lg shadow-destructive/20"
+                    ? "bg-destructive hover:bg-destructive/90 text-white animate-pulse shadow-lg shadow-destructive/20"
                     : "bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white shadow-lg shadow-primary/20 active:scale-[0.98]"
                 }`}
               >
@@ -1099,7 +1099,7 @@ export function ShadowingPractice() {
                   variant={isPlayingRecorded ? "secondary" : "outline"}
                   className={`w-full sm:w-auto h-12 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider gap-2 border-border/60 active:scale-[0.98] transition-all flex items-center justify-center ${
                     isPlayingRecorded
-                      ? "bg-primary text-white hover:bg-primary hover:text-white"
+                      ? "bg-primary text-white hover:bg-primary/90 hover:text-white"
                       : "bg-card hover:bg-muted/50 text-foreground"
                   }`}
                 >

@@ -29,8 +29,8 @@ export function SheetHeader({
     <header
       className={cn(
         "sticky top-0 z-40 border-b border-border/60 bg-[var(--minimal-canvas)]/95 backdrop-blur-md",
-        "dark:bg-[var(--minimal-canvas-dark)]/95",
-        className
+        ")]/95",
+        className,
       )}
     >
       <div className="max-w-[var(--minimal-content-max)] mx-auto px-4 py-3 space-y-2">

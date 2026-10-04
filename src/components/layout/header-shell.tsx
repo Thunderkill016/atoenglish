@@ -22,7 +22,7 @@ export function HeaderShell({ user, fullName }: HeaderShellProps) {
   if (isLesson) return null;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-[var(--minimal-canvas)]/90 dark:bg-background/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-[var(--minimal-canvas)]/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-[var(--minimal-content-max)] items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-6">
           <Link href="/learn" className="flex shrink-0 items-center gap-2">

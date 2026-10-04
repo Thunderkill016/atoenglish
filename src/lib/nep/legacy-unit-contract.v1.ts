@@ -45,7 +45,7 @@ export function isLegacyContractLessonId(lessonId: string): boolean {
 /**
  * Legacy UnitData fields carry inline HTML highlight markup meant for
  * `dangerouslySetInnerHTML` in the old template (e.g.
- * `<span class="text-emerald-400">word</span>`). Session envelopes are
+ * `<span class="text-primary">word</span>`). Session envelopes are
  * plain text — tags must be stripped or they render literally.
  */
 export function stripLegacyHtml(value: string): string {

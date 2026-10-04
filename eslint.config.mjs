@@ -32,7 +32,7 @@ const eslintConfig = [
     },
   },
   {
-    files: ["src/app/(main)/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-syntax": [
         "warn",

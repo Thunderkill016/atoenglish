@@ -355,7 +355,7 @@ export default function ProductPreview() {
               {speakingStatus === "idle" && (
                 <button
                   onClick={startSpeaking}
-                  className="flex items-center gap-3 bg-primary hover:bg-primary text-white font-bold h-14 px-8 rounded-2xl shadow-lg shadow-primary/15 active:scale-95 transition-all duration-200 group"
+                  className="flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-bold h-14 px-8 rounded-2xl shadow-lg shadow-primary/15 active:scale-95 transition-all duration-200 group"
                 >
                   <Mic className="size-5 animate-pulse text-primary group-hover:scale-110 transition-transform" />
                   <span>Nhấn để bắt đầu nói</span>

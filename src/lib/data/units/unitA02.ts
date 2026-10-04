@@ -1,6 +1,5 @@
 import { UnitData } from "@/lib/lessons/lesson-spec";
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // UNIT-A0-2 — Số Đếm & Giá Tiền  (A0)
 // Standardized header + section comments per lesson-blueprint.ts (CONTENT_BLOCK_ORDER)
@@ -27,7 +26,6 @@ export const unitA02: UnitData = {
   badgeName: "Người Đếm Số",
   badgeEmoji: "🔢",
 
-
   // ── HOOK: situation (real VN context) + learningOutcomes (2–5 can-do) + culturalNote (pragmatic VN↔EN)
   situation:
     "Bạn đang mua đồ tại cửa hàng tiện lợi có thu ngân người nước ngoài. Giá hiển thị $12. Làm sao bạn hỏi giá và xử lý thanh toán bằng tiếng Anh?",
@@ -38,11 +36,9 @@ export const unitA02: UnitData = {
     "Xử lý giao dịch mua bán đơn giản",
   ],
 
-
   // ── HOOK (cultural): pragmatic note
   culturalNote:
-    'Người bản ngữ hay dùng <span class="text-emerald-400 font-semibold">"How much is this?"</span> khi chỉ vào món hàng, hoặc <span class="text-emerald-400 font-semibold">"What\'s the total?"</span> khi muốn biết tổng. Không cần nói "How much money" — chỉ "How much" là đủ!',
-
+    'Người bản ngữ hay dùng <span class="text-primary font-semibold">"How much is this?"</span> khi chỉ vào món hàng, hoặc <span class="text-primary font-semibold">"What\'s the total?"</span> khi muốn biết tổng. Không cần nói "How much money" — chỉ "How much" là đủ!',
 
   // ── WARMUP: ≥3 short phrases (SRS + prior knowledge activation)
   warmupGreetings: [
@@ -73,7 +69,8 @@ export const unitA02: UnitData = {
     {
       id: 1,
       word: "price",
-      l1_interference_vn: "⚠️ \'Price\' vs \'prize\': /praɪs/ vô thanh. Đừng rung dây thanh ở cuối — sẽ thành \'prize\'.",
+      l1_interference_vn:
+        "⚠️ \'Price\' vs \'prize\': /praɪs/ vô thanh. Đừng rung dây thanh ở cuối — sẽ thành \'prize\'.",
       emoji: "🏷️",
       phonetic: "/praɪs/",
       meaning: "giá, giá tiền",
@@ -92,7 +89,8 @@ export const unitA02: UnitData = {
       example2: "This shirt costs twenty dollars.",
       collocation: "how much does it cost / cost a lot / total cost",
       audio: "/audio/unit-a0-2/cost.mp3",
-      l1_interference_vn: "⚠️ 'Cost' (v) bất quy tắc: cost-cost-cost (không thêm -ed). 'How much does it cost?' KHÔNG 'How much is it costing?'",
+      l1_interference_vn:
+        "⚠️ 'Cost' (v) bất quy tắc: cost-cost-cost (không thêm -ed). 'How much does it cost?' KHÔNG 'How much is it costing?'",
     },
     {
       id: 3,
@@ -104,7 +102,8 @@ export const unitA02: UnitData = {
       example2: "I want to pay in cash.",
       collocation: "pay by card / pay in cash / pay the bill",
       audio: "/audio/unit-a0-2/pay.mp3",
-      l1_interference_vn: "⚠️ 'Pay FOR something': 'I paid for the book'. 'Pay' (v) bất quy tắc: pay-paid-paid. KHÔNG 'I payed'.",
+      l1_interference_vn:
+        "⚠️ 'Pay FOR something': 'I paid for the book'. 'Pay' (v) bất quy tắc: pay-paid-paid. KHÔNG 'I payed'.",
     },
     {
       id: 4,
@@ -116,7 +115,8 @@ export const unitA02: UnitData = {
       example2: "Keep the change!",
       collocation: "keep the change / here's your change / no change",
       audio: "/audio/unit-a0-2/change.mp3",
-      l1_interference_vn: "⚠️ 'Change' = tiền thừa (danh từ) HOẶC thay đổi (động từ). 'Keep the change' = giữ tiền thừa lại.",
+      l1_interference_vn:
+        "⚠️ 'Change' = tiền thừa (danh từ) HOẶC thay đổi (động từ). 'Keep the change' = giữ tiền thừa lại.",
     },
     {
       id: 5,
@@ -132,7 +132,8 @@ export const unitA02: UnitData = {
     {
       id: 6,
       word: "cheap",
-      l1_interference_vn: "⚠️ \'Cheap\' /tʃiːp/ — bắt đầu bằng /tʃ/ như \'ch\' miền Nam. Không phát \'chip\' (âm khác!).",
+      l1_interference_vn:
+        "⚠️ \'Cheap\' /tʃiːp/ — bắt đầu bằng /tʃ/ như \'ch\' miền Nam. Không phát \'chip\' (âm khác!).",
       emoji: "😊",
       phonetic: "/tʃiːp/",
       meaning: "rẻ",
@@ -144,7 +145,8 @@ export const unitA02: UnitData = {
     {
       id: 7,
       word: "expensive",
-      l1_interference_vn: "⚠️ \'Expensive\' — 3 âm tiết: ex-PEN-sive. Nhấn âm giữa. Danh từ: \'expense\' (không có \'-ive\').",
+      l1_interference_vn:
+        "⚠️ \'Expensive\' — 3 âm tiết: ex-PEN-sive. Nhấn âm giữa. Danh từ: \'expense\' (không có \'-ive\').",
       emoji: "😬",
       phonetic: "/ɪkˈspensɪv/",
       meaning: "đắt (tiền)",
@@ -163,7 +165,8 @@ export const unitA02: UnitData = {
       example2: "I only have ten dollars.",
       collocation: "five dollars / US dollar / dollar bill",
       audio: "/audio/unit-a0-2/dollar.mp3",
-      l1_interference_vn: "⚠️ Tiền tệ KHÔNG dùng số nhiều khi sau số: '5 dollar' (SAI) vs '5 dollars' (ĐÚNG). Nhưng '$5' đứng trước số.",
+      l1_interference_vn:
+        "⚠️ Tiền tệ KHÔNG dùng số nhiều khi sau số: '5 dollar' (SAI) vs '5 dollars' (ĐÚNG). Nhưng '$5' đứng trước số.",
     },
     {
       id: 9,
@@ -175,7 +178,8 @@ export const unitA02: UnitData = {
       example2: "Keep your receipt for returns.",
       collocation: "a receipt / print the receipt / need a receipt",
       audio: "/audio/unit-a0-2/receipt.mp3",
-      l1_interference_vn: "⚠️ 'Receipt' /rɪˈsiːt/ — 'p' HOÀN TOÀN CÂM. KHÔNG đọc 're-cept'. Tương tự: 'debt' (/det/, b câm).",
+      l1_interference_vn:
+        "⚠️ 'Receipt' /rɪˈsiːt/ — 'p' HOÀN TOÀN CÂM. KHÔNG đọc 're-cept'. Tương tự: 'debt' (/det/, b câm).",
     },
     {
       id: 10,
@@ -187,14 +191,14 @@ export const unitA02: UnitData = {
       example2: "How much does this cost?",
       collocation: "how much is / how much does it cost / how much do you have",
       audio: "/audio/unit-a0-2/howmuch.mp3",
-      l1_interference_vn: "⚠️ 'How much' (không đếm được) vs 'how many' (đếm được). 'How much is it?' — KHÔNG 'How many does it cost?'",
+      l1_interference_vn:
+        "⚠️ 'How much' (không đếm được) vs 'how many' (đếm được). 'How much is it?' — KHÔNG 'How many does it cost?'",
     },
   ],
 
-
   // ── GRAMMAR: Inductive (Meaning→Form→CCQ) + vnNote L1
   grammar: {
-    title: "\"How much IS it?\" — Câu hỏi giá với Verb BE",
+    title: '"How much IS it?" — Câu hỏi giá với Verb BE',
     rule: "How much + IS/ARE + danh từ? → Hỏi giá hoặc số lượng của thứ gì đó.",
 
     conjugation: [
@@ -204,10 +208,13 @@ export const unitA02: UnitData = {
     ],
 
     examples: [
-      { en: "How much is it?",               vn: "Cái này giá bao nhiêu?" },
-      { en: "It's twelve dollars.",           vn: "Giá là mười hai đô la." },
-      { en: "The total is twenty dollars.",   vn: "Tổng cộng là hai mươi đô la." },
-      { en: "Can I pay by card?",             vn: "Tôi có thể trả bằng thẻ không?" },
+      { en: "How much is it?", vn: "Cái này giá bao nhiêu?" },
+      { en: "It's twelve dollars.", vn: "Giá là mười hai đô la." },
+      {
+        en: "The total is twenty dollars.",
+        vn: "Tổng cộng là hai mươi đô la.",
+      },
+      { en: "Can I pay by card?", vn: "Tôi có thể trả bằng thẻ không?" },
     ],
 
     tip: "Mẹo: 'How much IS IT?' — IS và IT đi cùng nhau thành cụm cố định. Học cả câu như một khối, đừng dịch từng từ!",
@@ -241,19 +248,17 @@ export const unitA02: UnitData = {
     },
   },
 
-
   // ── EXERCISES_INPUT: matching
   matchingExercise: {
     title: "Nối số với từ tiếng Anh",
     pairs: [
-      { left: "5",  right: "five" },
+      { left: "5", right: "five" },
       { left: "10", right: "ten" },
       { left: "12", right: "twelve" },
       { left: "15", right: "fifteen" },
       { left: "20", right: "twenty" },
     ],
   },
-
 
   // ── EXERCISES_INPUT: practiceQuiz (active recall)
   practiceQuiz: [
@@ -268,7 +273,8 @@ export const unitA02: UnitData = {
       ],
       answer: "How much is it?",
       type: "multiple-choice",
-      explanation_vn: "'How much' dùng cho thứ KHÔNG đếm được (tiền, giá). 'How many' dùng cho thứ ĐẾM ĐƯỢC (apples, people). Hỏi giá → How much.",
+      explanation_vn:
+        "'How much' dùng cho thứ KHÔNG đếm được (tiền, giá). 'How many' dùng cho thứ ĐẾM ĐƯỢC (apples, people). Hỏi giá → How much.",
     },
     {
       id: "pq2-2",
@@ -283,7 +289,8 @@ export const unitA02: UnitData = {
       options: ["Rẻ", "Đắt", "Miễn phí", "Giảm giá"],
       answer: "Đắt",
       type: "multiple-choice",
-      explanation_vn: "Expensive = đắt (giá cao). Cheap/Inexpensive = rẻ. Free = miễn phí. On sale = đang giảm giá. Bốn khái niệm giá cả cần nhớ.",
+      explanation_vn:
+        "Expensive = đắt (giá cao). Cheap/Inexpensive = rẻ. Free = miễn phí. On sale = đang giảm giá. Bốn khái niệm giá cả cần nhớ.",
     },
     {
       id: "pq2-4",
@@ -293,7 +300,6 @@ export const unitA02: UnitData = {
       type: "cloze",
     },
   ],
-
 
   // ── OUTPUT: practiceTranslate (VN→EN ≥3) + speaking (level1/2)
   practiceTranslate: [
@@ -314,7 +320,6 @@ export const unitA02: UnitData = {
     },
   ],
 
-
   // ── EXERCISES_INPUT: sentenceCorrection
   sentenceCorrectionExercises: [
     {
@@ -322,18 +327,18 @@ export const unitA02: UnitData = {
       sentence: "How many is this pen?",
       errorWord: "many",
       correction: "much",
-      explanation_vn: "'How MUCH' hỏi giá tiền (không đếm theo số lượng rời). 'How many' hỏi số lượng: 'How many pens?'",
+      explanation_vn:
+        "'How MUCH' hỏi giá tiền (không đếm theo số lượng rời). 'How many' hỏi số lượng: 'How many pens?'",
     },
     {
       id: "sc-A02-2",
       sentence: "It cost five dollar.",
       errorWord: "five dollar",
       correction: "five dollars",
-      explanation_vn: "Sau số lớn hơn 1, danh từ phải ở dạng số nhiều: 'five DOLLARS'. Không dùng 'dollar' sau số đếm.",
+      explanation_vn:
+        "Sau số lớn hơn 1, danh từ phải ở dạng số nhiều: 'five DOLLARS'. Không dùng 'dollar' sau số đếm.",
     },
   ],
-
-
 
   // ── EXERCISES_INPUT: listenAndArrange
   listenAndArrangeExercises: [
@@ -352,8 +357,6 @@ export const unitA02: UnitData = {
       answer: "It costs twenty thousand dong .",
     },
   ],
-
-
 
   // ── EXERCISES_INPUT: wordBank
   wordBankExercises: [
@@ -376,7 +379,6 @@ export const unitA02: UnitData = {
       answer: "Can I keep the change ?",
     },
   ],
-
 
   // ── EXERCISES_INPUT: scramble
   scrambleExercises: [
@@ -456,7 +458,8 @@ export const unitA02: UnitData = {
           id: "d2-1-8",
           speaker: "Staff",
           text: "Thank you! Here's your change — five dollars. Do you need a receipt?",
-          translation: "Cảm ơn! Đây là tiền thừa — năm đô la. Bạn cần biên lai không?",
+          translation:
+            "Cảm ơn! Đây là tiền thừa — năm đô la. Bạn cần biên lai không?",
         },
         {
           id: "d2-1-9",
@@ -494,19 +497,24 @@ export const unitA02: UnitData = {
           id: "d2-2-4",
           speaker: "Minh",
           text: "Ten digits total. Zero, nine, one, two, three, four, five, six, seven, eight.",
-          translation: "Tổng mười chữ số. Không, chín, một, hai, ba, bốn, năm, sáu, bảy, tám.",
+          translation:
+            "Tổng mười chữ số. Không, chín, một, hai, ba, bốn, năm, sáu, bảy, tám.",
         },
       ],
     },
   ],
-
 
   // ── EXERCISES_INPUT: listenAndChoose ≥5 (controlled practice)
   listenAndChoose: [
     {
       id: "lac2-1",
       audio_text: "How much is it",
-      options: ["How many is it", "How much is it", "How much it is", "What is it"],
+      options: [
+        "How many is it",
+        "How much is it",
+        "How much it is",
+        "What is it",
+      ],
       answer: "How much is it",
     },
     {
@@ -534,17 +542,26 @@ export const unitA02: UnitData = {
     {
       id: "lac2-4",
       audio_text: "This is very cheap",
-      options: ["Cái này rất rẻ", "Cái này rất đắt", "Cái này rất đẹp", "Cái này rất to"],
+      options: [
+        "Cái này rất rẻ",
+        "Cái này rất đắt",
+        "Cái này rất đẹp",
+        "Cái này rất to",
+      ],
       answer: "Cái này rất rẻ",
     },
     {
       id: "lac2-5",
       audio_text: "Here is your change five dollars",
-      options: ["Đây là tiền thừa năm đô la", "Đây là tiền thừa mười đô la", "Đây là biên lai năm đô la", "Đây là tiền thừa mười lăm đô la"],
+      options: [
+        "Đây là tiền thừa năm đô la",
+        "Đây là tiền thừa mười đô la",
+        "Đây là biên lai năm đô la",
+        "Đây là tiền thừa mười lăm đô la",
+      ],
       answer: "Đây là tiền thừa năm đô la",
     },
   ],
-
 
   // ── REVIEW: Exit quiz + cumulativeReview (spiral) + reading (B1+)
   cumulativeReviewQuestions: [
@@ -578,36 +595,39 @@ export const unitA02: UnitData = {
     },
   ],
 
-
   // ── FLUENCY: pronunciationFocus
   pronunciationFocus: {
     phoneme: "/s/ & /z/ cuối từ",
     description: "Số nhiều: khi nào thêm /s/ và khi nào /z/",
     examples: [
-      { word: "books", ipa: "/bʊks/", tip: "/s/ sau phụ âm vô thanh (k,p,t,f)" },
-      { word: "bags", ipa: "/bægz/", tip: "/z/ sau phụ âm hữu thanh và nguyên âm" },
+      {
+        word: "books",
+        ipa: "/bʊks/",
+        tip: "/s/ sau phụ âm vô thanh (k,p,t,f)",
+      },
+      {
+        word: "bags",
+        ipa: "/bægz/",
+        tip: "/z/ sau phụ âm hữu thanh và nguyên âm",
+      },
     ],
-    minimalPairs: [
-      ["books /s/", "bags /z/"],
-    ],
+    minimalPairs: [["books /s/", "bags /z/"]],
   },
-
 
   // ── FLUENCY: fluencyDrill ≥5 (Nation Strand 4 automaticity)
   fluencyDrill: {
     title: "Số từ 1–20 + Cụm câu mua sắm",
     items: [
-      { en: "One, two, three, four, five",      vn: "Một, hai, ba, bốn, năm" },
-      { en: "Six, seven, eight, nine, ten",      vn: "Sáu, bảy, tám, chín, mười" },
-      { en: "Eleven, twelve, thirteen",          vn: "Mười một, mười hai, mười ba" },
-      { en: "Fifteen, twenty",                   vn: "Mười lăm, hai mươi" },
-      { en: "How much is it?",                   vn: "Giá bao nhiêu?" },
-      { en: "The total is ___ dollars.",         vn: "Tổng cộng là ___ đô la." },
-      { en: "Can I pay by card?",                vn: "Tôi có thể trả bằng thẻ không?" },
-      { en: "Here's your change.",               vn: "Đây là tiền thừa của bạn." },
+      { en: "One, two, three, four, five", vn: "Một, hai, ba, bốn, năm" },
+      { en: "Six, seven, eight, nine, ten", vn: "Sáu, bảy, tám, chín, mười" },
+      { en: "Eleven, twelve, thirteen", vn: "Mười một, mười hai, mười ba" },
+      { en: "Fifteen, twenty", vn: "Mười lăm, hai mươi" },
+      { en: "How much is it?", vn: "Giá bao nhiêu?" },
+      { en: "The total is ___ dollars.", vn: "Tổng cộng là ___ đô la." },
+      { en: "Can I pay by card?", vn: "Tôi có thể trả bằng thẻ không?" },
+      { en: "Here's your change.", vn: "Đây là tiền thừa của bạn." },
     ],
   },
-
 
   // ── OUTPUT: speaking prompts (freer production)
   speaking: {
@@ -618,7 +638,6 @@ export const unitA02: UnitData = {
     level2Hint:
       "How much is the coffee? / And the sandwich? / What's the total? / Here's twenty dollars. / Keep the change!",
   },
-
 
   // ── REVIEW: Final quiz ≥5 (retrieval practice)
   quiz: [
@@ -657,7 +676,7 @@ export const unitA02: UnitData = {
     },
     {
       id: "q2-5",
-      question: "\"Expensive\" nghĩa là gì?",
+      question: '"Expensive" nghĩa là gì?',
       options: ["Rẻ", "Đắt", "Miễn phí", "Có giảm giá"],
       answer: "Đắt",
       type: "multiple-choice",
@@ -671,7 +690,8 @@ export const unitA02: UnitData = {
     },
     {
       id: "q2-7",
-      question: "Tổng cộng là mười lăm đô la. Đây là hai mươi đô la. (Dịch sang tiếng Anh)",
+      question:
+        "Tổng cộng là mười lăm đô la. Đây là hai mươi đô la. (Dịch sang tiếng Anh)",
       options: [],
       answer: "The total is fifteen dollars. Here's twenty dollars.",
       type: "translate",
@@ -716,7 +736,8 @@ export const unitA02: UnitData = {
       },
       {
         id: "uA02r-q4",
-        question_vn: "Sau khi mua hàng, người kể chuyện còn lại bao nhiêu tiền?",
+        question_vn:
+          "Sau khi mua hàng, người kể chuyện còn lại bao nhiêu tiền?",
         options: ["10,000 dong", "5,000 dong", "1,000 dong", "Zero dong"],
         answer: "Zero dong",
         explanation_vn: "'I have zero dong now!'",
@@ -732,10 +753,10 @@ export const unitA02: UnitData = {
       title: "Hỏi về công việc và nhiệm vụ hàng ngày của đồng nghiệp mới",
       focus: "Ask simple questions about job tasks at entry level",
       context: "Buddy chat trên first week at work",
-      l1Note: "⚠️ 'What do you do every day?' 'I send emails and answer phones.'",
-      example: "What time do you start? I answer customer emails in the morning and prepare reports in the afternoon."
-    }
-  ], 
+      l1Note:
+        "⚠️ 'What do you do every day?' 'I send emails and answer phones.'",
+      example:
+        "What time do you start? I answer customer emails in the morning and prepare reports in the afternoon.",
+    },
+  ],
 };
-
-

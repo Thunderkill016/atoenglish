@@ -334,27 +334,27 @@ function LoginContent() {
   const hasAnswers = !!answers[1];
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans flex flex-col lg:flex-row selection:bg-emerald-100 dark:selection:bg-emerald-950/30 selection:text-emerald-900 dark:selection:text-emerald-200">
+    <div className="min-h-screen min-h-[100dvh] bg-card text-foreground font-sans flex flex-col lg:flex-row selection:bg-primary/10 selection:text-primary">
       {/* ── Right Column: Survey / Login (mobile-first, full width; desktop chrome removed) ── */}
-      <div className="flex-1 flex flex-col justify-between py-8 sm:py-12 px-5 sm:px-12 md:px-16 lg:px-24 bg-white dark:bg-zinc-950 relative overflow-y-auto">
+      <div className="flex-1 flex flex-col justify-between py-8 sm:py-12 px-5 sm:px-12 md:px-16 lg:px-24 bg-white relative overflow-y-auto">
         {/* Background glow + dot grid */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-[40%] -left-[40%] w-[80%] h-[80%] rounded-full bg-emerald-500/5 blur-3xl" />
-          <div className="absolute -bottom-[40%] -right-[40%] w-[80%] h-[80%] rounded-full bg-emerald-600/5 dark:bg-emerald-600/10 blur-3xl" />
-          <div className="absolute inset-0 bg-[radial-gradient(#e4e4e7_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:16px_16px] opacity-60" />
+          <div className="absolute -top-[40%] -left-[40%] w-[80%] h-[80%] rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute -bottom-[40%] -right-[40%] w-[80%] h-[80%] rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute inset-0 bg-[radial-gradient(#e4e4e7_1px,transparent_1px)] [background-size:16px_16px] opacity-60" />
         </div>
 
         {/* Top Navigation */}
         <header className="max-w-md w-full mx-auto flex items-center justify-between mb-4 sm:mb-8 z-10">
           <Link href="/" className="lg:hidden flex items-center gap-2.5 group">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
               <Sprout className="size-4.5" />
             </span>
             <div className="flex flex-col leading-none text-left">
-              <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50 group-hover:text-emerald-600 transition-colors">
+              <span className="text-sm font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
                 AtoEnglish
               </span>
-              <span className="text-xs text-zinc-500 font-medium">
+              <span className="text-xs text-muted-foreground font-medium">
                 Grow every day
               </span>
             </div>
@@ -369,7 +369,7 @@ function LoginContent() {
                 setDirection(-1);
                 setOnboardingStep(0);
               }}
-              className="ml-auto text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 h-10 min-w-[80px] gap-1.5 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all"
+              className="ml-auto text-xs font-bold text-muted-foreground hover:text-foreground h-10 min-w-[80px] gap-1.5 rounded-xl border border-border hover:bg-card transition-all"
             >
               <ArrowLeft className="size-3.5" />
               Quay lại
@@ -378,7 +378,7 @@ function LoginContent() {
             <Link href="/" className="ml-auto">
               <Button
                 variant="ghost"
-                className="text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 h-10 min-w-[80px] gap-1.5 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all"
+                className="text-xs font-bold text-muted-foreground hover:text-foreground h-10 min-w-[80px] gap-1.5 rounded-xl border border-border hover:bg-card transition-all"
               >
                 <ArrowLeft className="size-3.5" />
                 Về trang chủ
@@ -416,7 +416,7 @@ function LoginContent() {
                     transition={{ type: "spring", stiffness: 300, damping: 24 }}
                     className="relative"
                   >
-                    <div className="size-24 rounded-3xl bg-emerald-600 flex items-center justify-center text-5xl shadow-xl shadow-emerald-500/20">
+                    <div className="size-24 rounded-3xl bg-primary flex items-center justify-center text-5xl shadow-xl shadow-primary/20">
                       🌱
                     </div>
                     <motion.div
@@ -434,13 +434,13 @@ function LoginContent() {
 
                   {/* Headline */}
                   <div className="space-y-3">
-                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground leading-tight">
                       Bắt đầu hành trình nói{" "}
-                      <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent dark:from-emerald-400 dark:to-teal-400">
+                      <span className="bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent">
                         28 ngày
                       </span>
                     </h1>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto leading-relaxed">
+                    <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
                       Chọn trình độ gần nhất để AtoEnglish gợi ý điểm bắt đầu
                       cho nhiệm vụ nói đầu tiên.
                     </p>
@@ -455,7 +455,7 @@ function LoginContent() {
                     ].map((tag) => (
                       <span
                         key={tag}
-                        className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/30 px-3 py-1.5 rounded-full"
+                        className="text-xs font-semibold text-primary bg-primary/10 border border-primary/40 px-3 py-1.5 rounded-full"
                       >
                         {tag}
                       </span>
@@ -482,7 +482,7 @@ function LoginContent() {
                       setOnboardingStep(2);
                       setIsSignUp(false);
                     }}
-                    className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 font-medium transition-colors underline underline-offset-4"
+                    className="text-xs text-muted-foreground hover:text-muted-foreground font-medium transition-colors underline underline-offset-4"
                   >
                     Tôi đã có tài khoản. Đăng nhập →
                   </button>
@@ -491,10 +491,10 @@ function LoginContent() {
               onboardingStep === 1 ? (
                 <div className="space-y-6">
                   <div className="space-y-1">
-                    <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight">
+                    <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground leading-tight">
                       {levelQuestion.title}
                     </h1>
-                    <p className="text-xs text-zinc-400 dark:text-zinc-500 font-normal">
+                    <p className="text-xs text-muted-foreground font-normal">
                       {levelQuestion.subtitle}
                     </p>
                   </div>
@@ -511,8 +511,8 @@ function LoginContent() {
                           whileTap={{ scale: 0.995 }}
                           className={`w-full text-left p-4 rounded-2xl border-2 transition-all duration-200 font-semibold text-sm flex items-center gap-4 shadow-sm group ${
                             isSelected
-                              ? "border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300 shadow-emerald-500/10"
-                              : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-200 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/10"
+                              ? "border-primary bg-primary/10/60 text-primary shadow-primary/10"
+                              : "border-border bg-white text-foreground hover:border-primary hover:bg-primary/10/20"
                           }`}
                         >
                           <span className="text-2xl shrink-0 leading-none">
@@ -530,7 +530,7 @@ function LoginContent() {
                                 stiffness: 500,
                                 damping: 25,
                               }}
-                              className="flex size-5 items-center justify-center rounded-full bg-emerald-500 text-white shrink-0"
+                              className="flex size-5 items-center justify-center rounded-full bg-primary text-white shrink-0"
                             >
                               <Check className="size-3" strokeWidth={3} />
                             </motion.span>
@@ -540,7 +540,7 @@ function LoginContent() {
                     })}
                   </div>
 
-                  <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 pt-1">
+                  <p className="text-center text-xs text-muted-foreground pt-1">
                     <button
                       type="button"
                       onClick={() => {
@@ -551,7 +551,7 @@ function LoginContent() {
                         setIsSignUp(false);
                         setAnswers({});
                       }}
-                      className="hover:text-zinc-600 dark:hover:text-zinc-300 underline underline-offset-4 transition-colors"
+                      className="hover:text-muted-foreground underline underline-offset-4 transition-colors"
                     >
                       Tôi đã có tài khoản
                     </button>
@@ -567,31 +567,31 @@ function LoginContent() {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="flex flex-col gap-3 p-4 rounded-2xl bg-emerald-500/5 dark:bg-emerald-500/5 border border-emerald-500/10 backdrop-blur-sm"
+                        className="flex flex-col gap-3 p-4 rounded-2xl bg-primary/5 border border-primary/10 backdrop-blur-sm"
                       >
-                        <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                        <div className="flex items-center gap-2 text-xs font-bold text-primary">
                           <Sparkles className="size-4" />
                           <span>Đã chọn điểm bắt đầu phù hợp</span>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
-                          <span className="inline-flex items-center text-xs sm:text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-lg border border-emerald-200/30 dark:border-emerald-900/30">
+                          <span className="inline-flex items-center text-xs sm:text-xs font-bold text-primary bg-primary/10/50 px-2.5 py-0.5 rounded-lg border border-primary/40/30">
                             Cấp độ: {recap.level}
                           </span>
-                          <span className="inline-flex items-center text-xs sm:text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-950/40 px-2.5 py-0.5 rounded-lg border border-blue-200/30 dark:border-blue-900/30">
+                          <span className="inline-flex items-center text-xs sm:text-xs font-bold text-primary bg-primary/10/50 px-2.5 py-0.5 rounded-lg border border-primary/40/30">
                             Học tập: {recap.time}
                           </span>
                         </div>
                       </motion.div>
                     )}
 
-                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground leading-tight">
                       {hasAnswers
                         ? "Bài học đầu tiên đã sẵn sàng!"
                         : isSignUp
                           ? "Tạo tài khoản mới"
                           : "Chào mừng quay trở lại"}
                     </h1>
-                    <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
+                    <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed">
                       {hasAnswers
                         ? "Đăng ký hoặc đăng nhập để bắt đầu luyện nhiệm vụ nói đầu tiên."
                         : isSignUp
@@ -610,10 +610,10 @@ function LoginContent() {
                       <Button
                         onClick={handleGoogleLogin}
                         disabled={isGoogleLoading || isLoading}
-                        className="w-full bg-white hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold h-12 rounded-xl text-sm gap-3 active:scale-[0.98] transition-all duration-300 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center"
+                        className="w-full bg-white hover:bg-card text-foreground font-bold h-12 rounded-xl text-sm gap-3 active:scale-[0.98] transition-all duration-300 border border-border shadow-sm flex items-center justify-center"
                       >
                         {isGoogleLoading ? (
-                          <Loader2 className="size-4 animate-spin text-zinc-500" />
+                          <Loader2 className="size-4 animate-spin text-muted-foreground" />
                         ) : (
                           <svg className="size-5 shrink-0" viewBox="0 0 24 24">
                             <path
@@ -640,18 +640,18 @@ function LoginContent() {
 
                     {/* Separator */}
                     <div className="relative flex py-1 items-center">
-                      <div className="flex-grow border-t border-zinc-200 dark:border-zinc-800" />
-                      <span className="flex-shrink mx-4 text-xs text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                      <div className="flex-grow border-t border-border" />
+                      <span className="flex-shrink mx-4 text-xs text-muted-foreground font-bold uppercase tracking-widest">
                         Hoặc sử dụng email
                       </span>
-                      <div className="flex-grow border-t border-zinc-200 dark:border-zinc-800" />
+                      <div className="flex-grow border-t border-border" />
                     </div>
 
                     {/* Email form */}
                     <form onSubmit={handleEmailAuth} className="space-y-4">
                       <div className="space-y-3">
                         <div className="relative">
-                          <Mail className="absolute left-3.5 top-3.5 size-4 text-zinc-400 dark:text-zinc-500" />
+                          <Mail className="absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
                           <input
                             id="login-email"
                             type="email"
@@ -662,12 +662,12 @@ function LoginContent() {
                             autoComplete="email"
                             inputMode="email"
                             enterKeyHint="next"
-                            className="flex h-12 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 px-3.5 py-2 pl-11 text-base text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-transparent transition-all duration-300 shadow-sm"
+                            className="flex h-12 w-full rounded-xl border border-border bg-white px-3.5 py-2 pl-11 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent transition-all duration-300 shadow-sm"
                             required
                           />
                         </div>
                         <div className="relative">
-                          <Lock className="absolute left-3.5 top-3.5 size-4 text-zinc-400 dark:text-zinc-500" />
+                          <Lock className="absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
                           <input
                             id="login-password"
                             type="password"
@@ -679,7 +679,7 @@ function LoginContent() {
                               isSignUp ? "new-password" : "current-password"
                             }
                             enterKeyHint="done"
-                            className="flex h-12 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 px-3.5 py-2 pl-11 text-base text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-transparent transition-all duration-300 shadow-sm"
+                            className="flex h-12 w-full rounded-xl border border-border bg-white px-3.5 py-2 pl-11 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent transition-all duration-300 shadow-sm"
                             required
                           />
                         </div>
@@ -708,7 +708,7 @@ function LoginContent() {
                       <button
                         type="button"
                         onClick={() => setIsSignUp(!isSignUp)}
-                        className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 font-bold transition-colors underline underline-offset-4"
+                        className="text-primary hover:text-primary font-bold transition-colors underline underline-offset-4"
                       >
                         {isSignUp
                           ? "Đã có tài khoản? Đăng nhập ngay"
@@ -724,7 +724,7 @@ function LoginContent() {
                             localStorage.removeItem("ato_onboarding_completed");
                           }
                         }}
-                        className="text-zinc-400 hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300 font-semibold transition-colors"
+                        className="text-muted-foreground hover:text-foreground font-semibold transition-colors"
                       >
                         {hasAnswers
                           ? "Làm lại khảo sát định hướng"
@@ -734,18 +734,18 @@ function LoginContent() {
                   </div>
 
                   {/* Legal */}
-                  <p className="text-xs text-center text-zinc-400 dark:text-zinc-500 leading-relaxed pt-2">
+                  <p className="text-xs text-center text-muted-foreground leading-relaxed pt-2">
                     Bằng việc tiếp tục, bạn đồng ý với{" "}
                     <Link
                       href="/terms"
-                      className="underline hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors font-medium"
+                      className="underline hover:text-muted-foreground transition-colors font-medium"
                     >
                       Điều khoản dịch vụ
                     </Link>{" "}
                     và{" "}
                     <Link
                       href="/privacy"
-                      className="underline hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors font-medium"
+                      className="underline hover:text-muted-foreground transition-colors font-medium"
                     >
                       Chính sách bảo mật
                     </Link>{" "}
@@ -758,7 +758,7 @@ function LoginContent() {
         </main>
 
         {/* Footer */}
-        <footer className="max-w-md w-full mx-auto text-center text-xs text-zinc-400 dark:text-zinc-500 font-normal pt-8 z-10">
+        <footer className="max-w-md w-full mx-auto text-center text-xs text-muted-foreground font-normal pt-8 z-10">
           &copy; {new Date().getFullYear()} AtoEnglish. Bảo lưu mọi quyền.
         </footer>
       </div>
@@ -770,8 +770,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
-          <Loader2 className="size-8 animate-spin text-emerald-600" />
+        <div className="min-h-screen bg-card flex items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-primary" />
         </div>
       }
     >

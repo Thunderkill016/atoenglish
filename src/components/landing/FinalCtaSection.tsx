@@ -60,7 +60,7 @@ export default function FinalCtaSection() {
               }
               className={buttonVariants({
                 className:
-                  "w-full sm:w-auto sm:min-w-[280px] justify-center bg-primary hover:bg-primary text-white font-bold h-14 px-10 rounded-2xl shadow-lg shadow-primary/15 hover:shadow-primary/25 hover:scale-[1.01] active:scale-[0.97] transition-all duration-300 gap-2.5",
+                  "w-full sm:w-auto sm:min-w-[280px] justify-center bg-primary hover:bg-primary/90 text-white font-bold h-14 px-10 rounded-2xl shadow-lg shadow-primary/15 hover:shadow-primary/25 hover:scale-[1.01] active:scale-[0.97] transition-all duration-300 gap-2.5",
               })}
             >
               {isLoggedIn ? "Vào Dashboard ngay" : "Bắt đầu bài đầu tiên"}

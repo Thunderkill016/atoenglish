@@ -79,7 +79,7 @@ export default async function ZeroPathPage({
 
         {openSessions.length > 0 ? (
           <nav aria-label="Tiếp tục buổi đang học" className="mb-6">
-            <p className="mb-2 text-sm font-medium text-stone-700">
+            <p className="mb-2 text-sm font-medium text-foreground">
               Tiếp tục buổi đang học
             </p>
             <ol className="flex flex-col gap-2">
@@ -87,12 +87,12 @@ export default async function ZeroPathPage({
                 <li key={session.id}>
                   <Link
                     href={`/zero-path?session=${session.id}`}
-                    className="block rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 transition-colors hover:border-emerald-400"
+                    className="block rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm text-primary transition-colors hover:border-primary"
                   >
                     {index.find((entry) => entry.lessonId === session.lesson_id)
                       ?.learnerCanDo ?? session.lesson_id}
                     {session.mode === "review" ? " · ôn tập" : ""}
-                    <span className="block text-xs text-emerald-700">
+                    <span className="block text-xs text-primary">
                       Bắt đầu{" "}
                       {new Date(session.created_at).toLocaleDateString("vi-VN")}
                     </span>
@@ -115,7 +115,7 @@ export default async function ZeroPathPage({
                       className={
                         active
                           ? "block rounded-xl border border-foreground/20 bg-foreground/5 px-4 py-3 text-sm"
-                          : "block rounded-xl border border-stone-200 px-4 py-3 text-sm text-stone-600 transition-colors hover:border-stone-400 hover:text-foreground"
+                          : "block rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-border hover:text-foreground"
                       }
                     >
                       <Link
@@ -126,18 +126,18 @@ export default async function ZeroPathPage({
                         Buổi {position + 1}
                         {active ? " · đang mở" : ""}
                       </Link>
-                      <span className="block text-xs text-stone-500">
+                      <span className="block text-xs text-muted-foreground">
                         {entry.learnerCanDo}
                       </span>
                       {state?.due ? (
                         <Link
                           href={`/zero-path?lesson=${entry.lessonId}&mode=review`}
-                          className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 underline underline-offset-2"
+                          className="mt-1 inline-block rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning underline underline-offset-2"
                         >
                           Đến hạn ôn — ôn buổi này
                         </Link>
                       ) : state?.introduced && state.nextReviewAt ? (
-                        <span className="mt-1 block text-xs text-stone-400">
+                        <span className="mt-1 block text-xs text-muted-foreground">
                           Ôn lại sau{" "}
                           {new Date(state.nextReviewAt).toLocaleDateString(
                             "vi-VN",
@@ -156,7 +156,7 @@ export default async function ZeroPathPage({
           {mode === "review" ? "Buổi ôn tập" : "Buổi học"}
         </LargeTitle>
 
-        <p className="mb-6 text-sm text-stone-600">
+        <p className="mb-6 text-sm text-muted-foreground">
           Mục tiêu: {lesson.learnerCanDo}
         </p>
 

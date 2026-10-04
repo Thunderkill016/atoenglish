@@ -27,49 +27,111 @@ export const IPOR_META: Record<
   input: {
     label: "Input",
     labelVi: "Tiếp nhận",
-    color: "text-sky-500/50",
-    activeColor: "text-sky-400 bg-sky-500/15 border-sky-500/30",
+    color: "text-primary/50",
+    activeColor: "text-primary bg-primary/15 border-primary/30",
   },
   processing: {
     label: "Processing",
     labelVi: "Xử lý",
-    color: "text-violet-500/50",
-    activeColor: "text-violet-400 bg-violet-500/15 border-violet-500/30",
+    color: "text-primary/50",
+    activeColor: "text-primary bg-primary/15 border-primary/30",
   },
   output: {
     label: "Output",
     labelVi: "Sản xuất",
-    color: "text-amber-500/50",
-    activeColor: "text-amber-400 bg-amber-500/15 border-amber-500/30",
+    color: "text-warning/50",
+    activeColor: "text-warning bg-warning/15 border-warning/30",
   },
   review: {
     label: "Review",
     labelVi: "Ôn tập",
-    color: "text-emerald-500/50",
-    activeColor: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30",
+    color: "text-primary/50",
+    activeColor: "text-primary bg-primary/15 border-primary/30",
   },
 };
 
 /** 10-step hybrid flow — vocab BEFORE dialogue (Nation & Webb 2011) */
 export const LESSON_SECTIONS: readonly LessonSectionDef[] = [
-  { id: 1, label: "Khởi động", phase: "input", estimatedMin: 3, goalVi: "SRS + tình huống thực tế" },
-  { id: 2, label: "Từ vựng", phase: "input", estimatedMin: 5, goalVi: "Pre-teach từ trước hội thoại" },
-  { id: 3, label: "Ngữ pháp", phase: "processing", estimatedMin: 5, goalVi: "Nhận diện mẫu → quy tắc" },
-  { id: 4, label: "Luyện tập", phase: "processing", estimatedMin: 8, goalVi: "Active recall + phản hồi tức thì" },
-  { id: 5, label: "Hội thoại", phase: "input", estimatedMin: 5, goalVi: "Nghe hiểu với vocab đã học" },
-  { id: 10, label: "Phản xạ", phase: "processing", estimatedMin: 4, goalVi: "Tự động hóa phản xạ (fluency)" },
-  { id: 9, label: "Dịch câu", phase: "output", estimatedMin: 5, goalVi: "Sản xuất câu VN→EN" },
-  { id: 6, label: "Shadowing", phase: "output", estimatedMin: 5, goalVi: "Nói theo ngữ điệu bản ngữ" },
-  { id: 7, label: "Luyện nói", phase: "output", estimatedMin: 5, goalVi: "Nói tự do trong ngữ cảnh" },
-  { id: 8, label: "Hoàn thành", phase: "review", estimatedMin: 5, goalVi: "Quiz + cumulative review + FSRS" },
+  {
+    id: 1,
+    label: "Khởi động",
+    phase: "input",
+    estimatedMin: 3,
+    goalVi: "SRS + tình huống thực tế",
+  },
+  {
+    id: 2,
+    label: "Từ vựng",
+    phase: "input",
+    estimatedMin: 5,
+    goalVi: "Pre-teach từ trước hội thoại",
+  },
+  {
+    id: 3,
+    label: "Ngữ pháp",
+    phase: "processing",
+    estimatedMin: 5,
+    goalVi: "Nhận diện mẫu → quy tắc",
+  },
+  {
+    id: 4,
+    label: "Luyện tập",
+    phase: "processing",
+    estimatedMin: 8,
+    goalVi: "Active recall + phản hồi tức thì",
+  },
+  {
+    id: 5,
+    label: "Hội thoại",
+    phase: "input",
+    estimatedMin: 5,
+    goalVi: "Nghe hiểu với vocab đã học",
+  },
+  {
+    id: 10,
+    label: "Phản xạ",
+    phase: "processing",
+    estimatedMin: 4,
+    goalVi: "Tự động hóa phản xạ (fluency)",
+  },
+  {
+    id: 9,
+    label: "Dịch câu",
+    phase: "output",
+    estimatedMin: 5,
+    goalVi: "Sản xuất câu VN→EN",
+  },
+  {
+    id: 6,
+    label: "Shadowing",
+    phase: "output",
+    estimatedMin: 5,
+    goalVi: "Nói theo ngữ điệu bản ngữ",
+  },
+  {
+    id: 7,
+    label: "Luyện nói",
+    phase: "output",
+    estimatedMin: 5,
+    goalVi: "Nói tự do trong ngữ cảnh",
+  },
+  {
+    id: 8,
+    label: "Hoàn thành",
+    phase: "review",
+    estimatedMin: 5,
+    goalVi: "Quiz + cumulative review + FSRS",
+  },
 ] as const;
 
-export const SECTION_ORDER = LESSON_SECTIONS.map((s) => s.id) as readonly number[];
+export const SECTION_ORDER = LESSON_SECTIONS.map(
+  (s) => s.id,
+) as readonly number[];
 export type SectionNumber = (typeof SECTION_ORDER)[number];
 export const TOTAL_SECTIONS = SECTION_ORDER.length;
 
 export const SECTION_LABELS: Record<number, string> = Object.fromEntries(
-  LESSON_SECTIONS.map((s) => [s.id, s.label])
+  LESSON_SECTIONS.map((s) => [s.id, s.label]),
 );
 
 const sectionById = new Map(LESSON_SECTIONS.map((s) => [s.id, s]));

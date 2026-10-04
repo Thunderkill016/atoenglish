@@ -1,6 +1,5 @@
 import { UnitData } from "@/lib/lessons/lesson-spec";
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // UNIT-A0-1 — Bảng Chữ Cái & Âm Cơ Bản  (A0)
 // Standardized header + section comments per lesson-blueprint.ts (CONTENT_BLOCK_ORDER)
@@ -37,7 +36,7 @@ export const unitA01: UnitData = {
 
   // ── HOOK: situation (real VN context) + learningOutcomes (2–5 can-do) + culturalNote (pragmatic VN↔EN)
   situation:
-    "Bạn đến một công ty nước ngoài để nộp hồ sơ. Nhân viên lễ tân nhìn lên và hỏi: \"Can you spell your name, please?\" Bạn cần biết cách phát âm từng chữ cái tiếng Anh để đánh vần tên mình.",
+    'Bạn đến một công ty nước ngoài để nộp hồ sơ. Nhân viên lễ tân nhìn lên và hỏi: "Can you spell your name, please?" Bạn cần biết cách phát âm từng chữ cái tiếng Anh để đánh vần tên mình.',
 
   learningOutcomes: [
     "Đọc đúng 26 chữ cái tiếng Anh (A → Z) theo cách phát âm gần với tiếng Việt",
@@ -45,18 +44,16 @@ export const unitA01: UnitData = {
     "Giới thiệu bản thân bằng câu chuẩn: My name IS... / I AM from...",
   ],
 
-
   // ── HOOK (cultural): pragmatic note
   culturalNote:
-    '<strong class="text-emerald-400">Bảng 26 chữ cái tiếng Anh</strong> — cách đọc gần với tiếng Việt:<br/><br/>' +
+    '<strong class="text-primary">Bảng 26 chữ cái tiếng Anh</strong> — cách đọc gần với tiếng Việt:<br/><br/>' +
     '<span class="font-mono text-sm leading-loose">' +
-    'A <span class="text-zinc-400">(ây)</span> · B <span class="text-zinc-400">(bi)</span> · C <span class="text-zinc-400">(xi)</span> · D <span class="text-zinc-400">(đi)</span> · E <span class="text-zinc-400">(i)</span> · F <span class="text-zinc-400">(ép-phờ)</span> · G <span class="text-zinc-400">(gi)</span> · H <span class="text-zinc-400">(ây-chờ)</span>' +
-    ' · I <span class="text-zinc-400">(ai)</span> · J <span class="text-zinc-400">(giây)</span> · K <span class="text-zinc-400">(kây)</span> · L <span class="text-zinc-400">(eo)</span> · M <span class="text-zinc-400">(em)</span> · N <span class="text-zinc-400">(en)</span>' +
-    ' · O <span class="text-zinc-400">(âu)</span> · P <span class="text-zinc-400">(pi)</span> · Q <span class="text-zinc-400">(kiu)</span> · R <span class="text-zinc-400">(a-rờ)</span> · S <span class="text-zinc-400">(ét)</span> · T <span class="text-zinc-400">(ti)</span>' +
-    ' · U <span class="text-zinc-400">(iu)</span> · V <span class="text-zinc-400">(vi)</span> · W <span class="text-zinc-400">(đáp-bờ-liu)</span> · X <span class="text-zinc-400">(ét-xờ)</span> · Y <span class="text-zinc-400">(oai)</span> · Z <span class="text-zinc-400">(zi/zét)</span>' +
-    '</span><br/><br/>' +
-    '💡 <span class="text-emerald-400 font-semibold">Mẹo đánh vần tên Việt:</span> Người nước ngoài hay hỏi <span class="text-emerald-400">"How do you spell that?"</span> khi nghe tên lạ. Tên như Nguyễn, Phạm, Trần thường cần đánh vần chậm, rõ từng chữ.',
-
+    'A <span class="text-muted-foreground">(ây)</span> · B <span class="text-muted-foreground">(bi)</span> · C <span class="text-muted-foreground">(xi)</span> · D <span class="text-muted-foreground">(đi)</span> · E <span class="text-muted-foreground">(i)</span> · F <span class="text-muted-foreground">(ép-phờ)</span> · G <span class="text-muted-foreground">(gi)</span> · H <span class="text-muted-foreground">(ây-chờ)</span>' +
+    ' · I <span class="text-muted-foreground">(ai)</span> · J <span class="text-muted-foreground">(giây)</span> · K <span class="text-muted-foreground">(kây)</span> · L <span class="text-muted-foreground">(eo)</span> · M <span class="text-muted-foreground">(em)</span> · N <span class="text-muted-foreground">(en)</span>' +
+    ' · O <span class="text-muted-foreground">(âu)</span> · P <span class="text-muted-foreground">(pi)</span> · Q <span class="text-muted-foreground">(kiu)</span> · R <span class="text-muted-foreground">(a-rờ)</span> · S <span class="text-muted-foreground">(ét)</span> · T <span class="text-muted-foreground">(ti)</span>' +
+    ' · U <span class="text-muted-foreground">(iu)</span> · V <span class="text-muted-foreground">(vi)</span> · W <span class="text-muted-foreground">(đáp-bờ-liu)</span> · X <span class="text-muted-foreground">(ét-xờ)</span> · Y <span class="text-muted-foreground">(oai)</span> · Z <span class="text-muted-foreground">(zi/zét)</span>' +
+    "</span><br/><br/>" +
+    '💡 <span class="text-primary font-semibold">Mẹo đánh vần tên Việt:</span> Người nước ngoài hay hỏi <span class="text-primary">"How do you spell that?"</span> khi nghe tên lạ. Tên như Nguyễn, Phạm, Trần thường cần đánh vần chậm, rõ từng chữ.',
 
   // ── WARMUP: 3 cards to activate prior knowledge ───────────────────────────
 
@@ -91,7 +88,8 @@ export const unitA01: UnitData = {
     {
       id: 1,
       word: "hello",
-      l1_interference_vn: "⚠️ \'Hello\' phát âm /həˈloʊ/ — nhấn âm thứ 2 \'LO\'. Không phát đều: \'HEL-lo\' (sai nhấn).",
+      l1_interference_vn:
+        "⚠️ \'Hello\' phát âm /həˈloʊ/ — nhấn âm thứ 2 \'LO\'. Không phát đều: \'HEL-lo\' (sai nhấn).",
       emoji: "👋",
       phonetic: "/həˈloʊ/",
       meaning: "xin chào",
@@ -103,7 +101,8 @@ export const unitA01: UnitData = {
     {
       id: 2,
       word: "name",
-      l1_interference_vn: "⚠️ \'My name IS Lan\' — KHÔNG bỏ \'is\': \'My name Lan\' là lỗi #1 của người Việt học tiếng Anh.",
+      l1_interference_vn:
+        "⚠️ \'My name IS Lan\' — KHÔNG bỏ \'is\': \'My name Lan\' là lỗi #1 của người Việt học tiếng Anh.",
       emoji: "🏷️",
       phonetic: "/neɪm/",
       meaning: "tên",
@@ -115,7 +114,8 @@ export const unitA01: UnitData = {
     {
       id: 3,
       word: "spell",
-      l1_interference_vn: "⚠️ \'Spell\' = đánh vần từng chữ cái. \'How do you spell that?\' — không nhầm với \'say\'.",
+      l1_interference_vn:
+        "⚠️ \'Spell\' = đánh vần từng chữ cái. \'How do you spell that?\' — không nhầm với \'say\'.",
       emoji: "🔤",
       phonetic: "/spel/",
       meaning: "đánh vần",
@@ -134,7 +134,8 @@ export const unitA01: UnitData = {
       example2: "Spell it letter by letter.",
       collocation: "capital letter / small letter / the letter A",
       audio: "/audio/unit-a0-1/letter.mp3",
-      l1_interference_vn: "⚠️ 'Letter' = chữ cái (A,B,C) HOẶC thư. 'Write a letter' = viết thư. Phân biệt qua ngữ cảnh.",
+      l1_interference_vn:
+        "⚠️ 'Letter' = chữ cái (A,B,C) HOẶC thư. 'Write a letter' = viết thư. Phân biệt qua ngữ cảnh.",
     },
     {
       id: 5,
@@ -150,7 +151,8 @@ export const unitA01: UnitData = {
     {
       id: 6,
       word: "thank",
-      l1_interference_vn: "⚠️ \'Thank\' bắt đầu bằng /θ/ — lưỡi phải ra ngoài hàng răng. KHÔNG phát \'tank\' hay \'fank\'.",
+      l1_interference_vn:
+        "⚠️ \'Thank\' bắt đầu bằng /θ/ — lưỡi phải ra ngoài hàng răng. KHÔNG phát \'tank\' hay \'fank\'.",
       emoji: "🙌",
       phonetic: "/θæŋk/",
       meaning: "cảm ơn",
@@ -170,7 +172,8 @@ export const unitA01: UnitData = {
       example2: "It's nice to see you.",
       collocation: "nice to meet you / how nice / nice day",
       audio: "/audio/unit-a0-1/nice.mp3",
-      l1_interference_vn: "⚠️ 'Nice to meet you' (gặp lần đầu). 'Nice' = pleasant. KHÔNG nhầm với 'good' — 'nice' thường nói về trải nghiệm/cảm giác.",
+      l1_interference_vn:
+        "⚠️ 'Nice to meet you' (gặp lần đầu). 'Nice' = pleasant. KHÔNG nhầm với 'good' — 'nice' thường nói về trải nghiệm/cảm giác.",
     },
     {
       id: 8,
@@ -182,7 +185,8 @@ export const unitA01: UnitData = {
       example2: "I want to meet your family.",
       collocation: "nice to meet you / meet someone / meet again",
       audio: "/audio/unit-a0-1/meet.mp3",
-      l1_interference_vn: "⚠️ 'Meet' (lần đầu gặp) vs 'see' (gặp người đã biết). 'Nice to meet you' (lần đầu) vs 'Great to see you again!'",
+      l1_interference_vn:
+        "⚠️ 'Meet' (lần đầu gặp) vs 'see' (gặp người đã biết). 'Nice to meet you' (lần đầu) vs 'Great to see you again!'",
     },
     {
       id: 9,
@@ -194,7 +198,8 @@ export const unitA01: UnitData = {
       example2: "Nice to see you again.",
       collocation: "say again / try again / once again / see you again",
       audio: "/audio/unit-a0-1/again.mp3",
-      l1_interference_vn: "⚠️ 'Again' đứng cuối câu: 'Say that again, please.' KHÔNG 'Again say that.' Phó từ luôn đặt sau động từ.",
+      l1_interference_vn:
+        "⚠️ 'Again' đứng cuối câu: 'Say that again, please.' KHÔNG 'Again say that.' Phó từ luôn đặt sau động từ.",
     },
     {
       id: 10,
@@ -206,7 +211,8 @@ export const unitA01: UnitData = {
       example2: "Do you understand?",
       collocation: "I understand / I don't understand / do you understand",
       audio: "/audio/unit-a0-1/understand.mp3",
-      l1_interference_vn: "⚠️ 'I understand' (không tiến hành từ đang xảy ra). KHÔNG 'I'm understanding' — stative verb không dùng continuous.",
+      l1_interference_vn:
+        "⚠️ 'I understand' (không tiến hành từ đang xảy ra). KHÔNG 'I'm understanding' — stative verb không dùng continuous.",
     },
   ],
 
@@ -215,23 +221,24 @@ export const unitA01: UnitData = {
 
   // ── GRAMMAR: Inductive (Meaning→Form→CCQ) + vnNote L1
   grammar: {
-    title: "Verb BE — \"My name IS...\" (Câu giới thiệu đầu tiên)",
+    title: 'Verb BE — "My name IS..." (Câu giới thiệu đầu tiên)',
     rule: "Tiếng Anh BẮT BUỘC phải có động từ. Câu đơn giản nhất: My name IS [tên].",
 
     conjugation: [
-      { subject: "I",        form: "am",  example: "I am Minh." },
-      { subject: "My name",  form: "is",  example: "My name is Minh." },
-      { subject: "Nice to",  form: "meet you", example: "Nice to meet you!" },
+      { subject: "I", form: "am", example: "I am Minh." },
+      { subject: "My name", form: "is", example: "My name is Minh." },
+      { subject: "Nice to", form: "meet you", example: "Nice to meet you!" },
     ],
 
     examples: [
-      { en: "My name is Linh.",       vn: "Tên tôi là Linh." },
-      { en: "I am from Vietnam.",     vn: "Tôi đến từ Việt Nam." },
-      { en: "Nice to meet you!",      vn: "Rất vui được gặp bạn!" },
-      { en: "I don't understand.",    vn: "Tôi không hiểu." },
+      { en: "My name is Linh.", vn: "Tên tôi là Linh." },
+      { en: "I am from Vietnam.", vn: "Tôi đến từ Việt Nam." },
+      { en: "Nice to meet you!", vn: "Rất vui được gặp bạn!" },
+      { en: "I don't understand.", vn: "Tôi không hiểu." },
     ],
 
-    tip: "Mẹo nhớ nhanh: Mỗi câu tiếng Anh cần ít nhất 1 động từ. IS và AM là 2 động từ nhỏ nhất — nhưng BẮT BUỘC phải có.\n\n" +
+    tip:
+      "Mẹo nhớ nhanh: Mỗi câu tiếng Anh cần ít nhất 1 động từ. IS và AM là 2 động từ nhỏ nhất — nhưng BẮT BUỘC phải có.\n\n" +
       "📌 I AM = I'M (rút gọn): 'I am Minh.' và 'I'm Minh.' đều ĐÚNG — dạng rút gọn nghe tự nhiên hơn trong giao tiếp hàng ngày.\n" +
       "📌 Tương tự: 'I am from Vietnam.' = 'I'm from Vietnam.' — nghĩa y hệt, chỉ khác cách viết.",
 
@@ -271,11 +278,11 @@ export const unitA01: UnitData = {
   matchingExercise: {
     title: "Nối cụm từ với nghĩa tiếng Việt",
     pairs: [
-      { left: "Nice to meet you",       right: "Rất vui được gặp bạn" },
-      { left: "Can you spell that?",    right: "Bạn có thể đánh vần không?" },
-      { left: "I don't understand",     right: "Tôi không hiểu" },
-      { left: "Say it again, please",   right: "Nói lại, làm ơn" },
-      { left: "My name is...",          right: "Tên tôi là..." },
+      { left: "Nice to meet you", right: "Rất vui được gặp bạn" },
+      { left: "Can you spell that?", right: "Bạn có thể đánh vần không?" },
+      { left: "I don't understand", right: "Tôi không hiểu" },
+      { left: "Say it again, please", right: "Nói lại, làm ơn" },
+      { left: "My name is...", right: "Tên tôi là..." },
     ],
   },
 
@@ -304,7 +311,7 @@ export const unitA01: UnitData = {
     },
     {
       id: "pq1-3",
-      question: "\"I don't understand\" có nghĩa là gì?",
+      question: '"I don\'t understand" có nghĩa là gì?',
       options: [
         "Tôi không thích",
         "Tôi không hiểu",
@@ -354,18 +361,18 @@ export const unitA01: UnitData = {
       sentence: "My name are Lan.",
       errorWord: "are",
       correction: "is",
-      explanation_vn: "'Name' là danh từ số ít → 'My name IS Lan'. 'Are' dùng cho số nhiều hoặc you/we/they.",
+      explanation_vn:
+        "'Name' là danh từ số ít → 'My name IS Lan'. 'Are' dùng cho số nhiều hoặc you/we/they.",
     },
     {
       id: "sc-A01-2",
       sentence: "I have eight years old.",
       errorWord: "have",
       correction: "am",
-      explanation_vn: "Nói tuổi bằng 'to be': 'I AM eight years old'. Không dùng 'have' cho tuổi trong tiếng Anh.",
+      explanation_vn:
+        "Nói tuổi bằng 'to be': 'I AM eight years old'. Không dùng 'have' cho tuổi trong tiếng Anh.",
     },
   ],
-
-
 
   // ── EXERCISES_INPUT: listenAndArrange
   listenAndArrangeExercises: [
@@ -373,19 +380,42 @@ export const unitA01: UnitData = {
       id: "laA01-1",
       audio_text: "My name is Lan and I am from Hanoi.",
       prompt_vn: "Tên tôi là Lan và tôi đến từ Hà Nội.",
-      words: ["My", "name", "is", "Lan", "and", "I", "am", "from", "Hanoi", ".", "are", "be"],
+      words: [
+        "My",
+        "name",
+        "is",
+        "Lan",
+        "and",
+        "I",
+        "am",
+        "from",
+        "Hanoi",
+        ".",
+        "are",
+        "be",
+      ],
       answer: "My name is Lan and I am from Hanoi .",
     },
     {
       id: "laA01-2",
       audio_text: "Nice to meet you my name is Nam.",
       prompt_vn: "Rất vui được gặp bạn tên tôi là Nam.",
-      words: ["Nice", "to", "meet", "you", "my", "name", "is", "Nam", ".", "are", "Nice meeting"],
+      words: [
+        "Nice",
+        "to",
+        "meet",
+        "you",
+        "my",
+        "name",
+        "is",
+        "Nam",
+        ".",
+        "are",
+        "Nice meeting",
+      ],
       answer: "Nice to meet you my name is Nam .",
     },
   ],
-
-
 
   // ── EXERCISES_INPUT: wordBank
   wordBankExercises: [
@@ -408,7 +438,6 @@ export const unitA01: UnitData = {
       answer: "Can you spell your name ?",
     },
   ],
-
 
   // ── EXERCISES_INPUT: scramble
   scrambleExercises: [
@@ -525,7 +554,8 @@ export const unitA01: UnitData = {
           id: "d1-2-2",
           speaker: "Linh",
           text: "Hello Sara! I am Linh. Nice to meet you too!",
-          translation: "Xin chào Sara! Tôi là Linh. Tôi cũng rất vui được gặp bạn!",
+          translation:
+            "Xin chào Sara! Tôi là Linh. Tôi cũng rất vui được gặp bạn!",
         },
         {
           id: "d1-2-3",
@@ -543,7 +573,8 @@ export const unitA01: UnitData = {
           id: "d1-2-5",
           speaker: "Sara",
           text: "Thank you! Sorry — I don't understand Vietnamese names. Can you say it again?",
-          translation: "Cảm ơn! Xin lỗi — tôi không hiểu tên tiếng Việt. Bạn có thể nói lại không?",
+          translation:
+            "Cảm ơn! Xin lỗi — tôi không hiểu tên tiếng Việt. Bạn có thể nói lại không?",
         },
         {
           id: "d1-2-6",
@@ -562,13 +593,23 @@ export const unitA01: UnitData = {
     {
       id: "lac1-1",
       audio_text: "My name is Minh",
-      options: ["My name Minh", "My name is Minh", "I name is Minh", "Name is Minh"],
+      options: [
+        "My name Minh",
+        "My name is Minh",
+        "I name is Minh",
+        "Name is Minh",
+      ],
       answer: "My name is Minh",
     },
     {
       id: "lac1-2",
       audio_text: "Nice to meet you",
-      options: ["Nice to meet you", "Nice to see you", "Nice to know you", "Good to meet you"],
+      options: [
+        "Nice to meet you",
+        "Nice to see you",
+        "Nice to know you",
+        "Good to meet you",
+      ],
       answer: "Nice to meet you",
     },
     {
@@ -585,13 +626,23 @@ export const unitA01: UnitData = {
     {
       id: "lac1-4",
       audio_text: "I am from Vietnam",
-      options: ["Tôi đến từ Việt Nam", "Tôi đến từ Nhật Bản", "Tôi đến từ Hàn Quốc", "Tôi đến từ Thái Lan"],
+      options: [
+        "Tôi đến từ Việt Nam",
+        "Tôi đến từ Nhật Bản",
+        "Tôi đến từ Hàn Quốc",
+        "Tôi đến từ Thái Lan",
+      ],
       answer: "Tôi đến từ Việt Nam",
     },
     {
       id: "lac1-5",
       audio_text: "I don't understand please say again",
-      options: ["Tôi không hiểu, làm ơn nói lại", "Tôi không thích, làm ơn nói lại", "Tôi không nghe thấy, làm ơn nói lại", "Tôi không biết, làm ơn hỏi lại"],
+      options: [
+        "Tôi không hiểu, làm ơn nói lại",
+        "Tôi không thích, làm ơn nói lại",
+        "Tôi không nghe thấy, làm ơn nói lại",
+        "Tôi không biết, làm ơn hỏi lại",
+      ],
       answer: "Tôi không hiểu, làm ơn nói lại",
     },
   ],
@@ -605,13 +656,14 @@ export const unitA01: UnitData = {
     phoneme: "/θ/",
     description: "Âm TH vô thanh — lưỡi nhô ra",
     examples: [
-      { word: "thank", ipa: "/θæŋk/", tip: "Lưỡi ra ngoài hàng răng, thổi hơi — KHÔNG phát 't' hay 'f'" },
+      {
+        word: "thank",
+        ipa: "/θæŋk/",
+        tip: "Lưỡi ra ngoài hàng răng, thổi hơi — KHÔNG phát 't' hay 'f'",
+      },
     ],
-    minimalPairs: [
-      ["thank", "tank"],
-    ],
+    minimalPairs: [["thank", "tank"]],
   },
-
 
   // ── FLUENCY: fluencyDrill ≥5 (Nation Strand 4 automaticity)
   fluencyDrill: {
@@ -713,7 +765,7 @@ export const unitA01: UnitData = {
     },
     {
       id: "q1-5",
-      question: "\"I don't understand\" — khi nào bạn nói câu này?",
+      question: '"I don\'t understand" — khi nào bạn nói câu này?',
       options: [
         "Khi bạn không thích điều gì đó",
         "Khi bạn không nghe thấy gì",
@@ -791,26 +843,40 @@ export const unitA01: UnitData = {
     {
       id: "uA01-cr-1",
       type: "multiple-choice" as const,
-      question: "Câu chào buổi sáng đúng là gì? (What is the correct morning greeting?)",
+      question:
+        "Câu chào buổi sáng đúng là gì? (What is the correct morning greeting?)",
       options: ["Good morning", "Good night", "Good evening", "Goodbye"],
       answer: "Good morning",
-      explanation_vn: "'Good morning' dùng để chào vào buổi sáng. 'Good evening' là buổi tối, 'Good night' là khi đi ngủ.",
+      explanation_vn:
+        "'Good morning' dùng để chào vào buổi sáng. 'Good evening' là buổi tối, 'Good night' là khi đi ngủ.",
     },
     {
       id: "uA01-cr-2",
       type: "multiple-choice" as const,
       question: "Bạn giới thiệu tên mình (Linh) như thế nào?",
-      options: ["My name is Linh.", "I am name Linh.", "Name I Linh.", "Linh is my."],
+      options: [
+        "My name is Linh.",
+        "I am name Linh.",
+        "Name I Linh.",
+        "Linh is my.",
+      ],
       answer: "My name is Linh.",
-      explanation_vn: "Cấu trúc đúng: 'My name is [tên].' — Đây là câu giới thiệu tên cơ bản nhất.",
+      explanation_vn:
+        "Cấu trúc đúng: 'My name is [tên].' — Đây là câu giới thiệu tên cơ bản nhất.",
     },
     {
       id: "uA01-cr-3",
       type: "multiple-choice" as const,
       question: "Câu trả lời đúng cho 'How are you?' là gì?",
-      options: ["I am fine, thank you.", "My name is Tom.", "Nice to meet you.", "Good morning."],
+      options: [
+        "I am fine, thank you.",
+        "My name is Tom.",
+        "Nice to meet you.",
+        "Good morning.",
+      ],
       answer: "I am fine, thank you.",
-      explanation_vn: "'I am fine, thank you.' là câu trả lời chuẩn. Các câu khác đúng ngữ pháp nhưng không phù hợp văn cảnh.",
+      explanation_vn:
+        "'I am fine, thank you.' là câu trả lời chuẩn. Các câu khác đúng ngữ pháp nhưng không phù hợp văn cảnh.",
     },
     {
       id: "uA01-cr-4",
@@ -818,7 +884,8 @@ export const unitA01: UnitData = {
       question: "Bạn nói gì khi tạm biệt?",
       options: ["Goodbye!", "Hello!", "How are you?", "What is your name?"],
       answer: "Goodbye!",
-      explanation_vn: "'Goodbye!' là lời tạm biệt phổ biến. Bạn cũng có thể nói 'Bye!' hay 'See you later!'",
+      explanation_vn:
+        "'Goodbye!' là lời tạm biệt phổ biến. Bạn cũng có thể nói 'Bye!' hay 'See you later!'",
     },
   ],
 
@@ -830,10 +897,12 @@ export const unitA01: UnitData = {
       title: "Ngày đầu đi làm: chào hỏi và làm quen đồng nghiệp",
       focus: "Basic greetings + self intro at office (entry level job)",
       context: "Orientation hoặc first day tại công ty nhỏ ở Việt Nam",
-      l1Note: "⚠️ 'Hello, my name is... Nice to meet you.' 'I am the new assistant.'",
-      example: "Hi everyone, my name is Lan. I just joined as marketing assistant. Nice to meet you all."
-    }
-  ], 
+      l1Note:
+        "⚠️ 'Hello, my name is... Nice to meet you.' 'I am the new assistant.'",
+      example:
+        "Hi everyone, my name is Lan. I just joined as marketing assistant. Nice to meet you all.",
+    },
+  ],
 };
 
 export default unitA01;

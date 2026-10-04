@@ -112,7 +112,7 @@ export default function TermsPage() {
               Mọi câu hỏi về điều khoản sử dụng, vui lòng liên hệ:{" "}
               <a
                 href="mailto:support@atoenglish.com"
-                className="text-emerald-600 dark:text-emerald-400 underline hover:no-underline font-medium"
+                className="text-primary underline hover:no-underline font-medium"
               >
                 support@atoenglish.com
               </a>
@@ -123,7 +123,7 @@ export default function TermsPage() {
         <div className="pt-8 border-t border-border/40 flex gap-4 text-sm">
           <Link
             href="/privacy"
-            className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+            className="text-primary font-semibold hover:underline"
           >
             Chính sách Bảo mật →
           </Link>

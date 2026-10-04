@@ -1,6 +1,5 @@
 import { UnitData } from "@/lib/lessons/lesson-spec";
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // UNIT-A0-6 — Gia Đình & Những Người Thân  (A0)
 // Standardized header + section comments per lesson-blueprint.ts (CONTENT_BLOCK_ORDER)
@@ -25,7 +24,6 @@ export const unitA06: UnitData = {
   badgeName: "Người Kể Chuyện",
   badgeEmoji: "👨‍👩‍👧‍👦",
 
-
   // ── HOOK: situation (real VN context) + learningOutcomes (2–5 can-do) + culturalNote (pragmatic VN↔EN)
   situation:
     "Đồng nghiệp nước ngoài Sara nhìn thấy ảnh gia đình trên điện thoại của bạn và hỏi về từng người. Bạn cần kể về gia đình bằng tiếng Anh.",
@@ -36,11 +34,9 @@ export const unitA06: UnitData = {
     "Kể về gia đình: This is my mother. She is a teacher.",
   ],
 
-
   // ── HOOK (cultural): pragmatic note
   culturalNote:
-    'Người bản ngữ thường hỏi <span class="text-emerald-400 font-semibold">"Do you have any brothers or sisters?"</span> thay vì hỏi về từng người một. Câu trả lời ngắn gọn như <span class="text-emerald-400 font-semibold">"I have one older brother"</span> là đủ — không cần kể chi tiết nếu không được hỏi tiếp.',
-
+    'Người bản ngữ thường hỏi <span class="text-primary font-semibold">"Do you have any brothers or sisters?"</span> thay vì hỏi về từng người một. Câu trả lời ngắn gọn như <span class="text-primary font-semibold">"I have one older brother"</span> là đủ — không cần kể chi tiết nếu không được hỏi tiếp.',
 
   // ── WARMUP: ≥3 short phrases (SRS + prior knowledge activation)
   warmupGreetings: [
@@ -64,7 +60,6 @@ export const unitA06: UnitData = {
     },
   ],
 
-
   // ── VOCABULARY: 8–20 words, pre-teach BEFORE dialogues; l1_interference_vn (A1 100%, B1+ ≥50%)
   vocab: [
     {
@@ -77,7 +72,8 @@ export const unitA06: UnitData = {
       example2: "She is my mother.",
       collocation: "my mother / mother's day / working mother",
       audio: "/audio/unit-a0-6/mother.mp3",
-      l1_interference_vn: "⚠️ 'My mother' (không viết hoa trừ đầu câu). 'Mom/Mum' (informal). KHÔNG dùng 'the mother' để chỉ mẹ của bạn.",
+      l1_interference_vn:
+        "⚠️ 'My mother' (không viết hoa trừ đầu câu). 'Mom/Mum' (informal). KHÔNG dùng 'the mother' để chỉ mẹ của bạn.",
     },
     {
       id: 2,
@@ -89,7 +85,8 @@ export const unitA06: UnitData = {
       example2: "He is my father.",
       collocation: "my father / father's day / single father",
       audio: "/audio/unit-a0-6/father.mp3",
-      l1_interference_vn: "⚠️ 'My father' = formal. 'Dad/Papa' = informal. Trong câu: 'My father is a doctor' — KHÔNG 'The father of me'.",
+      l1_interference_vn:
+        "⚠️ 'My father' = formal. 'Dad/Papa' = informal. Trong câu: 'My father is a doctor' — KHÔNG 'The father of me'.",
     },
     {
       id: 3,
@@ -101,7 +98,8 @@ export const unitA06: UnitData = {
       example2: "My brother is twenty years old.",
       collocation: "older brother / younger brother / big brother",
       audio: "/audio/unit-a0-6/brother.mp3",
-      l1_interference_vn: "⚠️ 'Brother' không phân biệt anh/em trai. Phải nói rõ: 'older brother' (anh) vs 'younger brother' (em trai).",
+      l1_interference_vn:
+        "⚠️ 'Brother' không phân biệt anh/em trai. Phải nói rõ: 'older brother' (anh) vs 'younger brother' (em trai).",
     },
     {
       id: 4,
@@ -113,7 +111,8 @@ export const unitA06: UnitData = {
       example2: "She is my younger sister.",
       collocation: "older sister / younger sister / big sister",
       audio: "/audio/unit-a0-6/sister.mp3",
-      l1_interference_vn: "⚠️ 'Sister' không phân biệt chị/em gái. 'Older sister' (chị) vs 'younger sister' (em gái). Tiếng Việt có nhưng tiếng Anh không.",
+      l1_interference_vn:
+        "⚠️ 'Sister' không phân biệt chị/em gái. 'Older sister' (chị) vs 'younger sister' (em gái). Tiếng Việt có nhưng tiếng Anh không.",
     },
     {
       id: 5,
@@ -125,7 +124,8 @@ export const unitA06: UnitData = {
       example2: "Her husband is very kind.",
       collocation: "my husband / her husband / future husband",
       audio: "/audio/unit-a0-6/husband.mp3",
-      l1_interference_vn: "⚠️ 'Husband' (đã kết hôn) vs 'boyfriend' (đang hẹn hò). KHÔNG nhầm. 'My husband' — KHÔNG 'my man' trong tiếng Anh chuẩn.",
+      l1_interference_vn:
+        "⚠️ 'Husband' (đã kết hôn) vs 'boyfriend' (đang hẹn hò). KHÔNG nhầm. 'My husband' — KHÔNG 'my man' trong tiếng Anh chuẩn.",
     },
     {
       id: 6,
@@ -137,7 +137,8 @@ export const unitA06: UnitData = {
       example2: "My wife is from Hue.",
       collocation: "my wife / his wife / wife and kids",
       audio: "/audio/unit-a0-6/wife.mp3",
-      l1_interference_vn: "⚠️ Số nhiều bất quy tắc: wife → wives (không phải wifes). Tương tự: life/lives, knife/knives.",
+      l1_interference_vn:
+        "⚠️ Số nhiều bất quy tắc: wife → wives (không phải wifes). Tương tự: life/lives, knife/knives.",
     },
     {
       id: 7,
@@ -149,7 +150,8 @@ export const unitA06: UnitData = {
       example2: "My child is five years old.",
       collocation: "my child / have children / only child",
       audio: "/audio/unit-a0-6/child.mp3",
-      l1_interference_vn: "⚠️ Số nhiều bất quy tắc: child → children (không phải childs). 'Two children', not 'two childs'. Cực kỳ phổ biến.",
+      l1_interference_vn:
+        "⚠️ Số nhiều bất quy tắc: child → children (không phải childs). 'Two children', not 'two childs'. Cực kỳ phổ biến.",
     },
     {
       id: 8,
@@ -161,7 +163,8 @@ export const unitA06: UnitData = {
       example2: "She has only one sister.",
       collocation: "only child / only one / the only / only a little",
       audio: "/audio/unit-a0-6/only.mp3",
-      l1_interference_vn: "⚠️ Vị trí 'only' ảnh hưởng nghĩa: 'Only I love her' vs 'I only love her' vs 'I love only her' — ba nghĩa khác nhau.",
+      l1_interference_vn:
+        "⚠️ Vị trí 'only' ảnh hưởng nghĩa: 'Only I love her' vs 'I only love her' vs 'I love only her' — ba nghĩa khác nhau.",
     },
     {
       id: 9,
@@ -173,7 +176,8 @@ export const unitA06: UnitData = {
       example2: "I am close to my sister.",
       collocation: "close family / very close / close friend",
       audio: "/audio/unit-a0-6/close.mp3",
-      l1_interference_vn: "⚠️ 'Close' /kloʊs/ (adj=gần/thân) vs /kloʊz/ (v=đóng). Cùng viết, đọc khác. 'A close friend' vs 'Close the door'.",
+      l1_interference_vn:
+        "⚠️ 'Close' /kloʊs/ (adj=gần/thân) vs /kloʊz/ (v=đóng). Cùng viết, đọc khác. 'A close friend' vs 'Close the door'.",
     },
     {
       id: 10,
@@ -185,10 +189,10 @@ export const unitA06: UnitData = {
       example2: "How many people are in your family?",
       collocation: "my family / family photo / close family / big family",
       audio: "/audio/unit-a0-6/family.mp3",
-      l1_interference_vn: "⚠️ 'My family is/are well' — cả hai đúng. Family = tập thể, có thể dùng singular hoặc plural verb tùy vùng.",
+      l1_interference_vn:
+        "⚠️ 'My family is/are well' — cả hai đúng. Family = tập thể, có thể dùng singular hoặc plural verb tùy vùng.",
     },
   ],
-
 
   // ── GRAMMAR: Inductive (Meaning→Form→CCQ) + vnNote L1
   grammar: {
@@ -196,16 +200,28 @@ export const unitA06: UnitData = {
     rule: "HE = nam giới (anh, chú, ông, bố...) / SHE = nữ giới / THEY = nhiều người",
 
     conjugation: [
-      { subject: "HE",   form: "IS",  example: "He is my father. He is a doctor." },
-      { subject: "SHE",  form: "IS",  example: "She is my mother. She is a teacher." },
-      { subject: "THEY", form: "ARE", example: "They are my parents. They are kind." },
+      {
+        subject: "HE",
+        form: "IS",
+        example: "He is my father. He is a doctor.",
+      },
+      {
+        subject: "SHE",
+        form: "IS",
+        example: "She is my mother. She is a teacher.",
+      },
+      {
+        subject: "THEY",
+        form: "ARE",
+        example: "They are my parents. They are kind.",
+      },
     ],
 
     examples: [
-      { en: "He is my older brother.",    vn: "Anh ấy là anh trai tôi." },
-      { en: "She is my younger sister.",  vn: "Cô ấy là em gái tôi." },
-      { en: "They are my parents.",       vn: "Họ là bố mẹ tôi." },
-      { en: "My family is very close.",   vn: "Gia đình tôi rất thân thiết." },
+      { en: "He is my older brother.", vn: "Anh ấy là anh trai tôi." },
+      { en: "She is my younger sister.", vn: "Cô ấy là em gái tôi." },
+      { en: "They are my parents.", vn: "Họ là bố mẹ tôi." },
+      { en: "My family is very close.", vn: "Gia đình tôi rất thân thiết." },
     ],
 
     tip: "Khi nói về người thân: 'This is my mother. SHE is a teacher.' — dùng SHE thay vì lặp lại 'my mother'. Người bản ngữ luôn dùng HE/SHE sau lần giới thiệu đầu tiên.",
@@ -239,19 +255,17 @@ export const unitA06: UnitData = {
     },
   },
 
-
   // ── EXERCISES_INPUT: matching
   matchingExercise: {
     title: "Nối thành viên gia đình với đại từ đúng",
     pairs: [
-      { left: "mother",  right: "she" },
-      { left: "father",  right: "he" },
+      { left: "mother", right: "she" },
+      { left: "father", right: "he" },
       { left: "brother", right: "he" },
-      { left: "sister",  right: "she" },
+      { left: "sister", right: "she" },
       { left: "parents", right: "they" },
     ],
   },
-
 
   // ── EXERCISES_INPUT: practiceQuiz (active recall)
   practiceQuiz: [
@@ -290,7 +304,6 @@ export const unitA06: UnitData = {
     },
   ],
 
-
   // ── OUTPUT: practiceTranslate (VN→EN ≥3) + speaking (level1/2)
   practiceTranslate: [
     {
@@ -310,7 +323,6 @@ export const unitA06: UnitData = {
     },
   ],
 
-
   // ── EXERCISES_INPUT: sentenceCorrection
   sentenceCorrectionExercises: [
     {
@@ -318,18 +330,18 @@ export const unitA06: UnitData = {
       sentence: "He has three child.",
       errorWord: "child",
       correction: "children",
-      explanation_vn: "'Child' số nhiều bất quy tắc: 'CHILDREN'. Không dùng 'childs'. Tương tự: man→men, woman→women.",
+      explanation_vn:
+        "'Child' số nhiều bất quy tắc: 'CHILDREN'. Không dùng 'childs'. Tương tự: man→men, woman→women.",
     },
     {
       id: "sc-A06-2",
       sentence: "She is my sister's.",
       errorWord: "sister's",
       correction: "sister",
-      explanation_vn: "'She is my sister' — không thêm '\\'s\" vào đây. '\\'s\" chỉ dùng cho sở hữu cách: 'my sister\\'s bag'.",
+      explanation_vn:
+        "'She is my sister' — không thêm '\\'s\" vào đây. '\\'s\" chỉ dùng cho sở hữu cách: 'my sister\\'s bag'.",
     },
   ],
-
-
 
   // ── EXERCISES_INPUT: listenAndArrange
   listenAndArrangeExercises: [
@@ -337,7 +349,20 @@ export const unitA06: UnitData = {
       id: "laA06-1",
       audio_text: "She is my mother and he is my father.",
       prompt_vn: "Đây là mẹ tôi và đây là bố tôi.",
-      words: ["She", "is", "my", "mother", "and", "he", "is", "my", "father", ".", "He is my mother", "They are"],
+      words: [
+        "She",
+        "is",
+        "my",
+        "mother",
+        "and",
+        "he",
+        "is",
+        "my",
+        "father",
+        ".",
+        "He is my mother",
+        "They are",
+      ],
       answer: "She is my mother and he is my father .",
     },
     {
@@ -349,30 +374,60 @@ export const unitA06: UnitData = {
     },
   ],
 
-
-
   // ── EXERCISES_INPUT: wordBank
   wordBankExercises: [
     {
       id: "wb1",
       prompt_vn: "Đây là mẹ tôi. Bà ấy là giáo viên.",
-      words: ["This", "is", "my", "mother.", "She", "is", "a", "teacher", ".", "are"],
+      words: [
+        "This",
+        "is",
+        "my",
+        "mother.",
+        "She",
+        "is",
+        "a",
+        "teacher",
+        ".",
+        "are",
+      ],
       answer: "This is my mother. She is a teacher .",
     },
     {
       id: "wb2",
       prompt_vn: "Họ là bố mẹ tôi. Họ rất thân thiết.",
-      words: ["They", "are", "my", "parents.", "They", "are", "very", "close", ".", "is"],
+      words: [
+        "They",
+        "are",
+        "my",
+        "parents.",
+        "They",
+        "are",
+        "very",
+        "close",
+        ".",
+        "is",
+      ],
       answer: "They are my parents. They are very close .",
     },
     {
       id: "wb3",
       prompt_vn: "Tôi có một anh trai và một em gái.",
-      words: ["I", "have", "one", "brother", "and", "one", "sister", ".", "is", "are"],
+      words: [
+        "I",
+        "have",
+        "one",
+        "brother",
+        "and",
+        "one",
+        "sister",
+        ".",
+        "is",
+        "are",
+      ],
       answer: "I have one brother and one sister .",
     },
   ],
-
 
   // ── EXERCISES_INPUT: scramble
   scrambleExercises: [
@@ -385,7 +440,17 @@ export const unitA06: UnitData = {
     {
       id: "s6-2",
       prompt_vn: "Họ là bố mẹ tôi. Họ rất thân thiết.",
-      words: ["They", "are", "my", "parents.", "They", "are", "very", "close", "."],
+      words: [
+        "They",
+        "are",
+        "my",
+        "parents.",
+        "They",
+        "are",
+        "very",
+        "close",
+        ".",
+      ],
       answer: "They are my parents. They are very close .",
     },
     {
@@ -395,7 +460,6 @@ export const unitA06: UnitData = {
       answer: "I have one brother and one sister .",
     },
   ],
-
 
   // ── DIALOGUES: ≥1 dialogue AFTER vocab (98% coverage)
   dialogues: [
@@ -427,7 +491,8 @@ export const unitA06: UnitData = {
           id: "d6-1-4",
           speaker: "Minh",
           text: "This is my mother. She is a teacher. She is fifty years old.",
-          translation: "Đây là mẹ tôi. Bà ấy là giáo viên. Bà ấy năm mươi tuổi.",
+          translation:
+            "Đây là mẹ tôi. Bà ấy là giáo viên. Bà ấy năm mươi tuổi.",
         },
         {
           id: "d6-1-5",
@@ -439,7 +504,8 @@ export const unitA06: UnitData = {
           id: "d6-1-6",
           speaker: "Minh",
           text: "Yes! He is my father. He is a doctor. He and my mother are very close.",
-          translation: "Đúng! Ông ấy là bố tôi. Ông ấy là bác sĩ. Ông ấy và mẹ tôi rất thân thiết.",
+          translation:
+            "Đúng! Ông ấy là bố tôi. Ông ấy là bác sĩ. Ông ấy và mẹ tôi rất thân thiết.",
         },
         {
           id: "d6-1-7",
@@ -451,7 +517,8 @@ export const unitA06: UnitData = {
           id: "d6-1-8",
           speaker: "Minh",
           text: "Yes! I have one older brother and one younger sister. My brother is married — his wife is from Hue. And my sister is an only child... I mean, she is single!",
-          translation: "Có! Tôi có một anh trai và một em gái. Anh tôi đã kết hôn — vợ anh ấy đến từ Huế. Và em gái tôi là... ý tôi là, em ấy còn độc thân!",
+          translation:
+            "Có! Tôi có một anh trai và một em gái. Anh tôi đã kết hôn — vợ anh ấy đến từ Huế. Và em gái tôi là... ý tôi là, em ấy còn độc thân!",
         },
       ],
     },
@@ -488,7 +555,6 @@ export const unitA06: UnitData = {
       ],
     },
   ],
-
 
   // ── EXERCISES_INPUT: listenAndChoose ≥5 (controlled practice)
   listenAndChoose: [
@@ -528,17 +594,26 @@ export const unitA06: UnitData = {
     {
       id: "lac6-4",
       audio_text: "My sister is married her husband is a doctor",
-      options: ["Chị tôi đã kết hôn, chồng cô ấy là bác sĩ", "Chị tôi đã kết hôn, chồng cô ấy là giáo viên", "Em tôi đã kết hôn, chồng cô ấy là bác sĩ", "Chị tôi độc thân, bạn trai cô ấy là bác sĩ"],
+      options: [
+        "Chị tôi đã kết hôn, chồng cô ấy là bác sĩ",
+        "Chị tôi đã kết hôn, chồng cô ấy là giáo viên",
+        "Em tôi đã kết hôn, chồng cô ấy là bác sĩ",
+        "Chị tôi độc thân, bạn trai cô ấy là bác sĩ",
+      ],
       answer: "Chị tôi đã kết hôn, chồng cô ấy là bác sĩ",
     },
     {
       id: "lac6-5",
       audio_text: "My family is very close we have four people",
-      options: ["Gia đình tôi rất thân thiết, chúng tôi có bốn người", "Gia đình tôi rất thân thiết, chúng tôi có ba người", "Gia đình tôi rất hạnh phúc, chúng tôi có bốn người", "Gia đình bạn rất thân thiết, chúng tôi có bốn người"],
+      options: [
+        "Gia đình tôi rất thân thiết, chúng tôi có bốn người",
+        "Gia đình tôi rất thân thiết, chúng tôi có ba người",
+        "Gia đình tôi rất hạnh phúc, chúng tôi có bốn người",
+        "Gia đình bạn rất thân thiết, chúng tôi có bốn người",
+      ],
       answer: "Gia đình tôi rất thân thiết, chúng tôi có bốn người",
     },
   ],
-
 
   // ── REVIEW: Exit quiz + cumulativeReview (spiral) + reading (B1+)
   cumulativeReviewQuestions: [
@@ -551,7 +626,8 @@ export const unitA06: UnitData = {
     },
     {
       id: "crA06-2",
-      question: "Nghề 'giáo viên' trong tiếng Anh là gì? (unitA05 - Nghề nghiệp)",
+      question:
+        "Nghề 'giáo viên' trong tiếng Anh là gì? (unitA05 - Nghề nghiệp)",
       options: ["Doctor", "Nurse", "Teacher", "Student"],
       answer: "Teacher",
       type: "multiple-choice",
@@ -572,36 +648,35 @@ export const unitA06: UnitData = {
     },
   ],
 
-
   // ── FLUENCY: pronunciationFocus
   pronunciationFocus: {
     phoneme: "/ʌ/ vs /ɑː/",
     description: "Phân biệt CUP /ʌ/ và CAR /ɑː/",
     examples: [
       { word: "sun", ipa: "/sʌn/", tip: "Ngắn, miệng nửa mở, không tròn môi" },
-      { word: "father", ipa: "/ˈfɑːðə/", tip: "Dài, miệng mở rộng nhất, hàm xuống thấp" },
+      {
+        word: "father",
+        ipa: "/ˈfɑːðə/",
+        tip: "Dài, miệng mở rộng nhất, hàm xuống thấp",
+      },
     ],
-    minimalPairs: [
-      ["cup /ʌ/", "carp /ɑː/"],
-    ],
+    minimalPairs: [["cup /ʌ/", "carp /ɑː/"]],
   },
-
 
   // ── FLUENCY: fluencyDrill ≥5 (Nation Strand 4 automaticity)
   fluencyDrill: {
     title: "Luyện nhanh: Kể về gia đình",
     items: [
-      { en: "This is my mother.",         vn: "Đây là mẹ tôi." },
-      { en: "She is a teacher.",          vn: "Bà ấy là giáo viên." },
-      { en: "This is my father.",         vn: "Đây là bố tôi." },
-      { en: "He is a doctor.",            vn: "Ông ấy là bác sĩ." },
-      { en: "They are my parents.",       vn: "Họ là bố mẹ tôi." },
-      { en: "My family is very close.",   vn: "Gia đình tôi rất thân thiết." },
-      { en: "I have one brother.",        vn: "Tôi có một anh/em trai." },
-      { en: "She is married.",            vn: "Cô ấy đã kết hôn." },
+      { en: "This is my mother.", vn: "Đây là mẹ tôi." },
+      { en: "She is a teacher.", vn: "Bà ấy là giáo viên." },
+      { en: "This is my father.", vn: "Đây là bố tôi." },
+      { en: "He is a doctor.", vn: "Ông ấy là bác sĩ." },
+      { en: "They are my parents.", vn: "Họ là bố mẹ tôi." },
+      { en: "My family is very close.", vn: "Gia đình tôi rất thân thiết." },
+      { en: "I have one brother.", vn: "Tôi có một anh/em trai." },
+      { en: "She is married.", vn: "Cô ấy đã kết hôn." },
     ],
   },
-
 
   // ── OUTPUT: speaking prompts (freer production)
   speaking: {
@@ -609,9 +684,9 @@ export const unitA06: UnitData = {
     level1Placeholder: "Nhập quan hệ (mother, father, brother, sister)...",
     level2Situation:
       "Giới thiệu gia đình bạn. Nói về ít nhất 3 người: tên quan hệ + đại từ HE/SHE + nghề nghiệp hoặc thông tin thêm.",
-    level2Hint: "This is my [relation]. He/She is [job/description]. My family is [adjective].",
+    level2Hint:
+      "This is my [relation]. He/She is [job/description]. My family is [adjective].",
   },
-
 
   // ── REVIEW: Final quiz ≥5 (retrieval practice)
   quiz: [
@@ -624,7 +699,8 @@ export const unitA06: UnitData = {
     },
     {
       id: "q6-2",
-      question: "Điền từ: 'My ___ is married. Her husband is a teacher.' (chị gái)",
+      question:
+        "Điền từ: 'My ___ is married. Her husband is a teacher.' (chị gái)",
       options: [],
       answer: "sister",
       type: "cloze",
@@ -657,7 +733,8 @@ export const unitA06: UnitData = {
     },
     {
       id: "q6-6",
-      question: "Gia đình tôi rất thân thiết. Tôi có một anh trai và một em gái. (Dịch)",
+      question:
+        "Gia đình tôi rất thân thiết. Tôi có một anh trai và một em gái. (Dịch)",
       options: [],
       answer: "My family is very close. I have one brother and one sister.",
       type: "translate",
@@ -724,10 +801,10 @@ export const unitA06: UnitData = {
       title: "Viết email đơn giản apply việc entry level",
       focus: "Email structure: subject, greeting, introduce, attach CV, close",
       context: "Gửi CV cho vị trí receptionist hoặc assistant",
-      l1Note: "⚠️ Subject clear. 'Dear Hiring Manager,' 'Please find my CV attached.' 'Thank you for your time.'",
-      example: "Subject: Application for Receptionist Position. Dear Sir/Madam, I am writing to apply... Please see attached CV."
-    }
-  ], 
+      l1Note:
+        "⚠️ Subject clear. 'Dear Hiring Manager,' 'Please find my CV attached.' 'Thank you for your time.'",
+      example:
+        "Subject: Application for Receptionist Position. Dear Sir/Madam, I am writing to apply... Please see attached CV.",
+    },
+  ],
 };
-
-
