@@ -138,7 +138,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
             {word.total_reviews} lượt ôn
           </span>
           <span className="text-xs text-zinc-400 dark:text-zinc-600">
-            Thành thạo {word.mastery_pct}%
+            {word.mastery_pct}% lượt không quên
           </span>
         </div>
       </div>
@@ -270,7 +270,7 @@ export default function HardWordsClient() {
           >
             <StatLine label="Cần chú ý" value={String(criticalCount)} />
             <StatLine label="Tổng Again" value={String(totalAgain)} />
-            <StatLine label="TB Thành thạo" value={`${avgMastery}%`} />
+            <StatLine label="TB không quên" value={`${avgMastery}%`} />
           </motion.div>
         )}
 

@@ -4,7 +4,7 @@ import PlacementTestClient from "./PlacementTestClient";
 export const metadata: Metadata = {
   title: "Placement Test | AtoEnglish",
   description:
-    "Bài test xếp loại CEFR chuẩn — 40 câu Grammar, Vocabulary, Reading. Xác định trình độ A1/A2/B1/B2 chính xác.",
+    "Bài ước tính đầu vào theo khung CEFR — 40 câu Grammar, Vocabulary, Reading. Gợi ý điểm bắt đầu A0–B2.",
   robots: { index: false },
 };
 

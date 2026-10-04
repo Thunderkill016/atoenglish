@@ -24,19 +24,6 @@ export type NavGroup = {
   items: NavItem[];
 };
 
-/** In-dashboard section anchors (sticky hub nav on /dashboard) */
-export type DashboardSection = {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-};
-
-export const dashboardSections: DashboardSection[] = [
-  { id: "dash-today", label: "Hôm nay", icon: BookOpen },
-  { id: "dash-practice", label: "Luyện tập", icon: Layers },
-  { id: "dash-progress", label: "Tiến độ", icon: TrendingUp },
-];
-
 /**
  * Session-runner boundaries where the shell hides all chrome (focus mode).
  * Covers unit lessons, the trial checkpoint and placement attempts.
@@ -123,27 +110,3 @@ export const desktopMoreItems: NavItem[] = [
     description: "Tài khoản",
   },
 ];
-
-/** Secondary shortcuts at bottom of dashboard (explore, not daily loop) */
-export function getDashboardExploreActions(unitRoute: string): NavItem[] {
-  return [
-    {
-      title: "Học 10 phút",
-      href: unitRoute,
-      icon: BookOpen,
-      description: "Tiếp tục bài đang học",
-    },
-    {
-      title: "Viết & Cải thiện",
-      href: "/me/writing",
-      icon: PenLine,
-      description: "AI writing feedback",
-    },
-    {
-      title: "Phát âm IPA",
-      href: "/me/pronunciation",
-      icon: Mic,
-      description: "IPA drills",
-    },
-  ];
-}

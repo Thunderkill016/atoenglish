@@ -38,7 +38,12 @@ const nextConfig = {
       { source: "/progress", destination: "/me/progress", permanent: true },
       {
         source: "/progress/weekly",
-        destination: "/me/progress/weekly",
+        destination: "/me/progress",
+        permanent: true,
+      },
+      {
+        source: "/me/progress/weekly",
+        destination: "/me/progress",
         permanent: true,
       },
       { source: "/grammar", destination: "/me/grammar", permanent: true },

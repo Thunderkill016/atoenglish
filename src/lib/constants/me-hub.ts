@@ -25,7 +25,7 @@ export const meHubStudy: MeHubItem[] = [
   {
     href: "/roadmap",
     label: "Lộ trình",
-    description: "A0 đến IELTS 6.5 theo sáu giai đoạn",
+    description: "Bốn giai đoạn theo CEFR",
     icon: Map,
   },
 ];
