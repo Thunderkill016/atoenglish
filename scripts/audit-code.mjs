@@ -243,7 +243,7 @@ const routeDirs = getRouteDirs(MAIN_PAGES_DIR);
 
 for (const routeDir of routeDirs) {
   const relativeRoute = path.relative(MAIN_PAGES_DIR, routeDir) || 'root';
-  // Whitelist routes that delegate layout to shared components (e.g. UnitTemplate has pb-24)
+  // Whitelist routes that delegate layout to shared components (e.g. session runner has pb-24)
   if (relativeRoute === 'learn/[unitSlug]') continue;
   // Get all TSX files in this route directory (recursively)
   const routeFiles = getFiles(routeDir).filter(f => f.endsWith('.tsx'));

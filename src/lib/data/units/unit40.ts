@@ -1,4 +1,4 @@
-import { UnitData } from "@/components/learn/UnitTemplate";
+import { UnitData } from "@/lib/lessons/lesson-spec";
 
 
 // ─────────────────────────────────────────────────────────────────────────────

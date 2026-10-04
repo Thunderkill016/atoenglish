@@ -1,4 +1,4 @@
-import { UnitData } from "@/components/learn/UnitTemplate";
+import { UnitData } from "@/lib/lessons/lesson-spec";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UNIT 1 — Greetings & Self-Introduction  (A1)

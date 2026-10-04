@@ -1,6 +1,6 @@
 /**
  * P1-5 Fix: Layout-preserving skeleton for the learn unit page.
- * Matches UnitTemplate structure: header + progress bar + section tabs + content area.
+ * Matches the session runner structure: header + progress bar + content area.
  * Prevents CLS (Cumulative Layout Shift) on slow connections.
  */
 export default function Loading() {

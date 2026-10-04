@@ -1,9 +1,7 @@
 export const SUPPORTED_SCOPES = ["curriculum", "cleanup"];
 
 const focusedLessonTests = [
-  "src/components/learn/UnitTemplate.test.tsx",
-  "src/components/learn/lesson-sections.test.ts",
-  "src/components/learn/lesson-ui/lesson-presentation.test.tsx",
+  "src/lib/nep/legacy-unit-contract.v1.test.ts",
 ];
 
 const curriculumManualReview = [
