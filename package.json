@@ -36,6 +36,7 @@
     "audio:generate:b2": "for u in unit-33 unit-34 unit-35 unit-36 unit-37 unit-38 unit-39 unit-40 unit-41 unit-42; do tsx scripts/generate-unit-audio.ts $u; done",
     "audio:generate:all": "npm run audio:generate:a0 && npm run audio:generate:a1 && npm run audio:generate:a2 && npm run audio:generate:b1 && npm run audio:generate:b2",
     "audio:generate:list": "tsx scripts/generate-unit-audio.ts list",
+    "audio:generate:kv": "tsx scripts/tts/generate-audio.ts",
     "check-deploy": "bash scripts/check-cf-deploy.sh",
     "check-deploy:wait": "sleep 30 && bash scripts/check-cf-deploy.sh",
     "smoke:learn": "bash scripts/smoke-learn.sh",

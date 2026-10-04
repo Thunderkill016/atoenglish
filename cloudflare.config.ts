@@ -17,6 +17,9 @@ export default defineConfig({
       IMAGES: bindings.images(),
       // Provisioned on first deploy — id pinned so redeploys reuse it.
       VINEXT_KV_CACHE: bindings.kv({ id: "4db63c0fc952467ab758ce7ae776d4fd" }),
+      // Pre-generated Aura-2 lesson audio keyed by text hash — see
+      // scripts/tts/generate-audio.ts and /api/audio.
+      AUDIO_KV: bindings.kv({ id: "113dff2180e249c589f2f3c949abb178" }),
       // Worker version metadata ({id, tag, timestamp}) for /api/health.
       CF_VERSION_METADATA: bindings.versionMetadata(),
       // Route Gemini calls through the `atoenglish` AI Gateway: request logs,
