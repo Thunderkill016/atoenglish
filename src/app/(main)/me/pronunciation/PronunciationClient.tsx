@@ -46,14 +46,18 @@ export default function PronunciationClient() {
       const saved = localStorage.getItem(STORAGE_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved) setMastered(new Set(JSON.parse(saved) as string[]));
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   function saveMastered(next: Set<string>) {
     setMastered(next);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   function toggleMastered(id: string) {
@@ -74,9 +78,16 @@ export default function PronunciationClient() {
     utt.pitch = 1;
     // Try to pick a native English voice
     const voices = window.speechSynthesis.getVoices();
-    const enVoice = voices.find(
-      (v) => v.lang.startsWith("en") && (v.name.includes("Google") || v.name.includes("Microsoft") || v.localService === false)
-    ) ?? voices.find((v) => v.lang.startsWith("en")) ?? null;
+    const enVoice =
+      voices.find(
+        (v) =>
+          v.lang.startsWith("en") &&
+          (v.name.includes("Google") ||
+            v.name.includes("Microsoft") ||
+            v.localService === false),
+      ) ??
+      voices.find((v) => v.lang.startsWith("en")) ??
+      null;
     if (enVoice) utt.voice = enVoice;
     utt.onend = () => setIsPlaying(false);
     utt.onerror = () => setIsPlaying(false);
@@ -103,7 +114,9 @@ export default function PronunciationClient() {
       mr.start();
       setIsRecording(true);
       setHasRecording(false);
-    } catch { /* microphone denied */ }
+    } catch {
+      /* microphone denied */
+    }
   }, []);
 
   const stopRecording = useCallback(() => {
@@ -126,17 +139,19 @@ export default function PronunciationClient() {
   }, []);
 
   // Filtered sounds
-  const filteredVowels = filter === "consonant"
-    ? []
-    : filter === "hard"
-      ? VOWELS.filter((s) => s.difficulty === "hard")
-      : VOWELS;
+  const filteredVowels =
+    filter === "consonant"
+      ? []
+      : filter === "hard"
+        ? VOWELS.filter((s) => s.difficulty === "hard")
+        : VOWELS;
 
-  const filteredConsonants = filter === "vowel"
-    ? []
-    : filter === "hard"
-      ? CONSONANTS.filter((s) => s.difficulty === "hard")
-      : CONSONANTS;
+  const filteredConsonants =
+    filter === "vowel"
+      ? []
+      : filter === "hard"
+        ? CONSONANTS.filter((s) => s.difficulty === "hard")
+        : CONSONANTS;
 
   const masteredCount = ALL_SOUNDS.filter((s) => mastered.has(s.id)).length;
   const totalCount = ALL_SOUNDS.length;
@@ -176,7 +191,8 @@ export default function PronunciationClient() {
     const isMastered = mastered.has(sound.id);
     const isSelected = selected?.id === sound.id;
     const d = DIFF[sound.difficulty];
-    const baseCard = "rounded-xl p-2.5 flex flex-col items-center gap-0.5 border-2 relative transition-all active:scale-[0.985]";
+    const baseCard =
+      "rounded-xl p-2.5 flex flex-col items-center gap-0.5 border-2 relative transition-all active:scale-[0.985]";
     const cardCls = `${baseCard} ${isSelected ? `${d.border} ${d.bg}` : isMastered ? "border-emerald-500/50 bg-emerald-500/5" : "border-border/60 bg-card"}`;
     const symCls = `text-[22px] font-mono font-bold leading-none ${isSelected ? d.text : isMastered ? "text-emerald-400" : "text-foreground"}`;
     return (
@@ -191,11 +207,12 @@ export default function PronunciationClient() {
         className={cardCls}
       >
         {isMastered && (
-          <CheckCircle2 size={10} className="absolute top-1 right-1 text-emerald-500" />
+          <CheckCircle2
+            size={10}
+            className="absolute top-1 right-1 text-emerald-500"
+          />
         )}
-        <span className={symCls}>
-          {sound.symbol}
-        </span>
+        <span className={symCls}>{sound.symbol}</span>
         <span className="text-[9px] text-muted-foreground font-semibold">
           {sound.exampleWord}
         </span>
@@ -207,15 +224,16 @@ export default function PronunciationClient() {
   return (
     <SecondaryPageShell
       title="44 Âm IPA Tiếng Anh"
-      subtitle="Nhấn vào âm để xem hướng dẫn · Nghe audio · Luyện giọng"
+      subtitle="Nghe mẫu · ghi âm tự nghe lại · tự đánh dấu đã luyện — không có chấm điểm tự động"
     >
       <div className="max-w-[520px] mx-auto pb-16">
-
         {/* Progress bar */}
         <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 mb-3.5">
           <div className="flex-1">
             <div className="flex justify-between mb-1.5">
-              <span className="text-[11px] text-muted-foreground font-semibold">Đã thuộc</span>
+              <span className="text-[11px] text-muted-foreground font-semibold">
+                Đã luyện (tự đánh dấu)
+              </span>
               <span className="text-[11px] text-emerald-500 font-bold">
                 {masteredCount}/{totalCount}
               </span>
@@ -244,8 +262,16 @@ export default function PronunciationClient() {
             [
               { key: "all", label: "Tất cả", count: ALL_SOUNDS.length },
               { key: "vowel", label: "Vowels", count: VOWELS.length },
-              { key: "consonant", label: "Consonants", count: CONSONANTS.length },
-              { key: "hard", label: "🇻🇳 Khó", count: ALL_SOUNDS.filter(s => s.difficulty === "hard").length },
+              {
+                key: "consonant",
+                label: "Consonants",
+                count: CONSONANTS.length,
+              },
+              {
+                key: "hard",
+                label: "🇻🇳 Khó",
+                count: ALL_SOUNDS.filter((s) => s.difficulty === "hard").length,
+              },
             ] as { key: FilterMode; label: string; count: number }[]
           ).map((f) => {
             const active = filter === f.key;
@@ -255,8 +281,20 @@ export default function PronunciationClient() {
                 onClick={() => setFilter(f.key)}
                 className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 px-1 text-[11px] font-bold transition-colors ${active ? "bg-primary border-primary text-primary-foreground" : "bg-card border-border/60 text-muted-foreground"}`}
               >
-                <span className={active ? "text-[11px] font-bold" : "text-[11px] font-bold text-muted-foreground"}>{f.label}</span>
-                <span className={`text-[10px] ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{f.count}</span>
+                <span
+                  className={
+                    active
+                      ? "text-[11px] font-bold"
+                      : "text-[11px] font-bold text-muted-foreground"
+                  }
+                >
+                  {f.label}
+                </span>
+                <span
+                  className={`text-[10px] ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+                >
+                  {f.count}
+                </span>
               </button>
             );
           })}
@@ -265,7 +303,10 @@ export default function PronunciationClient() {
         {/* Difficulty legend */}
         <div className="flex gap-4 mb-4 text-xs">
           {(["easy", "medium", "hard"] as const).map((d) => (
-            <div key={d} className="flex items-center gap-1.5 text-muted-foreground">
+            <div
+              key={d}
+              className="flex items-center gap-1.5 text-muted-foreground"
+            >
               <div className={`w-2 h-2 rounded-full ${DIFF[d].dot}`} />
               <span>{DIFFICULTY_LABEL[d]}</span>
             </div>
@@ -336,12 +377,17 @@ export default function PronunciationClient() {
 
                 {/* Sound header */}
                 <div className="flex items-center gap-4 mb-4">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-mono font-bold flex-shrink-0 border-2 ${DIFF[selected.difficulty].bg} ${DIFF[selected.difficulty].border} ${DIFF[selected.difficulty].text}`}>
+                  <div
+                    className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-mono font-bold flex-shrink-0 border-2 ${DIFF[selected.difficulty].bg} ${DIFF[selected.difficulty].border} ${DIFF[selected.difficulty].text}`}
+                  >
                     {selected.symbol}
                   </div>
                   <div>
-                    <div className={`text-xs font-bold mb-0.5 ${DIFF[selected.difficulty].text}`}>
-                      {selected.subtype} · {DIFFICULTY_LABEL[selected.difficulty]}
+                    <div
+                      className={`text-xs font-bold mb-0.5 ${DIFF[selected.difficulty].text}`}
+                    >
+                      {selected.subtype} ·{" "}
+                      {DIFFICULTY_LABEL[selected.difficulty]}
                     </div>
                     <div className="text-xl font-extrabold text-foreground mb-0.5">
                       {selected.exampleWord}
@@ -402,7 +448,8 @@ export default function PronunciationClient() {
                       className="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0"
                     />
                     <span className="text-xs text-red-500">
-                      Đang ghi âm... Phát âm &quot;{selected.exampleWord}&quot; rồi nhấn Dừng
+                      Đang ghi âm... Phát âm &quot;{selected.exampleWord}&quot;
+                      rồi nhấn Dừng
                     </span>
                   </motion.div>
                 )}
@@ -420,7 +467,10 @@ export default function PronunciationClient() {
                 {/* Vietnamese tip */}
                 {selected.vietnameseTip && (
                   <div className="flex gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 mb-3">
-                    <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                    <AlertTriangle
+                      size={15}
+                      className="text-amber-500 flex-shrink-0 mt-0.5"
+                    />
                     <div>
                       <div className="text-[11px] text-amber-500 font-bold mb-1">
                         ⚠️ LỖI HAY GẶP (người Việt)
@@ -438,22 +488,27 @@ export default function PronunciationClient() {
                     📝 THÊM VÍ DỤ
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {[selected.exampleWord, ...selected.moreExamples].map((word) => (
-                      <button
-                        key={word}
-                        onClick={() => {
-                          window.speechSynthesis.cancel();
-                          const utt = new SpeechSynthesisUtterance(word);
-                          utt.lang = "en-US";
-                          utt.rate = 0.85;
-                          window.speechSynthesis.speak(utt);
-                        }}
-                        className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/60 px-2.5 py-1 text-xs font-semibold text-foreground"
-                      >
-                        <Volume2 size={10} className="text-muted-foreground" />
-                        {word}
-                      </button>
-                    ))}
+                    {[selected.exampleWord, ...selected.moreExamples].map(
+                      (word) => (
+                        <button
+                          key={word}
+                          onClick={() => {
+                            window.speechSynthesis.cancel();
+                            const utt = new SpeechSynthesisUtterance(word);
+                            utt.lang = "en-US";
+                            utt.rate = 0.85;
+                            window.speechSynthesis.speak(utt);
+                          }}
+                          className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/60 px-2.5 py-1 text-xs font-semibold text-foreground"
+                        >
+                          <Volume2
+                            size={10}
+                            className="text-muted-foreground"
+                          />
+                          {word}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
 
@@ -468,18 +523,26 @@ export default function PronunciationClient() {
                       <>
                         {prev && (
                           <button
-                            onClick={() => { setSelected(prev); setHasRecording(false); }}
+                            onClick={() => {
+                              setSelected(prev);
+                              setHasRecording(false);
+                            }}
                             className="flex-1 flex items-center gap-1.5 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground"
                           >
-                            ← <span className="font-mono">{prev.symbol}</span> {prev.exampleWord}
+                            ← <span className="font-mono">{prev.symbol}</span>{" "}
+                            {prev.exampleWord}
                           </button>
                         )}
                         {next && (
                           <button
-                            onClick={() => { setSelected(next); setHasRecording(false); }}
+                            onClick={() => {
+                              setSelected(next);
+                              setHasRecording(false);
+                            }}
                             className="flex-1 flex items-center justify-end gap-1.5 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground"
                           >
-                            <span className="font-mono">{next.symbol}</span> {next.exampleWord} →
+                            <span className="font-mono">{next.symbol}</span>{" "}
+                            {next.exampleWord} →
                           </button>
                         )}
                       </>
@@ -487,13 +550,15 @@ export default function PronunciationClient() {
                   })()}
                 </div>
 
-                {/* Mark as mastered */}
+                {/* Self-reported practice marker — no auto scoring exists */}
                 <button
                   onClick={() => toggleMastered(selected.id)}
                   className={`w-full flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-bold transition ${mastered.has(selected.id) ? "bg-emerald-500/10 border-emerald-500 text-emerald-500" : "bg-muted border-border/70 text-muted-foreground"}`}
                 >
                   <CheckCircle2 size={16} />
-                  {mastered.has(selected.id) ? "✓ Đã thuộc — bỏ đánh dấu" : "Đánh dấu đã thuộc"}
+                  {mastered.has(selected.id)
+                    ? "✓ Đã luyện — bỏ đánh dấu"
+                    : "Đánh dấu đã luyện"}
                 </button>
               </motion.div>
             </>

@@ -322,8 +322,8 @@ export default function HardWordsClient() {
                 Chưa có dữ liệu luyện tập!
               </h2>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto leading-relaxed">
-                Hãy ôn tập flashcard vài buổi để AI phân tích từ nào bạn hay
-                quên nhất.
+                Hãy ôn tập flashcard vài buổi để hệ thống thống kê từ nào bạn
+                hay quên nhất.
               </p>
             </div>
             <div className="flex justify-center gap-3 flex-wrap pt-2">

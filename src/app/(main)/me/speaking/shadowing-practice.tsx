@@ -18,7 +18,10 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { saveSpeakingSession } from "@/app/actions/speaking";
 import { SpeechRecognitionFallback } from "@/lib/utils/speech-fallback";
-import { analyzeSpeaking, type SpeechAnalysisResult } from "@/lib/utils/speech-analysis";
+import {
+  analyzeSpeaking,
+  type SpeechAnalysisResult,
+} from "@/lib/utils/speech-analysis";
 
 interface SpeechRecognitionMock {
   continuous: boolean;
@@ -72,19 +75,22 @@ export const SHADOWING_ITEMS: ShadowingItem[] = [
     topic: "Greetings",
     level: "A0",
     transcript: "Hello! My name is Lan. Nice to meet you. I am from Vietnam.",
-    translation: "Xin chào! Tên tôi là Lan. Rất vui được gặp bạn. Tôi đến từ Việt Nam.",
+    translation:
+      "Xin chào! Tên tôi là Lan. Rất vui được gặp bạn. Tôi đến từ Việt Nam.",
     difficultWords: ["Hello", "Nice to meet you", "from"],
-    tips: "Nói chậm và rõ ràng. Chú ý: 'Nice to meet you' nối âm như 'nice-tuh-meet-you'. Ngữ điệu lên ở 'hello', xuống ở câu cuối."
+    tips: "Nói chậm và rõ ràng. Chú ý: 'Nice to meet you' nối âm như 'nice-tuh-meet-you'. Ngữ điệu lên ở 'hello', xuống ở câu cuối.",
   },
   {
     id: "numbers-shopping",
     title: "Shopping — Asking the Price",
     topic: "Shopping",
     level: "A0",
-    transcript: "Excuse me. How much is this? It is twenty dollars. Thank you very much!",
-    translation: "Xin lỗi. Cái này giá bao nhiêu? Nó là hai mươi đô la. Cảm ơn rất nhiều!",
+    transcript:
+      "Excuse me. How much is this? It is twenty dollars. Thank you very much!",
+    translation:
+      "Xin lỗi. Cái này giá bao nhiêu? Nó là hai mươi đô la. Cảm ơn rất nhiều!",
     difficultWords: ["Excuse me", "How much", "twenty"],
-    tips: "'Excuse me' phát âm /ɪkˈskjuːz miː/ — chữ 's' ở giữa phát /z/ (hữu thanh). 'Twenty' nhấn âm đầu: TW-en-ty."
+    tips: "'Excuse me' phát âm /ɪkˈskjuːz miː/ — chữ 's' ở giữa phát /z/ (hữu thanh). 'Twenty' nhấn âm đầu: TW-en-ty.",
   },
   // ── A1 — Elementary ───────────────────────────────────────────────────────
   {
@@ -92,173 +98,215 @@ export const SHADOWING_ITEMS: ShadowingItem[] = [
     title: "Describing a Daily Routine",
     topic: "Daily Life",
     level: "A1",
-    transcript: "I wake up at seven every morning. I have breakfast and then go to work by bus.",
-    translation: "Tôi thức dậy lúc bảy giờ mỗi sáng. Tôi ăn sáng rồi đi làm bằng xe buýt.",
+    transcript:
+      "I wake up at seven every morning. I have breakfast and then go to work by bus.",
+    translation:
+      "Tôi thức dậy lúc bảy giờ mỗi sáng. Tôi ăn sáng rồi đi làm bằng xe buýt.",
     difficultWords: ["wake up", "breakfast", "by bus"],
-    tips: "'Wake up' nối âm: /weɪk ʌp/. 'Breakfast' phát âm /ˈbrekfəst/ — chữ 'a' câm. Nhấn trọng âm: 'BREAKfast'."
+    tips: "'Wake up' nối âm: /weɪk ʌp/. 'Breakfast' phát âm /ˈbrekfəst/ — chữ 'a' câm. Nhấn trọng âm: 'BREAKfast'.",
   },
   {
     id: "family-description",
     title: "Talking About Your Family",
     topic: "Family",
     level: "A1",
-    transcript: "I have a small family. There are four people: my parents, my sister, and me.",
-    translation: "Tôi có một gia đình nhỏ. Có bốn người: bố mẹ tôi, chị gái tôi và tôi.",
+    transcript:
+      "I have a small family. There are four people: my parents, my sister, and me.",
+    translation:
+      "Tôi có một gia đình nhỏ. Có bốn người: bố mẹ tôi, chị gái tôi và tôi.",
     difficultWords: ["small", "parents", "sister"],
-    tips: "'There are' nối âm tự nhiên: /ðer ər/. 'Parents' phát âm /ˈpeər.ənts/ — nhấn âm đầu. Đọc cả câu liền mạch, không ngắt."
+    tips: "'There are' nối âm tự nhiên: /ðer ər/. 'Parents' phát âm /ˈpeər.ənts/ — nhấn âm đầu. Đọc cả câu liền mạch, không ngắt.",
   },
   {
     id: "likes-dislikes",
     title: "Talking About Likes & Dislikes",
     topic: "Personal Preferences",
     level: "A1",
-    transcript: "I really love learning English. It is challenging but very rewarding.",
-    translation: "Tôi thực sự yêu thích học tiếng Anh. Nó thách thức nhưng rất bổ ích.",
+    transcript:
+      "I really love learning English. It is challenging but very rewarding.",
+    translation:
+      "Tôi thực sự yêu thích học tiếng Anh. Nó thách thức nhưng rất bổ ích.",
     difficultWords: ["really", "challenging", "rewarding"],
-    tips: "'Really' nhấn âm ở: REAl-ly. 'Challenging' có 3 âm tiết: CHAL-len-ging. 'Rewarding' nhấn âm giữa: re-WARD-ing."
+    tips: "'Really' nhấn âm ở: REAl-ly. 'Challenging' có 3 âm tiết: CHAL-len-ging. 'Rewarding' nhấn âm giữa: re-WARD-ing.",
   },
   {
     id: "tech-society",
     title: "Technology & Society (Unit 4 Focus)",
     topic: "Technology",
     level: "B1",
-    transcript: "Artificial intelligence has become omnipresent. It is beginning to revolutionize how society operates.",
-    translation: "Trí tuệ nhân tạo đã có mặt ở khắp mọi nơi. Nó đang bắt đầu cách mạng hóa cách xã hội vận hành.",
+    transcript:
+      "Artificial intelligence has become omnipresent. It is beginning to revolutionize how society operates.",
+    translation:
+      "Trí tuệ nhân tạo đã có mặt ở khắp mọi nơi. Nó đang bắt đầu cách mạng hóa cách xã hội vận hành.",
     difficultWords: ["artificial intelligence", "omnipresent", "revolutionize"],
-    tips: "Hãy chú ý nối âm giữa 'become' và 'omnipresent' (/bɪˈkʌm_ˌɒm.nɪˈprez.ənt/) và nhấn âm chính ở âm thứ 3 của 'revolutionize'."
+    tips: "Hãy chú ý nối âm giữa 'become' và 'omnipresent' (/bɪˈkʌm_ˌɒm.nɪˈprez.ənt/) và nhấn âm chính ở âm thứ 3 của 'revolutionize'.",
   },
   {
     id: "introduce-opinion",
     title: "Expressing Personal Opinion",
     topic: "Communication",
     level: "B1",
-    transcript: "To be honest, I prefer cooking at home rather than eating out at expensive restaurants.",
-    translation: "Thành thật mà nói, tôi thích nấu ăn ở nhà hơn là đi ăn ngoài ở những nhà hàng đắt đỏ.",
+    transcript:
+      "To be honest, I prefer cooking at home rather than eating out at expensive restaurants.",
+    translation:
+      "Thành thật mà nói, tôi thích nấu ăn ở nhà hơn là đi ăn ngoài ở những nhà hàng đắt đỏ.",
     difficultWords: ["To be honest", "prefer", "eating out"],
-    tips: "Phát âm từ 'honest' câm âm 'h' (/ˈɒn.ɪst/), hạ giọng ở cuối câu để thể hiện sự tự nhiên."
+    tips: "Phát âm từ 'honest' câm âm 'h' (/ˈɒn.ɪst/), hạ giọng ở cuối câu để thể hiện sự tự nhiên.",
   },
   {
     id: "business-meeting",
     title: "Asking for Project Status",
     topic: "Business English",
     level: "B2",
-    transcript: "Could you please give me a brief update on the project status and the next milestones?",
-    translation: "Bạn có thể vui lòng cập nhật ngắn gọn về tình hình dự án và các mốc quan trọng tiếp theo được không?",
+    transcript:
+      "Could you please give me a brief update on the project status and the next milestones?",
+    translation:
+      "Bạn có thể vui lòng cập nhật ngắn gọn về tình hình dự án và các mốc quan trọng tiếp theo được không?",
     difficultWords: ["brief update", "project status", "milestones"],
-    tips: "Nhấn mạnh từ 'brief' và 'status' (/ˈsteɪ.təs/). Chú ý phát âm gió âm cuối của 'milestones'."
+    tips: "Nhấn mạnh từ 'brief' và 'status' (/ˈsteɪ.təs/). Chú ý phát âm gió âm cuối của 'milestones'.",
   },
   {
     id: "asking-way",
     title: "Asking for Directions",
     topic: "Travel",
     level: "A2",
-    transcript: "Excuse me, could you tell me the way to the nearest subway station, please?",
-    translation: "Xin lỗi, bạn có thể chỉ cho tôi đường đến ga tàu điện ngầm gần nhất được không?",
+    transcript:
+      "Excuse me, could you tell me the way to the nearest subway station, please?",
+    translation:
+      "Xin lỗi, bạn có thể chỉ cho tôi đường đến ga tàu điện ngầm gần nhất được không?",
     difficultWords: ["Excuse me", "nearest", "subway station"],
-    tips: "Hãy lên giọng nhẹ ở đoạn 'Excuse me' và hạ giọng ở từ 'please' ở cuối câu để giữ thái độ lịch sự."
+    tips: "Hãy lên giọng nhẹ ở đoạn 'Excuse me' và hạ giọng ở từ 'please' ở cuối câu để giữ thái độ lịch sự.",
   },
   {
     id: "health-lifestyle",
     title: "Healthy Lifestyle Advice",
     topic: "Health",
     level: "B1",
-    transcript: "Staying hydrated and getting sufficient sleep are critical factors for maintaining energy levels throughout the day.",
-    translation: "Cung cấp đủ nước và ngủ đủ giấc là những yếu tố quyết định để duy trì năng lượng suốt cả ngày.",
+    transcript:
+      "Staying hydrated and getting sufficient sleep are critical factors for maintaining energy levels throughout the day.",
+    translation:
+      "Cung cấp đủ nước và ngủ đủ giấc là những yếu tố quyết định để duy trì năng lượng suốt cả ngày.",
     difficultWords: ["hydrated", "sufficient", "critical factors"],
-    tips: "Chữ 'sufficient' phát âm âm /ʃ/ ở giữa (/səˈfɪʃ.ənt/). Đọc liền mạch cụm 'throughout the day'."
+    tips: "Chữ 'sufficient' phát âm âm /ʃ/ ở giữa (/səˈfɪʃ.ənt/). Đọc liền mạch cụm 'throughout the day'.",
   },
   {
     id: "self-introduction",
     title: "Simple Self Introduction",
     topic: "Daily Life",
     level: "A1",
-    transcript: "Hi, my name is Minh. I am twenty-five years old. I live in Ho Chi Minh City and I work as an engineer.",
-    translation: "Xin chào, tên tôi là Minh. Tôi 25 tuổi. Tôi sống ở Thành phố Hồ Chí Minh và làm việc như một kỹ sư.",
+    transcript:
+      "Hi, my name is Minh. I am twenty-five years old. I live in Ho Chi Minh City and I work as an engineer.",
+    translation:
+      "Xin chào, tên tôi là Minh. Tôi 25 tuổi. Tôi sống ở Thành phố Hồ Chí Minh và làm việc như một kỹ sư.",
     difficultWords: ["twenty-five", "engineer", "Ho Chi Minh City"],
-    tips: "Nhấn giọng vào danh từ riêng 'Ho Chi Minh City'. Phát âm 'engineer' với trọng âm ở âm tiết cuối: /ˌen.dʒɪˈnɪər/."
+    tips: "Nhấn giọng vào danh từ riêng 'Ho Chi Minh City'. Phát âm 'engineer' với trọng âm ở âm tiết cuối: /ˌen.dʒɪˈnɪər/.",
   },
   {
     id: "describe-city",
     title: "Describing Your City",
     topic: "Travel",
     level: "A2",
-    transcript: "My city is very busy and crowded. There are many restaurants, parks, and shopping centres. The public transport is cheap and convenient.",
-    translation: "Thành phố của tôi rất bận rộn và đông đúc. Có nhiều nhà hàng, công viên và trung tâm mua sắm. Phương tiện giao thông công cộng thì rẻ và tiện lợi.",
+    transcript:
+      "My city is very busy and crowded. There are many restaurants, parks, and shopping centres. The public transport is cheap and convenient.",
+    translation:
+      "Thành phố của tôi rất bận rộn và đông đúc. Có nhiều nhà hàng, công viên và trung tâm mua sắm. Phương tiện giao thông công cộng thì rẻ và tiện lợi.",
     difficultWords: ["crowded", "shopping centres", "convenient"],
-    tips: "Nối âm 'very busy' thành /ˈver.i.ˈbɪz.i/. Chú ý 'convenient' phát âm /kənˈviː.ni.ənt/ — không được bỏ âm tiết giữa."
+    tips: "Nối âm 'very busy' thành /ˈver.i.ˈbɪz.i/. Chú ý 'convenient' phát âm /kənˈviː.ni.ənt/ — không được bỏ âm tiết giữa.",
   },
   {
     id: "climate-change",
     title: "Climate Change Opinion",
     topic: "Environment",
     level: "B2",
-    transcript: "Climate change is one of the most pressing challenges of our generation. Governments and individuals must collaborate urgently to reduce carbon emissions and protect biodiversity.",
-    translation: "Biến đổi khí hậu là một trong những thách thức cấp bách nhất của thế hệ chúng ta. Các chính phủ và cá nhân phải hợp tác khẩn cấp để giảm lượng phát thải carbon và bảo vệ đa dạng sinh học.",
-    difficultWords: ["pressing challenges", "collaborate", "carbon emissions", "biodiversity"],
-    tips: "Nhấn âm 'most PRESS-ing'. Phát âm 'biodiversity' rõ 5 âm tiết: /ˌbaɪ.oʊ.daɪˈvɜː.sɪ.ti/. Đọc cả câu như một luồng liền mạch, không nghỉ sau mỗi từ."
+    transcript:
+      "Climate change is one of the most pressing challenges of our generation. Governments and individuals must collaborate urgently to reduce carbon emissions and protect biodiversity.",
+    translation:
+      "Biến đổi khí hậu là một trong những thách thức cấp bách nhất của thế hệ chúng ta. Các chính phủ và cá nhân phải hợp tác khẩn cấp để giảm lượng phát thải carbon và bảo vệ đa dạng sinh học.",
+    difficultWords: [
+      "pressing challenges",
+      "collaborate",
+      "carbon emissions",
+      "biodiversity",
+    ],
+    tips: "Nhấn âm 'most PRESS-ing'. Phát âm 'biodiversity' rõ 5 âm tiết: /ˌbaɪ.oʊ.daɪˈvɜː.sɪ.ti/. Đọc cả câu như một luồng liền mạch, không nghỉ sau mỗi từ.",
   },
   {
     id: "saas-intro",
     title: "Introducing Your SaaS Product",
     topic: "Business English",
     level: "B1",
-    transcript: "We built a software platform that helps Vietnamese learners reach English fluency faster using AI and spaced repetition.",
-    translation: "Chúng tôi đã xây dựng một nền tảng phần mềm giúp người học Việt Nam đạt được sự thành thạo tiếng Anh nhanh hơn bằng AI và lặp lại cách quãng.",
+    transcript:
+      "We built a software platform that helps Vietnamese learners reach English fluency faster using AI and spaced repetition.",
+    translation:
+      "Chúng tôi đã xây dựng một nền tảng phần mềm giúp người học Việt Nam đạt được sự thành thạo tiếng Anh nhanh hơn bằng AI và lặp lại cách quãng.",
     difficultWords: ["software platform", "fluency", "spaced repetition"],
-    tips: "Nhấn vào 'AI' và 'spaced repetition' vì đây là điểm bán hàng chính. Phát âm 'fluency' 3 âm tiết: /ˈfluː.ən.si/."
+    tips: "Nhấn vào 'AI' và 'spaced repetition' vì đây là điểm bán hàng chính. Phát âm 'fluency' 3 âm tiết: /ˈfluː.ən.si/.",
   },
   {
     id: "email-opening",
     title: "Professional Email Opening",
     topic: "Business English",
     level: "A2",
-    transcript: "I hope this email finds you well. I am writing to follow up on our previous conversation about the partnership proposal.",
-    translation: "Tôi hy vọng email này đến tay bạn trong tình trạng tốt. Tôi viết thư để theo dõi cuộc trò chuyện trước của chúng ta về đề xuất hợp tác.",
-    difficultWords: ["follow up", "previous conversation", "partnership proposal"],
-    tips: "Cụm 'finds you well' là thành ngữ xã giao — đọc liền /faɪndz.jʊ.wɛl/. Nhấn vào 'partnership' và 'proposal' cuối câu."
+    transcript:
+      "I hope this email finds you well. I am writing to follow up on our previous conversation about the partnership proposal.",
+    translation:
+      "Tôi hy vọng email này đến tay bạn trong tình trạng tốt. Tôi viết thư để theo dõi cuộc trò chuyện trước của chúng ta về đề xuất hợp tác.",
+    difficultWords: [
+      "follow up",
+      "previous conversation",
+      "partnership proposal",
+    ],
+    tips: "Cụm 'finds you well' là thành ngữ xã giao — đọc liền /faɪndz.jʊ.wɛl/. Nhấn vào 'partnership' và 'proposal' cuối câu.",
   },
   {
     id: "startup-pitch",
     title: "30-Second Startup Pitch",
     topic: "Business English",
     level: "B2",
-    transcript: "Our product solves a real pain point: Vietnamese professionals spend years learning English but never reach conversational fluency because existing tools are not designed for their specific needs.",
-    translation: "Sản phẩm của chúng tôi giải quyết một vấn đề thực sự: các chuyên gia Việt Nam dành nhiều năm học tiếng Anh nhưng không bao giờ đạt được sự thành thạo trong hội thoại vì các công cụ hiện có không được thiết kế cho nhu cầu cụ thể của họ.",
+    transcript:
+      "Our product solves a real pain point: Vietnamese professionals spend years learning English but never reach conversational fluency because existing tools are not designed for their specific needs.",
+    translation:
+      "Sản phẩm của chúng tôi giải quyết một vấn đề thực sự: các chuyên gia Việt Nam dành nhiều năm học tiếng Anh nhưng không bao giờ đạt được sự thành thạo trong hội thoại vì các công cụ hiện có không được thiết kế cho nhu cầu cụ thể của họ.",
     difficultWords: ["pain point", "conversational fluency", "specific needs"],
-    tips: "Đây là câu pitch — đọc chắc chắn, tự tin. Nhấn 'real pain point' và 'never reach'. Không được bỏ âm /t/ cuối 'point' và 'fluent'."
+    tips: "Đây là câu pitch — đọc chắc chắn, tự tin. Nhấn 'real pain point' và 'never reach'. Không được bỏ âm /t/ cuối 'point' và 'fluent'.",
   },
   {
     id: "meeting-facilitation",
     title: "Facilitating a Team Meeting",
     topic: "Business English",
     level: "B1",
-    transcript: "Let us quickly go through today's agenda. First, I would like to get an update from each team on their current progress and blockers.",
-    translation: "Hãy nhanh chóng xem qua chương trình hôm nay. Đầu tiên, tôi muốn nhận thông tin cập nhật từ mỗi nhóm về tiến độ hiện tại và những trở ngại của họ.",
+    transcript:
+      "Let us quickly go through today's agenda. First, I would like to get an update from each team on their current progress and blockers.",
+    translation:
+      "Hãy nhanh chóng xem qua chương trình hôm nay. Đầu tiên, tôi muốn nhận thông tin cập nhật từ mỗi nhóm về tiến độ hiện tại và những trở ngại của họ.",
     difficultWords: ["agenda", "update", "blockers"],
-    tips: "Phát âm 'agenda' /əˈdʒen.də/ — không nói 'a-gen-da'. Cụm 'let us' thường co lại thành 'let's' /lɛts/ trong văn nói tự nhiên."
+    tips: "Phát âm 'agenda' /əˈdʒen.də/ — không nói 'a-gen-da'. Cụm 'let us' thường co lại thành 'let's' /lɛts/ trong văn nói tự nhiên.",
   },
   {
     id: "negotiation",
     title: "Price Negotiation",
     topic: "Business English",
     level: "B2",
-    transcript: "I understand your budget constraints. However, given the value we deliver, I believe our pricing is competitive. Would you be open to a three-month trial at a discounted rate?",
-    translation: "Tôi hiểu những ràng buộc ngân sách của bạn. Tuy nhiên, với giá trị chúng tôi mang lại, tôi tin rằng giá của chúng tôi rất cạnh tranh. Bạn có sẵn sàng dùng thử ba tháng với mức giá ưu đãi không?",
+    transcript:
+      "I understand your budget constraints. However, given the value we deliver, I believe our pricing is competitive. Would you be open to a three-month trial at a discounted rate?",
+    translation:
+      "Tôi hiểu những ràng buộc ngân sách của bạn. Tuy nhiên, với giá trị chúng tôi mang lại, tôi tin rằng giá của chúng tôi rất cạnh tranh. Bạn có sẵn sàng dùng thử ba tháng với mức giá ưu đãi không?",
     difficultWords: ["budget constraints", "competitive", "discounted rate"],
-    tips: "Đọc 'However' với ngữ điệu lên nhẹ rồi hạ xuống. Nhấn 'value' và 'competitive'. Câu hỏi cuối phải lên giọng ở cuối."
+    tips: "Đọc 'However' với ngữ điệu lên nhẹ rồi hạ xuống. Nhấn 'value' và 'competitive'. Câu hỏi cuối phải lên giọng ở cuối.",
   },
   {
     id: "user-feedback",
     title: "Responding to User Feedback",
     topic: "Business English",
     level: "B1",
-    transcript: "Thank you so much for taking the time to share your feedback. We really appreciate your insight and we will prioritize this feature in our next sprint.",
-    translation: "Cảm ơn bạn rất nhiều vì đã dành thời gian chia sẻ phản hồi. Chúng tôi thực sự đánh giá cao nhận xét của bạn và sẽ ưu tiên tính năng này trong sprint tiếp theo.",
+    transcript:
+      "Thank you so much for taking the time to share your feedback. We really appreciate your insight and we will prioritize this feature in our next sprint.",
+    translation:
+      "Cảm ơn bạn rất nhiều vì đã dành thời gian chia sẻ phản hồi. Chúng tôi thực sự đánh giá cao nhận xét của bạn và sẽ ưu tiên tính năng này trong sprint tiếp theo.",
     difficultWords: ["taking the time", "insight", "prioritize", "sprint"],
-    tips: "Cụm 'taking the time' đọc liền nhau. 'Prioritize' phát âm 4 âm tiết: /praɪˈɒr.ɪ.taɪz/. 'Sprint' là từ kỹ thuật Agile — phát âm rõ âm /t/ cuối."
-  }
+    tips: "Cụm 'taking the time' đọc liền nhau. 'Prioritize' phát âm 4 âm tiết: /praɪˈɒr.ɪ.taɪz/. 'Sprint' là từ kỹ thuật Agile — phát âm rõ âm /t/ cuối.",
+  },
 ];
-
 
 export function ShadowingPractice() {
   const [selectedId, setSelectedId] = useState<string>(SHADOWING_ITEMS[0].id);
@@ -278,7 +326,6 @@ export function ShadowingPractice() {
     }
   }, []);
 
-  
   // States cho Ghi âm
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [hasRecorded, setHasRecorded] = useState<boolean>(false);
@@ -300,14 +347,17 @@ export function ShadowingPractice() {
   const startTimeRef = useRef<number>(0);
   const isMountedRef = useRef(true);
 
-  const activeItem = SHADOWING_ITEMS.find((item) => item.id === selectedId) || SHADOWING_ITEMS[0];
+  const activeItem =
+    SHADOWING_ITEMS.find((item) => item.id === selectedId) ||
+    SHADOWING_ITEMS[0];
 
   // Khởi động SpeechRecognition
-  const SpeechRecognition = typeof window !== "undefined"
-    ? ((window as unknown as SpeechWindowMock).SpeechRecognition ||
-       (window as unknown as SpeechWindowMock).webkitSpeechRecognition ||
-       (SpeechRecognitionFallback as unknown as new () => SpeechRecognitionMock))
-    : null;
+  const SpeechRecognition =
+    typeof window !== "undefined"
+      ? (window as unknown as SpeechWindowMock).SpeechRecognition ||
+        (window as unknown as SpeechWindowMock).webkitSpeechRecognition ||
+        (SpeechRecognitionFallback as unknown as new () => SpeechRecognitionMock)
+      : null;
 
   // Vòng đời chung của component (mount / unmount)
   useEffect(() => {
@@ -348,15 +398,15 @@ export function ShadowingPractice() {
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHasRecorded(false);
-     
+
     setRecordedUrl(null);
-     
+
     setRecognizedText("");
-     
+
     setAccuracyScore(null);
     setMissingCodas([]);
     setIsPlayingRecorded(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
   // Hàm phát audio gốc bằng Web Speech Synthesis
@@ -375,8 +425,10 @@ export function ShadowingPractice() {
     utterance.rate = playbackSpeed;
 
     const voices = window.speechSynthesis.getVoices();
-    const usVoice = voices.find(voice => voice.lang === "en-US" && voice.name.includes("Google")) 
-                   || voices.find(voice => voice.lang.startsWith("en-"));
+    const usVoice =
+      voices.find(
+        (voice) => voice.lang === "en-US" && voice.name.includes("Google"),
+      ) || voices.find((voice) => voice.lang.startsWith("en-"));
     if (usVoice) {
       utterance.voice = usVoice;
     }
@@ -419,7 +471,9 @@ export function ShadowingPractice() {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
         const audioUrl = URL.createObjectURL(audioBlob);
         if (isMountedRef.current) {
           setRecordedUrl(audioUrl);
@@ -452,39 +506,52 @@ export function ShadowingPractice() {
           setRecognizedText(fullTranscript);
           // Chấm điểm sau khi thu âm xong
           if (fullTranscript.trim()) {
-            const score = calculateAccuracy(activeItem.transcript, fullTranscript);
+            const score = calculateAccuracy(
+              activeItem.transcript,
+              fullTranscript,
+            );
             setAccuracyScore(score);
-            const omissions = detectMissingCodas(activeItem.transcript, fullTranscript);
+            const omissions = detectMissingCodas(
+              activeItem.transcript,
+              fullTranscript,
+            );
             setMissingCodas(omissions);
-            
+
             if (score >= 80) {
               if (omissions.length > 0) {
-                toast.warning(`Tuyệt vời! ${score}%. Lưu ý: ${omissions[0]}`);
+                toast.warning(`Khớp bản mẫu ${score}%. Lưu ý: ${omissions[0]}`);
               } else {
-                toast.success(`Xuất sắc! Độ chính xác đạt ${score}%`);
+                toast.success(`Khớp bản mẫu ${score}%`);
               }
             } else if (score >= 50) {
               if (omissions.length > 0) {
-                toast.warning(`Khá tốt! ${score}%. Cảnh báo: ${omissions[0]}`);
+                toast.warning(
+                  `Khớp bản mẫu ${score}%. Cảnh báo: ${omissions[0]}`,
+                );
               } else {
-                toast.info(`Khá tốt! Độ chính xác đạt ${score}%`);
+                toast.info(`Khớp bản mẫu ${score}%`);
               }
             } else {
               if (omissions.length > 0) {
-                toast.error(`Chưa đạt (${score}%). Lỗi: ${omissions.join(", ")}`);
+                toast.error(
+                  `Khớp bản mẫu ${score}%. Lỗi: ${omissions.join(", ")}`,
+                );
               } else {
-                toast.warning(`Hãy cố gắng nói to, rõ ràng hơn. Độ chính xác: ${score}%`);
+                toast.warning(`Khớp bản mẫu ${score}%. Thử nói to và rõ hơn.`);
               }
             }
 
             // Ghi nhận lịch sử luyện tập vào database
-            const duration = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
+            const duration = Math.max(
+              1,
+              Math.round((Date.now() - startTimeRef.current) / 1000),
+            );
             const saveRes = await saveSpeakingSession({
               practiceType: "shadowing",
               duration,
               transcript: fullTranscript,
               accuracyScore: score,
-              scenarioId: activeItem.id
+              scenarioId: activeItem.id,
             });
             if (!isMountedRef.current) return;
             if (saveRes.success && saveRes.xpEarned) {
@@ -494,14 +561,26 @@ export function ShadowingPractice() {
               try {
                 const key = "guest_speaking_sessions";
                 const prev = JSON.parse(localStorage.getItem(key) || "[]");
-                const entry = { id: `guest-${Date.now()}`, practice_type: "shadowing" as const, duration, accuracy_score: score ?? null, scenario_id: activeItem.id, created_at: new Date().toISOString() };
-                localStorage.setItem(key, JSON.stringify([entry, ...prev].slice(0, 20)));
+                const entry = {
+                  id: `guest-${Date.now()}`,
+                  practice_type: "shadowing" as const,
+                  duration,
+                  accuracy_score: score ?? null,
+                  scenario_id: activeItem.id,
+                  created_at: new Date().toISOString(),
+                };
+                localStorage.setItem(
+                  key,
+                  JSON.stringify([entry, ...prev].slice(0, 20)),
+                );
               } catch {}
             }
           } else {
             setAccuracyScore(0);
             setMissingCodas([]);
-            toast.error("Không nhận diện được giọng nói của bạn. Hãy nói to và rõ hơn.");
+            toast.error(
+              "Không nhận diện được giọng nói của bạn. Hãy nói to và rõ hơn.",
+            );
           }
         };
 
@@ -532,7 +611,9 @@ export function ShadowingPractice() {
       toast.info("Đang ghi âm... Hãy nói đuổi theo transcript!");
     } catch (err) {
       if (isMountedRef.current) {
-        toast.error("Không thể kết nối Microphone. Vui lòng kiểm tra quyền thiết bị.");
+        toast.error(
+          "Không thể kết nối Microphone. Vui lòng kiểm tra quyền thiết bị.",
+        );
       }
     }
   };
@@ -542,7 +623,7 @@ export function ShadowingPractice() {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      
+
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
@@ -605,31 +686,54 @@ export function ShadowingPractice() {
   // Helper: detect specific missing English final consonants (codas) commonly deleted by Vietnamese learners
   const detectMissingCodas = (expected: string, actual: string): string[] => {
     const missingWarnings: string[] = [];
-    const cleanExpected = expected.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").trim();
-    const cleanActual = actual.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").trim();
+    const cleanExpected = expected
+      .toLowerCase()
+      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+      .trim();
+    const cleanActual = actual
+      .toLowerCase()
+      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+      .trim();
 
     const expectedWords = cleanExpected.split(/\s+/);
     const actualWords = cleanActual.split(/\s+/);
 
     expectedWords.forEach((word) => {
       // Check if the expected word ends in a target coda sound
-      if (word.endsWith("k") || word.endsWith("t") || word.endsWith("s") || word.endsWith("d") || word.endsWith("ce") || word.endsWith("se")) {
+      if (
+        word.endsWith("k") ||
+        word.endsWith("t") ||
+        word.endsWith("s") ||
+        word.endsWith("d") ||
+        word.endsWith("ce") ||
+        word.endsWith("se")
+      ) {
         // Find matching word base in actual spoken phrase
         const baseWordWithoutCoda = word.replace(/(k|t|s|d|ce|se)$/, "");
-        
+
         // If user pronounced the base but omitted the ending
         const foundOmission = actualWords.some(
-          (aWord) => aWord === baseWordWithoutCoda && aWord !== word
+          (aWord) => aWord === baseWordWithoutCoda && aWord !== word,
         );
 
         if (foundOmission) {
           let soundExplanation = "";
-          if (word.endsWith("k")) soundExplanation = "âm /k/ (ví dụ: 'like' -> 'lai-kờ')";
-          else if (word.endsWith("t")) soundExplanation = "âm /t/ (ví dụ: 'cat' -> 'ca-tờ')";
-          else if (word.endsWith("s") || word.endsWith("ce") || word.endsWith("se")) soundExplanation = "âm /s/ (ví dụ: 'face' -> 'fây-sờ')";
-          else if (word.endsWith("d")) soundExplanation = "âm /d/ (ví dụ: 'red' -> 're-dờ')";
+          if (word.endsWith("k"))
+            soundExplanation = "âm /k/ (ví dụ: 'like' -> 'lai-kờ')";
+          else if (word.endsWith("t"))
+            soundExplanation = "âm /t/ (ví dụ: 'cat' -> 'ca-tờ')";
+          else if (
+            word.endsWith("s") ||
+            word.endsWith("ce") ||
+            word.endsWith("se")
+          )
+            soundExplanation = "âm /s/ (ví dụ: 'face' -> 'fây-sờ')";
+          else if (word.endsWith("d"))
+            soundExplanation = "âm /d/ (ví dụ: 'red' -> 're-dờ')";
 
-          missingWarnings.push(`Từ "${word}" phát âm thiếu ${soundExplanation}`);
+          missingWarnings.push(
+            `Từ "${word}" phát âm thiếu ${soundExplanation}`,
+          );
         }
       }
     });
@@ -650,7 +754,9 @@ export function ShadowingPractice() {
       return (
         <p className="text-sm sm:text-lg font-medium leading-relaxed text-foreground tracking-wide font-sans break-words overflow-wrap-anywhere">
           {parts.map((part, index) => {
-            const isDifficult = words.some(w => w.toLowerCase() === part.toLowerCase());
+            const isDifficult = words.some(
+              (w) => w.toLowerCase() === part.toLowerCase(),
+            );
             if (isDifficult) {
               return (
                 <span
@@ -671,9 +777,16 @@ export function ShadowingPractice() {
     }
 
     // Khi đã có điểm, so sánh từng từ của transcript gốc với từ được nhận diện
-    const cleanWord = (w: string) => w.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "").trim();
-    const recWordsClean = recognizedText.split(/\s+/).map(cleanWord).filter(Boolean);
-    
+    const cleanWord = (w: string) =>
+      w
+        .toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "")
+        .trim();
+    const recWordsClean = recognizedText
+      .split(/\s+/)
+      .map(cleanWord)
+      .filter(Boolean);
+
     // Split bằng khoảng trắng để giữ nguyên các từ kèm dấu câu gốc
     const origWordsRaw = text.split(/(\s+)/);
 
@@ -758,9 +871,13 @@ export function ShadowingPractice() {
               className="text-xs font-bold text-primary hover:bg-primary/5 rounded-lg h-8 px-2.5"
             >
               {showTranslation ? (
-                <span className="flex items-center gap-1"><EyeOff className="size-3.5" /> Ẩn dịch nghĩa</span>
+                <span className="flex items-center gap-1">
+                  <EyeOff className="size-3.5" /> Ẩn dịch nghĩa
+                </span>
               ) : (
-                <span className="flex items-center gap-1"><Eye className="size-3.5" /> Xem dịch nghĩa</span>
+                <span className="flex items-center gap-1">
+                  <Eye className="size-3.5" /> Xem dịch nghĩa
+                </span>
               )}
             </Button>
           </div>
@@ -789,7 +906,9 @@ export function ShadowingPractice() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:flex-wrap gap-2 sm:gap-3 pt-2">
           {/* Speed settings */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider shrink-0">Tốc độ:</span>
+            <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider shrink-0">
+              Tốc độ:
+            </span>
             <div className="bg-foreground/[0.03] border border-foreground/[0.05] p-1 rounded-xl flex gap-1">
               {[0.8, 1.0, 1.2].map((speed) => (
                 <button
@@ -842,8 +961,12 @@ export function ShadowingPractice() {
         <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 text-primary flex items-start gap-2.5 leading-relaxed">
           <Info className="size-4.5 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
-            <span className="text-xs font-bold uppercase tracking-wider">Mẹo luyện phát âm:</span>
-            <p className="text-xs text-primary/80 font-normal">{activeItem.tips}</p>
+            <span className="text-xs font-bold uppercase tracking-wider">
+              Mẹo luyện phát âm:
+            </span>
+            <p className="text-xs text-primary/80 font-normal">
+              {activeItem.tips}
+            </p>
           </div>
         </div>
 
@@ -864,8 +987,8 @@ export function ShadowingPractice() {
                   accuracyScore >= 80
                     ? "bg-emerald-500/5 border-emerald-500/20"
                     : accuracyScore >= 50
-                    ? "bg-amber-500/5 border-amber-500/20"
-                    : "bg-red-500/5 border-red-500/20"
+                      ? "bg-amber-500/5 border-amber-500/20"
+                      : "bg-red-500/5 border-red-500/20"
                 }`}
               >
                 <div className="space-y-1 text-center sm:text-left">
@@ -875,14 +998,16 @@ export function ShadowingPractice() {
                     ) : (
                       <AlertTriangle className="size-5 text-amber-500" />
                     )}
-                    <span className="text-sm font-bold text-foreground">Kết quả Shadowing AI</span>
+                    <span className="text-sm font-bold text-foreground">
+                      Kết quả shadowing
+                    </span>
                   </div>
                   <p className="text-xs text-muted-foreground font-normal">
                     {accuracyScore >= 80
-                      ? "Phát âm tuyệt vời! Bạn đã bắt được ngữ điệu chuẩn xác."
+                      ? "Transcript khớp gần hết bản mẫu — máy nghe đúng các từ bạn nói."
                       : accuracyScore >= 50
-                      ? "Tương đối tốt! Hãy chú ý các từ màu đỏ để cải thiện thêm."
-                      : "Bạn nói còn thiếu hoặc nhận diện không rõ. Hãy thử lại."}
+                        ? "Transcript khớp một phần — xem các từ nhận diện sai bên dưới."
+                        : "Máy nhận diện được ít từ đúng — thử nói to và chậm hơn."}
                   </p>
                   {recognizedText && (
                     <div className="text-[11px] text-muted-foreground/80 mt-1 font-mono break-all max-w-lg leading-relaxed">
@@ -893,11 +1018,16 @@ export function ShadowingPractice() {
                     <div className="mt-3 p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-400 text-xs space-y-1.5 shadow-sm">
                       <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
                         <AlertTriangle className="size-4 animate-bounce text-amber-500" />
-                        Cảnh báo phát âm (Nhỡ âm đuôi)
+                        Nghi ngờ thiếu âm cuối (theo transcript)
                       </div>
                       <ul className="list-disc list-inside space-y-1 font-semibold pl-1">
                         {missingCodas.map((warning, i) => (
-                          <li key={i} className="text-foreground/90 dark:text-zinc-200">{warning}</li>
+                          <li
+                            key={i}
+                            className="text-foreground/90 dark:text-zinc-200"
+                          >
+                            {warning}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -906,10 +1036,17 @@ export function ShadowingPractice() {
                   {/* Best-practice L1 feedback from advanced analyzer (autopilot applied) */}
                   {analysisTips.length > 0 && (
                     <div className="mt-3 p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 text-xs space-y-1.5 shadow-sm">
-                      <div className="font-bold uppercase tracking-wider">Mẹo dành riêng cho người Việt (phân tích cục bộ)</div>
+                      <div className="font-bold uppercase tracking-wider">
+                        Mẹo dành riêng cho người Việt (phân tích cục bộ)
+                      </div>
                       <ul className="list-disc list-inside space-y-0.5 pl-1">
                         {analysisTips.map((tip: string, i: number) => (
-                          <li key={i} className="text-foreground/90 dark:text-zinc-200">{tip}</li>
+                          <li
+                            key={i}
+                            className="text-foreground/90 dark:text-zinc-200"
+                          >
+                            {tip}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -917,16 +1054,20 @@ export function ShadowingPractice() {
                 </div>
 
                 <div className="flex flex-col items-center justify-center shrink-0">
-                  <span className={`text-2xl sm:text-3xl font-black ${
-                    accuracyScore >= 80
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : accuracyScore >= 50
-                      ? "text-amber-500"
-                      : "text-red-500"
-                  }`}>
+                  <span
+                    className={`text-2xl sm:text-3xl font-black ${
+                      accuracyScore >= 80
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : accuracyScore >= 50
+                          ? "text-amber-500"
+                          : "text-red-500"
+                    }`}
+                  >
                     {accuracyScore}%
                   </span>
-                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold font-mono">Độ chính xác</span>
+                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold font-mono">
+                    Khớp bản mẫu
+                  </span>
                 </div>
               </motion.div>
             )}
@@ -1001,25 +1142,28 @@ export function ShadowingPractice() {
             {/* Waveform Animation for Recording */}
             {isRecording && (
               <div className="flex items-center gap-1.5 h-6 px-3 bg-red-500/5 rounded-full border border-red-500/10">
-                {([18, 10, 24, 8, 20, 14, 26, 12, 22, 16] as const).map((maxH, i) => (
-                  <motion.div
-                    key={i}
-                    className="w-1 bg-red-500 rounded-full"
-                    animate={{ height: [6, maxH, 6] }}
-                    transition={{
-                      duration: 0.4 + (i % 5) * 0.06,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: i * 0.04,
-                    }}
-                  />
-                ))}
+                {([18, 10, 24, 8, 20, 14, 26, 12, 22, 16] as const).map(
+                  (maxH, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1 bg-red-500 rounded-full"
+                      animate={{ height: [6, maxH, 6] }}
+                      transition={{
+                        duration: 0.4 + (i % 5) * 0.06,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: i * 0.04,
+                      }}
+                    />
+                  ),
+                )}
               </div>
             )}
-            
+
             {!isRecording && !hasRecorded && (
               <p className="text-xs text-muted-foreground text-center sm:text-left font-normal max-w-sm">
-                Nhấn nút và nói đồng thời cùng với audio gốc. Hệ thống sẽ ghi âm và so sánh giọng của bạn.
+                Nhấn nút và nói đồng thời cùng với audio gốc. Hệ thống sẽ ghi âm
+                và so sánh giọng của bạn.
               </p>
             )}
           </div>

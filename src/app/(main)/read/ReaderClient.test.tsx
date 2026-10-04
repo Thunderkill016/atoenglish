@@ -87,8 +87,10 @@ describe("ReaderClient", () => {
     await flush();
 
     // All words start as "new" (no stored state).
-    const hello = [...container.querySelectorAll("button")].find((b) => b.textContent === "Hello");
-    expect(hello!.className).toContain("bg-sky-100");
+    const hello = [...container.querySelectorAll("button")].find(
+      (b) => b.textContent === "Hello",
+    );
+    expect(hello!.className).toContain("bg-state-new/15");
 
     // Tap → gloss popover shows the curated meaning.
     clickText(container, "Hello");
@@ -109,11 +111,18 @@ describe("ReaderClient", () => {
     const helloAgain = [...container.querySelectorAll("button")].find(
       (b) => b.textContent === "Hello",
     );
-    expect(helloAgain!.className).toContain("decoration-emerald-300");
+    expect(helloAgain!.className).toContain("decoration-state-known");
   });
 
   it("honestly shows 'chưa có nghĩa' for words outside the dictionary", async () => {
-    const text = [{ id: "t2", title: "Gap text", level: "A0" as const, body: "Photosynthesis is hard." }];
+    const text = [
+      {
+        id: "t2",
+        title: "Gap text",
+        level: "A0" as const,
+        body: "Photosynthesis is hard.",
+      },
+    ];
     await act(async () => {
       root.render(<ReaderClient signedIn starterTexts={text} />);
     });
@@ -133,8 +142,10 @@ describe("ReaderClient", () => {
     expect(container.textContent).toContain("Đăng nhập để đánh dấu");
     clickText(container, "Test text");
     await flush();
-    const hello = [...container.querySelectorAll("button")].find((b) => b.textContent === "Hello");
-    expect(hello!.className).not.toContain("bg-sky-100");
+    const hello = [...container.querySelectorAll("button")].find(
+      (b) => b.textContent === "Hello",
+    );
+    expect(hello!.className).not.toContain("bg-state-new/15");
     clickText(container, "Hello");
     await flush();
     // Gloss still works, but marking controls are absent.

@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Mic,
-  Volume2,
-  MessageSquare,
-  Calendar,
-  Sparkles,
-} from "lucide-react";
+import { Mic, Volume2, MessageSquare, Calendar, Sparkles } from "lucide-react";
 import {
   ListSection,
   PrimaryRow,
@@ -23,11 +17,13 @@ export default function SpeakingPage() {
   useEffect(() => {
     async function loadHistory() {
       const res = await getRecentSpeakingSessions(6);
-      let sessions = (res.success && res.sessions) ? res.sessions : [];
+      let sessions = res.success && res.sessions ? res.sessions : [];
       // Guest: show local history viz (TASK-152)
       if (sessions.length === 0 && typeof window !== "undefined") {
         try {
-          const local = JSON.parse(localStorage.getItem("guest_speaking_sessions") || "[]");
+          const local = JSON.parse(
+            localStorage.getItem("guest_speaking_sessions") || "[]",
+          );
           if (Array.isArray(local) && local.length) sessions = local;
         } catch {}
       }
@@ -72,10 +68,15 @@ export default function SpeakingPage() {
           <PrimaryRow
             href="/me/speaking/phoneme"
             label="Phoneme Coach"
-            description="AI phân tích phát âm"
+            description="Luyện câu mẫu — so sánh transcript"
             icon={Sparkles}
           />
         </ListSection>
+
+        <p className="px-1 text-[var(--minimal-caption-size)] text-muted-foreground/80">
+          Chấm phát âm tự động chưa đủ tin cậy để bật. Các chỉ số bên dưới là độ
+          khớp transcript, không phải điểm phát âm.
+        </p>
 
         {/* Compact recent — guest local history viz enhanced (TASK-152) */}
         {historySessions.length > 0 && (
@@ -105,7 +106,10 @@ export default function SpeakingPage() {
                   </span>
                 </div>
                 {session.accuracy_score !== null && (
-                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono shrink-0">
+                  <span
+                    className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono shrink-0"
+                    title="Độ khớp transcript với bản mẫu — không phải điểm phát âm"
+                  >
                     {session.accuracy_score}%
                   </span>
                 )}

@@ -11,7 +11,11 @@ import {
 } from "@/app/actions/read";
 import { saveCardToSRS } from "@/app/actions/cards";
 import { lookupGloss } from "@/lib/read/gloss";
-import { distinctWords, tokenizeText, type ReadToken } from "@/lib/read/tokenize";
+import {
+  distinctWords,
+  tokenizeText,
+  type ReadToken,
+} from "@/lib/read/tokenize";
 import type { StarterText } from "@/lib/read/starter-texts";
 
 const PASTE_MAX_CHARS = 5000;
@@ -30,7 +34,10 @@ export function ReaderClient({
   const [tapped, setTapped] = useState<string | null>(null);
   const [pasted, setPasted] = useState("");
   const [pasteError, setPasteError] = useState<string | null>(null);
-  const [counts, setCounts] = useState<{ known: number; learning: number } | null>(null);
+  const [counts, setCounts] = useState<{
+    known: number;
+    learning: number;
+  } | null>(null);
 
   const tokens = useMemo(() => (text ? tokenizeText(text.body) : []), [text]);
   const words = useMemo(() => (text ? distinctWords(text.body) : []), [text]);
@@ -43,7 +50,8 @@ export function ReaderClient({
       if (result.signedIn) setStates(result.states);
     });
     void getReadWordCounts().then((result) => {
-      if (result.signedIn) setCounts({ known: result.known, learning: result.learning });
+      if (result.signedIn)
+        setCounts({ known: result.known, learning: result.learning });
     });
   }, [signedIn, text, words]);
 
@@ -67,7 +75,8 @@ export function ReaderClient({
 
   function refreshCounts() {
     void getReadWordCounts().then((result) => {
-      if (result.signedIn) setCounts({ known: result.known, learning: result.learning });
+      if (result.signedIn)
+        setCounts({ known: result.known, learning: result.learning });
     });
   }
 
@@ -125,17 +134,21 @@ export function ReaderClient({
     return (
       <div className="space-y-6">
         <section aria-label="Bài đọc mẫu">
-          <h2 className="mb-2 text-sm font-medium text-stone-700">Bài đọc mẫu</h2>
+          <h2 className="mb-2 text-sm font-medium text-foreground">
+            Bài đọc mẫu
+          </h2>
           <ol className="flex flex-col gap-2">
             {starterTexts.map((starter) => (
               <li key={starter.id}>
                 <button
                   type="button"
-                  onClick={() => setText({ title: starter.title, body: starter.body })}
-                  className="block w-full rounded-xl border border-stone-200 px-4 py-3 text-left text-sm transition-colors hover:border-stone-400"
+                  onClick={() =>
+                    setText({ title: starter.title, body: starter.body })
+                  }
+                  className="block w-full rounded-xl border border-border px-4 py-3 text-left text-sm transition-colors hover:border-foreground/40"
                 >
                   <span className="font-medium">{starter.title}</span>
-                  <span className="ml-2 rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">
+                  <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                     {starter.level}
                   </span>
                 </button>
@@ -145,15 +158,19 @@ export function ReaderClient({
         </section>
 
         <section aria-label="Dán văn bản của bạn">
-          <h2 className="mb-2 text-sm font-medium text-stone-700">Hoặc dán văn bản của bạn</h2>
+          <h2 className="mb-2 text-sm font-medium text-foreground">
+            Hoặc dán văn bản của bạn
+          </h2>
           <textarea
             value={pasted}
             onChange={(event) => setPasted(event.target.value)}
             rows={5}
             placeholder="Paste an English text here…"
-            className="w-full rounded-xl border border-stone-200 px-4 py-3 text-sm outline-none focus:border-stone-400"
+            className="w-full rounded-xl border border-border px-4 py-3 text-sm outline-none focus:border-foreground/40"
           />
-          {pasteError ? <p className="mt-1 text-xs text-red-600">{pasteError}</p> : null}
+          {pasteError ? (
+            <p className="mt-1 text-xs text-destructive">{pasteError}</p>
+          ) : null}
           <button
             type="button"
             onClick={submitPaste}
@@ -163,8 +180,9 @@ export function ReaderClient({
             Đọc văn bản này
           </button>
           {!signedIn ? (
-            <p className="mt-3 text-xs text-stone-500">
-              Đăng nhập để đánh dấu từ bạn biết — lượt khách chỉ đọc được văn bản.
+            <p className="mt-3 text-xs text-muted-foreground">
+              Đăng nhập để đánh dấu từ bạn biết — lượt khách chỉ đọc được văn
+              bản.
             </p>
           ) : null}
         </section>
@@ -191,9 +209,12 @@ export function ReaderClient({
           ← Chọn văn bản khác
         </button>
         {signedIn && counts ? (
-          <p className="text-xs text-stone-500">
-            {counts.known} từ đã đánh dấu biết · {knownInText}/{words.length} từ trên trang
-            <span className="block text-[10px] text-stone-400">tự đánh dấu — không phải điểm đánh giá</span>
+          <p className="text-xs text-muted-foreground">
+            {counts.known} từ đã đánh dấu biết · {knownInText}/{words.length} từ
+            trên trang
+            <span className="block text-[10px] text-muted-foreground">
+              tự đánh dấu — không phải điểm đánh giá
+            </span>
           </p>
         ) : null}
       </div>
@@ -208,18 +229,20 @@ export function ReaderClient({
           const status = signedIn ? states[token.normalized] : undefined;
           const classes =
             status === "known"
-              ? "rounded-sm px-0.5 text-stone-800 underline decoration-emerald-300 decoration-2 underline-offset-4"
+              ? "rounded-sm px-0.5 underline decoration-state-known decoration-2 underline-offset-4"
               : status === "learning"
-                ? "rounded-sm bg-amber-100 px-0.5 text-amber-900"
+                ? "rounded-sm bg-state-learning/15 px-0.5 text-foreground"
                 : signedIn
-                  ? "rounded-sm bg-sky-100 px-0.5 text-sky-900"
+                  ? "rounded-sm bg-state-new/15 px-0.5 text-foreground"
                   : "rounded-sm px-0.5";
           return (
             <button
               key={index}
               type="button"
-              onClick={() => setTapped(tapped === token.normalized ? null : token.normalized)}
-              className={`${classes} cursor-pointer transition-colors hover:bg-stone-200`}
+              onClick={() =>
+                setTapped(tapped === token.normalized ? null : token.normalized)
+              }
+              className={`${classes} cursor-pointer transition-colors hover:bg-muted`}
             >
               {token.text}
             </button>
@@ -231,7 +254,7 @@ export function ReaderClient({
         <div
           role="dialog"
           aria-label={`Từ: ${tapped}`}
-          className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"
+          className="rounded-2xl border border-border bg-card p-4 shadow-sm"
         >
           <div className="flex items-center justify-between">
             <p className="font-semibold">{tapped}</p>
@@ -239,21 +262,25 @@ export function ReaderClient({
               <button
                 type="button"
                 onClick={() => speak(tapped)}
-                className="rounded-full border border-stone-200 px-3 py-1 text-xs text-stone-600 hover:border-stone-400"
+                className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:border-foreground/40"
                 aria-label={`Nghe phát âm: ${tapped}`}
               >
                 Nghe
               </button>
             ) : null}
           </div>
-          <p className="mt-1 text-sm text-stone-700">
+          <p className="mt-1 text-sm text-foreground/90">
             {tappedGloss ? tappedGloss.meaning_vn : "chưa có nghĩa"}
           </p>
           {tappedGloss?.phonetic ? (
-            <p className="text-xs text-stone-400">{tappedGloss.phonetic}</p>
+            <p className="text-xs text-muted-foreground">
+              {tappedGloss.phonetic}
+            </p>
           ) : null}
           {tappedGloss?.example_en ? (
-            <p className="mt-1 text-xs italic text-stone-500">{tappedGloss.example_en}</p>
+            <p className="mt-1 text-xs italic text-muted-foreground">
+              {tappedGloss.example_en}
+            </p>
           ) : null}
 
           {signedIn ? (
@@ -263,8 +290,8 @@ export function ReaderClient({
                 onClick={() => void mark(tapped, "known")}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
                   tappedStatus === "known"
-                    ? "bg-emerald-600 text-white"
-                    : "border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    ? "bg-state-known text-primary-foreground"
+                    : "border border-state-known/40 text-state-known hover:bg-state-known/10"
                 }`}
               >
                 Tôi biết từ này
@@ -274,8 +301,8 @@ export function ReaderClient({
                 onClick={() => void mark(tapped, "learning")}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
                   tappedStatus === "learning"
-                    ? "bg-amber-500 text-white"
-                    : "border border-amber-200 text-amber-700 hover:bg-amber-50"
+                    ? "bg-state-learning text-primary-foreground"
+                    : "border border-state-learning/40 text-state-learning hover:bg-state-learning/10"
                 }`}
               >
                 Đang học
@@ -284,7 +311,7 @@ export function ReaderClient({
                 <button
                   type="button"
                   onClick={() => void unmark(tapped)}
-                  className="rounded-full border border-stone-200 px-3 py-1 text-xs text-stone-500 hover:bg-stone-50"
+                  className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:bg-muted/60"
                 >
                   Bỏ đánh dấu
                 </button>
@@ -293,14 +320,14 @@ export function ReaderClient({
                 <button
                   type="button"
                   onClick={() => void saveWord(tapped)}
-                  className="rounded-full border border-sky-200 px-3 py-1 text-xs text-sky-700 hover:bg-sky-50"
+                  className="rounded-full border border-state-new/40 px-3 py-1 text-xs text-state-new hover:bg-state-new/10"
                 >
                   Lưu vào flashcard
                 </button>
               ) : null}
             </div>
           ) : (
-            <p className="mt-3 text-xs text-stone-500">
+            <p className="mt-3 text-xs text-muted-foreground">
               Đăng nhập để đánh dấu và lưu từ vào flashcard.
             </p>
           )}

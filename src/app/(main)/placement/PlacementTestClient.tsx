@@ -20,10 +20,17 @@ import {
   LANG_USE_COUNT,
   type CEFRLevel,
 } from "@/lib/data/placement-test";
-import { savePlacementResult, setPlacementLevel } from "@/app/actions/placement";
+import {
+  savePlacementResult,
+  setPlacementLevel,
+} from "@/app/actions/placement";
 import { PLACEMENT_LEVEL_OPTIONS } from "@/lib/placement/starting-unit";
-import { SecondaryPageShell, MinimalButton, ListSection, Screen } from "@/components/design-system";
-
+import {
+  SecondaryPageShell,
+  MinimalButton,
+  ListSection,
+  Screen,
+} from "@/components/design-system";
 
 type Stage = "pick" | "test" | "saving" | "results";
 
@@ -44,7 +51,9 @@ export default function PlacementTestClient() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [selected, setSelected] = useState<number | null>(null);
-  const [result, setResult] = useState<ReturnType<typeof calculateResult> | null>(null);
+  const [result, setResult] = useState<ReturnType<
+    typeof calculateResult
+  > | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [learnPath, setLearnPath] = useState<string | null>(null);
   const [isSelfSelect, setIsSelfSelect] = useState(false);
@@ -53,10 +62,13 @@ export default function PlacementTestClient() {
   const isLast = currentIdx === TOTAL_QUESTIONS - 1;
   const progressPct = Math.round((currentIdx / TOTAL_QUESTIONS) * 100);
 
-  const handleAnswer = useCallback((optIdx: number) => {
-    if (selected !== null) return;
-    setSelected(optIdx);
-  }, [selected]);
+  const handleAnswer = useCallback(
+    (optIdx: number) => {
+      if (selected !== null) return;
+      setSelected(optIdx);
+    },
+    [selected],
+  );
 
   const handleNext = useCallback(async () => {
     if (selected === null) return;
@@ -109,7 +121,7 @@ export default function PlacementTestClient() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-5 pb-16"
         >
-          <ListSection title="Tôi biết trình độ của mình">
+          <ListSection title="Tôi biết điểm bắt đầu phù hợp">
             {PLACEMENT_LEVEL_OPTIONS.map((opt) => (
               <button
                 key={opt.level}
@@ -121,13 +133,24 @@ export default function PlacementTestClient() {
                   <span className="text-xl">{opt.emoji}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-xs font-black text-primary">{opt.level}</span>
-                      <span className="text-sm font-bold text-foreground">{opt.title}</span>
+                      <span className="text-xs font-black text-primary">
+                        {opt.level}
+                      </span>
+                      <span className="text-sm font-bold text-foreground">
+                        {opt.title}
+                      </span>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{opt.description}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">Bắt đầu: {opt.startLabel}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {opt.description}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Bắt đầu: {opt.startLabel}
+                    </p>
                   </div>
-                  <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+                  <ChevronRight
+                    size={16}
+                    className="text-muted-foreground shrink-0"
+                  />
                 </div>
               </button>
             ))}
@@ -138,7 +161,8 @@ export default function PlacementTestClient() {
               Hoặc làm bài test đầy đủ
             </p>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {TOTAL_QUESTIONS} câu Reading · Vocabulary · Language Use · ~15–25 phút
+              {TOTAL_QUESTIONS} câu Reading · Vocabulary · Language Use · ~15–25
+              phút
             </p>
             <div className="grid grid-cols-3 gap-2">
               {[
@@ -146,9 +170,16 @@ export default function PlacementTestClient() {
                 { label: "Vocab", count: VOCAB_COUNT },
                 { label: "Grammar", count: LANG_USE_COUNT },
               ].map((s) => (
-                <div key={s.label} className="rounded-lg bg-muted/50 p-2 text-center">
-                  <div className="text-sm font-black text-foreground">{s.count}</div>
-                  <div className="text-[10px] text-muted-foreground">{s.label}</div>
+                <div
+                  key={s.label}
+                  className="rounded-lg bg-muted/50 p-2 text-center"
+                >
+                  <div className="text-sm font-black text-foreground">
+                    {s.count}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {s.label}
+                  </div>
                 </div>
               ))}
             </div>
@@ -188,14 +219,21 @@ export default function PlacementTestClient() {
     return (
       <Screen narrow={false}>
         <div className="max-w-[480px] mx-auto pt-1 pb-24">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             {/* Level badge hero */}
             <div className="text-center mb-6">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.2 }}
+                transition={{
+                  type: "spring",
+                  damping: 12,
+                  stiffness: 200,
+                  delay: 0.2,
+                }}
                 className="w-24 h-24 rounded-full bg-primary/10 border-4 border-primary flex items-center justify-center mx-auto mb-4 text-3xl font-black text-primary font-sans"
               >
                 {result.cefrLevel}
@@ -206,12 +244,19 @@ export default function PlacementTestClient() {
               <p className="text-[13px] text-muted-foreground leading-relaxed max-w-[340px] mx-auto">
                 {result.levelDescription}
               </p>
+              <p className="mt-2 text-[11px] text-muted-foreground/80">
+                {isSelfSelect
+                  ? "Mức bạn tự chọn — điểm bắt đầu, không phải kết quả đo."
+                  : "Ước tính từ bài test ngắn — chưa đo được nói và viết."}
+              </p>
             </div>
 
             {!isSelfSelect && (
               <div className="rounded-xl border border-border/60 bg-card p-4 mb-3.5">
                 <div className="flex justify-between mb-2.5">
-                  <span className="text-xs font-bold text-muted-foreground tracking-wider">TỔNG ĐIỂM</span>
+                  <span className="text-xs font-bold text-muted-foreground tracking-wider">
+                    TỔNG ĐIỂM
+                  </span>
                   <span className="text-lg font-black text-primary">
                     {result.totalScore}/{TOTAL_QUESTIONS}
                   </span>
@@ -219,7 +264,9 @@ export default function PlacementTestClient() {
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={{ width: `${(result.totalScore / TOTAL_QUESTIONS) * 100}%` }}
+                    animate={{
+                      width: `${(result.totalScore / TOTAL_QUESTIONS) * 100}%`,
+                    }}
                     transition={{ duration: 1, delay: 0.4 }}
                     className="h-full bg-primary rounded-full"
                   />
@@ -229,7 +276,9 @@ export default function PlacementTestClient() {
 
             {isSelfSelect && (
               <div className="rounded-xl border border-border/60 bg-card p-3.5 mb-3.5 text-xs text-muted-foreground leading-relaxed">
-                ✅ Lộ trình đã mở từ trình độ <strong className="text-primary">{result.cefrLevel}</strong> — các bài trước đó có thể ôn lại tuỳ chọn, không bắt buộc.
+                ✅ Lộ trình mở từ điểm bắt đầu{" "}
+                <strong className="text-primary">{result.cefrLevel}</strong> —
+                các bài trước đó có thể ôn lại tuỳ chọn, không bắt buộc.
               </div>
             )}
 
@@ -237,14 +286,33 @@ export default function PlacementTestClient() {
             {!isSelfSelect && (
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {[
-                  { key: "reading", score: result.readingScore, total: READING_COUNT },
-                  { key: "vocabulary", score: result.vocabularyScore, total: VOCAB_COUNT },
-                  { key: "language-use", score: result.languageUseScore, total: LANG_USE_COUNT },
+                  {
+                    key: "reading",
+                    score: result.readingScore,
+                    total: READING_COUNT,
+                  },
+                  {
+                    key: "vocabulary",
+                    score: result.vocabularyScore,
+                    total: VOCAB_COUNT,
+                  },
+                  {
+                    key: "language-use",
+                    score: result.languageUseScore,
+                    total: LANG_USE_COUNT,
+                  },
                 ].map((s) => (
-                  <div key={s.key} className="rounded-xl border border-border/60 bg-card p-3 text-center">
+                  <div
+                    key={s.key}
+                    className="rounded-xl border border-border/60 bg-card p-3 text-center"
+                  >
                     <div className="text-lg mb-1">{SKILL_ICON[s.key]}</div>
-                    <div className="text-base font-extrabold text-foreground">{s.score}/{s.total}</div>
-                    <div className="text-[10px] text-muted-foreground font-semibold">{SKILL_LABEL[s.key]}</div>
+                    <div className="text-base font-extrabold text-foreground">
+                      {s.score}/{s.total}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground font-semibold">
+                      {SKILL_LABEL[s.key]}
+                    </div>
                     <div className="mt-1.5 h-0.5 bg-muted rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
@@ -268,7 +336,9 @@ export default function PlacementTestClient() {
                   <div className="w-5 h-5 rounded-full bg-primary/10 border border-primary/50 flex items-center justify-center text-[10px] font-extrabold text-primary shrink-0">
                     {i + 1}
                   </div>
-                  <span className="text-xs text-muted-foreground leading-snug">{step}</span>
+                  <span className="text-xs text-muted-foreground leading-snug">
+                    {step}
+                  </span>
                 </div>
               ))}
             </div>
@@ -283,23 +353,39 @@ export default function PlacementTestClient() {
                   const userAns = answers[q.id];
                   const correct = userAns === q.correctAnswer;
                   return (
-                    <div key={q.id} className="flex gap-2 items-start mb-2.5 pb-2.5 border-b border-border/40 last:border-0 last:mb-0 last:pb-0">
+                    <div
+                      key={q.id}
+                      className="flex gap-2 items-start mb-2.5 pb-2.5 border-b border-border/40 last:border-0 last:mb-0 last:pb-0"
+                    >
                       <div className="shrink-0 mt-0.5">
-                        {correct
-                          ? <CheckCircle2 size={14} className="text-emerald-500" />
-                          : <XCircle size={14} className="text-red-500" />}
+                        {correct ? (
+                          <CheckCircle2
+                            size={14}
+                            className="text-emerald-500"
+                          />
+                        ) : (
+                          <XCircle size={14} className="text-red-500" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className={`text-[11px] font-bold mb-0.5 ${correct ? "text-emerald-500" : "text-red-500"}`}>
+                        <div
+                          className={`text-[11px] font-bold mb-0.5 ${correct ? "text-emerald-500" : "text-red-500"}`}
+                        >
                           {`Q${q.id}`} · {SKILL_LABEL[q.skill]} · {q.level}
                         </div>
                         <div className="text-[11px] text-muted-foreground leading-snug mb-0.5">
-                          {q.question.length > 60 ? q.question.slice(0, 60) + "…" : q.question}
+                          {q.question.length > 60
+                            ? q.question.slice(0, 60) + "…"
+                            : q.question}
                         </div>
                         {!correct && (
                           <div className="text-[11px] text-muted-foreground leading-snug">
-                            ✓ <span className="text-emerald-500">{q.options[q.correctAnswer]}</span>
-                            {" · "}{q.explanation}
+                            ✓{" "}
+                            <span className="text-emerald-500">
+                              {q.options[q.correctAnswer]}
+                            </span>
+                            {" · "}
+                            {q.explanation}
                           </div>
                         )}
                       </div>
@@ -328,10 +414,15 @@ export default function PlacementTestClient() {
                   variant={learnPath ? "secondary" : "primary"}
                   className="flex-1"
                 >
-                  <Trophy size={16} /> {learnPath ? "Xem lộ trình học" : "Về Bài học"}
+                  <Trophy size={16} />{" "}
+                  {learnPath ? "Xem lộ trình học" : "Về Bài học"}
                 </MinimalButton>
-                <MinimalButton href="/learn" variant="secondary" className="flex-1">
-                  Dashboard
+                <MinimalButton
+                  href="/roadmap"
+                  variant="secondary"
+                  className="flex-1"
+                >
+                  Lộ trình
                 </MinimalButton>
               </div>
             </div>
@@ -345,7 +436,6 @@ export default function PlacementTestClient() {
   return (
     <Screen narrow={false}>
       <div className="max-w-[480px] mx-auto pb-24">
-
         {/* Progress header */}
         <div className="mb-5">
           <div className="flex justify-between items-center mb-2">
@@ -420,7 +510,9 @@ export default function PlacementTestClient() {
                     >
                       {String.fromCharCode(65 + i)}
                     </div>
-                    <span className={`leading-snug ${isSelected ? "font-semibold text-foreground" : ""}`}>
+                    <span
+                      className={`leading-snug ${isSelected ? "font-semibold text-foreground" : ""}`}
+                    >
                       {opt}
                     </span>
                   </motion.button>
@@ -428,7 +520,11 @@ export default function PlacementTestClient() {
               })}
             </div>
 
-            <MinimalButton fullWidth onClick={handleNext} disabled={selected === null}>
+            <MinimalButton
+              fullWidth
+              onClick={handleNext}
+              disabled={selected === null}
+            >
               {isLast ? "Nộp bài & Xem kết quả" : "Câu tiếp theo"}
               <ChevronRight size={18} />
             </MinimalButton>
