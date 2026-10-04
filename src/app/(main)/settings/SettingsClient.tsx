@@ -31,32 +31,41 @@ interface SettingSectionProps {
 function SettingSection({ title, children }: SettingSectionProps) {
   return (
     <div className="mb-6">
-      <h2 className="mb-2 px-1 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+      <h2 className="mb-2 px-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
         {title}
       </h2>
-      <div className="divide-y divide-zinc-100 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900/50">
+      <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
         {children}
       </div>
     </div>
   );
 }
 
-function SettingToggle({ id, label, description, checked, onChange }: SettingToggleProps) {
+function SettingToggle({
+  id,
+  label,
+  description,
+  checked,
+  onChange,
+}: SettingToggleProps) {
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-3.5">
       <div className="min-w-0 flex-1">
-        <label htmlFor={id} className="block cursor-pointer text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+        <label
+          htmlFor={id}
+          className="block cursor-pointer text-sm font-semibold text-foreground"
+        >
           {label}
         </label>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{description}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
       </div>
       <button
         id={id}
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${
-          checked ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-600"
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          checked ? "bg-primary" : "bg-muted"
         }`}
       >
         <span
@@ -85,13 +94,13 @@ function SettingSelect({
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-3.5">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{label}</p>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{description}</p>
+        <p className="text-sm font-semibold text-foreground">{label}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
       </div>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded-lg border border-zinc-200 bg-zinc-100 px-2.5 py-1.5 text-xs font-semibold text-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+        className="rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-ring dark:text-foreground"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -123,66 +132,79 @@ export default function SettingsClient({ userEmail }: { userEmail: string }) {
 
   const [soundEffects, setSoundEffects] = useState(() => {
     const settings = getStoredSettings();
-    return settings.soundEffects !== undefined ? Boolean(settings.soundEffects) : true;
+    return settings.soundEffects !== undefined
+      ? Boolean(settings.soundEffects)
+      : true;
   });
   const [autoPlayAudio, setAutoPlayAudio] = useState(() => {
     const settings = getStoredSettings();
-    return settings.autoPlayAudio !== undefined ? Boolean(settings.autoPlayAudio) : false;
-  });
-  const [showPhonetics, setShowPhonetics] = useState(() => {
-    const settings = getStoredSettings();
-    return settings.showPhonetics !== undefined ? Boolean(settings.showPhonetics) : true;
+    return settings.autoPlayAudio !== undefined
+      ? Boolean(settings.autoPlayAudio)
+      : false;
   });
   const [fsrsRetention, setFsrsRetention] = useState(() => {
     const settings = getStoredSettings();
-    return settings.fsrsRetention !== undefined ? String(settings.fsrsRetention) : "0.9";
+    return settings.fsrsRetention !== undefined
+      ? String(settings.fsrsRetention)
+      : "0.9";
   });
   const [fsrsMaxNewCards, setFsrsMaxNewCards] = useState(() => {
     const settings = getStoredSettings();
-    return settings.fsrsMaxNewCards !== undefined ? String(settings.fsrsMaxNewCards) : "15";
+    return settings.fsrsMaxNewCards !== undefined
+      ? String(settings.fsrsMaxNewCards)
+      : "15";
   });
   const [theme, setTheme] = useState(() => {
     const settings = getStoredSettings();
-    return typeof settings.theme === "string" ? settings.theme : "system";
-  });
-  const [fontSize, setFontSize] = useState(() => {
-    const settings = getStoredSettings();
-    return typeof settings.fontSize === "string" ? settings.fontSize : "normal";
+    const stored =
+      typeof settings.theme === "string" ? settings.theme : "light";
+    // "system" is unsupported (enableSystem=false) — coerce legacy values.
+    return stored === "system" ? "light" : stored;
   });
 
   const saveSettings = () => {
     const settings = {
       soundEffects,
       autoPlayAudio,
-      showPhonetics,
       fsrsRetention: Number(fsrsRetention),
       fsrsMaxNewCards: Number(fsrsMaxNewCards),
       theme,
-      fontSize,
     };
     localStorage.setItem("ato_settings", JSON.stringify(settings));
     applyTheme(theme);
-    window.dispatchEvent(new CustomEvent("ato:settings-changed", { detail: settings }));
+    window.dispatchEvent(
+      new CustomEvent("ato:settings-changed", { detail: settings }),
+    );
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2500);
   };
 
   const clearLocalProgress = () => {
-    if (!window.confirm("Xóa dữ liệu học tạm trên thiết bị? Dữ liệu tiến độ trên server sẽ không bị xóa.")) return;
-    const keep = ["ato_settings", "sb-vhpfskkredizeazlyzsh-auth-token"];
+    if (
+      !window.confirm(
+        "Xóa dữ liệu học tạm trên thiết bị? Dữ liệu tiến độ trên server sẽ không bị xóa.",
+      )
+    )
+      return;
+    const keep = ["ato_settings"];
     for (const key of Object.keys(localStorage)) {
-      if (!keep.some((prefix) => key.includes(prefix))) localStorage.removeItem(key);
+      if (!keep.some((prefix) => key.includes(prefix)))
+        localStorage.removeItem(key);
     }
     window.location.reload();
   };
 
   const installPwa = () => {
-    const promptEvent = (window as Window & { _pwaInstallPrompt?: BeforeInstallPromptEvent })._pwaInstallPrompt;
+    const promptEvent = (
+      window as Window & { _pwaInstallPrompt?: BeforeInstallPromptEvent }
+    )._pwaInstallPrompt;
     if (promptEvent) {
       void promptEvent.prompt();
       return;
     }
-    window.alert("Mở menu trình duyệt (⋮) → Thêm vào màn hình chính để cài AtoEnglish.");
+    window.alert(
+      "Mở menu trình duyệt (⋮) → Thêm vào màn hình chính để cài AtoEnglish.",
+    );
   };
 
   return (
@@ -229,36 +251,43 @@ export default function SettingsClient({ userEmail }: { userEmail: string }) {
             checked={autoPlayAudio}
             onChange={setAutoPlayAudio}
           />
-          <SettingToggle
-            id="show-phonetics"
-            label="Hiển thị phiên âm IPA"
-            description="Hiện phiên âm quốc tế khi nội dung có dữ liệu IPA."
-            checked={showPhonetics}
-            onChange={setShowPhonetics}
-          />
-          <Link href="/placement-test" className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+          <Link
+            href="/placement-test"
+            className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-muted"
+          >
             <div className="flex items-center gap-3">
-              <span className="rounded-lg bg-violet-100 p-2 text-violet-500 dark:bg-violet-950/40">
+              <span className="rounded-lg bg-muted text-muted-foreground p-2">
                 <GraduationCap className="size-4" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Làm lại Placement Test</p>
-                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Cập nhật điểm bắt đầu trong curriculum.</p>
+                <p className="text-sm font-semibold text-foreground">
+                  Làm lại Placement Test
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Cập nhật điểm bắt đầu trong curriculum.
+                </p>
               </div>
             </div>
-            <ChevronRight className="size-4 flex-shrink-0 text-zinc-400" />
+            <ChevronRight className="size-4 flex-shrink-0 text-muted-foreground" />
           </Link>
-          <Link href="/grammar" className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+          <Link
+            href="/grammar"
+            className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-muted"
+          >
             <div className="flex items-center gap-3">
-              <span className="rounded-lg bg-blue-100 p-2 text-blue-500 dark:bg-blue-950/40">
+              <span className="rounded-lg bg-muted text-muted-foreground p-2">
                 <BookOpenCheck className="size-4" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Ngữ pháp tham khảo</p>
-                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Mở tài liệu ngữ pháp hỗ trợ bài học.</p>
+                <p className="text-sm font-semibold text-foreground">
+                  Ngữ pháp tham khảo
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Mở tài liệu ngữ pháp hỗ trợ bài học.
+                </p>
               </div>
             </div>
-            <ChevronRight className="size-4 flex-shrink-0 text-zinc-400" />
+            <ChevronRight className="size-4 flex-shrink-0 text-muted-foreground" />
           </Link>
         </SettingSection>
 
@@ -268,55 +297,64 @@ export default function SettingsClient({ userEmail }: { userEmail: string }) {
             description="Màu sắc giao diện ứng dụng."
             value={theme}
             options={[
-              { value: "system", label: "Theo hệ thống" },
-              { value: "dark", label: "Tối" },
               { value: "light", label: "Sáng" },
+              { value: "dark", label: "Tối" },
             ]}
             onChange={setTheme}
-          />
-          <SettingSelect
-            label="Cỡ chữ"
-            description="Điều chỉnh kích thước chữ đọc nội dung."
-            value={fontSize}
-            options={[
-              { value: "small", label: "Nhỏ" },
-              { value: "normal", label: "Bình thường" },
-              { value: "large", label: "Lớn" },
-            ]}
-            onChange={setFontSize}
           />
         </SettingSection>
 
         <SettingSection title="Ứng dụng">
-          <button onClick={installPwa} className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+          <button
+            onClick={installPwa}
+            className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-muted"
+          >
             <div className="flex items-center gap-3">
-              <span className="rounded-lg bg-zinc-100 p-2 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"><Smartphone className="size-4" /></span>
+              <span className="rounded-lg bg-muted p-2 text-muted-foreground">
+                <Smartphone className="size-4" />
+              </span>
               <div>
-                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Cài đặt ứng dụng</p>
-                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Thêm AtoEnglish vào màn hình chính.</p>
+                <p className="text-sm font-semibold text-foreground">
+                  Cài đặt ứng dụng
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Thêm AtoEnglish vào màn hình chính.
+                </p>
               </div>
             </div>
-            <ChevronRight className="size-4 flex-shrink-0 text-zinc-400" />
+            <ChevronRight className="size-4 flex-shrink-0 text-muted-foreground" />
           </button>
-          <button onClick={clearLocalProgress} className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-red-50 dark:hover:bg-red-950/20">
+          <button
+            onClick={clearLocalProgress}
+            className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-destructive/10"
+          >
             <div className="flex items-center gap-3">
-              <span className="rounded-lg bg-red-100 p-2 text-red-500 dark:bg-red-950/40"><Trash2 className="size-4" /></span>
+              <span className="rounded-lg bg-destructive/10 text-destructive p-2">
+                <Trash2 className="size-4" />
+              </span>
               <div>
-                <p className="text-sm font-semibold text-red-500">Xóa cache cục bộ</p>
-                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Xóa dữ liệu tạm trên thiết bị, không xóa tiến độ server.</p>
+                <p className="text-sm font-semibold text-destructive">
+                  Xóa cache cục bộ
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Xóa dữ liệu tạm trên thiết bị, không xóa tiến độ server.
+                </p>
               </div>
             </div>
-            <ChevronRight className="size-4 flex-shrink-0 text-zinc-400" />
+            <ChevronRight className="size-4 flex-shrink-0 text-muted-foreground" />
           </button>
         </SettingSection>
 
-        <div className="mb-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/30">
+        <div className="mb-6 rounded-2xl border border-border bg-muted p-4 ">
           <div className="flex items-start gap-3">
-            <Shield className="mt-0.5 size-4 flex-shrink-0 text-emerald-500" />
+            <Shield className="mt-0.5 size-4 flex-shrink-0 text-success" />
             <div>
-              <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Quyền riêng tư</p>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                Tiến độ học tập được lưu trên Supabase với RLS; cài đặt giao diện được lưu cục bộ trên thiết bị.
+              <p className="text-xs font-semibold text-foreground">
+                Quyền riêng tư
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Tiến độ học tập được lưu trên Supabase với RLS; cài đặt giao
+                diện được lưu cục bộ trên thiết bị.
               </p>
             </div>
           </div>
@@ -326,15 +364,26 @@ export default function SettingsClient({ userEmail }: { userEmail: string }) {
           <motion.button
             onClick={saveSettings}
             whileTap={{ scale: 0.96 }}
-            className="pointer-events-auto flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-colors hover:bg-emerald-600"
+            className="pointer-events-auto flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
           >
             <AnimatePresence mode="wait">
               {saved ? (
-                <motion.span key="saved" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} className="flex items-center gap-1.5">
+                <motion.span
+                  key="saved"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  className="flex items-center gap-1.5"
+                >
                   <Check className="size-4" /> Đã lưu!
                 </motion.span>
               ) : (
-                <motion.span key="save" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
+                <motion.span
+                  key="save"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                >
                   Lưu cài đặt
                 </motion.span>
               )}

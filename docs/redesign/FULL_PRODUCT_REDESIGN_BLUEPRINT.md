@@ -461,13 +461,11 @@ Strangler pattern, evidence-first:
 2. ~~**Guest self-study scope**~~ → **one trial lesson.** Guest = `unit-a0-1` only, then signup wall at checkpoint. Landing copy aligned ("bài đầu tiên không cần đăng nhập"); dead guest `nextRoute` branch wired through `MissionLessonTemplate`.
 3. ~~**`/zero-path`**~~ → **promote as canonical.** Its session contract becomes the reference runtime; MissionRunner/UnitTemplate merge into it in Phases 4–6 (Decision 4 applies with zero-path as the target contract).
 
-**Still open:**
-
-4. **Checkpoint a0–b2:** build real item banks (cost) or remove routes? Recommend remove until banks exist.
-5. **Unit-13..42 fate:** whitelist extended to all 50 on prod (Phase 0) — but do units without real contracts stay completable, or get marked "in build"? Revisit in Phase 6.
+4. ~~**Checkpoint a0–b2**~~ → **remove routes** until real item banks exist. Trial checkpoint stays (only claim surface with real persistence). _(resolved 2026-10-04)_
+5. ~~**Unit-13..42 fate**~~ → **mark "in build"** (Phase 6): whitelist open per Phase 0, but units without real contracts get honest labeling, not silent completion counts. _(resolved 2026-10-04)_
 6. ~~**Oral evidence vs `responseText:null`**~~ → resolved by F4: `has_observed_oral_response` accepts `responseSource:speech` + `responseLength>0` metadata; no transcript persisted.
-7. **Dark mode:** commit post-token-migration or light-only?
-8. **VAPID key rotation + Supabase/Vercel retirement** (infra, from prior audit — still open).
+7. ~~**Dark mode**~~ → **light-first.** Dark variants already broken (reader, lesson cards); token migration precedes either way. _(resolved 2026-10-04)_
+8. **VAPID key rotation + Supabase/Vercel retirement** (infra, from prior audit — **owner action pending**, not a code task).
 
 ---
 
@@ -528,6 +526,8 @@ Strangler pattern, evidence-first:
 | 11  | Trusted evaluator over attempt-only (F4)            | Enables evidence vision; DB machinery already correct, only write path missing         | Attempt-only (permanent blind planner); GUC claims injection (STABLE fn pre-evaluates) | prod verification                | mostly — path exists, extend consumers |
 | 12  | Guest = one trial lesson                            | Honest scope; signup wall at checkpoint is intentional conversion                      | Guest progression (large surface, no evidence merge infra)                             | owner decision                   | yes                                    |
 | 13  | `/zero-path` promoted as canonical session contract | Most honest surface; already consumes trusted evidence path; avoids third runtime      | Keep frozen (orphan forever); retire (lose reference impl)                             | owner decision                   | hard to reverse — phased merge         |
+| 14  | Checkpoint a0–b2 removed until item banks exist     | Decorative gates presented as progression; F5 label fix was interim                    | Build item banks now (authoring cost); keep mislabeled                                 | owner decision                   | yes — restore when banks exist         |
+| 15  | Units without contracts marked "in build"           | Whitelist open but silent completion counts overstate the catalog                      | Keep invisible wall; remove units (catalog investment lost)                            | owner decision                   | yes                                    |
 
 ## Assumption corrections (per mission rule 24)
 
