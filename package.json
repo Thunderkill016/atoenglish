@@ -39,7 +39,11 @@
     "check-deploy": "bash scripts/check-vercel-deploy.sh",
     "check-deploy:wait": "sleep 30 && bash scripts/check-vercel-deploy.sh",
     "smoke:learn": "bash scripts/smoke-learn.sh",
-    "ci:local": "bash scripts/ci-local.sh"
+    "ci:local": "bash scripts/ci-local.sh",
+    "dev:vinext": "vite dev --port 3001",
+    "build:vinext": "vite build",
+    "start:vinext": "vite preview",
+    "deploy:vinext": "vinext-cloudflare deploy"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -65,15 +69,20 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.62.5",
     "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4.3.1",
+    "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/dom-speech-recognition": "^0.0.12",
     "@types/node": "^26",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
+    "@vinext/cloudflare": "^1.0.1",
     "@vitejs/plugin-react": "^6.0.2",
+    "@vitejs/plugin-rsc": "^0.5.35",
     "@vitest/coverage-v8": "^4.1.9",
+    "cf": "^1.0.0-beta.12",
     "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
@@ -81,12 +90,17 @@
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.7",
     "postcss": "^8",
+    "react-server-dom-webpack": "^19.2.7",
     "shadcn": "^4.11.0",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
+    "vinext": "^1.0.1",
+    "vite": "^8.3.2",
+    "vite-css-modules": "^1.16.0",
     "vitest": "^4.1.9",
-    "wait-on": "^9.0.10"
+    "wait-on": "^9.0.10",
+    "wrangler": "^4.147.0"
   },
   "browserslist": {
     "production": [
@@ -115,5 +129,6 @@
   "engines": {
     "node": "24.x",
     "npm": "11.x"
-  }
+  },
+  "type": "module"
 }

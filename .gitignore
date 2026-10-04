@@ -54,3 +54,7 @@ test-results/
 
 # research corpus (1.6GB evidence archive, not source)
 /research/
+/dist/
+.vinext/
+.cloudflare/
+.wrangler/
