@@ -5,6 +5,7 @@ import {
   isLegacyContractLessonId,
   legacyContractLessonId,
   resolveLegacyContract,
+  stripLegacyHtml,
 } from "./legacy-unit-contract.v1";
 import { evaluateNếpAction } from "./evaluator";
 import type { LessonAction } from "./lesson-contract";
@@ -104,6 +105,64 @@ describe("legacy-unit-contract compiler", () => {
     const contract = compileLegacyUnitContract("unit-1")!;
     expect(contract.sourceDerived.principleIds).toEqual([]);
     expect(contract.sourceDerived.claimIds).toEqual([]);
+  });
+});
+
+describe("legacy HTML markup hygiene", () => {
+  it("stripLegacyHtml removes inline tags and decodes entities", () => {
+    expect(
+      stripLegacyHtml(
+        'Người Việt nói <span class="text-emerald-400">"good morning"</span> &amp; cười.',
+      ),
+    ).toBe('Người Việt nói "good morning" & cười.');
+  });
+
+  it("no compiled action exposes HTML tags in learner-visible or evaluator fields", () => {
+    const TAG = /<[a-zA-Z][^>]*>/;
+    const check = (slug: string, label: string, value?: string) => {
+      if (value !== undefined) {
+        expect(TAG.test(value), `${slug}:${label} leaks HTML: ${value}`).toBe(
+          false,
+        );
+      }
+    };
+    for (const slug of legacyUnitSlugs()) {
+      const entry = legacyUnitEntry(slug);
+      if (entry && isMissionLesson(entry.data)) continue;
+      const contract = compileLegacyUnitContract(slug)!;
+      check(slug, "mission", contract.mission);
+      check(slug, "learnerCanDo", contract.learnerCanDo);
+      for (const action of contract.actions) {
+        check(slug, `${action.id}.title`, action.title);
+        check(slug, `${action.id}.instruction`, action.instruction);
+        check(slug, `${action.id}.prompt`, action.prompt);
+        check(slug, `${action.id}.model`, action.model);
+        check(slug, `${action.id}.supportVi`, action.supportVi);
+        for (const choice of action.choices ?? []) {
+          check(slug, `${action.id}.choice`, choice);
+        }
+        for (const signal of action.targetSignals ?? []) {
+          check(slug, `${action.id}.targetSignal`, signal);
+        }
+      }
+    }
+  });
+
+  it("assessed-action support never contains the answer", () => {
+    for (const slug of legacyUnitSlugs()) {
+      const entry = legacyUnitEntry(slug);
+      if (entry && isMissionLesson(entry.data)) continue;
+      const contract = compileLegacyUnitContract(slug)!;
+      for (const action of contract.actions) {
+        if (!action.assessment || !action.supportVi) continue;
+        for (const signal of action.targetSignals ?? []) {
+          expect(
+            action.supportVi.toLowerCase().includes(signal.toLowerCase()),
+            `${slug}:${action.id} supportVi leaks the answer "${signal}"`,
+          ).toBe(false);
+        }
+      }
+    }
   });
 });
 

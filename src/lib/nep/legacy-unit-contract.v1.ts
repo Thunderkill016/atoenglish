@@ -33,10 +33,29 @@ export function isLegacyContractLessonId(lessonId: string): boolean {
   return lessonId.startsWith(LEGACY_CONTRACT_ID_PREFIX);
 }
 
+/**
+ * Legacy UnitData fields carry inline HTML highlight markup meant for
+ * `dangerouslySetInnerHTML` in the old template (e.g.
+ * `<span class="text-emerald-400">word</span>`). Session envelopes are
+ * plain text — tags must be stripped or they render literally.
+ */
+export function stripLegacyHtml(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function joinLines(parts: Array<string | undefined | null>): string {
   return parts
-    .map((part) => part?.trim())
-    .filter((part): part is string => Boolean(part && part.length > 0))
+    .map((part) => (part ? stripLegacyHtml(part) : ""))
+    .filter((part) => part.length > 0)
     .join(" · ");
 }
 
@@ -63,7 +82,7 @@ function compileLegacyActions(
       title: "Khởi động",
       instruction: "Đọc tình huống và lời chào mẫu trước khi vào bài.",
       prompt: warmupText || undefined,
-      model: unit.culturalNote || undefined,
+      model: unit.culturalNote ? stripLegacyHtml(unit.culturalNote) : undefined,
     });
   }
 
@@ -92,48 +111,48 @@ function compileLegacyActions(
       id: "notice-grammar",
       kind: "notice",
       modality: "read",
-      title: grammar.title,
+      title: stripLegacyHtml(grammar.title),
       instruction: "Đọc mẫu câu và quy tắc — không cần ghi nhớ thuật ngữ.",
-      prompt: grammar.rule,
-      model:
-        joinLines(
-          grammar.examples.map((example) => `${example.en} — ${example.vn}`),
-        ) || grammar.tip,
-      supportVi: grammar.vnNote,
+      prompt: stripLegacyHtml(grammar.rule),
+      model: joinLines([
+        ...grammar.examples.map((example) => `${example.en} — ${example.vn}`),
+        grammar.tip,
+      ]),
+      supportVi: grammar.vnNote ? stripLegacyHtml(grammar.vnNote) : undefined,
     });
   }
 
   const dialogues = unit.dialogues.length
     ? unit.dialogues
     : (unit.dialogues_list ?? []);
-  if (dialogues.length > 0) {
+  dialogues.forEach((dialogue, index) => {
     actions.push({
-      id: "ctx-dialogue",
+      id: `ctx-dialogue-${index + 1}`,
       kind: "context",
-      modality: "listen",
-      title: dialogues[0].title ?? "Hội thoại",
+      modality: "read",
+      title: dialogue.title ? stripLegacyHtml(dialogue.title) : "Hội thoại",
       instruction:
-        "Nghe/đọc hội thoại mẫu — chú ý cách người ta dùng mẫu câu mục tiêu.",
+        "Đọc hội thoại mẫu — chú ý cách người ta dùng mẫu câu mục tiêu.",
       model: joinLines(
-        dialogues.flatMap((dialogue) =>
-          dialogue.lines.map(
-            (line) => `${line.speaker}: ${line.text} (${line.translation})`,
-          ),
+        dialogue.lines.map(
+          (line) => `${line.speaker}: ${line.text} (${line.translation})`,
         ),
       ),
     });
-  }
+  });
 
+  // listenAndChoose items have no audio in the session runtime — presented
+  // honestly as reading comprehension, never labeled as listening.
   for (const item of unit.listenAndChoose ?? []) {
     actions.push({
       id: `cmp-${item.id}`,
       kind: "comprehend",
       modality: "choice",
-      title: "Nghe hiểu",
-      instruction: "Đọc/ nghe nội dung rồi chọn đáp án đúng.",
-      prompt: item.audio_text,
-      choices: item.options,
-      targetSignals: [item.answer],
+      title: "Đọc hiểu",
+      instruction: "Đọc nội dung rồi chọn đáp án đúng.",
+      prompt: stripLegacyHtml(item.audio_text),
+      choices: item.options.map(stripLegacyHtml),
+      targetSignals: [stripLegacyHtml(item.answer)],
       assessment: {
         targetCapabilityId: capabilityId,
         evidenceType: "recognition",
@@ -158,10 +177,11 @@ function compileLegacyActions(
       instruction: isChoice
         ? "Chọn đáp án đúng từ trí nhớ — chưa xem lại từ vựng."
         : "Gõ câu trả lời từ trí nhớ.",
-      prompt: question.question,
-      choices: isChoice ? question.options : undefined,
-      targetSignals: [question.answer],
-      supportVi: question.explanation_vn,
+      prompt: stripLegacyHtml(question.question),
+      choices: isChoice ? question.options!.map(stripLegacyHtml) : undefined,
+      targetSignals: [stripLegacyHtml(question.answer)],
+      // explanation_vn is deliberately NOT used as support: it restates the
+      // answer, which would break attempt-before-reveal.
       assessment: {
         targetCapabilityId: capabilityId,
         evidenceType: isChoice ? "recognition" : "retrieval",
@@ -183,8 +203,8 @@ function compileLegacyActions(
       title: "Tự dịch",
       instruction:
         "Dịch câu sang tiếng Anh — gõ nguyên câu, không nhìn đáp án.",
-      prompt: item.prompt_vn,
-      targetSignals: [item.answer],
+      prompt: stripLegacyHtml(item.prompt_vn),
+      targetSignals: [stripLegacyHtml(item.answer)],
       assessment: {
         targetCapabilityId: capabilityId,
         evidenceType: "retrieval",
@@ -200,8 +220,10 @@ function compileLegacyActions(
       kind: "produce",
       modality: "text",
       title: "Nói hoặc viết tự do",
-      instruction: unit.speaking.level1Prompt,
-      prompt: unit.speaking.level1Placeholder,
+      instruction: stripLegacyHtml(unit.speaking.level1Prompt),
+      prompt: unit.speaking.level1Placeholder
+        ? stripLegacyHtml(unit.speaking.level1Placeholder)
+        : undefined,
       collectsResponse: true,
     });
   }
@@ -211,8 +233,10 @@ function compileLegacyActions(
       kind: "produce",
       modality: "text",
       title: "Tình huống tự do",
-      instruction: unit.speaking.level2Situation,
-      supportVi: unit.speaking.level2Hint,
+      instruction: stripLegacyHtml(unit.speaking.level2Situation),
+      supportVi: unit.speaking.level2Hint
+        ? stripLegacyHtml(unit.speaking.level2Hint)
+        : undefined,
       collectsResponse: true,
     });
   }
@@ -250,9 +274,11 @@ export function compileLegacyUnitContract(
     capabilityId: `legacy.${unitSlug}`,
     embeddedCapabilityIds: [],
     prerequisites: [],
-    mission: unit.title,
-    learnerCanDo: unit.learningOutcomes?.[0] ?? unit.description,
-    newItems: (unit.vocab ?? []).map((item) => item.word),
+    mission: stripLegacyHtml(unit.title),
+    learnerCanDo: stripLegacyHtml(
+      unit.learningOutcomes?.[0] ?? unit.description,
+    ),
+    newItems: (unit.vocab ?? []).map((item) => stripLegacyHtml(item.word)),
     reviewTargets: [],
     evidenceChannels: [
       ...(hasComprehension ? (["comprehension"] as const) : []),
