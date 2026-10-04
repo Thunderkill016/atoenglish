@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 
 import { createRateLimiter } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+import { lemmaKey } from "@/lib/vocab/lemma";
 import type { LearnerKnownWordRow } from "@/types/learning-tables";
 
 /**
@@ -27,24 +28,38 @@ export type ReadWriteResult =
   | { readonly ok: true }
   | {
       readonly ok: false;
-      readonly reason: "rate-limited" | "invalid" | "unauthenticated" | "storage";
+      readonly reason:
+        | "rate-limited"
+        | "invalid"
+        | "unauthenticated"
+        | "storage";
     };
 
 export type ReadWordCounts =
   | { readonly signedIn: false }
-  | { readonly signedIn: true; readonly known: number; readonly learning: number };
+  | {
+      readonly signedIn: true;
+      readonly known: number;
+      readonly learning: number;
+    };
 
 type WordsTableClient = {
   from(table: "learner_known_words"): {
     select(columns: string): {
-      in(column: string, values: readonly string[]): PromiseLike<{
+      in(
+        column: string,
+        values: readonly string[],
+      ): PromiseLike<{
         data: readonly { word: string; status: WordStatus }[] | null;
         error: { message: string } | null;
       }>;
       eq(
         column: string,
         value: unknown,
-      ): PromiseLike<{ data: readonly { status: WordStatus }[] | null; error: { message: string } | null }>;
+      ): PromiseLike<{
+        data: readonly { word: string; status: WordStatus }[] | null;
+        error: { message: string } | null;
+      }>;
     };
     upsert(
       row: { user_id: string; word: string; status: WordStatus },
@@ -59,10 +74,54 @@ type WordsTableClient = {
           column: string,
           value: unknown,
         ): PromiseLike<{ error: { message: string } | null }>;
+        in(
+          column: string,
+          values: readonly string[],
+        ): PromiseLike<{ error: { message: string } | null }>;
       };
     };
   };
 };
+
+type WordsTable = ReturnType<WordsTableClient["from"]>;
+
+/**
+ * lemma → status over stored rows. Legacy surface rows fill first so
+ * canonical lemma rows always win — a mixed "books" + "book" history
+ * resolves to the canonical mark.
+ */
+function statusByLemma(
+  rows: readonly { word: string; status: WordStatus }[],
+): Map<string, WordStatus> {
+  const map = new Map<string, WordStatus>();
+  for (const row of rows) {
+    const key = lemmaKey(row.word);
+    if (key && key !== row.word && !map.has(key)) {
+      map.set(key, row.status);
+    }
+  }
+  for (const row of rows) {
+    if (lemmaKey(row.word) === row.word) map.set(row.word, row.status);
+  }
+  return map;
+}
+
+/**
+ * Stored surface words belonging to one lemma. Legacy rows may hold
+ * inflections ("books", "played") that all share the lemma — write paths
+ * need the full sibling set so re-marks/clears never leave stale rows.
+ */
+async function lemmaWordsOfUser(
+  table: WordsTable,
+  userId: string,
+  lemma: string,
+): Promise<readonly string[] | null> {
+  const { data, error } = await table
+    .select("word, status")
+    .eq("user_id", userId);
+  if (error || !data) return null;
+  return data.map((row) => row.word).filter((word) => lemmaKey(word) === lemma);
+}
 
 const readLimiter = createRateLimiter(240, 60 * 1000, "read-word-state");
 
@@ -80,7 +139,8 @@ function normalizeInput(word: unknown): string | null {
 
 async function limitedRate(): Promise<boolean> {
   const reqHeaders = await headers();
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+  const ip =
+    reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
   return (await readLimiter.check(ip)).success;
 }
 
@@ -93,18 +153,27 @@ export async function getReadWordStates(
   } = await supabase.auth.getUser();
   if (!user) return { signedIn: false };
 
-  const normalized = [...new Set(words.map(normalizeInput).filter((w): w is string => w !== null))];
+  const normalized = [
+    ...new Set(
+      words.map(normalizeInput).filter((w): w is string => w !== null),
+    ),
+  ];
   if (normalized.length === 0) return { signedIn: true, states: {} };
   const bounded = normalized.slice(0, 2000);
-
+  // Rows are keyed by canonical lemma for new writes; older rows may hold
+  // surface forms — lemmaKey(row.word) resolves both.
   const { data, error } = await (supabase as unknown as WordsTableClient)
     .from("learner_known_words")
     .select("word, status")
-    .in("word", bounded);
+    .eq("user_id", user.id);
   if (error || !data) return { signedIn: true, states: {} };
 
+  const byLemma = statusByLemma(data);
   const states: Record<string, WordStatus> = {};
-  for (const row of data) states[row.word] = row.status;
+  for (const word of bounded) {
+    const status = byLemma.get(lemmaKey(word) ?? "");
+    if (status) states[word] = status;
+  }
   return { signedIn: true, states };
 }
 
@@ -123,17 +192,33 @@ export async function setReadWordStatus(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, reason: "unauthenticated" };
 
-  const { error } = await (supabase as unknown as WordsTableClient)
-    .from("learner_known_words")
-    .upsert(
-      { user_id: user.id, word: normalized, status },
-      { onConflict: "user_id,word" },
-    );
+  const key = lemmaKey(normalized) ?? normalized;
+  const table = (supabase as unknown as WordsTableClient).from(
+    "learner_known_words",
+  );
+  // Clear legacy surface rows for the same lemma so one mark per lemma
+  // remains — the upsert below then owns the canonical identity.
+  const words = await lemmaWordsOfUser(table, user.id, key);
+  if (!words) return { ok: false, reason: "storage" };
+  const siblings = words.filter((word) => word !== key);
+  if (siblings.length > 0) {
+    const { error: deleteError } = await table
+      .delete()
+      .eq("user_id", user.id)
+      .in("word", siblings);
+    if (deleteError) return { ok: false, reason: "storage" };
+  }
+  const { error } = await table.upsert(
+    { user_id: user.id, word: key, status },
+    { onConflict: "user_id,word" },
+  );
   return error ? { ok: false, reason: "storage" } : { ok: true };
 }
 
 /** Back to implicit "unknown" — deletes the self-marked row. */
-export async function clearReadWordStatus(word: string): Promise<ReadWriteResult> {
+export async function clearReadWordStatus(
+  word: string,
+): Promise<ReadWriteResult> {
   if (!(await limitedRate())) return { ok: false, reason: "rate-limited" };
   const normalized = normalizeInput(word);
   if (!normalized) return { ok: false, reason: "invalid" };
@@ -143,12 +228,22 @@ export async function clearReadWordStatus(word: string): Promise<ReadWriteResult
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, reason: "unauthenticated" };
 
-  const { error } = await (supabase as unknown as WordsTableClient)
-    .from("learner_known_words")
-    .delete()
-    .eq("user_id", user.id)
-    .eq("word", normalized);
-  return error ? { ok: false, reason: "storage" } : { ok: true };
+  const key = lemmaKey(normalized) ?? normalized;
+  const table = (supabase as unknown as WordsTableClient).from(
+    "learner_known_words",
+  );
+  // Legacy surface rows for the same lemma clear together with the canonical
+  // row — otherwise a stale "books" row survives clearing "book".
+  const words = await lemmaWordsOfUser(table, user.id, key);
+  if (!words) return { ok: false, reason: "storage" };
+  if (words.length > 0) {
+    const { error } = await table
+      .delete()
+      .eq("user_id", user.id)
+      .in("word", words);
+    if (error) return { ok: false, reason: "storage" };
+  }
+  return { ok: true };
 }
 
 export async function getReadWordCounts(): Promise<ReadWordCounts> {
@@ -166,8 +261,10 @@ export async function getReadWordCounts(): Promise<ReadWordCounts> {
 
   let known = 0;
   let learning = 0;
-  for (const row of data as readonly LearnerKnownWordRow[]) {
-    if (row.status === "known") known += 1;
+  for (const status of statusByLemma(
+    data as readonly LearnerKnownWordRow[],
+  ).values()) {
+    if (status === "known") known += 1;
     else learning += 1;
   }
   return { signedIn: true, known, learning };

@@ -7,7 +7,13 @@ import { reviewCardFSRS } from "@/lib/srs/fsrs";
 import { Card } from "@/types/database";
 import { headers } from "next/headers";
 import { createRateLimiter } from "@/lib/security/rate-limit";
-import { SaveCardSchema, ReviewCardSchema, SeedVocabSchema, WrongWordsSchema } from "@/lib/security/validation";
+import {
+  SaveCardSchema,
+  ReviewCardSchema,
+  SeedVocabSchema,
+  WrongWordsSchema,
+} from "@/lib/security/validation";
+import { lemmaKey } from "@/lib/vocab/lemma";
 
 const saveCardLimiter = createRateLimiter(60, 60 * 1000, "save-card");
 const reviewCardLimiter = createRateLimiter(60, 60 * 1000, "review-card");
@@ -33,7 +39,7 @@ type FsrsReviewResult = ReturnType<typeof reviewCardFSRS>;
  */
 async function persistFsrsReview(
   cardId: string,
-  result: FsrsReviewResult
+  result: FsrsReviewResult,
 ): Promise<{ success: true } | { success: false; error: string }> {
   const { error } = await rpcService("apply_fsrs_card_review", {
     p_card_id: cardId,
@@ -57,19 +63,45 @@ async function persistFsrsReview(
     p_log_review: result.reviewLog.review,
   });
 
-  return error
-    ? { success: false, error: error.message }
-    : { success: true };
+  return error ? { success: false, error: error.message } : { success: true };
+}
+
+type CardsClient = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * Canonical lemma → stored surface word for one user's deck. SRS identity is
+ * lemma-level: "goes" and "go" are the same card, so dedupe/scheduling never
+ * keys on the raw inflection.
+ */
+async function fetchUserLemmaMap(
+  supabase: CardsClient,
+  userId: string,
+): Promise<Map<string, string>> {
+  const { data } = await supabase
+    .from("cards")
+    .select("word")
+    .eq("user_id", userId)
+    .limit(10000);
+  const map = new Map<string, string>();
+  for (const row of data ?? []) {
+    const key = lemmaKey(row.word);
+    if (key && !map.has(key)) map.set(key, row.word);
+  }
+  return map;
 }
 
 /** Server Action lưu một từ vựng mới vào bảng cards (SRS) của người dùng. */
 export async function saveCardToSRS(params: SaveCardParams) {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
     const rateLimitCheck = await saveCardLimiter.check(ip);
     if (!rateLimitCheck.success) {
-      return { success: false, error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau." };
+      return {
+        success: false,
+        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau.",
+      };
     }
 
     const validated = SaveCardSchema.safeParse(params);
@@ -81,52 +113,54 @@ export async function saveCardToSRS(params: SaveCardParams) {
     }
     const cleanParams = validated.data;
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return { success: false, error: "Bạn cần đăng nhập để lưu từ vựng vào hệ thống SRS." };
+      return {
+        success: false,
+        error: "Bạn cần đăng nhập để lưu từ vựng vào hệ thống SRS.",
+      };
     }
 
     const formattedWord = cleanParams.word.toLowerCase().trim();
-    const { data: existingCard, error: selectError } = await supabase
-      .from("cards")
-      .select("id, word")
-      .eq("user_id", user.id)
-      .eq("word", formattedWord)
-      .maybeSingle();
+    const lemma = lemmaKey(formattedWord);
+    const lemmaMap = await fetchUserLemmaMap(supabase, user.id);
+    const existingWord = lemma ? lemmaMap.get(lemma) : undefined;
 
-    if (selectError) {
-      return { success: false, error: `Lỗi kiểm tra thẻ trùng lặp: ${selectError.message}` };
-    }
-    if (existingCard) {
+    if (existingWord) {
       return {
         success: true,
-        message: `Từ "${cleanParams.word}" đã được lưu trong tủ thẻ của bạn trước đây.`,
+        message: `Từ "${existingWord}" đã được lưu trong tủ thẻ của bạn trước đây.`,
         existed: true,
       };
     }
 
     const now = new Date().toISOString();
-    const { error: insertError } = await supabase
-      .from("cards")
-      .insert({
-        user_id: user.id,
-        word: formattedWord,
-        phonetic: cleanParams.phonetic || null,
-        meaning_vn: cleanParams.meaning_vn,
-        example_en: cleanParams.example_en || null,
-        topic: cleanParams.topic || "General",
-        level: cleanParams.level || "A1",
-        interval: 0,
-        repetitions: 0,
-        due_date: now,
-        state: 0,
-        difficulty: 0.0,
-        stability: 0.0,
-        last_review: null,
-        next_review: now,
-      });
+    const { error: insertError } = await supabase.from("cards").insert({
+      user_id: user.id,
+      word: formattedWord,
+      phonetic: cleanParams.phonetic || null,
+      meaning_vn: cleanParams.meaning_vn,
+      example_en: cleanParams.example_en || null,
+      topic: cleanParams.topic || "General",
+      level: cleanParams.level || "A1",
+      interval: 0,
+      repetitions: 0,
+      due_date: now,
+      state: 0,
+      difficulty: 0.0,
+      stability: 0.0,
+      last_review: null,
+      next_review: now,
+    });
 
-    if (insertError) return { success: false, error: `Lỗi khi lưu thẻ mới: ${insertError.message}` };
+    if (insertError)
+      return {
+        success: false,
+        error: `Lỗi khi lưu thẻ mới: ${insertError.message}`,
+      };
 
     revalidatePath("/learn");
     revalidatePath("/review");
@@ -147,9 +181,15 @@ export async function getDueCards(maxNewCards?: number) {
   const MAX_NEW_PER_DAY = maxNewCards ?? 15;
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return { success: false, error: "Bạn cần đăng nhập để lấy các thẻ ôn tập đến hạn." };
+      return {
+        success: false,
+        error: "Bạn cần đăng nhập để lấy các thẻ ôn tập đến hạn.",
+      };
     }
 
     const now = new Date().toISOString();
@@ -172,16 +212,28 @@ export async function getDueCards(maxNewCards?: number) {
     ]);
 
     if (reviewRes.error) {
-      return { success: false, error: `Lỗi truy vấn thẻ đến hạn: ${reviewRes.error.message}` };
+      return {
+        success: false,
+        error: `Lỗi truy vấn thẻ đến hạn: ${reviewRes.error.message}`,
+      };
     }
     if (newRes.error) {
-      return { success: false, error: `Lỗi truy vấn thẻ mới: ${newRes.error.message}` };
+      return {
+        success: false,
+        error: `Lỗi truy vấn thẻ mới: ${newRes.error.message}`,
+      };
     }
 
-    return { success: true, cards: [...(reviewRes.data ?? []), ...(newRes.data ?? [])] };
+    return {
+      success: true,
+      cards: [...(reviewRes.data ?? []), ...(newRes.data ?? [])],
+    };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return { success: false, error: `Lỗi hệ thống khi lấy thẻ: ${errorMessage}` };
+    return {
+      success: false,
+      error: `Lỗi hệ thống khi lấy thẻ: ${errorMessage}`,
+    };
   }
 }
 
@@ -189,7 +241,10 @@ export async function getDueCards(maxNewCards?: number) {
 export async function getDueWarmupCards(limit: number = 5) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) return { success: false, cards: [] };
 
     const now = new Date().toISOString();
@@ -213,17 +268,25 @@ export async function getDueWarmupCards(limit: number = 5) {
 export async function reviewCard(
   cardId: string,
   rating: "Again" | "Hard" | "Good" | "Easy",
-  retentionRate?: number
+  retentionRate?: number,
 ) {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
     const rateLimitCheck = await reviewCardLimiter.check(ip);
     if (!rateLimitCheck.success) {
-      return { success: false, error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau." };
+      return {
+        success: false,
+        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau.",
+      };
     }
 
-    const validated = ReviewCardSchema.safeParse({ cardId, rating, retentionRate });
+    const validated = ReviewCardSchema.safeParse({
+      cardId,
+      rating,
+      retentionRate,
+    });
     if (!validated.success) {
       return {
         success: false,
@@ -232,9 +295,15 @@ export async function reviewCard(
     }
     const cleanParams = validated.data;
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return { success: false, error: "Bạn cần đăng nhập để thực hiện đánh giá thẻ." };
+      return {
+        success: false,
+        error: "Bạn cần đăng nhập để thực hiện đánh giá thẻ.",
+      };
     }
 
     // select(*) is deliberate: after the migration it includes the complete persisted FSRS state.
@@ -252,10 +321,17 @@ export async function reviewCard(
       };
     }
 
-    const fsrsUpdates = reviewCardFSRS(card as unknown as Card, cleanParams.rating, cleanParams.retentionRate);
+    const fsrsUpdates = reviewCardFSRS(
+      card as unknown as Card,
+      cleanParams.rating,
+      cleanParams.retentionRate,
+    );
     const persisted = await persistFsrsReview(cleanParams.cardId, fsrsUpdates);
     if (!persisted.success) {
-      return { success: false, error: `Không thể lưu review FSRS: ${persisted.error}` };
+      return {
+        success: false,
+        error: `Không thể lưu review FSRS: ${persisted.error}`,
+      };
     }
 
     revalidatePath("/learn");
@@ -269,7 +345,10 @@ export async function reviewCard(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return { success: false, error: `Lỗi hệ thống khi đánh giá thẻ: ${errorMessage}` };
+    return {
+      success: false,
+      error: `Lỗi hệ thống khi đánh giá thẻ: ${errorMessage}`,
+    };
   }
 }
 
@@ -277,8 +356,12 @@ export async function reviewCard(
 export async function getAllCards(topic?: string) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return { success: false, error: "Bạn cần đăng nhập.", cards: [] };
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user)
+      return { success: false, error: "Bạn cần đăng nhập.", cards: [] };
 
     let query = supabase
       .from("cards")
@@ -300,7 +383,10 @@ export async function getAllCards(topic?: string) {
 export async function getCardTopics() {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) return { success: false, topics: [] };
 
     const { data, error } = await supabase
@@ -309,7 +395,9 @@ export async function getCardTopics() {
       .eq("user_id", user.id);
 
     if (error) return { success: false, topics: [] };
-    const topics = Array.from(new Set((data || []).map((c) => c.topic).filter((t): t is string => !!t)));
+    const topics = Array.from(
+      new Set((data || []).map((c) => c.topic).filter((t): t is string => !!t)),
+    );
     return { success: true, topics };
   } catch {
     return { success: false, topics: [] };
@@ -318,13 +406,19 @@ export async function getCardTopics() {
 
 /** Tự động thêm vocab unit vào FSRS sau khi hoàn thành bài. */
 export async function seedUnitVocabToSRS(params: {
-  vocab: Array<{ word: string; phonetic?: string | null; meaning_vn: string; example_en?: string | null }>;
+  vocab: Array<{
+    word: string;
+    phonetic?: string | null;
+    meaning_vn: string;
+    example_en?: string | null;
+  }>;
   topic: string;
   level?: "A0" | "A1" | "A2" | "B1" | "B2" | "C1";
 }) {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
     const rateLimitCheck = await seedVocabLimiter.check(ip);
     if (!rateLimitCheck.success) return { success: false, added: 0 };
 
@@ -333,27 +427,45 @@ export async function seedUnitVocabToSRS(params: {
     const { vocab, topic, level } = validated.data;
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) return { success: false, added: 0 };
 
     const now = new Date().toISOString();
-    const rows = vocab.map((v) => ({
-      user_id: user.id,
-      word: v.word.toLowerCase().trim(),
-      phonetic: v.phonetic ?? null,
-      meaning_vn: v.meaning_vn,
-      example_en: v.example_en ?? null,
-      topic,
-      level: level ?? "A1",
-      interval: 0,
-      repetitions: 0,
-      due_date: now,
-      state: 0,
-      difficulty: 0.0,
-      stability: 0.0,
-      last_review: null,
-      next_review: now,
-    }));
+    const lemmaMap = await fetchUserLemmaMap(supabase, user.id);
+    const seenLemmas = new Set<string>();
+    const rows = vocab
+      .map((v) => ({
+        user_id: user.id,
+        word: v.word.toLowerCase().trim(),
+        phonetic: v.phonetic ?? null,
+        meaning_vn: v.meaning_vn,
+        example_en: v.example_en ?? null,
+        topic,
+        level: level ?? "A1",
+        interval: 0,
+        repetitions: 0,
+        due_date: now,
+        state: 0,
+        difficulty: 0.0,
+        stability: 0.0,
+        last_review: null,
+        next_review: now,
+      }))
+      .filter((row) => {
+        const key = lemmaKey(row.word);
+        if (!key || seenLemmas.has(key) || lemmaMap.has(key)) return false;
+        seenLemmas.add(key);
+        return true;
+      });
+
+    if (rows.length === 0) {
+      revalidatePath("/review");
+      revalidatePath("/learn");
+      return { success: true, added: 0 };
+    }
 
     const { error } = await supabase
       .from("cards")
@@ -377,31 +489,45 @@ export async function scheduleWrongWordsForReview(words: string[]) {
     if (!words.length) return { success: true, updated: 0 };
 
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
     const rateLimitCheck = await wrongWordsLimiter.check(ip);
     if (!rateLimitCheck.success) return { success: false, updated: 0 };
 
     const validated = WrongWordsSchema.safeParse({ words });
     if (!validated.success) return { success: false, updated: 0 };
-    const cleanWords = validated.data.words.map((w) => w.toLowerCase().trim());
+    const wantedLemmas = new Set(
+      validated.data.words
+        .map((w) => lemmaKey(w.toLowerCase().trim()))
+        .filter((key): key is string => key !== null),
+    );
+    if (wantedLemmas.size === 0) return { success: true, updated: 0 };
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) return { success: false, updated: 0 };
 
-    const { data: cards, error: fetchErr } = await supabase
+    const { data: allCards, error: fetchErr } = await supabase
       .from("cards")
       .select("*")
       .eq("user_id", user.id)
-      .in("word", cleanWords);
+      .limit(10000);
 
-    if (fetchErr || !cards?.length) return { success: true, updated: 0 };
+    if (fetchErr || !allCards?.length) return { success: true, updated: 0 };
+    const cards = allCards.filter((card) => {
+      const key = lemmaKey(card.word);
+      return key !== null && wantedLemmas.has(key);
+    });
+    if (!cards.length) return { success: true, updated: 0 };
 
     const results = await Promise.all(
       cards.map(async (card) => {
         const fsrsResult = reviewCardFSRS(card as unknown as Card, "Again");
         return persistFsrsReview(card.id, fsrsResult);
-      })
+      }),
     );
 
     const updated = results.filter((result) => result.success).length;
@@ -432,7 +558,10 @@ export async function getHardWords(limit: number = 20): Promise<{
 }> {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) return { success: false, error: "Unauthenticated" };
 
     const { data: againLogs, error: logErr } = await supabase
@@ -442,7 +571,8 @@ export async function getHardWords(limit: number = 20): Promise<{
       .eq("rating", 1);
 
     if (logErr) return { success: false, error: logErr.message };
-    if (!againLogs || againLogs.length === 0) return { success: true, words: [] };
+    if (!againLogs || againLogs.length === 0)
+      return { success: true, words: [] };
 
     const againMap = new Map<string, number>();
     for (const log of againLogs) {
@@ -469,7 +599,9 @@ export async function getHardWords(limit: number = 20): Promise<{
         if (!card) return null;
         const again_count = againMap.get(id) ?? 0;
         const total_reviews = Math.max(card.repetitions ?? 1, again_count);
-        const mastery_pct = Math.round(Math.max(0, (1 - again_count / total_reviews) * 100));
+        const mastery_pct = Math.round(
+          Math.max(0, (1 - again_count / total_reviews) * 100),
+        );
         return {
           id: card.id,
           word: card.word,
