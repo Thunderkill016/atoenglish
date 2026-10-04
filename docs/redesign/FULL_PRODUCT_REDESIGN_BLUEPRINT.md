@@ -474,14 +474,14 @@ Strangler pattern, evidence-first:
 - [x] `types/supabase.ts` regenerated; zero schema-drift class bugs reachable. _(Phase 0 — `scripts/db-types.mjs` direct Neon introspection; 3 transfer drift errors found+fixed)_
 - [x] Completable set = exactly the units with real contracts; guest/auth inversion gone. _(Phase 0 — whitelist → 50 units + `complete_unit_transaction` service-role-only; contract-gating revisited in Phase 6)_
 - [x] `learning_evidence_events`/`learner_skill_states` written in production. _(F4 — `record_learning_attempt_trusted` + service path; verified live)_
-- [ ] One session contract drives all lessons; legacy wrapped or migrated; item-level resume. _(zero-path contract chosen as canonical target)_
-- [ ] 4-tab IA live; zero orphan routes; zero ghost nav entries.
-- [ ] One design system: semantic tokens only in `(main)`; one Button; extracted states; ≤2 content widths.
-- [ ] Progress shows capability-by-mode evidence with honest labels; no completion-as-level display.
+- [x] One session contract drives all lessons; legacy wrapped or migrated; item-level resume. _(Phase 4 — `legacy-unit-contract.v1` compiles all 50 units into the zero-path contract; item-resume via persisted outcomes)_
+- [x] 4-tab IA live; zero orphan routes; zero ghost nav entries. _(Phases 3+9 — redirects via config; `/me/progress/weekly` orphan deleted; legacy nav config removed)_
+- [x] One design system: semantic tokens only in `(main)`; one Button; extracted states; ≤2 content widths. _(Phases 2–9 — raw-palette rule covers all `src/**` at 0 warnings; `dark:` dead variants stripped repo-wide)_
+- [x] Progress shows capability-by-mode evidence with honest labels; no completion-as-level display. _(Phases 5+7 — `current_level` reframed as intake estimate; ASR scores labeled transcript-match; mastery claims → observed ratios)_
 - [x] Zero fabricated evidence paths (shadowing/writing/journal/roleplay honest or absent). _(Phase 0 — dead transcript paths removed; demo score removed)_
 - [x] Privacy copy == actual data behavior. _(Phase 0)_
-- [ ] a11y: labels on all inputs, keyboard-complete interactions, reduced-motion, ≥12px, one `<main>`.
-- [ ] All existing gates green + new evidence-integrity tests.
+- [x] a11y: labels on all inputs, keyboard-complete interactions, reduced-motion, ≥12px, one `<main>`. _(Phase 8 — MotionConfig + CSS media, main#main-content on out-of-group routes, text-xs floor, 20/20 a11y e2e)_
+- [x] All existing gates green + new evidence-integrity tests. _(tsc + lint 0 warnings + 877 unit + 50 content-standard + build green at `f7d49fb4`; contract lint qaLesson across 44 units; lemma-identity action tests)_
 
 ---
 

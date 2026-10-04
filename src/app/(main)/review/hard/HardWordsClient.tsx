@@ -15,6 +15,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { getHardWords } from "@/app/actions/cards";
+import { speakEnglish } from "@/lib/speech";
 import { SecondaryPageShell, StatLine } from "@/components/design-system";
 
 type HardWord = {
@@ -31,30 +32,17 @@ type HardWord = {
 
 const LEVEL_COLORS: Record<string, string> = {
   A0: "text-muted-foreground bg-muted/10 border-border/25",
-  A1: "text-primary bg-primary/10 border-primary/25",
+  A1: "text-success bg-success/10 border-success/25",
   A2: "text-primary bg-primary/10 border-primary/25",
-  B1: "text-primary bg-primary/10 border-primary/25",
-  B2: "text-primary bg-primary/10 border-primary/25",
+  B1: "text-info bg-info/10 border-info/25",
+  B2: "text-warning bg-warning/10 border-warning/25",
   C1: "text-destructive bg-destructive/10 border-destructive/25",
 };
 
 function getMasteryColor(pct: number) {
-  if (pct >= 75)
-    return {
-      bar: "bg-primary",
-      text: "text-primary",
-    };
+  if (pct >= 75) return { bar: "bg-primary", text: "text-primary" };
   if (pct >= 50) return { bar: "bg-warning", text: "text-warning" };
   return { bar: "bg-destructive", text: "text-destructive" };
-}
-
-function speak(text: string) {
-  if (typeof window === "undefined") return;
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = "en-US";
-  utt.rate = 0.85;
-  window.speechSynthesis.speak(utt);
 }
 
 // ─── Word card ───────────────────────────────────────────────────────────────
@@ -69,7 +57,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: index * 0.04 }}
-      className="bg-white/70 border border-border/60 rounded-2xl overflow-hidden hover:border-border transition-colors"
+      className="bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-border:border-border transition-colors"
     >
       {/* Main row */}
       <button
@@ -156,7 +144,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
               {/* TTS buttons */}
               <div className="flex items-center gap-2 flex-wrap">
                 <button
-                  onClick={() => speak(word.word)}
+                  onClick={() => speakEnglish(word.word)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold hover:bg-primary/20 transition-colors"
                 >
                   <Volume2 className="w-3.5 h-3.5" />
@@ -164,7 +152,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
                 </button>
                 {word.example_en && (
                   <button
-                    onClick={() => speak(word.example_en!)}
+                    onClick={() => speakEnglish(word.example_en!)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold hover:bg-primary/20 transition-colors"
                   >
                     <Volume2 className="w-3.5 h-3.5" />
@@ -191,7 +179,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
                   ? "⚠️ Bạn quên từ này rất thường xuyên. Hãy ôn tập hàng ngày và tạo câu ví dụ riêng để ghi nhớ sâu hơn."
                   : word.mastery_pct < 70
                     ? "💪 Đang cải thiện! Tiếp tục ôn tập đều đặn mỗi ngày."
-                    : "✅ Sắp thành thạo rồi! Một vài lần ôn nữa là thuộc chắc."}
+                    : "✅ Tỷ lệ không quên đang cao — ôn đều để giữ nhịp."}
               </p>
             </div>
           </motion.div>
@@ -330,14 +318,14 @@ export default function HardWordsClient() {
             <div className="flex justify-center gap-3 flex-wrap pt-2">
               <Link
                 href="/review"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white text-sm font-bold hover:from-primary hover:to-primary transition-all active:scale-95 shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-foreground text-sm font-bold hover:from-primary hover:to-primary transition-all active:scale-95 shadow-sm"
               >
                 <Layers className="w-4 h-4" />
                 Bắt đầu ôn tập
               </Link>
               <Link
                 href="/learn"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/60 bg-white/60 text-muted-foreground text-sm font-bold hover:border-border transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/60 bg-white/60 text-foreground text-sm font-bold hover:border-border:border-border transition-all"
               >
                 <BookOpen className="w-4 h-4" />
                 Học bài mới
