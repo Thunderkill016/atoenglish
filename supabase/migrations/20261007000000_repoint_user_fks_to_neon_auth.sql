@@ -1,7 +1,7 @@
 -- Re-point profile-owned foreign keys from public.users to neon_auth.user.
 --
 -- Under Supabase, public.users was populated by an after-insert trigger on
--- auth.users (handle_new_user). Neon Managed Auth owns the neon_auth schema,
+-- neon_auth.user (handle_new_user). Neon Managed Auth owns the neon_auth schema,
 -- so no trigger can exist there and public.users stays empty. Identity and
 -- cascade semantics now come directly from neon_auth.user.
 --

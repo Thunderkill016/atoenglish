@@ -1623,6 +1623,10 @@ export type Database = {
         Args: { p_knowledge_item_id: string; p_capability_id: string; p_session_id: string; p_exercise_type: string; p_response_modality: string; p_prompt_id: string; p_context_id: string; p_response_text: string; p_correct: boolean; p_latency_ms: number; p_hint_count: number; p_reveal_used: boolean; p_support_level: number; p_metadata: Json; p_evidence_type: string; p_evidence_target_id: string; p_evidence_success: boolean; p_evidence_confidence: number; p_evidence_context_id: string; p_evaluator: string; p_evidence_metadata: Json }
         Returns: string
       }
+      record_learning_attempt_trusted: {
+        Args: { p_user_id: string; p_knowledge_item_id: string; p_capability_id: string; p_session_id: string; p_exercise_type: string; p_response_modality: string; p_prompt_id: string; p_context_id: string; p_response_text: string; p_correct: boolean; p_latency_ms: number; p_hint_count: number; p_reveal_used: boolean; p_support_level: number; p_metadata: Json; p_evidence_type: string; p_evidence_target_id: string; p_evidence_success: boolean; p_evidence_confidence: number; p_evidence_context_id: string; p_evaluator: string; p_evidence_metadata: Json }
+        Returns: string
+      }
       set_updated_at: {
         Args: {  }
         Returns: string
@@ -1954,6 +1958,7 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
 
 
 export const Constants = {
