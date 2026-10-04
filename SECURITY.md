@@ -24,7 +24,7 @@ Chúng tôi sẽ phản hồi trong vòng **48 giờ** và cố gắng vá lỗi
 ## Security Architecture
 
 ### Authentication
-- **Supabase Auth**: Google OAuth 2.0 + Email/Password
+- **Neon Managed Auth (Better Auth)**: Google OAuth 2.0 + Email/Password
 - Session tokens lưu trong httpOnly cookies (không accessible từ JS)
 - Middleware guard tất cả routes `/(main)/*`
 
@@ -52,7 +52,7 @@ Tất cả routes có các headers:
 ### Input Validation
 - Tất cả Server Actions validate input với **Zod schemas**
 - Không có raw string interpolation trong SQL queries
-- User IDs luôn lấy từ `supabase.auth.getUser()` — không nhận từ client
+- User IDs luôn lấy từ server-side auth session — không nhận từ client
 
 ### Dependency Security
 - `npm audit` chạy trong CI pipeline

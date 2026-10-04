@@ -121,7 +121,7 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
-  v_user_id uuid := auth.uid();
+  v_user_id uuid := public.auth_uid();
   v_previous_elapsed_days integer;
   v_previous_learning_steps integer;
 BEGIN

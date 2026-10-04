@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { captureException } from "@/lib/report-error";
 
 /**
  * Root-level error boundary — catches unexpected errors in root-segment pages.
@@ -16,31 +17,36 @@ export default function RootError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => { void error; }, [error]);
+  useEffect(() => {
+    captureException(error, { tags: { location: "root" } });
+  }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-950 px-6 text-center text-white">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-foreground px-6 text-center text-white">
       <span className="text-5xl">⚠️</span>
       <h1 className="text-2xl font-black">Có lỗi xảy ra</h1>
-      <p className="max-w-xs text-sm leading-relaxed text-zinc-400">
-        Ứng dụng gặp sự cố không mong muốn. Vui lòng thử lại hoặc quay về trang chủ.
+      <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+        Ứng dụng gặp sự cố không mong muốn. Vui lòng thử lại hoặc quay về trang
+        chủ.
       </p>
       <div className="flex flex-wrap justify-center gap-3">
         <button
           onClick={reset}
-          className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-600 transition-colors"
+          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition-colors"
         >
           Thử lại
         </button>
         <Link
-          href="/dashboard"
-          className="rounded-xl bg-zinc-800 px-5 py-2.5 text-sm font-bold text-white hover:bg-zinc-700 transition-colors"
+          href="/learn"
+          className="rounded-xl bg-foreground px-5 py-2.5 text-sm font-bold text-white hover:bg-foreground transition-colors"
         >
           Về Dashboard
         </Link>
       </div>
       {error.digest && (
-        <p className="text-[11px] text-zinc-600">Error ID: {error.digest}</p>
+        <p className="text-xs text-muted-foreground">
+          Error ID: {error.digest}
+        </p>
       )}
     </div>
   );

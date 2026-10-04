@@ -7,32 +7,30 @@ import { test, expect } from "@playwright/test";
  * Guest self-study routes are intentionally excluded from that array.
  */
 const PROTECTED_ROUTES = [
-  "/progress",
+  "/me/progress",
+  "/me/writing",
+  "/me/grammar",
+  "/me/pronunciation",
+  "/me/speaking",
+  "/me/settings",
   "/roadmap",
-  "/writing",
-  "/leaderboard",
-  "/grammar",
-  "/business",
-  "/challenge",
-  "/pronunciation",
-  "/placement-test",
-  "/invite",
-  "/certificate",
-  "/settings",
+  "/placement",
   "/checkpoint",
   "/quiz",
+  // Guests get exactly one trial lesson (unit-a0-1). Every other unit slug
+  // redirects via the page-level auth check, not the middleware prefix.
+  "/learn/unit-1",
 ];
 
 /**
  * Representative routes intentionally available to unauthenticated learners.
- * `/learn` is prefix-based in session.ts, so test both A0 and A1 lesson slugs.
+ * `/learn` is prefix-based in session.ts: only the trial lesson stays open.
  */
 const GUEST_SELF_STUDY_ROUTES = [
-  "/dashboard",
+  "/learn",
   "/learn/unit-a0-1",
-  "/learn/unit-1",
-  "/flashcards",
-  "/speaking",
+  "/review",
+  "/read",
 ];
 
 const PUBLIC_ROUTES = [
@@ -42,7 +40,9 @@ const PUBLIC_ROUTES = [
 
 test.describe("Protected Routes — Unauthenticated Redirects", () => {
   for (const route of PROTECTED_ROUTES) {
-    test(`${route} redirects to /login with return context`, async ({ page }) => {
+    test(`${route} redirects to /login with return context`, async ({
+      page,
+    }) => {
       await page.goto(route);
 
       const finalUrl = new URL(page.url());
@@ -56,7 +56,12 @@ test.describe("Protected Routes — Unauthenticated Redirects", () => {
 test.describe("Guest Self-Study Routes — Accessible Without Auth", () => {
   for (const route of GUEST_SELF_STUDY_ROUTES) {
     test(`${route} remains accessible without login`, async ({ page }) => {
-      const response = await page.goto(route);
+      // domcontentloaded: dev server streams RSC + lazily compiles chunks,
+      // so the full "load" event can exceed the test timeout. These tests
+      // only assert URL/status, which settle at navigation time.
+      const response = await page.goto(route, {
+        waitUntil: "domcontentloaded",
+      });
       const finalUrl = new URL(page.url());
 
       expect(finalUrl.pathname).not.toBe("/login");
@@ -82,12 +87,12 @@ test.describe("Public Routes — Accessible Without Auth", () => {
 
 test.describe("Landing Page — Key Elements", () => {
   test("has hero heading in Vietnamese", async ({ page }) => {
-    await page.goto("/");
-    await expect(page.locator("h1")).toContainText("Học tiếng Anh");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("h1").first()).toContainText("Học tiếng Anh");
   });
 
   test("has CTA button linking to login", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     const cta = page.getByRole("link", { name: /Bắt đầu học/i }).first();
     await expect(cta).toBeVisible();
     await expect(cta).toHaveAttribute("href", /login/);
@@ -95,30 +100,43 @@ test.describe("Landing Page — Key Elements", () => {
 
   test("states the focused 28-day pilot promise", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("28 ngày", { exact: true }).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText("10–15 phút", { exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByText("28 ngày", { exact: true }).first(),
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByText("10–15 phút", { exact: true }).first(),
+    ).toBeVisible();
     await expect(page.getByText("A0", { exact: true }).first()).toBeVisible();
   });
 
   test("footer has privacy and terms links", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("link", { name: /Bảo mật|Privacy/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Điều khoản|Terms/i })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Bảo mật|Privacy/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Điều khoản|Terms/i }),
+    ).toBeVisible();
   });
 });
 
 test.describe("Pilot Promise — Consistent Entry Experience", () => {
-  test("onboarding repeats the same duration and beginner starting point", async ({ page }) => {
+  test("onboarding repeats the same duration and beginner starting point", async ({
+    page,
+  }) => {
     await page.goto("/login");
-    await expect(page.getByText("28 ngày", { exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByText("28 ngày", { exact: true }).first(),
+    ).toBeVisible();
     await expect(page.getByText(/10–15 phút\/ngày/).first()).toBeVisible();
     await expect(page.getByText(/Bắt đầu từ A0/).first()).toBeVisible();
   });
 
-  test("dashboard reinforces the daily speaking step", async ({ page }) => {
-    await page.goto("/dashboard");
-    await expect(page.getByTestId("pilot-promise")).toContainText("10–15 phút");
-    await expect(page.getByTestId("pilot-promise")).toContainText("28 ngày");
+  test("learn home keeps the continue-learning loop visible", async ({
+    page,
+  }) => {
+    await page.goto("/learn", { waitUntil: "domcontentloaded" });
+    await expect(page.getByTestId("continue-learning")).toBeVisible();
   });
 });
 

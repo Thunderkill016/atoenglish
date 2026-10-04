@@ -15,11 +15,11 @@ Các tài liệu Nếp, 28-day pilot, Real Talk, YouTube-to-Curriculum, CycleWar
 
 ## Stack
 
-- Next.js 16 / React 19 / TypeScript
+- Next.js 16 / React 19 / TypeScript (vinext → Cloudflare Workers)
 - Tailwind CSS v4
-- Supabase Auth + PostgreSQL
+- Neon Postgres + Neon Managed Better Auth + Neon Data API
 - Vitest + Playwright
-- Vercel
+- Cloudflare Workers (`deploy:vinext`)
 
 Phiên bản chính xác nằm trong `package.json` và `package-lock.json`.
 
@@ -33,11 +33,21 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Các flow dùng Supabase cần tối thiểu:
+Các flow dùng Neon cần tối thiểu (pull tự động bằng `neon env` khi project đã `neon link`):
 
 ```text
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
+DATABASE_URL / DATABASE_URL_UNPOOLED
+NEON_AUTH_BASE_URL
+NEON_DATA_API_URL
+NEXT_PUBLIC_NEON_DATA_API_URL
+NEON_AUTH_COOKIE_SECRET   # tự tạo: node -e "console.log(require('crypto').randomBytes(36).toString('base64url'))"
+```
+
+Database migrations chạy trên Neon branch:
+
+```bash
+npm run db:migrate   # adapt + compat bootstrap + replay toàn bộ migrations
+npm run db:test      # pgTAP trust-boundary + RLS suites
 ```
 
 Không commit secret hoặc `.env.local`.
@@ -71,7 +81,7 @@ Code, migrations, config và tests mô tả hệ thống đang chạy; tài li�
 
 ## Release consistency
 
-GitHub + Supabase đã được đồng bộ lại trong đợt reset 2026-09-06. Vercel production vẫn phải được đối chiếu với exact `main` trước lần release tiếp theo; theo dõi tại issue #152.
+Production chạy trên Cloudflare Workers (deploy qua `npm run deploy:vinext`) với Neon branch `production` làm database. Trước mỗi release, đối chiếu exact `main` commit với Worker version (`npm run check-deploy`) và trạng thái migrations trên branch production.
 
 Không coi preview deployment hoặc CI xanh là bằng chứng production đã đồng bộ.
 

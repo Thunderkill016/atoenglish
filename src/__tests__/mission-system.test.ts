@@ -13,7 +13,10 @@ import {
   createMissionSession,
   transitionMissionSession,
 } from "@/lib/missions/mission-engine";
-import { summarizeTransferEvidence } from "@/lib/missions/mission-progress";
+import {
+  attemptRowToTransferEvidence,
+  summarizeTransferEvidence,
+} from "@/lib/missions/mission-progress";
 import { validateMissionSpec } from "@/lib/missions/mission-spec";
 
 const VALID_TRANSCRIPTS: Record<string, string[]> = {
@@ -251,5 +254,44 @@ describe("transfer scheduling and integrity", () => {
     expect(summary.attemptCount).toBe(1);
     expect(summary.retryScore).toBeNull();
     expect(summary.verified).toBe(false);
+  });
+});
+
+describe("attemptRowToTransferEvidence (canonical learning_attempts adapter)", () => {
+  const row = {
+    prompt_id: "unit-a0-1:transfer:transfer-day-1-cafe",
+    session_id: "session-a",
+    metadata: {
+      compatibilitySource: "legacy-learning-attempt-v1",
+      lessonId: "unit-a0-1",
+      activityId: "unit-a0-1:transfer:transfer-day-1-cafe",
+      legacyModality: "speaking",
+      legacyStatus: "scored",
+      legacyScore: 75,
+      legacyErrorTags: [],
+      legacyEvaluator: "transcript-intent",
+      legacyEvaluatorVersion: "1.0.0",
+    },
+    created_at: "2026-08-02T08:00:00.000Z",
+  };
+
+  it("maps canonical columns back to the legacy evidence shape", () => {
+    expect(attemptRowToTransferEvidence(row)).toEqual({
+      activity_id: "unit-a0-1:transfer:transfer-day-1-cafe",
+      session_id: "session-a",
+      score: 75,
+      created_at: "2026-08-02T08:00:00.000Z",
+    });
+  });
+
+  it("rejects rows without prompt or session ids instead of fabricating evidence", () => {
+    expect(attemptRowToTransferEvidence({ ...row, prompt_id: null })).toBeNull();
+    expect(attemptRowToTransferEvidence({ ...row, session_id: null })).toBeNull();
+  });
+
+  it("falls back to a null score when metadata lacks legacyScore", () => {
+    expect(
+      attemptRowToTransferEvidence({ ...row, metadata: null })?.score,
+    ).toBeNull();
   });
 });

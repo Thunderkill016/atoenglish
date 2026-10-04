@@ -42,15 +42,16 @@ export default async function RoadmapPage() {
   const nextUnitRoute = nextUnit?.route ?? "/learn";
 
   return (
-    <main id="main-content">
+    <>
       <RoadmapClient
         nextUnitRoute={nextUnitRoute}
         nextUnitTitle={nextUnit?.title}
+        nextUnitLevel={nextUnit?.level}
         userLevel={userLevel}
         completedUnitIds={completedIds}
         startingUnitIndex={startingUnitIndex}
         placementCompleted={placementCompleted}
       />
-    </main>
+    </>
   );
 }

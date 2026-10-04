@@ -1,13 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-function protectedPreviewPath(path: string) {
-  const shareToken = process.env.VERCEL_SHARE_TOKEN;
-  if (!shareToken) return path;
-
-  const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}_vercel_share=${encodeURIComponent(shareToken)}`;
-}
-
 test.describe("Gold Day 1 guest journey", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
@@ -25,7 +17,7 @@ test.describe("Gold Day 1 guest journey", () => {
   test("finishes mission, mandatory retry and reaches checkpoint login", async ({
     page,
   }) => {
-    await page.goto(protectedPreviewPath("/learn/unit-a0-1"));
+    await page.goto("/learn/unit-a0-1");
 
     await expect(
       page.getByRole("heading", { name: "Gặp đồng nghiệp mới" }),

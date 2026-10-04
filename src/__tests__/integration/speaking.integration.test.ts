@@ -4,15 +4,13 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { adminClient, testUserId } from "../setup-integration";
+import { adminClient, adminSql, testUserId } from "../setup-integration";
 
 const getAction = () => import("@/app/actions/speaking");
 
 async function cleanSessions() {
-  await adminClient
-    .from("speaking_sessions")
-    .delete()
-    .eq("user_id", testUserId);
+  // Owner SQL — speaking_sessions intentionally denies DELETE to authenticated
+  await adminSql`delete from speaking_sessions where user_id = ${testUserId}`;
 }
 
 describe("saveSpeakingSession()", () => {

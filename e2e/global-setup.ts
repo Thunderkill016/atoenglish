@@ -25,7 +25,7 @@ try {
 export default async function globalSetup(): Promise<void> {
   if (!hasE2EAdminCredentials()) {
     console.warn(
-      "[e2e] Skipping global setup — NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing",
+      "[e2e] Skipping global setup — NEON_AUTH_BASE_URL or DATABASE_URL missing",
     );
     return;
   }

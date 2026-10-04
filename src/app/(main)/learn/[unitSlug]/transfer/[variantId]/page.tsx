@@ -4,7 +4,10 @@ import type { Metadata } from "next";
 import MissionTransferTemplate from "@/components/learn/MissionTransferTemplate";
 import { PILOT_LESSON_SPECS } from "@/lib/lessons/pilot-lessons";
 import type { LessonSpecV1 } from "@/lib/lessons/lesson-spec";
-import { summarizeTransferEvidence } from "@/lib/missions/mission-progress";
+import {
+  attemptRowToTransferEvidence,
+  summarizeTransferEvidence,
+} from "@/lib/missions/mission-progress";
 import type { MissionSpecV1 } from "@/lib/missions/mission-spec";
 import { createClient } from "@/lib/supabase/server";
 
@@ -55,13 +58,16 @@ export default async function MissionTransferPage({
       .maybeSingle(),
     supabase
       .from("learning_attempts")
-      .select("activity_id, session_id, score, created_at")
+      .select("prompt_id, session_id, metadata, created_at")
       .eq("user_id", user.id)
-      .eq("lesson_id", unitSlug)
-      .like("activity_id", `${unitSlug}:transfer:%`),
+      .like("prompt_id", `${unitSlug}:transfer:%`),
   ]);
 
   if (!completion) redirect(`/learn/${unitSlug}`);
+
+  const transferEvidence = (attempts ?? [])
+    .map(attemptRowToTransferEvidence)
+    .filter((row): row is NonNullable<typeof row> => row !== null);
 
   const dueAt = new Date(completion.completed_at);
   const requestTime = new Date();
@@ -77,7 +83,7 @@ export default async function MissionTransferPage({
     if (prior.dueAfterDays >= variant.dueAfterDays) break;
     const priorActivityId = `${unitSlug}:transfer:${prior.id}`;
     const priorEvidence = summarizeTransferEvidence(
-      attempts ?? [],
+      transferEvidence,
       priorActivityId,
       passScore,
     );
@@ -88,7 +94,7 @@ export default async function MissionTransferPage({
 
   const currentActivityId = `${unitSlug}:transfer:${variant.id}`;
   const currentEvidence = summarizeTransferEvidence(
-    attempts ?? [],
+    transferEvidence,
     currentActivityId,
     passScore,
   );

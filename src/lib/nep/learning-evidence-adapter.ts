@@ -11,8 +11,16 @@ export type EvaluatedNếpAction = {
   response: string;
   responseSource: NếpResponseSource;
   evaluation: NếpEvaluationResult;
-  supportUsed: boolean;
+  /** Highest support-ladder rung revealed (0 = none), clamped server-side. */
+  supportLevelUsed: number;
   latencyMs: number;
+  /**
+   * Server-bound flag: a delayed re-observation of an already-introduced
+   * lesson. Review-mode attempts mint `retention` evidence instead of the
+   * action's own channel — the action's evidence type is preserved in
+   * metadata for construct granularity.
+   */
+  reviewMode?: boolean;
 };
 
 function responseModality(action: LessonAction, source: NếpResponseSource) {
@@ -44,7 +52,16 @@ function structuredErrorSignals(
  * signals, response length, modality and task identity cross the persistence boundary.
  */
 export function toLearningAttemptRecord(input: EvaluatedNếpAction): RecordLearningAttemptInput | null {
-  const { lesson, action, response, responseSource, evaluation, supportUsed, latencyMs } = input;
+  const {
+    lesson,
+    action,
+    response,
+    responseSource,
+    evaluation,
+    supportLevelUsed,
+    latencyMs,
+    reviewMode = false,
+  } = input;
   const assessment = action.assessment;
   if (!assessment) return null;
 
@@ -62,8 +79,10 @@ export function toLearningAttemptRecord(input: EvaluatedNếpAction): RecordLear
     responseSource,
     responseLength: evaluation.observedResponse ? response.trim().length : 0,
     rawResponsePersisted: false,
-    supportUsed,
+    supportUsed: supportLevelUsed > 0,
+    supportLevelUsed,
     changedContext: action.changedContext ?? false,
+    reviewMode,
     errorSignals,
   };
 
@@ -79,12 +98,14 @@ export function toLearningAttemptRecord(input: EvaluatedNếpAction): RecordLear
       latencyMs: safeLatency,
       hintCount: 0,
       revealUsed,
-      supportLevel: supportUsed ? 1 : 0,
+      supportLevel: supportLevelUsed,
       metadata,
     },
     candidate: assessment.evidenceType
       ? {
-          type: assessment.evidenceType,
+          // A delayed review attempt observes retention of the capability;
+          // the action's own channel stays in metadata for granularity.
+          type: reviewMode ? "retention" : assessment.evidenceType,
           targetId: assessment.targetCapabilityId,
           success: evaluation.success,
           contextId: assessment.contextId,
@@ -95,6 +116,8 @@ export function toLearningAttemptRecord(input: EvaluatedNếpAction): RecordLear
             actionId: action.id,
             responseSource,
             rawResponsePersisted: false,
+            reviewMode,
+            assessmentEvidenceType: assessment.evidenceType,
             errorSignals,
           },
         }

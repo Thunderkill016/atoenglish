@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { adminClient, testUserId } from "../setup-integration";
+import { adminClient, adminSql, testUserId } from "../setup-integration";
 
 const getActions = () => import("@/app/actions/quiz");
 
@@ -13,16 +13,15 @@ async function cleanQuiz() {
   const today = new Date().toLocaleDateString("sv-SE", {
     timeZone: "Asia/Ho_Chi_Minh",
   });
-  await adminClient
-    .from("quiz_results")
-    .delete()
-    .eq("user_id", testUserId)
-    .eq("unit_id", UNIT)
-    .eq("quiz_date", today);
-  await adminClient
-    .from("user_progress")
-    .update({ total_xp: 0, streak: 0 })
-    .eq("user_id", testUserId);
+  // Owner SQL — quiz_results has no DELETE policy for authenticated
+  await adminSql`
+    delete from quiz_results
+    where user_id = ${testUserId} and unit_id = ${UNIT} and quiz_date = ${today}
+  `;
+  await adminSql`
+    update user_progress set total_xp = 0, streak = 0
+    where user_id = ${testUserId}
+  `;
 }
 
 describe("saveQuizResult()", () => {

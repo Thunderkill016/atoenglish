@@ -82,9 +82,9 @@ security invoker
 set search_path = ''
 as $function$
 declare
-  v_uid uuid := (select auth.uid());
+  v_uid uuid := (select public.auth_uid());
 begin
-  if current_user not in ('postgres', 'service_role')
+  if current_user not in ('postgres', 'service_role', 'neondb_owner')
      and (v_uid is null or p_user_id is distinct from v_uid) then
     raise exception 'not authorized' using errcode = '42501';
   end if;
@@ -105,10 +105,10 @@ security invoker
 set search_path = ''
 as $function$
 declare
-  v_uid uuid := (select auth.uid());
+  v_uid uuid := (select public.auth_uid());
   v_week date := pg_catalog.date_trunc('week', pg_catalog.now())::date;
 begin
-  if current_user not in ('postgres', 'service_role')
+  if current_user not in ('postgres', 'service_role', 'neondb_owner')
      and (v_uid is null or p_user_id is distinct from v_uid) then
     raise exception 'not authorized' using errcode = '42501';
   end if;
@@ -133,7 +133,7 @@ grant execute on function public.bump_league_xp(uuid, integer)
 
 -- Streak freeze grants are recorded once per milestone to prevent repeated claims.
 create table if not exists private.streak_freeze_grants (
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references neon_auth.user(id) on delete cascade,
   milestone integer not null check (milestone in (7, 14, 30)),
   granted_at timestamptz not null default now(),
   primary key (user_id, milestone)
@@ -197,9 +197,9 @@ security invoker
 set search_path = ''
 as $function$
 declare
-  v_uid uuid := (select auth.uid());
+  v_uid uuid := (select public.auth_uid());
 begin
-  if current_user not in ('postgres', 'service_role')
+  if current_user not in ('postgres', 'service_role', 'neondb_owner')
      and (v_uid is null or p_user_id is distinct from v_uid) then
     raise exception 'not authorized' using errcode = '42501';
   end if;
@@ -220,11 +220,11 @@ security invoker
 set search_path = ''
 as $function$
 declare
-  v_uid uuid := (select auth.uid());
+  v_uid uuid := (select public.auth_uid());
   v_freeze_count integer;
   v_streak integer;
 begin
-  if current_user not in ('postgres', 'service_role')
+  if current_user not in ('postgres', 'service_role', 'neondb_owner')
      and (v_uid is null or p_user_id is distinct from v_uid) then
     raise exception 'not authorized' using errcode = '42501';
   end if;

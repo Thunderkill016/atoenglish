@@ -1,5 +1,4 @@
-import { UnitData } from "@/components/learn/UnitTemplate";
-
+import { UnitData } from "@/lib/lessons/lesson-spec";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UNIT-A0-8 — Khẩn Cấp & Cụm Từ Sinh Tồn  (A0)
@@ -25,7 +24,6 @@ export const unitA08: UnitData = {
   badgeName: "Người Sinh Tồn",
   badgeEmoji: "🆘",
 
-
   // ── HOOK: situation (real VN context) + learningOutcomes (2–5 can-do) + culturalNote (pragmatic VN↔EN)
   situation:
     "Bạn đang du lịch một mình ở nước ngoài. Đột nhiên bạn bị lạc, không tìm thấy khách sạn, và điện thoại sắp hết pin. Bạn cần nhờ người xung quanh giúp đỡ ngay lập tức!",
@@ -36,11 +34,9 @@ export const unitA08: UnitData = {
     "Dùng câu mệnh lệnh lịch sự: Call..., Please help...",
   ],
 
-
   // ── HOOK (cultural): pragmatic note
   culturalNote:
-    'Trong tình huống khẩn cấp tại Mỹ/Anh, gọi <span class="text-emerald-400 font-semibold">911 (Mỹ)</span> hoặc <span class="text-emerald-400 font-semibold">999 (Anh)</span>. Nói ngay: <span class="text-emerald-400 font-semibold">"I need help!"</span> và địa chỉ của bạn. Người điều hành sẽ hỏi thêm — cứ trả lời từng câu một, không cần nói dài.',
-
+    'Trong tình huống khẩn cấp tại Mỹ/Anh, gọi <span class="text-primary font-semibold">911 (Mỹ)</span> hoặc <span class="text-primary font-semibold">999 (Anh)</span>. Nói ngay: <span class="text-primary font-semibold">"I need help!"</span> và địa chỉ của bạn. Người điều hành sẽ hỏi thêm — cứ trả lời từng câu một, không cần nói dài.',
 
   // ── WARMUP: ≥3 short phrases (SRS + prior knowledge activation)
   warmupGreetings: [
@@ -64,7 +60,6 @@ export const unitA08: UnitData = {
     },
   ],
 
-
   // ── VOCABULARY: 8–20 words, pre-teach BEFORE dialogues; l1_interference_vn (A1 100%, B1+ ≥50%)
   vocab: [
     {
@@ -77,7 +72,8 @@ export const unitA08: UnitData = {
       example2: "Can you help me, please?",
       collocation: "I need help / call for help / help me / please help",
       audio: "/audio/unit-a0-8/help.mp3",
-      l1_interference_vn: "⚠️ 'Help someone (to) do something': 'Help me carry this'. 'Can you help me?' KHÔNG 'Can you help to me?'",
+      l1_interference_vn:
+        "⚠️ 'Help someone (to) do something': 'Help me carry this'. 'Can you help me?' KHÔNG 'Can you help to me?'",
     },
     {
       id: 2,
@@ -89,7 +85,8 @@ export const unitA08: UnitData = {
       example2: "Call an ambulance now!",
       collocation: "call the police / call 911 / call for help / make a call",
       audio: "/audio/unit-a0-8/call.mp3",
-      l1_interference_vn: "⚠️ 'Call someone' (gọi điện): 'Call me at 9'. 'Call' cũng = gọi tên: 'They call him Bob'. KHÔNG 'call to someone'.",
+      l1_interference_vn:
+        "⚠️ 'Call someone' (gọi điện): 'Call me at 9'. 'Call' cũng = gọi tên: 'They call him Bob'. KHÔNG 'call to someone'.",
     },
     {
       id: 3,
@@ -101,7 +98,8 @@ export const unitA08: UnitData = {
       example2: "I need the police.",
       collocation: "call the police / the police are here / police station",
       audio: "/audio/unit-a0-8/police.mp3",
-      l1_interference_vn: "⚠️ 'Police' = số nhiều (danh từ tập hợp): 'The police ARE coming'. KHÔNG 'The police IS'. 'Call the police!' không có 's'.",
+      l1_interference_vn:
+        "⚠️ 'Police' = số nhiều (danh từ tập hợp): 'The police ARE coming'. KHÔNG 'The police IS'. 'Call the police!' không có 's'.",
     },
     {
       id: 4,
@@ -113,7 +111,8 @@ export const unitA08: UnitData = {
       example2: "Is there a hospital nearby?",
       collocation: "go to hospital / take to hospital / nearest hospital",
       audio: "/audio/unit-a0-8/hospital.mp3",
-      l1_interference_vn: "⚠️ 'In hospital' (Anh-Anh, đang điều trị) vs 'in the hospital' (Anh-Mỹ, ở tòa nhà). 'Go to hospital' = nhập viện.",
+      l1_interference_vn:
+        "⚠️ 'In hospital' (Anh-Anh, đang điều trị) vs 'in the hospital' (Anh-Mỹ, ở tòa nhà). 'Go to hospital' = nhập viện.",
     },
     {
       id: 5,
@@ -129,7 +128,8 @@ export const unitA08: UnitData = {
     {
       id: 6,
       word: "sick",
-      l1_interference_vn: "⚠️ \'Sick\' /sɪk/ — âm /ɪ/ ngắn. Phân biệt với \'seek\' /siːk/ (dài). \'I\'m sick\' ≠ \'I\'m seek\'.",
+      l1_interference_vn:
+        "⚠️ \'Sick\' /sɪk/ — âm /ɪ/ ngắn. Phân biệt với \'seek\' /siːk/ (dài). \'I\'m sick\' ≠ \'I\'m seek\'.",
       emoji: "🤒",
       phonetic: "/sɪk/",
       meaning: "ốm, bệnh",
@@ -148,7 +148,8 @@ export const unitA08: UnitData = {
       example2: "Are you hurt?",
       collocation: "I'm hurt / get hurt / my [body part] hurts / are you hurt",
       audio: "/audio/unit-a0-8/hurt.mp3",
-      l1_interference_vn: "⚠️ 'Hurt' bất quy tắc: hurt-hurt-hurt (ba dạng giống nhau). 'I hurt my arm' vs 'My arm hurts' — hai cách diễn đạt khác nhau.",
+      l1_interference_vn:
+        "⚠️ 'Hurt' bất quy tắc: hurt-hurt-hurt (ba dạng giống nhau). 'I hurt my arm' vs 'My arm hurts' — hai cách diễn đạt khác nhau.",
     },
     {
       id: 8,
@@ -158,9 +159,11 @@ export const unitA08: UnitData = {
       meaning: "trường hợp khẩn cấp",
       example: "This is an emergency!",
       example2: "Call 911 — it's an emergency!",
-      collocation: "this is an emergency / emergency room / in an emergency / emergency number",
+      collocation:
+        "this is an emergency / emergency room / in an emergency / emergency number",
       audio: "/audio/unit-a0-8/emergency.mp3",
-      l1_interference_vn: "⚠️ 'In an emergency'. 'Emergency services' = dịch vụ khẩn cấp. 'Emergency exit' = lối thoát hiểm.",
+      l1_interference_vn:
+        "⚠️ 'In an emergency'. 'Emergency services' = dịch vụ khẩn cấp. 'Emergency exit' = lối thoát hiểm.",
     },
     {
       id: 9,
@@ -170,9 +173,11 @@ export const unitA08: UnitData = {
       meaning: "cẩn thận",
       example: "Be careful! The road is dangerous.",
       example2: "Please be careful.",
-      collocation: "be careful / very careful / careful please / drive carefully",
+      collocation:
+        "be careful / very careful / careful please / drive carefully",
       audio: "/audio/unit-a0-8/careful.mp3",
-      l1_interference_vn: "⚠️ 'Be careful!' / 'Careful OF': 'Be careful of the dog'. 'Carefully' là adverb. 'A careful driver' = adj.",
+      l1_interference_vn:
+        "⚠️ 'Be careful!' / 'Careful OF': 'Be careful of the dog'. 'Carefully' là adverb. 'A careful driver' = adj.",
     },
     {
       id: 10,
@@ -184,10 +189,10 @@ export const unitA08: UnitData = {
       example2: "Stay safe!",
       collocation: "stay safe / are you safe / feel safe / safe place",
       audio: "/audio/unit-a0-8/safe.mp3",
-      l1_interference_vn: "⚠️ Safe (adj) → safety (n) → safely (adv). 'Stay safe!' rất thông dụng. 'Is it safe to...?' = liệu có an toàn không?",
+      l1_interference_vn:
+        "⚠️ Safe (adj) → safety (n) → safely (adv). 'Stay safe!' rất thông dụng. 'Is it safe to...?' = liệu có an toàn không?",
     },
   ],
-
 
   // ── GRAMMAR: Inductive (Meaning→Form→CCQ) + vnNote L1
   grammar: {
@@ -195,17 +200,25 @@ export const unitA08: UnitData = {
     rule: "Câu mệnh lệnh = ĐỘNG TỪ (dạng nguyên thể) + ... — Không cần chủ ngữ!",
 
     conjugation: [
-      { subject: "Call",  form: "the police!",    example: "Call the police! (Gọi cảnh sát!)" },
-      { subject: "Go",    form: "to the hospital!", example: "Go to the hospital!" },
-      { subject: "Be",    form: "careful!",        example: "Be careful! (Cẩn thận!)" },
-      { subject: "Stay",  form: "safe!",           example: "Stay safe! (Giữ an toàn!)" },
+      {
+        subject: "Call",
+        form: "the police!",
+        example: "Call the police! (Gọi cảnh sát!)",
+      },
+      {
+        subject: "Go",
+        form: "to the hospital!",
+        example: "Go to the hospital!",
+      },
+      { subject: "Be", form: "careful!", example: "Be careful! (Cẩn thận!)" },
+      { subject: "Stay", form: "safe!", example: "Stay safe! (Giữ an toàn!)" },
     ],
 
     examples: [
-      { en: "Call the police!",          vn: "Gọi cảnh sát!" },
+      { en: "Call the police!", vn: "Gọi cảnh sát!" },
       { en: "Please call an ambulance!", vn: "Làm ơn gọi xe cấp cứu!" },
-      { en: "Be careful!",               vn: "Cẩn thận!" },
-      { en: "Don't go alone!",           vn: "Đừng đi một mình!" },
+      { en: "Be careful!", vn: "Cẩn thận!" },
+      { en: "Don't go alone!", vn: "Đừng đi một mình!" },
     ],
 
     tip: "Thêm 'please' để nghe lịch sự hơn: 'Call the police!' → 'Please call the police!' Trong tình huống khẩn cấp, bạn không cần quá lịch sự — người bản ngữ sẽ hiểu!",
@@ -223,7 +236,8 @@ export const unitA08: UnitData = {
     dialogueExample: {
       speaker: "Minh",
       text: "Please call the police! I'm lost and I don't feel safe!",
-      translation: "Làm ơn gọi cảnh sát! Tôi bị lạc và tôi không cảm thấy an toàn!",
+      translation:
+        "Làm ơn gọi cảnh sát! Tôi bị lạc và tôi không cảm thấy an toàn!",
       highlight: "call",
     },
 
@@ -239,19 +253,17 @@ export const unitA08: UnitData = {
     },
   },
 
-
   // ── EXERCISES_INPUT: matching
   matchingExercise: {
     title: "Nối tình huống với câu nói phù hợp",
     pairs: [
-      { left: "Bị lạc đường",      right: "I'm lost. Can you help me?" },
-      { left: "Bị ốm nặng",        right: "I feel sick. I need a doctor." },
-      { left: "Bị thương",          right: "I'm hurt! Please call an ambulance!" },
-      { left: "Nguy hiểm",          right: "Be careful! This is dangerous!" },
-      { left: "Tình huống khẩn",    right: "This is an emergency! Call 911!" },
+      { left: "Bị lạc đường", right: "I'm lost. Can you help me?" },
+      { left: "Bị ốm nặng", right: "I feel sick. I need a doctor." },
+      { left: "Bị thương", right: "I'm hurt! Please call an ambulance!" },
+      { left: "Nguy hiểm", right: "Be careful! This is dangerous!" },
+      { left: "Tình huống khẩn", right: "This is an emergency! Call 911!" },
     ],
   },
-
 
   // ── EXERCISES_INPUT: practiceQuiz (active recall)
   practiceQuiz: [
@@ -295,7 +307,6 @@ export const unitA08: UnitData = {
     },
   ],
 
-
   // ── OUTPUT: practiceTranslate (VN→EN ≥3) + speaking (level1/2)
   practiceTranslate: [
     {
@@ -315,7 +326,6 @@ export const unitA08: UnitData = {
     },
   ],
 
-
   // ── EXERCISES_INPUT: sentenceCorrection
   sentenceCorrectionExercises: [
     {
@@ -323,18 +333,18 @@ export const unitA08: UnitData = {
       sentence: "Call a ambulance right now!",
       errorWord: "a ambulance",
       correction: "an ambulance",
-      explanation_vn: "Trước nguyên âm (a, e, i, o, u) dùng 'AN': 'AN ambulance'. 'A' dùng trước phụ âm.",
+      explanation_vn:
+        "Trước nguyên âm (a, e, i, o, u) dùng 'AN': 'AN ambulance'. 'A' dùng trước phụ âm.",
     },
     {
       id: "sc-A08-2",
       sentence: "I need a help please.",
       errorWord: "a help",
       correction: "help",
-      explanation_vn: "'Help' là danh từ không đếm được — không dùng 'a' trước 'help'. Đúng: 'I need HELP'.",
+      explanation_vn:
+        "'Help' là danh từ không đếm được — không dùng 'a' trước 'help'. Đúng: 'I need HELP'.",
     },
   ],
-
-
 
   // ── EXERCISES_INPUT: listenAndArrange
   listenAndArrangeExercises: [
@@ -342,19 +352,38 @@ export const unitA08: UnitData = {
       id: "laA08-1",
       audio_text: "Please call an ambulance right away.",
       prompt_vn: "Vui lòng gọi xe cấp cứu ngay.",
-      words: ["Please", "call", "an", "ambulance", "right", "away", ".", "a ambulance", "calling"],
+      words: [
+        "Please",
+        "call",
+        "an",
+        "ambulance",
+        "right",
+        "away",
+        ".",
+        "a ambulance",
+        "calling",
+      ],
       answer: "Please call an ambulance right away .",
     },
     {
       id: "laA08-2",
       audio_text: "I need help this is an emergency.",
       prompt_vn: "Tôi cần giúp đỡ đây là tình huống khẩn cấp.",
-      words: ["I", "need", "help", "this", "is", "an", "emergency", ".", "a help", "needs"],
+      words: [
+        "I",
+        "need",
+        "help",
+        "this",
+        "is",
+        "an",
+        "emergency",
+        ".",
+        "a help",
+        "needs",
+      ],
       answer: "I need help this is an emergency .",
     },
   ],
-
-
 
   // ── EXERCISES_INPUT: wordBank
   wordBankExercises: [
@@ -367,7 +396,18 @@ export const unitA08: UnitData = {
     {
       id: "wb2",
       prompt_vn: "Làm ơn gọi cảnh sát! Đây là tình huống khẩn cấp!",
-      words: ["Please", "call", "the", "police!", "This", "is", "an", "emergency", "!", "are"],
+      words: [
+        "Please",
+        "call",
+        "the",
+        "police!",
+        "This",
+        "is",
+        "an",
+        "emergency",
+        "!",
+        "are",
+      ],
       answer: "Please call the police! This is an emergency !",
     },
     {
@@ -377,7 +417,6 @@ export const unitA08: UnitData = {
       answer: "Be careful! This road is dangerous .",
     },
   ],
-
 
   // ── EXERCISES_INPUT: scramble
   scrambleExercises: [
@@ -390,7 +429,17 @@ export const unitA08: UnitData = {
     {
       id: "s8-2",
       prompt_vn: "Làm ơn gọi cảnh sát! Đây là tình huống khẩn cấp!",
-      words: ["Please", "call", "the", "police!", "This", "is", "an", "emergency", "!"],
+      words: [
+        "Please",
+        "call",
+        "the",
+        "police!",
+        "This",
+        "is",
+        "an",
+        "emergency",
+        "!",
+      ],
       answer: "Please call the police! This is an emergency !",
     },
     {
@@ -400,7 +449,6 @@ export const unitA08: UnitData = {
       answer: "Be careful! This road is dangerous .",
     },
   ],
-
 
   // ── DIALOGUES: ≥1 dialogue AFTER vocab (98% coverage)
   dialogues: [
@@ -426,7 +474,8 @@ export const unitA08: UnitData = {
           id: "d8-1-3",
           speaker: "Minh",
           text: "I'm safe, but I'm lost. I can't find my hotel. Can you help me?",
-          translation: "Tôi an toàn, nhưng tôi bị lạc. Tôi không tìm được khách sạn. Bạn có thể giúp tôi không?",
+          translation:
+            "Tôi an toàn, nhưng tôi bị lạc. Tôi không tìm được khách sạn. Bạn có thể giúp tôi không?",
         },
         {
           id: "d8-1-4",
@@ -438,19 +487,22 @@ export const unitA08: UnitData = {
           id: "d8-1-5",
           speaker: "Minh",
           text: "Marina Bay Hotel. Also — I feel sick. Is there a hospital nearby?",
-          translation: "Khách sạn Marina Bay. Ngoài ra — tôi cảm thấy ốm. Có bệnh viện nào gần đây không?",
+          translation:
+            "Khách sạn Marina Bay. Ngoài ra — tôi cảm thấy ốm. Có bệnh viện nào gần đây không?",
         },
         {
           id: "d8-1-6",
           speaker: "Passerby",
           text: "Are you hurt? Do I need to call an ambulance?",
-          translation: "Bạn có bị thương không? Tôi có cần gọi xe cấp cứu không?",
+          translation:
+            "Bạn có bị thương không? Tôi có cần gọi xe cấp cứu không?",
         },
         {
           id: "d8-1-7",
           speaker: "Minh",
           text: "No, I'm not hurt. Just sick and tired. Please call a taxi — and be careful with my bag!",
-          translation: "Không, tôi không bị thương. Chỉ ốm và mệt thôi. Làm ơn gọi taxi — và cẩn thận với túi của tôi!",
+          translation:
+            "Không, tôi không bị thương. Chỉ ốm và mệt thôi. Làm ơn gọi taxi — và cẩn thận với túi của tôi!",
         },
       ],
     },
@@ -464,7 +516,8 @@ export const unitA08: UnitData = {
           id: "d8-2-1",
           speaker: "Minh",
           text: "Hello! This is Room 305. This is an emergency — I feel very sick!",
-          translation: "Xin chào! Đây là phòng 305. Đây là tình huống khẩn cấp — tôi cảm thấy rất ốm!",
+          translation:
+            "Xin chào! Đây là phòng 305. Đây là tình huống khẩn cấp — tôi cảm thấy rất ốm!",
         },
         {
           id: "d8-2-2",
@@ -476,13 +529,15 @@ export const unitA08: UnitData = {
           id: "d8-2-3",
           speaker: "Minh",
           text: "I'm not hurt. But I'm very sick. Please call a doctor!",
-          translation: "Tôi không bị thương. Nhưng tôi rất ốm. Làm ơn gọi bác sĩ!",
+          translation:
+            "Tôi không bị thương. Nhưng tôi rất ốm. Làm ơn gọi bác sĩ!",
         },
         {
           id: "d8-2-4",
           speaker: "Reception",
           text: "Stay safe and stay calm. I'll call a doctor now. Be careful — don't stand up too fast.",
-          translation: "Hãy giữ an toàn và bình tĩnh. Tôi sẽ gọi bác sĩ ngay. Cẩn thận — đừng đứng dậy quá nhanh.",
+          translation:
+            "Hãy giữ an toàn và bình tĩnh. Tôi sẽ gọi bác sĩ ngay. Cẩn thận — đừng đứng dậy quá nhanh.",
         },
         {
           id: "d8-2-5",
@@ -494,12 +549,12 @@ export const unitA08: UnitData = {
           id: "d8-2-6",
           speaker: "Reception",
           text: "Wait for the doctor first. If it's an emergency, we'll take you to the hospital.",
-          translation: "Đợi bác sĩ trước. Nếu đây là tình huống khẩn cấp, chúng tôi sẽ đưa bạn đến bệnh viện.",
+          translation:
+            "Đợi bác sĩ trước. Nếu đây là tình huống khẩn cấp, chúng tôi sẽ đưa bạn đến bệnh viện.",
         },
       ],
     },
   ],
-
 
   // ── EXERCISES_INPUT: listenAndChoose ≥5 (controlled practice)
   listenAndChoose: [
@@ -539,13 +594,23 @@ export const unitA08: UnitData = {
     {
       id: "lac8-4",
       audio_text: "I feel sick I need a doctor",
-      options: ["Tôi cảm thấy ốm, tôi cần bác sĩ", "Tôi bị thương, tôi cần bác sĩ", "Tôi cảm thấy ốm, tôi cần cảnh sát", "Tôi bị lạc, tôi cần bác sĩ"],
+      options: [
+        "Tôi cảm thấy ốm, tôi cần bác sĩ",
+        "Tôi bị thương, tôi cần bác sĩ",
+        "Tôi cảm thấy ốm, tôi cần cảnh sát",
+        "Tôi bị lạc, tôi cần bác sĩ",
+      ],
       answer: "Tôi cảm thấy ốm, tôi cần bác sĩ",
     },
     {
       id: "lac8-5",
       audio_text: "Be careful this road is dangerous",
-      options: ["Cẩn thận! Con đường này nguy hiểm.", "Cẩn thận! Con đường này rất dài.", "Cẩn thận! Khu vực này nguy hiểm.", "Dừng lại! Con đường này nguy hiểm."],
+      options: [
+        "Cẩn thận! Con đường này nguy hiểm.",
+        "Cẩn thận! Con đường này rất dài.",
+        "Cẩn thận! Khu vực này nguy hiểm.",
+        "Dừng lại! Con đường này nguy hiểm.",
+      ],
       answer: "Cẩn thận! Con đường này nguy hiểm.",
     },
   ],
@@ -584,38 +649,41 @@ export const unitA08: UnitData = {
     },
   ],
 
-
   // ── FLUENCY: pronunciationFocus
   pronunciationFocus: {
     phoneme: "/ŋ/ cuối từ",
     description: "Âm NG cuối — sing, ring, long",
     examples: [
-      { word: "morning", ipa: "/ˈmɔːnɪŋ/", tip: "Cuối âm mũi mềm từ vòm — không bật thêm /g/" },
-      { word: "working", ipa: "/ˈwɜːkɪŋ/", tip: "'-ing' kết thúc bằng /ŋ/, không phải /ng/" },
+      {
+        word: "morning",
+        ipa: "/ˈmɔːnɪŋ/",
+        tip: "Cuối âm mũi mềm từ vòm — không bật thêm /g/",
+      },
+      {
+        word: "working",
+        ipa: "/ˈwɜːkɪŋ/",
+        tip: "'-ing' kết thúc bằng /ŋ/, không phải /ng/",
+      },
     ],
-    minimalPairs: [
-      ["sing /ŋ/", "singer /ŋ/"],
-    ],
+    minimalPairs: [["sing /ŋ/", "singer /ŋ/"]],
   },
-
 
   // ── FLUENCY: fluencyDrill ≥5 (Nation Strand 4 automaticity)
   fluencyDrill: {
     title: "Luyện nhanh: Cụm từ sống còn",
     items: [
-      { en: "Help!",                             vn: "Cứu tôi với!" },
-      { en: "I need help!",                      vn: "Tôi cần giúp đỡ!" },
-      { en: "I'm lost.",                         vn: "Tôi bị lạc." },
-      { en: "I feel sick.",                      vn: "Tôi cảm thấy ốm." },
-      { en: "I'm hurt.",                         vn: "Tôi bị thương." },
-      { en: "Call the police!",                  vn: "Gọi cảnh sát!" },
-      { en: "Please call an ambulance!",         vn: "Làm ơn gọi xe cấp cứu!" },
-      { en: "This is an emergency!",             vn: "Đây là tình huống khẩn cấp!" },
-      { en: "Are you safe?",                     vn: "Bạn có an toàn không?" },
-      { en: "Be careful!",                       vn: "Cẩn thận!" },
+      { en: "Help!", vn: "Cứu tôi với!" },
+      { en: "I need help!", vn: "Tôi cần giúp đỡ!" },
+      { en: "I'm lost.", vn: "Tôi bị lạc." },
+      { en: "I feel sick.", vn: "Tôi cảm thấy ốm." },
+      { en: "I'm hurt.", vn: "Tôi bị thương." },
+      { en: "Call the police!", vn: "Gọi cảnh sát!" },
+      { en: "Please call an ambulance!", vn: "Làm ơn gọi xe cấp cứu!" },
+      { en: "This is an emergency!", vn: "Đây là tình huống khẩn cấp!" },
+      { en: "Are you safe?", vn: "Bạn có an toàn không?" },
+      { en: "Be careful!", vn: "Cẩn thận!" },
     ],
   },
-
 
   // ── OUTPUT: speaking prompts (freer production)
   speaking: {
@@ -623,9 +691,9 @@ export const unitA08: UnitData = {
     level1Placeholder: "Nhập tình trạng: lost / sick / hurt...",
     level2Situation:
       "Bạn đang ở sân bay nước ngoài, mất ví và điện thoại. Nhờ một người xa lạ giúp bạn gọi cảnh sát và tìm đường đến khách sạn.",
-    level2Hint: "Excuse me! I need help. I'm lost. My wallet is lost too. Please call the police. Is there a police station nearby?",
+    level2Hint:
+      "Excuse me! I need help. I'm lost. My wallet is lost too. Please call the police. Is there a police station nearby?",
   },
-
 
   // ── REVIEW: Final quiz ≥5 (retrieval practice)
   quiz: [
@@ -754,10 +822,10 @@ export const unitA08: UnitData = {
       title: "Kết thúc ngày làm việc: chào tạm biệt và xác nhận deadline",
       focus: "End of day: goodbye, confirm tomorrow tasks (entry level)",
       context: "Cuối ngày với đồng nghiệp hoặc sếp trực tiếp",
-      l1Note: "⚠️ 'Have a nice evening.' 'I'll finish the list tomorrow morning.' 'See you at 8.'",
-      example: "I will send the file first thing tomorrow. Have a good evening! See you at eight."
-    }
-  ], 
+      l1Note:
+        "⚠️ 'Have a nice evening.' 'I'll finish the list tomorrow morning.' 'See you at 8.'",
+      example:
+        "I will send the file first thing tomorrow. Have a good evening! See you at eight.",
+    },
+  ],
 };
-
-

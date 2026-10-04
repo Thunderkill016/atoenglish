@@ -44,6 +44,7 @@
   "exclude": [
     "node_modules",
     "supabase/functions",
-    "scripts"
+    "scripts",
+    "research"
   ]
 }

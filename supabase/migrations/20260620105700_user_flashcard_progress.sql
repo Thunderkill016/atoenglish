@@ -5,7 +5,7 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS public.user_flashcard_progress (
-  user_id              UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id              UUID PRIMARY KEY REFERENCES neon_auth.user(id) ON DELETE CASCADE,
 
   -- Daily tracking (reset daily)
   cards_reviewed_today INT         NOT NULL DEFAULT 0,

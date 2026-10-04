@@ -141,9 +141,9 @@ export async function saveQuizResult(params: {
 
       await awardQuizXp(supabase, user.id, xpDelta, today);
 
-      revalidatePath("/dashboard");
+      revalidatePath("/learn");
       revalidatePath("/quiz");
-      revalidatePath("/progress");
+      revalidatePath("/me/progress");
 
       return { success: true, xpEarned: xpDelta, pct: bestPct };
     }
@@ -180,9 +180,9 @@ export async function saveQuizResult(params: {
 
     await awardQuizXp(supabase, user.id, xpForAttempt, today);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/learn");
     revalidatePath("/quiz");
-    revalidatePath("/progress");
+    revalidatePath("/me/progress");
 
     return { success: true, xpEarned: xpForAttempt, pct };
   } catch (err) {

@@ -16,12 +16,20 @@ import {
 } from "@/lib/nep/practice-execution.v1";
 import { createRateLimiter } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+import { rpcService } from "@/lib/supabase/service";
 
-const learningAttemptLimiter = createRateLimiter(180, 60 * 1000, "learning-attempt");
+const learningAttemptLimiter = createRateLimiter(
+  180,
+  60 * 1000,
+  "learning-attempt",
+);
 
 type RpcError = { message: string } | null;
 type RpcClient = {
-  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: RpcError }>;
+  rpc: (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: RpcError }>;
 };
 
 export type RecordNếpPracticeAttemptResult =
@@ -37,6 +45,18 @@ export type RecordNếpPracticeAttemptResult =
       persistence: "local-only";
       attemptId: null;
       evaluation: NếpEvaluationResult;
+      feedback: string;
+      evidenceRecorded: false;
+      evidenceType: null;
+      evidenceRejection: null;
+    }
+  | {
+      success: true;
+      persisted: false;
+      /** Unassessed self-report channel — recorded nowhere, mints nothing. */
+      persistence: "self-report";
+      attemptId: null;
+      evaluation: null;
       feedback: string;
       evidenceRecorded: false;
       evidenceType: null;
@@ -84,8 +104,29 @@ function rpcArgs(
 }
 
 function isTransferPolicyRejection(message: string): boolean {
-  return message.includes("Transfer requires")
-    || message.includes("Evidence context must match attempted context");
+  return (
+    message.includes("Transfer requires") ||
+    message.includes("Evidence context must match attempted context")
+  );
+}
+
+function isClientEvidenceRejection(message: string): boolean {
+  return message.includes("Client-supplied mastery evidence is not accepted");
+}
+
+/**
+ * Evidence may be dropped while the attempt itself remains valid:
+ * - transfer lost the changed-context race, or
+ * - the hardened RPC wrapper refused caller-supplied evidence args from a
+ *   Data API boundary (evidence writes need a trusted DB context — the
+ *   attempt record itself is still legitimate append-only history).
+ */
+function isEvidenceWriteRejection(
+  message: string,
+  evidenceType: EvidenceType,
+): boolean {
+  if (isClientEvidenceRejection(message)) return true;
+  return evidenceType === "transfer" && isTransferPolicyRejection(message);
 }
 
 /**
@@ -101,10 +142,14 @@ export async function recordNếpPracticeAttempt(
 ): Promise<RecordNếpPracticeAttemptResult> {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
     const rateLimitCheck = await learningAttemptLimiter.check(ip);
     if (!rateLimitCheck.success) {
-      return { success: false, error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau." };
+      return {
+        success: false,
+        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau.",
+      };
     }
 
     const parsed = NếpPracticeSubmissionSchema.safeParse(input);
@@ -117,10 +162,26 @@ export async function recordNếpPracticeAttempt(
 
     const compiled = compileCanonicalNếpPracticeAttempt(parsed.data);
     if (!compiled) {
-      return { success: false, error: "Lesson/action không tồn tại trong canonical Nếp contract." };
+      return {
+        success: false,
+        error: "Lesson/action không tồn tại trong canonical Nếp contract.",
+      };
     }
 
     const { record, evaluation, feedback } = compiled;
+    if (!record || !evaluation) {
+      return {
+        success: true,
+        persisted: false,
+        persistence: "self-report",
+        attemptId: null,
+        evaluation: null,
+        feedback,
+        evidenceRecorded: false,
+        evidenceType: null,
+        evidenceRejection: null,
+      };
+    }
     const { attempt, candidate } = record;
     const evidence = candidate
       ? materializeEvidence({
@@ -132,7 +193,10 @@ export async function recordNếpPracticeAttempt(
       : null;
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return {
         success: true,
@@ -148,16 +212,46 @@ export async function recordNếpPracticeAttempt(
     }
 
     const rpcClient = supabase as unknown as RpcClient;
-    let { data, error } = await rpcClient.rpc("record_learning_attempt", rpcArgs(attempt, evidence));
-    let evidenceRecorded = evidence !== null;
+    // Evidence-bearing writes go through the trusted direct-DB path: the
+    // server has already verified the caller above and recomputed every
+    // evidence field deterministically, so nothing caller-controlled reaches
+    // mastery state. Attempt-only writes stay on the Data API boundary.
+    let data: unknown;
+    let error: RpcError;
+    if (evidence) {
+      const trusted = await rpcService<string>(
+        "record_learning_attempt_trusted",
+        {
+          p_user_id: user.id,
+          ...rpcArgs(attempt, evidence),
+        },
+      );
+      data = trusted.data;
+      error = trusted.error;
+    } else {
+      const attemptOnly = await rpcClient.rpc(
+        "record_learning_attempt",
+        rpcArgs(attempt, null),
+      );
+      data = attemptOnly.data;
+      error = attemptOnly.error;
+    }
+    let evidenceRecorded = evidence !== null && !error;
     let evidenceRejection: string | null = null;
 
     // A changed-context decision depends on persisted history and can lose a race between
-    // concurrent requests. Preserve the immutable attempt even when the DB correctly rejects
-    // only transfer evidence. Infrastructure/permission errors are never downgraded.
-    if (error && evidence?.type === "transfer" && isTransferPolicyRejection(error.message)) {
+    // concurrent requests. Preserve the immutable attempt when only the evidence write is
+    // rejected. Infrastructure/permission errors are never downgraded.
+    if (
+      error &&
+      evidence &&
+      isEvidenceWriteRejection(error.message, evidence.type)
+    ) {
       evidenceRejection = error.message;
-      const retry = await rpcClient.rpc("record_learning_attempt", rpcArgs(attempt, null));
+      const retry = await rpcClient.rpc(
+        "record_learning_attempt",
+        rpcArgs(attempt, null),
+      );
       data = retry.data;
       error = retry.error;
       evidenceRecorded = false;
@@ -180,11 +274,14 @@ export async function recordNếpPracticeAttempt(
       evaluation,
       feedback,
       evidenceRecorded,
-      evidenceType: evidenceRecorded ? evidence?.type ?? null : null,
+      evidenceType: evidenceRecorded ? (evidence?.type ?? null) : null,
       evidenceRejection,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return { success: false, error: `Lỗi hệ thống khi ghi learning event: ${message}` };
+    return {
+      success: false,
+      error: `Lỗi hệ thống khi ghi learning event: ${message}`,
+    };
   }
 }

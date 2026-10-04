@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { rpcService } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { UNIT_VOCABULARY } from "@/lib/constants/vocabulary";
 import { UNITS } from "@/lib/constants/units";
@@ -14,6 +15,17 @@ const completeUnitLimiter = createRateLimiter(10, 60 * 1000, "complete-unit");
 const CEFR_LEVEL_ORDER = ["A0", "A1", "A2", "B1", "B2", "C1"] as const;
 type CEFRAutoLevel = (typeof CEFR_LEVEL_ORDER)[number];
 void CEFR_LEVEL_ORDER;
+
+interface TransactionResult {
+  success: boolean;
+  already_completed?: boolean;
+  xp_earned?: number;
+  new_streak?: number;
+  new_total_xp?: number;
+  current_level?: string;
+  completed_count?: number;
+  leveled_up?: boolean;
+}
 
 /**
  * Authoritative unit completion boundary.
@@ -61,13 +73,19 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
     const xpMultiplier = cleanParams.starCount === 3 ? 1.0 : cleanParams.starCount === 2 ? 0.85 : 0.70;
     const xpEarned = Math.round(BASE_XP * xpMultiplier);
 
-    const { data: txResult, error: txError } = await supabase.rpc("complete_unit_transaction", {
-      p_user_id: user.id,
-      p_unit_id: cleanParams.unitId,
-      p_xp_earned: xpEarned,
-      p_stars: cleanParams.starCount,
-      p_today: today,
-    });
+    // complete_unit_transaction is granted to service_role only (hardened XP
+    // trust boundary) — invoke it through the owner-side service path, not
+    // the user-scoped Data API client.
+    const { data: txResult, error: txError } = await rpcService<TransactionResult>(
+      "complete_unit_transaction",
+      {
+        p_user_id: user.id,
+        p_unit_id: cleanParams.unitId,
+        p_xp_earned: xpEarned,
+        p_stars: cleanParams.starCount,
+        p_today: today,
+      },
+    );
 
     if (txError) {
       return {
@@ -76,17 +94,7 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
       };
     }
 
-    interface TransactionResult {
-      success: boolean;
-      already_completed?: boolean;
-      xp_earned?: number;
-      new_streak?: number;
-      new_total_xp?: number;
-      current_level?: string;
-      completed_count?: number;
-      leveled_up?: boolean;
-    }
-    const resultData = txResult as unknown as TransactionResult;
+    const resultData = txResult;
 
     if (resultData.already_completed) {
       return {
@@ -131,10 +139,10 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
       if (!upsertError) addedCount = upserted?.length ?? 0;
     }
 
-    revalidatePath("/dashboard");
     revalidatePath("/learn");
-    revalidatePath("/flashcards");
-    revalidatePath("/progress");
+    revalidatePath("/learn");
+    revalidatePath("/review");
+    revalidatePath("/me/progress");
 
     return {
       success: true,
@@ -291,9 +299,9 @@ export async function resetUnitProgress(unitId: string) {
         .in("word", wordList);
     }
 
-    revalidatePath("/dashboard");
     revalidatePath("/learn");
-    revalidatePath("/flashcards");
+    revalidatePath("/learn");
+    revalidatePath("/review");
 
     return {
       success: true,

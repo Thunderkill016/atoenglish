@@ -4,7 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS public.challenge_results (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id         uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  user_id         uuid NOT NULL REFERENCES neon_auth.user (id) ON DELETE CASCADE,
   score           integer NOT NULL CHECK (score >= 0),
   total           integer NOT NULL CHECK (total >= 1 AND total <= 10),
   xp_earned       integer NOT NULL CHECK (xp_earned >= 0),

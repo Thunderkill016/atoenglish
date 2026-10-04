@@ -71,7 +71,7 @@ The single active direction can be replaced only by an explicit current owner de
 
 ## Runtime reality
 
-`main` contains the current Next.js/React/TypeScript/Supabase application, existing A0–B2 curriculum data, learning surfaces, progress/review systems, tests and migrations.
+`main` contains the current Next.js/React/TypeScript application on Cloudflare Workers + Neon, existing A0–B2 curriculum data, learning surfaces, progress/review systems, tests and migrations.
 
 These describe the current implementation only. Their existence does not grant them product authority and does not create separate workstreams.
 
@@ -85,16 +85,13 @@ The September canonical learning-attempt boundary is reconciled across repositor
 - repository migration history uses the same version;
 - authenticated callers can execute `get_learner_evidence_coverage(text[])`; anonymous callers cannot.
 
-The Vercel release path was restored by PR #157:
+The production release path is Cloudflare Workers + Neon (Vercel and Supabase were retired by the spec-009 migration):
 
-- reviewed pushes to `main` create production deployments through the Vercel Git integration;
-- `preview/**` branches create preview deployments;
-- other Git branches remain disabled by default in `vercel.json`;
-- the restored path was verified against exact Git metadata, production aliases, `/api/health`, `/learn`, `/login`, Supabase connectivity and Vercel runtime logs.
+- production runs as the `atoenglish` Cloudflare Worker at `atoenglish.thunderkill016.workers.dev`, deployed via `npm run deploy:vinext` (`scripts/deploy-cf.mjs` builds the vinext bundle and runs `cf deploy --prebuilt`);
+- data and auth run on Neon project `weathered-haze-10487148`, branch `production`, through the Neon Data API and Managed Better Auth (`neon_auth`);
+- Worker secrets are managed through `cf workers secrets` (see `CLOUDFLARE_DEPLOY.md`); no Vercel or Supabase runtime dependency remains.
 
-Issue #152 is resolved by this reconciled release path. The release invariant remains: **production must be traceable to an exact reviewed `main` commit, the required Supabase state must exist, and the resulting Vercel deployment must be verified after promotion.**
-
-Do not silently re-enable the old GitHub Actions Vercel deployment experiment. The repository does not rely on a `VERCEL_TOKEN` workflow for the current release path.
+Issue #152's release invariant is unchanged: **production must be traceable to an exact reviewed `main` commit, the required Neon production-branch state must exist, and the resulting Worker deployment must be verified after promotion** (`/api/health`, `npm run smoke:learn`, Worker logs).
 
 ## Governance
 

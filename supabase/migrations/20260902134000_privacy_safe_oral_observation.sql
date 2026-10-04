@@ -52,7 +52,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
-  v_user_id uuid := auth.uid();
+  v_user_id uuid := public.auth_uid();
   v_attempt_id uuid;
   v_confidence double precision;
   v_support_penalty double precision;

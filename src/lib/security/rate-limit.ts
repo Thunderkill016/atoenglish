@@ -142,7 +142,7 @@ export function createRateLimiter(
   }
 
   // Fallback: in-memory limiter (dev or production without Upstash configured).
-  // In production, add UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to Vercel env vars
+  // In production, add UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to production env vars
   // to enable distributed Redis-backed rate limiting.
   return new InMemoryRateLimiterImpl(requestsPerMinute, windowMs);
 }

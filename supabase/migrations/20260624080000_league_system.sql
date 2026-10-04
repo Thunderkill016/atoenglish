@@ -22,7 +22,7 @@ CREATE INDEX        IF NOT EXISTS idx_leagues_tier    ON leagues (tier, week_sta
 
 -- ── league_memberships: user ↔ league per week ───────────────────────────────
 CREATE TABLE IF NOT EXISTS league_memberships (
-  user_id      uuid        NOT NULL REFERENCES auth.users ON DELETE CASCADE,
+  user_id      uuid        NOT NULL REFERENCES neon_auth.user ON DELETE CASCADE,
   league_id    uuid        NOT NULL REFERENCES leagues    ON DELETE CASCADE,
   xp_this_week integer     NOT NULL DEFAULT 0,
   joined_at    timestamptz NOT NULL DEFAULT now(),

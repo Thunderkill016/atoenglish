@@ -1,102 +1,63 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { checkHasSession } from "@/lib/auth-check";
 
-// Test the client-side session detection logic
-// checkHasSession() reads document.cookie and localStorage for Supabase auth tokens
+// checkHasSession() asks the Better Auth session endpoint because the
+// Neon session cookies are HttpOnly and invisible to document.cookie.
 
 describe("checkHasSession", () => {
-  // Save originals
-  const originalCookie = Object.getOwnPropertyDescriptor(
-    Document.prototype,
-    "cookie"
-  );
-
-  beforeEach(() => {
-    // Clear localStorage before each test
-    localStorage.clear();
-  });
-
   afterEach(() => {
-    // Restore cookie descriptor
-    if (originalCookie) {
-      Object.defineProperty(Document.prototype, "cookie", originalCookie);
-    }
-    localStorage.clear();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  // Helper to mock document.cookie
-  function mockCookie(value: string) {
-    Object.defineProperty(document, "cookie", {
-      get: () => value,
-      configurable: true,
-    });
+  function mockFetch(status: number, body: unknown) {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(body), { status }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
   }
 
-  it("returns false when no session exists (empty cookie + empty localStorage)", () => {
-    mockCookie("");
-    expect(checkHasSession()).toBe(false);
-  });
-
-  it("returns true when Supabase sb- cookie is present", () => {
-    mockCookie("sb-vhpfs-auth-token=eyJhbGc; other-cookie=value");
-    expect(checkHasSession()).toBe(true);
-  });
-
-  it("returns false when only non-Supabase cookies exist", () => {
-    mockCookie("session=abc123; theme=dark; _ga=GA1.2.xyz");
-    expect(checkHasSession()).toBe(false);
-  });
-
-  it("returns true when Supabase auth token in localStorage", () => {
-    localStorage.setItem("sb-vhpfskkredizeazlyzsh-auth-token", "token-value");
-    mockCookie("");
-    expect(checkHasSession()).toBe(true);
-  });
-
-  it("returns false when localStorage has sb- key but not auth-token suffix", () => {
-    localStorage.setItem("sb-vhpfskkredizeazlyzsh-other-key", "some-value");
-    mockCookie("");
-    expect(checkHasSession()).toBe(false);
-  });
-
-  it("returns true when both cookie and localStorage have tokens (cookie takes priority)", () => {
-    mockCookie("sb-test-auth-token=value");
-    localStorage.setItem("sb-test-auth-token", "token");
-    expect(checkHasSession()).toBe(true);
-  });
-
-  it("returns false in non-browser environment (window is undefined handled)", () => {
-    // The function returns false early if typeof window === 'undefined'
-    // In jsdom (vitest env) window IS defined, so we test the actual logic path
-    // This test just ensures the function runs without throwing
-    expect(() => checkHasSession()).not.toThrow();
-  });
-
-  it("returns true with multiple sb- cookies (picks first matching)", () => {
-    mockCookie("unrelated=val; sb-project-auth-token=abc; other=def");
-    expect(checkHasSession()).toBe(true);
-  });
-
-  it("handles cookie read errors gracefully (returns false, not throw)", () => {
-    // Simulate an environment where document.cookie throws
-    Object.defineProperty(document, "cookie", {
-      get: () => {
-        throw new Error("Cookie access denied");
-      },
-      configurable: true,
+  it("returns true when the session endpoint returns a session", async () => {
+    const fetchMock = mockFetch(200, {
+      session: { id: "s1" },
+      user: { id: "u1" },
     });
-    localStorage.clear();
-    // Should not throw, should fall through to localStorage check
-    expect(() => checkHasSession()).not.toThrow();
-    expect(checkHasSession()).toBe(false);
+    await expect(checkHasSession()).resolves.toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/get-session", {
+      credentials: "include",
+    });
   });
 
-  it("returns false early if window is undefined", () => {
+  it("returns false when the endpoint returns null (anonymous)", async () => {
+    mockFetch(200, null);
+    await expect(checkHasSession()).resolves.toBe(false);
+  });
+
+  it("returns false on non-OK responses", async () => {
+    mockFetch(401, { error: "unauthorized" });
+    await expect(checkHasSession()).resolves.toBe(false);
+  });
+
+  it("returns false when fetch rejects (network error)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("network down")),
+    );
+    await expect(checkHasSession()).resolves.toBe(false);
+  });
+
+  it("returns false when the payload is not an object", async () => {
+    mockFetch(200, "unexpected");
+    await expect(checkHasSession()).resolves.toBe(false);
+  });
+
+  it("returns false early if window is undefined", async () => {
     const originalWindow = global.window;
     // @ts-expect-error - overriding window for test
     delete global.window;
     try {
-      expect(checkHasSession()).toBe(false);
+      await expect(checkHasSession()).resolves.toBe(false);
     } finally {
       global.window = originalWindow;
     }

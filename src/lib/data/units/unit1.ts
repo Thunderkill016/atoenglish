@@ -1,4 +1,4 @@
-import { UnitData } from "@/components/learn/UnitTemplate";
+import { UnitData } from "@/lib/lessons/lesson-spec";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UNIT 1 — Greetings & Self-Introduction  (A1)
@@ -37,12 +37,22 @@ export const unit1: UnitData = {
   // ── VĂN HOÁ NOTE: Tạo curiosity ngay từ đầu ──────────────────────────────
   // Research: Cultural hook tăng intrinsic motivation (SDT - Ryan & Deci 2000)
   culturalNote:
-    'Người bản ngữ dùng <span class="text-emerald-400 font-semibold">Hi!</span> thường xuyên hơn <span class="text-emerald-400 font-semibold">Hello!</span> trong giao tiếp hàng ngày — ngay cả trong môi trường công sở. <span class="text-emerald-400 font-semibold">Hello</span> nghe trang trọng hơn, phù hợp khi gặp khách hàng hoặc sếp lần đầu. Thú vị: người Anh và người Mỹ bắt tay NGẮN và CHỈ 1 LẦN — không lắc tay nhiều lần như ở Việt Nam!',
+    'Người bản ngữ dùng <span class="text-primary font-semibold">Hi!</span> thường xuyên hơn <span class="text-primary font-semibold">Hello!</span> trong giao tiếp hàng ngày — ngay cả trong môi trường công sở. <span class="text-primary font-semibold">Hello</span> nghe trang trọng hơn, phù hợp khi gặp khách hàng hoặc sếp lần đầu. Thú vị: người Anh và người Mỹ bắt tay NGẮN và CHỈ 1 LẦN — không lắc tay nhiều lần như ở Việt Nam!',
 
   // ── JOB SCENARIOS (TASK-153: world-class + VN adult job needs) ───────────
   jobScenarios: [
-    { id: 1, title: "Ngày đầu đi làm tại văn phòng", focus: "greetings + self-intro + small talk", context: "first day office in Hanoi with US colleague (Babbel-style)" },
-    { id: 2, title: "Gặp sếp hoặc khách hàng", focus: "formal hello + how are you + seat", context: "meeting manager or client" },
+    {
+      id: 1,
+      title: "Ngày đầu đi làm tại văn phòng",
+      focus: "greetings + self-intro + small talk",
+      context: "first day office in Hanoi with US colleague (Babbel-style)",
+    },
+    {
+      id: 2,
+      title: "Gặp sếp hoặc khách hàng",
+      focus: "formal hello + how are you + seat",
+      context: "meeting manager or client",
+    },
   ],
 
   // ── WARMUP: Kích hoạt prior knowledge ────────────────────────────────────
@@ -82,9 +92,11 @@ export const unit1: UnitData = {
       example: "Good morning, everyone!",
       example2: "Good morning! Ready for the meeting?",
       collocation: "Good morning, sir/ma'am",
-      audio: "/audio/unit1/good_morning.mp3",
-      l1_interference_vn: "⚠️ Chỉ dùng đến 12 giờ trưa. Sau đó: 'Good afternoon' (12h-18h), 'Good evening' (18h+). KHÔNG 'Good day' (nghe cổ xưa).",
-      image_url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop&auto=format",
+      audio: "/audio/unit-1/good_morning.mp3",
+      l1_interference_vn:
+        "⚠️ Chỉ dùng đến 12 giờ trưa. Sau đó: 'Good afternoon' (12h-18h), 'Good evening' (18h+). KHÔNG 'Good day' (nghe cổ xưa).",
+      image_url:
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop&auto=format",
     },
     {
       id: 2,
@@ -95,8 +107,9 @@ export const unit1: UnitData = {
       example: "Good afternoon, Mr. Smith.",
       example2: "Good afternoon! Come in, please.",
       collocation: "Good afternoon, team",
-      audio: "/audio/unit1/good_afternoon.mp3",
-      l1_interference_vn: "⚠️ Dùng từ khoảng 12h đến 6h tối. Nhớ: 'afternoon' có 'noon' (12h) ở trong. 'See you' không phân biệt sáng/chiều.",
+      audio: "/audio/unit-1/good_afternoon.mp3",
+      l1_interference_vn:
+        "⚠️ Dùng từ khoảng 12h đến 6h tối. Nhớ: 'afternoon' có 'noon' (12h) ở trong. 'See you' không phân biệt sáng/chiều.",
     },
     {
       id: 3,
@@ -107,8 +120,9 @@ export const unit1: UnitData = {
       example: "My name is Linh.",
       example2: "Hi! My name is Alex. What's yours?",
       collocation: "My name is... / I'm...",
-      audio: "/audio/unit1/my_name_is.mp3",
-      l1_interference_vn: "⚠️ 'My name is Lan' = formal hơn 'I'm Lan'. Trong tiếng Việt nói cả hai như nhau, nhưng tiếng Anh 'I'm' thông dụng hơn khi gặp gỡ.",
+      audio: "/audio/unit-1/my_name_is.mp3",
+      l1_interference_vn:
+        "⚠️ 'My name is Lan' = formal hơn 'I'm Lan'. Trong tiếng Việt nói cả hai như nhau, nhưng tiếng Anh 'I'm' thông dụng hơn khi gặp gỡ.",
     },
     {
       id: 4,
@@ -119,8 +133,9 @@ export const unit1: UnitData = {
       example: "I'm from Vietnam.",
       example2: "I'm from a city near Hanoi.",
       collocation: "originally from / come from",
-      audio: "/audio/unit1/im_from.mp3",
-      l1_interference_vn: "⚠️ 'I'm from Vietnam' (✅) = 'I come from Vietnam' (✅). KHÔNG nói 'I am come from' — đây là lỗi phổ biến của người Việt.",
+      audio: "/audio/unit-1/im_from.mp3",
+      l1_interference_vn:
+        "⚠️ 'I'm from Vietnam' (✅) = 'I come from Vietnam' (✅). KHÔNG nói 'I am come from' — đây là lỗi phổ biến của người Việt.",
     },
     {
       id: 5,
@@ -131,8 +146,9 @@ export const unit1: UnitData = {
       example: "Hi! How are you today?",
       example2: "How are you doing?",
       collocation: "How are you? / How are you doing? / How's it going?",
-      audio: "/audio/unit1/how_are_you.mp3",
-      l1_interference_vn: "⚠️ Câu trả lời chuẩn: 'Fine/Good, thanks. And you?' — KHÔNG trả lời chi tiết về sức khỏe trừ khi ai đó hỏi thật sự.",
+      audio: "/audio/unit-1/how_are_you.mp3",
+      l1_interference_vn:
+        "⚠️ Câu trả lời chuẩn: 'Fine/Good, thanks. And you?' — KHÔNG trả lời chi tiết về sức khỏe trừ khi ai đó hỏi thật sự.",
     },
     {
       id: 6,
@@ -143,8 +159,9 @@ export const unit1: UnitData = {
       example: "What's your name? — I'm David.",
       example2: "And what's your name, please?",
       collocation: "What's your name? / May I ask your name?",
-      audio: "/audio/unit1/whats_your_name.mp3",
-      l1_interference_vn: "⚠️ KHÔNG nói 'What is your name calling?' hay 'How do you call yourself?' — đây là dịch thẳng từ tiếng Việt. Chỉ cần 'What's your name?'",
+      audio: "/audio/unit-1/whats_your_name.mp3",
+      l1_interference_vn:
+        "⚠️ KHÔNG nói 'What is your name calling?' hay 'How do you call yourself?' — đây là dịch thẳng từ tiếng Việt. Chỉ cần 'What's your name?'",
     },
     {
       id: 7,
@@ -155,8 +172,9 @@ export const unit1: UnitData = {
       example: "I'm fine, thank you. And you?",
       example2: "I'm fine, thanks for asking!",
       collocation: "Fine, thanks! / Pretty good, thanks!",
-      audio: "/audio/unit1/im_fine_thank_you.mp3",
-      l1_interference_vn: "⚠️ 'I'm fine/good/great, thanks' đều OK. 'Fine' KHÔNG phải 'phạt tiền' (đó là lỗi false friend). Có thể dùng 'Not bad!' cũng được.",
+      audio: "/audio/unit-1/im_fine_thank_you.mp3",
+      l1_interference_vn:
+        "⚠️ 'I'm fine/good/great, thanks' đều OK. 'Fine' KHÔNG phải 'phạt tiền' (đó là lỗi false friend). Có thể dùng 'Not bad!' cũng được.",
     },
     {
       id: 8,
@@ -167,8 +185,9 @@ export const unit1: UnitData = {
       example: "I'm good. And you?",
       example2: "I feel great! And you?",
       collocation: "And you? / How about you? / What about you?",
-      audio: "/audio/unit1/and_you.mp3",
-      l1_interference_vn: "⚠️ 'And you?' = hỏi lại. Cũng nói 'What about you?' hay 'How about you?' Tất cả đều tự nhiên trong hội thoại.",
+      audio: "/audio/unit-1/and_you.mp3",
+      l1_interference_vn:
+        "⚠️ 'And you?' = hỏi lại. Cũng nói 'What about you?' hay 'How about you?' Tất cả đều tự nhiên trong hội thoại.",
     },
     {
       id: 9,
@@ -179,9 +198,11 @@ export const unit1: UnitData = {
       example: "Nice to meet you, Sarah!",
       example2: "Nice to meet you — I've heard so much about you!",
       collocation: "Nice to meet you! / Pleased to meet you! (trang trọng hơn)",
-      audio: "/audio/unit1/nice_to_meet_you.mp3",
-      l1_interference_vn: "⚠️ Trả lời bằng: 'Nice to meet you TOO' (có 'too'). KHÔNG chỉ nói 'Nice to meet you' lại — nghe lạ. 'You too' cũng đúng.",
-      image_url: "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=200&h=200&fit=crop&auto=format",
+      audio: "/audio/unit-1/nice_to_meet_you.mp3",
+      l1_interference_vn:
+        "⚠️ Trả lời bằng: 'Nice to meet you TOO' (có 'too'). KHÔNG chỉ nói 'Nice to meet you' lại — nghe lạ. 'You too' cũng đúng.",
+      image_url:
+        "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=200&h=200&fit=crop&auto=format",
     },
     {
       id: 10,
@@ -192,8 +213,9 @@ export const unit1: UnitData = {
       example: "Please sit down.",
       example2: "Could you help me, please?",
       collocation: "Please + động từ / Could you... please?",
-      audio: "/audio/unit1/please.mp3",
-      l1_interference_vn: "⚠️ 'Please' đặt đầu hoặc cuối câu yêu cầu: 'Please help me' / 'Help me, please'. Giữa câu nghe kém tự nhiên hơn.",
+      audio: "/audio/unit-1/please.mp3",
+      l1_interference_vn:
+        "⚠️ 'Please' đặt đầu hoặc cuối câu yêu cầu: 'Please help me' / 'Help me, please'. Giữa câu nghe kém tự nhiên hơn.",
     },
   ],
 
@@ -204,7 +226,7 @@ export const unit1: UnitData = {
     {
       id: 1,
       title: "Ngày đầu đi làm",
-      audio: "/audio/unit1/dialogue_1.mp3",
+      audio: "/audio/unit-1/dialogue_1.mp3",
       desc: "Alex (đồng nghiệp Mỹ) gặp Linh trong ngày đầu đi làm tại văn phòng.",
       lines: [
         {
@@ -217,7 +239,8 @@ export const unit1: UnitData = {
           id: "d1-2",
           speaker: "Linh",
           text: "Hi Alex! I'm Linh. Nice to meet you too.",
-          translation: "Chào Alex! Mình là Linh. Mình cũng rất vui được gặp bạn.",
+          translation:
+            "Chào Alex! Mình là Linh. Mình cũng rất vui được gặp bạn.",
         },
         {
           id: "d1-3",
@@ -248,7 +271,7 @@ export const unit1: UnitData = {
     {
       id: 2,
       title: "Gặp lại bạn cũ",
-      audio: "/audio/unit1/dialogue_2.mp3",
+      audio: "/audio/unit-1/dialogue_2.mp3",
       desc: "Bob gặp lại Alice sau một thời gian dài không gặp.",
       lines: [
         {
@@ -280,7 +303,7 @@ export const unit1: UnitData = {
     {
       id: 3,
       title: "Gặp giáo viên",
-      audio: "/audio/unit1/dialogue_3.mp3",
+      audio: "/audio/unit-1/dialogue_3.mp3",
       desc: "Minh gặp thầy Brown trước giờ học.",
       lines: [
         {
@@ -324,13 +347,23 @@ export const unit1: UnitData = {
     {
       id: "lac2",
       audio_text: "Nice to meet you",
-      options: ["How are you?", "Nice to meet you", "I'm from Vietnam", "Goodbye"],
+      options: [
+        "How are you?",
+        "Nice to meet you",
+        "I'm from Vietnam",
+        "Goodbye",
+      ],
       answer: "Nice to meet you",
     },
     {
       id: "lac3",
       audio_text: "I am from Vietnam",
-      options: ["I am fine", "My name is Linh", "I am from Vietnam", "See you later"],
+      options: [
+        "I am fine",
+        "My name is Linh",
+        "I am from Vietnam",
+        "See you later",
+      ],
       answer: "I am from Vietnam",
     },
     {
@@ -364,7 +397,7 @@ export const unit1: UnitData = {
   },
 
   grammar: {
-    title: "To be — Động từ \"là / ở / thì\"",
+    title: 'To be — Động từ "là / ở / thì"',
     // Inductive notice: dẫn người học nhận ra pattern trong dialogue trước
     // Research: noticing → input becomes intake (Schmidt 1990)
     rule: "I am  |  You / We / They are  |  He / She / It is",
@@ -378,7 +411,10 @@ export const unit1: UnitData = {
       { en: "My name is Minh.", vn: "Tên tôi là Minh." },
       { en: "I am from Vietnam.", vn: "Tôi đến từ Việt Nam." },
       { en: "She is nice.", vn: "Cô ấy rất tốt." },
-      { en: "We are happy to be here.", vn: "Chúng tôi rất vui khi có mặt ở đây." },
+      {
+        en: "We are happy to be here.",
+        vn: "Chúng tôi rất vui khi có mặt ở đây.",
+      },
     ],
     tip: "Mẹo nhớ nhanh: I → AM (chỉ mình I), He/She/It → IS (số ít), còn lại (You/We/They) → ARE.",
 
@@ -428,14 +464,16 @@ export const unit1: UnitData = {
       sentence: "She am a teacher.",
       errorWord: "am",
       correction: "is",
-      explanation_vn: "Chủ ngữ 'She' (ngôi 3 số ít) → dùng 'IS', không dùng 'am'. Quy tắc: I AM / You·We·They ARE / He·She·It IS.",
+      explanation_vn:
+        "Chủ ngữ 'She' (ngôi 3 số ít) → dùng 'IS', không dùng 'am'. Quy tắc: I AM / You·We·They ARE / He·She·It IS.",
     },
     {
       id: "sc1-2",
       sentence: "My name are Linh.",
       errorWord: "are",
       correction: "is",
-      explanation_vn: "'My name' là số ít → dùng 'IS'. 'Are' dùng cho 'you, we, they'. Ví dụ đúng: 'My name IS Linh.'",
+      explanation_vn:
+        "'My name' là số ít → dùng 'IS'. 'Are' dùng cho 'you, we, they'. Ví dụ đúng: 'My name IS Linh.'",
     },
   ],
 
@@ -448,7 +486,8 @@ export const unit1: UnitData = {
       options: ["am", "is", "are", "be"],
       answer: "is",
       type: "multiple-choice",
-      explanation_vn: "'My name' là số ít (singular) → dùng 'IS'. Quy tắc: I AM / You·We·They ARE / He·She·It·My name IS.",
+      explanation_vn:
+        "'My name' là số ít (singular) → dùng 'IS'. Quy tắc: I AM / You·We·They ARE / He·She·It·My name IS.",
     },
     {
       id: "pq2",
@@ -456,7 +495,8 @@ export const unit1: UnitData = {
       options: ["Tạm biệt", "Cảm ơn", "Rất vui được gặp bạn", "Xin chào"],
       answer: "Rất vui được gặp bạn",
       type: "multiple-choice",
-      explanation_vn: "'Nice to meet you' = Rất vui được gặp bạn — dùng khi gặp lần đầu. Trả lời: 'Nice to meet you TOO!' (phải có 'too').",
+      explanation_vn:
+        "'Nice to meet you' = Rất vui được gặp bạn — dùng khi gặp lần đầu. Trả lời: 'Nice to meet you TOO!' (phải có 'too').",
     },
     {
       id: "pq3",
@@ -561,10 +601,16 @@ export const unit1: UnitData = {
     {
       id: "q1",
       question: "Câu nào dùng để nói 'Rất vui được gặp bạn'?",
-      options: ["Goodbye", "Nice to meet you", "How old are you?", "Where are you from?"],
+      options: [
+        "Goodbye",
+        "Nice to meet you",
+        "How old are you?",
+        "Where are you from?",
+      ],
       answer: "Nice to meet you",
       type: "multiple-choice",
-      explanation_vn: "'Nice to meet you' = lời chào khi lần đầu gặp mặt. 'Goodbye' = tạm biệt, không dùng khi gặp nhau.",
+      explanation_vn:
+        "'Nice to meet you' = lời chào khi lần đầu gặp mặt. 'Goodbye' = tạm biệt, không dùng khi gặp nhau.",
     },
     {
       id: "q2",
@@ -572,24 +618,37 @@ export const unit1: UnitData = {
       options: ["Good morning", "Hi!", "Goodbye", "Please"],
       answer: "Hi!",
       type: "multiple-choice",
-      explanation_vn: "'Hi!' là lời chào thân mật, dùng hàng ngày. 'Good morning' trang trọng hơn, chỉ dùng buổi sáng.",
+      explanation_vn:
+        "'Hi!' là lời chào thân mật, dùng hàng ngày. 'Good morning' trang trọng hơn, chỉ dùng buổi sáng.",
     },
     // Medium
     {
       id: "q3",
       question: "Câu nào đúng ngữ pháp?",
-      options: ["She am a teacher.", "He are my friend.", "She is a teacher.", "They is nice."],
+      options: [
+        "She am a teacher.",
+        "He are my friend.",
+        "She is a teacher.",
+        "They is nice.",
+      ],
       answer: "She is a teacher.",
       type: "multiple-choice",
-      explanation_vn: "Động từ 'to be': I am / You are / He·She·It IS / They are. 'She' → dùng 'is', không dùng 'am' hay 'are'.",
+      explanation_vn:
+        "Động từ 'to be': I am / You are / He·She·It IS / They are. 'She' → dùng 'is', không dùng 'am' hay 'are'.",
     },
     {
       id: "q4",
       question: "Khi ai đó nói 'How are you?', câu trả lời phù hợp nhất là gì?",
-      options: ["Nice to meet you", "I am fine, thank you", "My name is Linh", "Goodbye"],
+      options: [
+        "Nice to meet you",
+        "I am fine, thank you",
+        "My name is Linh",
+        "Goodbye",
+      ],
       answer: "I am fine, thank you",
       type: "multiple-choice",
-      explanation_vn: "'How are you?' hỏi về tình trạng. Đáp: 'I am fine / I'm good / I'm well'. 'Nice to meet you' chỉ dùng khi lần đầu gặp mặt.",
+      explanation_vn:
+        "'How are you?' hỏi về tình trạng. Đáp: 'I am fine / I'm good / I'm well'. 'Nice to meet you' chỉ dùng khi lần đầu gặp mặt.",
     },
     // Hard — productive
     {
@@ -620,7 +679,8 @@ export const unit1: UnitData = {
       options: ["Đúng", "Sai", "Không đề cập"],
       answer: "Đúng",
       type: "true-false",
-      explanation_vn: "Trong hội thoại: Linh nói 'I'm from Vietnam' và Alex nói 'I'm from the USA' — cả hai đều đúng.",
+      explanation_vn:
+        "Trong hội thoại: Linh nói 'I'm from Vietnam' và Alex nói 'I'm from the USA' — cả hai đều đúng.",
     },
   ],
 
@@ -633,7 +693,8 @@ export const unit1: UnitData = {
       options: ["Blue", "Red", "Green", "Yellow"],
       answer: "Red",
       type: "multiple-choice",
-      explanation_vn: "Red = đỏ. Blue = xanh dương. Green = xanh lá. Yellow = vàng. Đây là 4 màu cơ bản nhất.",
+      explanation_vn:
+        "Red = đỏ. Blue = xanh dương. Green = xanh lá. Yellow = vàng. Đây là 4 màu cơ bản nhất.",
     },
     {
       id: "cr1-2",
@@ -641,7 +702,8 @@ export const unit1: UnitData = {
       options: ["Eleven", "Twelve", "Ten", "Eight"],
       answer: "Ten",
       type: "multiple-choice",
-      explanation_vn: "Ten = 10. Eight = 8. Eleven = 11. Twelve = 12. Nhớ: Eleven và Twelve là 2 số bất quy tắc (không theo quy luật -teen).",
+      explanation_vn:
+        "Ten = 10. Eight = 8. Eleven = 11. Twelve = 12. Nhớ: Eleven và Twelve là 2 số bất quy tắc (không theo quy luật -teen).",
     },
     {
       id: "cr1-3",
@@ -656,7 +718,8 @@ export const unit1: UnitData = {
       options: ["Sorry", "Please", "Thank you", "Hello"],
       answer: "Thank you",
       type: "multiple-choice",
-      explanation_vn: "Thank you = Cảm ơn. Sorry = Xin lỗi. Please = Xin / Làm ơn. Hello = Xin chào. Bốn từ lịch sự thiết yếu nhất.",
+      explanation_vn:
+        "Thank you = Cảm ơn. Sorry = Xin lỗi. Please = Xin / Làm ơn. Hello = Xin chào. Bốn từ lịch sự thiết yếu nhất.",
     },
     {
       id: "cr1-5",
@@ -672,14 +735,19 @@ export const unit1: UnitData = {
   // 8 cặp từ QUAN TRỌNG NHẤT của unit — phản xạ trong 60 giây
   pronunciationFocus: {
     phoneme: "/θ/",
-    description: "Âm \"th\" vô thanh — lưỡi chạm nhẹ răng trên, thổi hơi (thank, think)",
+    description:
+      'Âm "th" vô thanh — lưỡi chạm nhẹ răng trên, thổi hơi (thank, think)',
     examples: [
-        { word: "thank", ipa: "/θæŋk/", tip: "Đặt lưỡi giữa hai hàm răng, thổi hơi — KHÔNG cuộn lưỡi" },
-        { word: "three", ipa: "/θriː/", tip: "Giữ lưỡi ở răng, hơi ra đều" },
+      {
+        word: "thank",
+        ipa: "/θæŋk/",
+        tip: "Đặt lưỡi giữa hai hàm răng, thổi hơi — KHÔNG cuộn lưỡi",
+      },
+      { word: "three", ipa: "/θriː/", tip: "Giữ lưỡi ở răng, hơi ra đều" },
     ],
     minimalPairs: [
-        ["thank", "tank"],
-        ["think", "tink"],
+      ["thank", "tank"],
+      ["think", "tink"],
     ],
   },
 
@@ -723,14 +791,25 @@ export const unit1: UnitData = {
       {
         id: "u1r-q2",
         question_vn: "Tom và Mai làm việc ở đâu?",
-        options: ["A school in England", "A hospital in Vietnam", "A company in Hanoi", "A bank in Saigon"],
+        options: [
+          "A school in England",
+          "A hospital in Vietnam",
+          "A company in Hanoi",
+          "A bank in Saigon",
+        ],
         answer: "A company in Hanoi",
-        explanation_vn: "Đoạn văn nói 'We work together at a company in Hanoi.'",
+        explanation_vn:
+          "Đoạn văn nói 'We work together at a company in Hanoi.'",
       },
       {
         id: "u1r-q3",
         question_vn: "Tom nói gì khi gặp Mai?",
-        options: ["How are you?'", "'Nice to meet you, Mai!'", "'Good morning!'", "'See you later!'"],
+        options: [
+          "How are you?'",
+          "'Nice to meet you, Mai!'",
+          "'Good morning!'",
+          "'See you later!'",
+        ],
         answer: "'Nice to meet you, Mai!'",
         explanation_vn: "Đoạn văn nói Tom says: 'Nice to meet you, Mai!'",
       },

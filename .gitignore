@@ -38,7 +38,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
 .supabase-db-password
 
 # vercel
@@ -51,3 +53,11 @@ supabase/.temp/
 test-results/
 .playwright-cli/
 /output/playwright/
+
+# research corpus (1.6GB evidence archive, not source)
+/research/
+/dist/
+.vinext/
+.cloudflare/
+.wrangler/
+.neon

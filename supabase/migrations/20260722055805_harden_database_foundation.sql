@@ -22,21 +22,8 @@ revoke insert on table public.notification_logs from anon, authenticated;
 revoke all on table public.project_memories from anon, authenticated;
 
 -- Move pgvector out of the exposed public schema.
-do $migration$
-begin
-  if exists (
-    select 1
-    from pg_extension e
-    join pg_namespace n on n.oid = e.extnamespace
-    where e.extname = 'vector' and n.nspname = 'public'
-  ) then
-    execute 'alter extension vector set schema extensions';
-  end if;
-end
-$migration$;
-
 create or replace function public.match_memories(
-  query_embedding extensions.vector,
+  query_embedding public.vector,
   match_threshold double precision default 0.70,
   match_count integer default 8,
   filter_project text default null,
@@ -63,19 +50,19 @@ as $function$
     pm.metadata,
     pm.project,
     pm.created_at,
-    (1 - (pm.embedding operator(extensions.<=>) query_embedding))::double precision as similarity
+    (1 - (pm.embedding operator(public.<=>) query_embedding))::double precision as similarity
   from public.project_memories as pm
   where
-    (1 - (pm.embedding operator(extensions.<=>) query_embedding)) > greatest(0.0, least(match_threshold, 1.0))
+    (1 - (pm.embedding operator(public.<=>) query_embedding)) > greatest(0.0, least(match_threshold, 1.0))
     and (filter_project is null or pm.project = filter_project)
     and (filter_category is null or pm.category = filter_category)
-  order by pm.embedding operator(extensions.<=>) query_embedding
+  order by pm.embedding operator(public.<=>) query_embedding
   limit greatest(1, least(match_count, 50));
 $function$;
 
-revoke all on function public.match_memories(extensions.vector, double precision, integer, text, text)
+revoke all on function public.match_memories(public.vector, double precision, integer, text, text)
   from public, anon, authenticated;
-grant execute on function public.match_memories(extensions.vector, double precision, integer, text, text)
+grant execute on function public.match_memories(public.vector, double precision, integer, text, text)
   to service_role;
 
 -- Safe trigger helpers and pure helpers: immutable search path.

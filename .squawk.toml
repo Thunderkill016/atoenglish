@@ -1,0 +1,24 @@
+# Squawk migration-lint configuration.
+# scripts/neon/replay-migrations.mjs wraps each migration file in its own
+# transaction, so lint under the same transactional model.
+assume_in_transaction = true
+pg_version = "18"
+
+# Advisory rules disabled repo-wide:
+# - prefer-big-int*: int/serial primary keys are acceptable at current scale.
+# - require-concurrent-index-creation: CREATE INDEX CONCURRENTLY cannot run
+#   inside a transaction and would break transaction-wrapped replay; indexes
+#   here are created on new or small tables.
+excluded_rules = [
+  "prefer-big-int",
+  "prefer-bigint-over-int",
+  "prefer-bigint-over-smallint",
+  "require-concurrent-index-creation",
+]
+
+# Accepted deviations in migrations that are already applied to production;
+# editing them would rewrite applied history. New files are linted normally.
+excluded_paths = [
+  "**/20260621160000_schema_consolidation.sql",
+  "**/20260621190000_fix_award_user_xp_level_check.sql",
+]

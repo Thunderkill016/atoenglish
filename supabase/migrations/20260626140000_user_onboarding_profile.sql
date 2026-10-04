@@ -4,7 +4,7 @@
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS public.user_onboarding_profile (
-  user_id        uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id        uuid PRIMARY KEY REFERENCES neon_auth.user(id) ON DELETE CASCADE,
   goal           text NOT NULL,
   obstacle       text NOT NULL,
   daily_minutes  integer NOT NULL CHECK (daily_minutes IN (5, 15, 30, 60)),

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
+import { captureException } from "@/lib/report-error";
 import { motion } from "framer-motion";
 import { AlertTriangle, RefreshCcw, Home } from "lucide-react";
 import Link from "next/link";
@@ -14,13 +14,13 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    captureException(error);
   }, [error]);
 
   return (
     <div className="relative flex min-h-[70vh] flex-col items-center justify-center px-4 text-center space-y-6">
       {/* Ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-64 w-64 rounded-full bg-red-500/5 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-64 w-64 rounded-full bg-destructive/5 blur-3xl pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -29,7 +29,7 @@ export default function Error({
         className="space-y-6 max-w-md"
       >
         {/* Icon */}
-        <div className="flex size-20 items-center justify-center rounded-3xl bg-red-500/10 text-red-500 mx-auto border border-red-500/20">
+        <div className="flex size-20 items-center justify-center rounded-3xl bg-destructive/10 text-destructive mx-auto border border-destructive/20">
           <AlertTriangle className="size-10" />
         </div>
 
@@ -37,10 +37,11 @@ export default function Error({
         <div className="space-y-2">
           <h1 className="text-2xl font-black text-foreground">Có lỗi xảy ra</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Đã xảy ra lỗi khi tải trang này. Hãy thử tải lại hoặc quay về trang chủ.
+            Đã xảy ra lỗi khi tải trang này. Hãy thử tải lại hoặc quay về trang
+            chủ.
           </p>
           {error.digest && (
-            <p className="text-[10px] font-mono text-muted-foreground/60 bg-muted/50 px-3 py-1 rounded-lg inline-block">
+            <p className="text-xs font-mono text-muted-foreground/60 bg-muted/50 px-3 py-1 rounded-lg inline-block">
               Mã lỗi: {error.digest}
             </p>
           )}
@@ -56,8 +57,8 @@ export default function Error({
             Thử lại
           </button>
           <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-foreground text-sm font-bold hover:bg-muted transition-all active:scale-[0.98]"
+            href="/learn"
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl border border-border bg-transparent text-foreground text-sm font-bold hover:bg-muted transition-all active:scale-[0.98]"
           >
             <Home className="size-4" />
             Về Dashboard

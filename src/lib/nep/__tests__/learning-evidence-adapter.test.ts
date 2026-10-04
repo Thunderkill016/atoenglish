@@ -13,7 +13,7 @@ function recordFor(
   kind: "comprehend" | "produce" | "repair" | "retry" | "transfer",
   response: string,
   responseSource: "speech" | "text" | null,
-  supportUsed = false,
+  supportLevelUsed = 0,
 ) {
   const lessonAction = action(kind);
   return toLearningAttemptRecord({
@@ -22,7 +22,7 @@ function recordFor(
     response,
     responseSource,
     evaluation: evaluateNếpAction(lessonAction, response),
-    supportUsed,
+    supportLevelUsed,
     latencyMs: 1000,
   });
 }
@@ -132,7 +132,7 @@ describe("Nếp → learning-core adapter", () => {
       "retry",
       "Could you say that again? My name is Hoang.",
       "speech",
-      false,
+      0,
     );
 
     expect(record?.attempt.revealUsed).toBe(true);
@@ -145,7 +145,7 @@ describe("Nếp → learning-core adapter", () => {
       "retry",
       "Could you say that again? My name is Hoang.",
       "speech",
-      true,
+      1,
     );
 
     expect(record?.attempt.supportLevel).toBe(1);
@@ -155,5 +155,33 @@ describe("Nếp → learning-core adapter", () => {
       errorSignals: { errorTags: [], missingTargetGroupIndexes: [], remediationHints: [] },
     });
     expect(record?.candidate).toBeNull();
+  });
+
+  it("mints retention evidence in review mode while preserving the action's own channel in metadata", () => {
+    const lessonAction = action("produce");
+    const record = toLearningAttemptRecord({
+      lesson: firstMeetingLessonV1,
+      action: lessonAction,
+      response: "My name is Hoang",
+      responseSource: "speech",
+      evaluation: evaluateNếpAction(lessonAction, "My name is Hoang"),
+      supportLevelUsed: 0,
+      latencyMs: 1000,
+      reviewMode: true,
+    });
+
+    expect(record?.candidate?.type).toBe("retention");
+    expect(record?.candidate?.metadata).toMatchObject({
+      reviewMode: true,
+      assessmentEvidenceType: "production",
+    });
+    expect(record?.attempt.metadata).toMatchObject({ reviewMode: true });
+  });
+
+  it("keeps the action's own evidence type when reviewMode is off", () => {
+    const record = recordFor("produce", "My name is Hoang", "speech");
+
+    expect(record?.candidate?.type).toBe("production");
+    expect(record?.attempt.metadata).toMatchObject({ reviewMode: false });
   });
 });

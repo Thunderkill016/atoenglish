@@ -1,9 +1,12 @@
 /**
- * Integration Test Setup
+ * Integration Test Setup (Neon)
  *
  * Strategy:
- * - Create a persistent test user via Supabase Admin API
- * - Sign in as that user to get a real JWT
+ * - Ensure a persistent test user exists in neon_auth.user
+ * - Sign in via the Neon Auth API to get a session token
+ * - Exchange the session token for a Data API JWT
+ * - Build a @neondatabase/neon-js client with that JWT (RLS enforced as the
+ *   test user) plus an .auth.getUser() shim
  * - Mock Next.js server-only modules with vi.mock (hoisted)
  * - Mock @/lib/supabase/server via globalThis reference so the factory can
  *   return a client that is set asynchronously in beforeAll
@@ -29,32 +32,104 @@ try {
   }
 } catch { /* .env.local not found — CI uses real env vars */ }
 
-import { createClient } from "@supabase/supabase-js";
+import { neon } from "@neondatabase/serverless";
+import { createClient } from "@neondatabase/neon-js";
 import { vi, beforeAll, afterAll } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { NeonPostgrestClient } from "@neondatabase/neon-js";
 import type { Database } from "@/types/supabase";
 
 // ── Env ─────────────────────────────────────────────────────────────────────
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const AUTH_BASE_URL = process.env.NEON_AUTH_BASE_URL!;
+const DATA_API_URL = process.env.NEON_DATA_API_URL!;
+const DB_URL = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL!;
 
 const TEST_EMAIL = "integration-test@atoenglish.test";
 const TEST_PASSWORD = "TestPassword!2026";
 
-// ── Admin client (bypasses RLS) ───────────────────────────────────────────
-export const adminClient = createClient<Database>(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+// ── SQL (owner role — bypasses RLS, for setup/lookup/cleanup only) ──────────
+// Exported as adminSql: test cleanup must bypass RLS because several tables
+// intentionally deny DELETE to `authenticated` (e.g. speaking_sessions).
+// This mirrors the old Supabase service_role adminClient behavior.
+const sql = neon(DB_URL);
+export const adminSql = sql;
+
+type AuthUser = { id: string; email: string; name?: string | null };
+
+async function authApi<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${AUTH_BASE_URL}/${path}`, {
+    ...init,
+    headers: {
+      // The Neon project allows localhost origins (allow_localhost).
+      Origin: "http://localhost",
+      ...init?.headers,
+    },
+  });
+  const body = (await res.json().catch(() => null)) as T & {
+    message?: string;
+    code?: string;
+  };
+  if (!res.ok) {
+    throw new Error(
+      `Neon Auth ${path} failed (${res.status}): ${body?.message ?? res.statusText}`,
+    );
+  }
+  return body;
+}
+
+async function ensureTestUser(): Promise<AuthUser> {
+  const existing = await sql`
+    SELECT id, email FROM neon_auth."user" WHERE email = ${TEST_EMAIL} LIMIT 1
+  `;
+  if (existing[0]) return existing[0] as AuthUser;
+
+  const { user } = await authApi<{ user: AuthUser }>("sign-up/email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+      name: "Integration Test",
+      // Absolute URL satisfies the auth service's Origin requirement.
+      callbackURL: "http://localhost/auth/callback",
+    }),
+  });
+  return user;
+}
+
+async function getDataApiJwt(): Promise<string> {
+  const signInRes = await fetch(`${AUTH_BASE_URL}/sign-in/email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Origin: "http://localhost",
+    },
+    body: JSON.stringify({ email: TEST_EMAIL, password: TEST_PASSWORD }),
+  });
+  if (!signInRes.ok) {
+    throw new Error(`Neon Auth sign-in failed (${signInRes.status})`);
+  }
+  // The /token endpoint authenticates via the session cookie, not Bearer.
+  const sessionCookie = (signInRes.headers.getSetCookie?.() ?? [])
+    .map((c) => c.split(";")[0])
+    .join("; ");
+  const { token } = await authApi<{ token: string }>("token", {
+    headers: { Cookie: sessionCookie },
+  });
+  return token;
+}
 
 // ── Test user client (set in beforeAll, referenced via globalThis) ─────────
 export let testUserId: string;
+
+// Same client surface as adminClient — RLS-scoped to the test user, which is
+// the only scope the integration tests operate on.
+export let adminClient: NeonPostgrestClient<Database>;
 
 // globalThis bridge: vi.mock factory runs at import time (hoisted),
 // but createClient() is called at test runtime — AFTER beforeAll sets the client.
 declare global {
    
-  var __testSupabaseClient: SupabaseClient<Database> | undefined;
+  var __testSupabaseClient: unknown;
    
   var __testUserId: string | undefined;
 }
@@ -93,64 +168,61 @@ vi.mock("@/lib/supabase/server", () => ({
 
 // ── Setup ────────────────────────────────────────────────────────────────
 beforeAll(async () => {
-  // 1. Ensure test user exists
-  const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-  let user = existingUsers?.users?.find((u) => u.email === TEST_EMAIL);
+  const user = await ensureTestUser();
+  testUserId = user.id;
+  globalThis.__testUserId = user.id;
 
-  if (!user) {
-    const { data, error } = await adminClient.auth.admin.createUser({
-      email: TEST_EMAIL,
-      password: TEST_PASSWORD,
-      email_confirm: true,
-    });
-    if (error) throw new Error(`Failed to create test user: ${error.message}`);
-    user = data.user;
-  }
-  testUserId = user!.id;
-  globalThis.__testUserId = user!.id;
+  const jwt = await getDataApiJwt();
 
-  // 2. Sign in as test user to get real JWT
-  const { data: session, error: signInError } = await createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  ).auth.signInWithPassword({ email: TEST_EMAIL, password: TEST_PASSWORD });
+  const db = createClient<Database>({
+    dataApi: { url: DATA_API_URL, getToken: async () => jwt },
+  });
 
-  if (signInError || !session.session) {
-    throw new Error(`Failed to sign in test user: ${signInError?.message}`);
-  }
-
-  // 3. Build authenticated client and expose via globalThis
-  globalThis.__testSupabaseClient = createClient<Database>(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    {
-      global: { headers: { Authorization: `Bearer ${session.session.access_token}` } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    }
-  );
-
-  // 4. Ensure test user has user_progress row
-  await adminClient.from("user_progress").upsert(
-    {
-      user_id: testUserId,
-      current_level: "A1",
-      total_xp: 0,
-      streak: 0,
-      last_active_date: new Date().toISOString().split("T")[0],
+  // Compat surface: tests exercise the same supabase.auth.getUser() shape
+  // production code uses via src/lib/supabase/server.ts.
+  const client = Object.assign(db, {
+    auth: {
+      getUser: vi.fn(async () => ({
+        data: { user: { ...user, user_metadata: {} } },
+        error: null,
+      })),
+      getSession: vi.fn(async () => ({
+        data: { session: { user }, user },
+        error: null,
+      })),
+      signOut: vi.fn(async () => ({ error: null })),
     },
-    { onConflict: "user_id" }
-  );
+  });
 
-  // 5. Clean onboarding profile for this test user (RLS test will (re)insert)
-  await adminClient.from("user_onboarding_profile").delete().eq("user_id", testUserId);
+  globalThis.__testSupabaseClient = client;
+  adminClient = db;
+
+  // Ensure test user has user_progress row (owner SQL — bypasses RLS)
+  await sql`
+    insert into public.user_progress
+      (user_id, current_level, total_xp, streak, last_active_date)
+    values (
+      ${testUserId}, 'A1', 0, 0, ${new Date().toISOString().split("T")[0]}
+    )
+    on conflict (user_id) do nothing
+  `;
+
+  // Clean onboarding profile for this test user (RLS test will (re)insert)
+  await sql`delete from public.user_onboarding_profile where user_id = ${testUserId}`;
 });
 
 afterAll(async () => {
-  await adminClient.from("user_lesson_progress").delete().eq("user_id", testUserId);
-  await adminClient.from("speaking_sessions").delete().eq("user_id", testUserId);
-  await adminClient.from("card_review_logs").delete().eq("user_id", testUserId);
-  await adminClient.from("challenge_results").delete().eq("user_id", testUserId);
-  await adminClient.from("quiz_results").delete().eq("user_id", testUserId);
-  await adminClient.from("user_onboarding_profile").delete().eq("user_id", testUserId);
+  if (!adminClient) return;
+  const uid = testUserId;
+  for (const table of [
+    "user_lesson_progress",
+    "speaking_sessions",
+    "card_review_logs",
+    "challenge_results",
+    "quiz_results",
+    "user_onboarding_profile",
+  ]) {
+    await sql.query(`delete from public.${table} where user_id = $1`, [uid]);
+  }
   globalThis.__testSupabaseClient = undefined;
 });

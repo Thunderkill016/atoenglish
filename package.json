@@ -22,10 +22,10 @@
     "e2e:a11y": "dotenv -e .env.local -- playwright test e2e/accessibility-smoke.spec.ts",
     "e2e:time-to-lesson": "dotenv -e .env.local -- playwright test e2e/time-to-lesson.spec.ts",
     "e2e:ui": "dotenv -e .env.local -- playwright test --ui",
-    "db:start": "npx --yes supabase@2.116.0 db start",
-    "db:lint": "npx --yes supabase@2.116.0 db lint --local --level error --fail-on error",
-    "db:test": "npx --yes supabase@2.116.0 test db --local",
-    "db:types": "npx --yes supabase@2.116.0 gen types typescript --local > src/types/supabase.ts",
+    "db:migrate": "node scripts/neon/adapt-migrations.mjs && dotenv -e .env.local -- node scripts/neon/replay-migrations.mjs --bootstrap",
+    "db:lint": "npx --yes squawk-cli@1.5.0 --pg-version 18 supabase/migrations",
+    "db:test": "dotenv -e .env.local -- bash scripts/db-test.sh",
+    "db:types": "dotenv -e .env.local -- bash scripts/db-types.sh",
     "prepare": "husky",
     "test:integration": "dotenv -e .env.local -- vitest run --config vitest.integration.config.ts",
     "audio:generate": "tsx scripts/generate-unit-audio.ts",
@@ -36,20 +36,23 @@
     "audio:generate:b2": "for u in unit-33 unit-34 unit-35 unit-36 unit-37 unit-38 unit-39 unit-40 unit-41 unit-42; do tsx scripts/generate-unit-audio.ts $u; done",
     "audio:generate:all": "npm run audio:generate:a0 && npm run audio:generate:a1 && npm run audio:generate:a2 && npm run audio:generate:b1 && npm run audio:generate:b2",
     "audio:generate:list": "tsx scripts/generate-unit-audio.ts list",
-    "check-deploy": "bash scripts/check-vercel-deploy.sh",
-    "check-deploy:wait": "sleep 30 && bash scripts/check-vercel-deploy.sh",
+    "check-deploy": "bash scripts/check-cf-deploy.sh",
+    "check-deploy:wait": "sleep 30 && bash scripts/check-cf-deploy.sh",
     "smoke:learn": "bash scripts/smoke-learn.sh",
-    "ci:local": "bash scripts/ci-local.sh"
+    "ci:local": "bash scripts/ci-local.sh",
+    "dev:vinext": "vite dev --port 3001",
+    "build:vinext": "vite build",
+    "start:vinext": "vite preview",
+    "deploy:vinext": "node scripts/deploy-cf.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
-    "@sentry/nextjs": "^10.59.0",
-    "@supabase/ssr": "^0.12.0",
-    "@supabase/supabase-js": "^2.108.2",
+    "@neon/config": "^1.8.3",
+    "@neondatabase/auth": "0.5.0-beta",
+    "@neondatabase/neon-js": "^0.7.0-beta",
+    "@neondatabase/serverless": "^1.2.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
-    "@vercel/analytics": "^2.0.1",
-    "@vercel/speed-insights": "^2.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
@@ -58,22 +61,26 @@
     "next-themes": "^0.4.6",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "recharts": "^3.9.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "ts-fsrs": "^5.4.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.62.5",
     "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4.3.1",
+    "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/dom-speech-recognition": "^0.0.12",
     "@types/node": "^26",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
+    "@vinext/cloudflare": "^1.0.1",
     "@vitejs/plugin-react": "^6.0.2",
+    "@vitejs/plugin-rsc": "^0.5.35",
     "@vitest/coverage-v8": "^4.1.9",
+    "cf": "^1.0.0-beta.12",
     "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
@@ -81,12 +88,16 @@
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.7",
     "postcss": "^8",
+    "react-server-dom-webpack": "^19.2.7",
     "shadcn": "^4.11.0",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
+    "vinext": "^1.0.1",
+    "vite": "^8.3.2",
+    "vite-css-modules": "^1.16.0",
     "vitest": "^4.1.9",
-    "wait-on": "^9.0.10"
+    "wrangler": "^4.147.0"
   },
   "browserslist": {
     "production": [
@@ -108,12 +119,13 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "eslint --fix --max-warnings=0"
+      "eslint --fix"
     ]
   },
   "packageManager": "npm@11.16.0",
   "engines": {
     "node": "24.x",
     "npm": "11.x"
-  }
+  },
+  "type": "module"
 }

@@ -16,9 +16,10 @@ function submission(
     lessonId: LESSON_ID,
     lessonVersion: LESSON_VERSION,
     actionId,
+    idempotencyKey: crypto.randomUUID(),
     response,
     responseSource: "speech",
-    supportUsed: false,
+    supportLevelUsed: 0,
     latencyMs: 1200,
     ...overrides,
   };
@@ -124,5 +125,46 @@ describe("zero-path session runner", () => {
     runner.recordSubmission(submission("produce", "my name is hoang"), "2026-09-21T10:00:00.000Z");
     const projection = runner.projection();
     expect(projection.acceptedEvents).toHaveLength(2);
+  });
+
+  it("replays the prior outcome for a repeated idempotency key without re-minting", () => {
+    const runner = session();
+    const key = crypto.randomUUID();
+    const first = runner.recordSubmission(submission("produce", "my name is hoang", { idempotencyKey: key }));
+    expect(first.kind).toBe("evidence");
+
+    const replay = runner.recordSubmission(submission("produce", "my name is hoang", { idempotencyKey: key }));
+    expect(replay.kind).toBe("duplicate");
+    expect(replay.kind === "duplicate" && replay.prior.kind).toBe("evidence");
+
+    const model = runner.readModel();
+    expect(model.submissions).toBe(1);
+    expect(model.evidenceMinted).toBe(1);
+  });
+
+  it("clamps support level to the canonical ladder length", () => {
+    const runner = session();
+    // retrieve declares a 2-rung ladder; the client cannot claim level 16.
+    const outcome = runner.recordSubmission(
+      submission("retrieve", "my name is hoang", { supportLevelUsed: 16 }),
+    );
+    expect(outcome.kind).toBe("evidence");
+    if (outcome.kind === "evidence") {
+      expect(outcome.evaluation.success).toBe(true);
+    }
+    // The clamped level itself is verified through the attempt record in
+    // practice-execution and learning-evidence-adapter tests.
+    expect(runner.readModel().evidenceMinted).toBe(1);
+  });
+
+  it("records unassessed self-report actions without minting evidence", () => {
+    const runner = session();
+    const outcome = runner.recordSubmission(submission("reflect", "Tôi làm được nhưng còn chậm"));
+    expect(outcome.kind).toBe("self-report");
+
+    const model = runner.readModel();
+    expect(model.submissions).toBe(1);
+    expect(model.selfReports).toBe(1);
+    expect(model.evidenceMinted).toBe(0);
   });
 });

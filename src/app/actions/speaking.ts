@@ -150,8 +150,8 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
     }
 
     // Revalidate speaking + dashboard so XP and streak update immediately
-    revalidatePath("/speaking");
-    revalidatePath("/dashboard");
+    revalidatePath("/me/speaking");
+    revalidatePath("/learn");
 
     return {
       success: true,

@@ -15,11 +15,11 @@ security invoker
 set search_path = ''
 as $function$
 declare
-  v_uid uuid := (select auth.uid());
+  v_uid uuid := (select public.auth_uid());
   v_today date := (pg_catalog.now() at time zone 'Asia/Ho_Chi_Minh')::date;
   v_yesterday date := ((pg_catalog.now() at time zone 'Asia/Ho_Chi_Minh')::date - 1);
 begin
-  if current_user not in ('postgres', 'service_role')
+  if current_user not in ('postgres', 'service_role', 'neondb_owner')
      and (v_uid is null or p_user_id is distinct from v_uid) then
     raise exception 'not authorized' using errcode = '42501';
   end if;
@@ -87,7 +87,7 @@ security invoker
 set search_path = ''
 as $function$
 declare
-  v_uid uuid := (select auth.uid());
+  v_uid uuid := (select public.auth_uid());
   v_base_xp integer;
   v_expected_xp integer;
   v_progress_id uuid;
@@ -100,7 +100,7 @@ declare
   v_yesterday date := ((pg_catalog.now() at time zone 'Asia/Ho_Chi_Minh')::date - 1);
   v_completed_count integer;
 begin
-  if current_user not in ('postgres', 'service_role')
+  if current_user not in ('postgres', 'service_role', 'neondb_owner')
      and (v_uid is null or p_user_id is distinct from v_uid) then
     raise exception 'not authorized' using errcode = '42501';
   end if;

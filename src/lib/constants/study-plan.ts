@@ -4,7 +4,14 @@
 
 export interface DailyActivity {
   duration: number; // minutes
-  skill: "pronunciation" | "vocabulary" | "grammar" | "listening" | "speaking" | "reading" | "writing";
+  skill:
+    | "pronunciation"
+    | "vocabulary"
+    | "grammar"
+    | "listening"
+    | "speaking"
+    | "reading"
+    | "writing";
   icon: string;
   title: string;
   description: string;
@@ -63,7 +70,7 @@ export const STUDY_PHASES: StudyPhase[] = [
     cefrFrom: "A0",
     cefrTo: "A2",
     color: "#3b82f6",
-    gradient: "from-blue-600 to-cyan-500",
+    gradient: "from-primary to-primary",
     emoji: "🧱",
     goal: "Phát âm chuẩn, 500–800 từ thiết yếu, giao tiếp hàng ngày đơn giản",
     vocabTarget: 800,
@@ -107,7 +114,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "pronunciation",
         icon: "🎯",
         title: "Phát Âm & Shadowing",
-        description: "Nghe 1 clip ngắn native speaker → nhắc lại 2–3 lần, khớp rhythm & intonation",
+        description:
+          "Nghe 1 clip ngắn native speaker → nhắc lại 2–3 lần, khớp rhythm & intonation",
         resource: "ELSA Speak / Rachel's English / YouGlish",
       },
       {
@@ -115,7 +123,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "vocabulary",
         icon: "🃏",
         title: "SRS Flashcards",
-        description: "Ôn từ theo FSRS — chỉ ôn đúng lúc sắp quên. Chủ đề: chào hỏi, gia đình, số, màu sắc, đồ ăn",
+        description:
+          "Ôn từ theo FSRS — chỉ ôn đúng lúc sắp quên. Chủ đề: chào hỏi, gia đình, số, màu sắc, đồ ăn",
         resource: "AtoEnglish Flashcards",
       },
       {
@@ -123,7 +132,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "grammar",
         icon: "📐",
         title: "Ngữ Pháp Trong Ngữ Cảnh",
-        description: "Học 1 cấu trúc nhỏ qua ví dụ thực tế, không học lý thuyết trừu tượng",
+        description:
+          "Học 1 cấu trúc nhỏ qua ví dụ thực tế, không học lý thuyết trừu tượng",
         resource: "AtoEnglish Grammar / Murphy Elementary",
       },
       {
@@ -131,7 +141,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "listening",
         icon: "👂",
         title: "Comprehensible Input",
-        description: "Nghe/xem clip dễ hiểu 70–80% — không cần hiểu hết. Não tiếp thu tự nhiên",
+        description:
+          "Nghe/xem clip dễ hiểu 70–80% — không cần hiểu hết. Não tiếp thu tự nhiên",
         resource: "BBC Learning English / VOA Learning English / Peppa Pig",
       },
       {
@@ -139,22 +150,70 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "speaking",
         icon: "🎙️",
         title: "Output: Tự Nói & Ghi Âm",
-        description: "Tự giới thiệu bản thân, mô tả ngày hôm nay, viết 3 câu journal. Record + nghe lại",
+        description:
+          "Tự giới thiệu bản thân, mô tả ngày hôm nay, viết 3 câu journal. Record + nghe lại",
         resource: "Voice Memo / AtoEnglish Speaking",
       },
     ],
     resources: [
-      { name: "ELSA Speak", url: "https://elsaspeak.com", type: "app", description: "Luyện phát âm với AI — rất tốt cho người Việt", free: true },
-      { name: "BBC Learning English", url: "https://www.bbc.co.uk/learningenglish", type: "website", description: "Clip + bài học miễn phí, chuẩn British English", free: true },
-      { name: "YouGlish", url: "https://youglish.com", type: "website", description: "Xem native speaker nói từ bất kỳ trong video thật", free: true },
-      { name: "VOA Learning English", url: "https://learningenglish.voanews.com", type: "website", description: "Tin tức tiếng Anh tốc độ chậm, chuẩn American English", free: true },
-      { name: "Essential Grammar in Use", type: "book", description: "Raymond Murphy — sách ngữ pháp số 1 cho beginner", free: false },
-      { name: "Rachel's English", url: "https://www.youtube.com/@rachelsenglish", type: "youtube", description: "Phát âm American English siêu chi tiết", free: true },
+      {
+        name: "ELSA Speak",
+        url: "https://elsaspeak.com",
+        type: "app",
+        description: "Luyện phát âm với AI — rất tốt cho người Việt",
+        free: true,
+      },
+      {
+        name: "BBC Learning English",
+        url: "https://www.bbc.co.uk/learningenglish",
+        type: "website",
+        description: "Clip + bài học miễn phí, chuẩn British English",
+        free: true,
+      },
+      {
+        name: "YouGlish",
+        url: "https://youglish.com",
+        type: "website",
+        description: "Xem native speaker nói từ bất kỳ trong video thật",
+        free: true,
+      },
+      {
+        name: "VOA Learning English",
+        url: "https://learningenglish.voanews.com",
+        type: "website",
+        description: "Tin tức tiếng Anh tốc độ chậm, chuẩn American English",
+        free: true,
+      },
+      {
+        name: "Essential Grammar in Use",
+        type: "book",
+        description: "Raymond Murphy — sách ngữ pháp số 1 cho beginner",
+        free: false,
+      },
+      {
+        name: "Rachel's English",
+        url: "https://www.youtube.com/@rachelsenglish",
+        type: "youtube",
+        description: "Phát âm American English siêu chi tiết",
+        free: true,
+      },
     ],
     vietnameseTips: [
-      { problem: "Nói 'Việtlish' — đọc từng chữ cái", solution: "Tập stress patterns: từ 2 âm → stress âm 1 (HEL-lo, TA-ble). Record và so sánh native." },
-      { problem: "Quên thêm -s/-es cho ngôi thứ 3", solution: "Drill: 'She WORKS, he DRINKS, it RUNS' — tập như phản xạ, không cần nghĩ." },
-      { problem: "Không biết dùng 'a' hay 'the'", solution: "Quy tắc đơn giản: lần đầu nhắc → 'a dog'; lần sau → 'the dog'. Luyện qua reading." },
+      {
+        problem: "Nói 'Việtlish' — đọc từng chữ cái",
+        solution:
+          "Tập stress patterns: từ 2 âm → stress âm 1 (HEL-lo, TA-ble). Record và so sánh native.",
+      },
+      {
+        problem: "Quên thêm -s/-es cho ngôi thứ 3",
+        solution:
+          "Drill: 'She WORKS, he DRINKS, it RUNS' — tập như phản xạ, không cần nghĩ.",
+      },
+      {
+        problem: "Không biết dùng 'a' hay 'the'",
+        solution:
+          "Quy tắc đơn giản: lần đầu nhắc → 'a dog'; lần sau → 'the dog'. Luyện qua reading.",
+      },
     ],
     weeklyReview: [
       "Record 1 phút tự giới thiệu — so sánh với tuần trước",
@@ -174,7 +233,7 @@ export const STUDY_PHASES: StudyPhase[] = [
     cefrFrom: "A2",
     cefrTo: "B1",
     color: "#8b5cf6",
-    gradient: "from-violet-600 to-purple-500",
+    gradient: "from-primary to-primary",
     emoji: "🏗️",
     goal: "1500–2000 từ, xử lý tình huống thực tế, kể chuyện quá khứ, đọc bài ngắn",
     vocabTarget: 2000,
@@ -218,7 +277,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "pronunciation",
         icon: "🎯",
         title: "Shadowing Nâng Cao",
-        description: "Clip dài hơn (1–2 phút), tập connected speech, contractions (gonna, wanna, I'd)",
+        description:
+          "Clip dài hơn (1–2 phút), tập connected speech, contractions (gonna, wanna, I'd)",
         resource: "YouGlish / English with Lucy",
       },
       {
@@ -226,7 +286,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "vocabulary",
         icon: "🃏",
         title: "SRS + Themed Vocab",
-        description: "Chủ đề: work, travel, technology, health, relationships. Học cụm từ (collocations), không chỉ từ đơn",
+        description:
+          "Chủ đề: work, travel, technology, health, relationships. Học cụm từ (collocations), không chỉ từ đơn",
         resource: "AtoEnglish Flashcards",
       },
       {
@@ -234,7 +295,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "listening",
         icon: "👂",
         title: "CI Input Nặng Hơn",
-        description: "VOA Learning English, News in Levels, TED Talks easy (script available). 80% hiểu mới nghe tiếp",
+        description:
+          "VOA Learning English, News in Levels, TED Talks easy (script available). 80% hiểu mới nghe tiếp",
         resource: "News in Levels / TED-Ed",
       },
       {
@@ -242,7 +304,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "reading",
         icon: "📖",
         title: "Graded Reading",
-        description: "Oxford Bookworms A2–B1. Đọc 1–2 trang/ngày. Chú ý collocations và cách câu được kết nối",
+        description:
+          "Oxford Bookworms A2–B1. Đọc 1–2 trang/ngày. Chú ý collocations và cách câu được kết nối",
         resource: "Oxford Bookworms / Graded Readers",
       },
       {
@@ -250,22 +313,71 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "speaking",
         icon: "🎙️",
         title: "Output: Kể Chuyện & Mô Tả",
-        description: "Mô tả ảnh, kể chuyện hôm qua, role-play tình huống. Language exchange HelloTalk 2x/tuần",
+        description:
+          "Mô tả ảnh, kể chuyện hôm qua, role-play tình huống. Language exchange HelloTalk 2x/tuần",
         resource: "HelloTalk / Tandem / AtoEnglish Speaking",
       },
     ],
     resources: [
-      { name: "News in Levels", url: "https://www.newsinlevels.com", type: "website", description: "Tin tức 3 level — chọn Level 1–2 cho giai đoạn này", free: true },
-      { name: "HelloTalk", url: "https://www.hellotalk.com", type: "app", description: "Language exchange với native speaker — miễn phí", free: true },
-      { name: "TED-Ed", url: "https://ed.ted.com", type: "youtube", description: "Video giáo dục ngắn 3–6 phút — có script, phụ đề", free: true },
-      { name: "English with Lucy", url: "https://www.youtube.com/@EnglishwithLucy", type: "youtube", description: "British English — grammar + pronunciation rõ ràng", free: true },
-      { name: "Oxford Bookworms A2–B1", type: "book", description: "Graded readers — đọc truyện adapted từ tác phẩm nổi tiếng", free: false },
-      { name: "Grammarly", url: "https://www.grammarly.com", type: "app", description: "Kiểm tra writing — học từ lỗi sai", free: true },
+      {
+        name: "News in Levels",
+        url: "https://www.newsinlevels.com",
+        type: "website",
+        description: "Tin tức 3 level — chọn Level 1–2 cho giai đoạn này",
+        free: true,
+      },
+      {
+        name: "HelloTalk",
+        url: "https://www.hellotalk.com",
+        type: "app",
+        description: "Language exchange với native speaker — miễn phí",
+        free: true,
+      },
+      {
+        name: "TED-Ed",
+        url: "https://ed.ted.com",
+        type: "youtube",
+        description: "Video giáo dục ngắn 3–6 phút — có script, phụ đề",
+        free: true,
+      },
+      {
+        name: "English with Lucy",
+        url: "https://www.youtube.com/@EnglishwithLucy",
+        type: "youtube",
+        description: "British English — grammar + pronunciation rõ ràng",
+        free: true,
+      },
+      {
+        name: "Oxford Bookworms A2–B1",
+        type: "book",
+        description:
+          "Graded readers — đọc truyện adapted từ tác phẩm nổi tiếng",
+        free: false,
+      },
+      {
+        name: "Grammarly",
+        url: "https://www.grammarly.com",
+        type: "app",
+        description: "Kiểm tra writing — học từ lỗi sai",
+        free: true,
+      },
     ],
     vietnameseTips: [
-      { problem: "Không phân biệt Present Perfect vs Past Simple", solution: "'I have eaten' (còn liên quan tới hiện tại) vs 'I ate' (xong hẳn, biết khi nào). Luyện qua storytelling." },
-      { problem: "Hay dịch từ tiếng Việt sang Anh từng từ", solution: "Học theo chunks: 'take a shower' chứ không phải 'shower take'. SRS theo cụm từ, không từ đơn." },
-      { problem: "Ngại nói vì sợ sai", solution: "Người bản xứ không quan tâm lỗi ngữ pháp nhỏ — họ quan tâm mày có communicate được không. Lỗi = feedback." },
+      {
+        problem: "Không phân biệt Present Perfect vs Past Simple",
+        solution:
+          "'I have eaten' (còn liên quan tới hiện tại) vs 'I ate' (xong hẳn, biết khi nào). Luyện qua storytelling.",
+      },
+      {
+        problem: "Hay dịch từ tiếng Việt sang Anh từng từ",
+        solution:
+          "Học theo chunks: 'take a shower' chứ không phải 'shower take'. SRS theo cụm từ, không từ đơn.",
+      },
+      {
+        problem: "Ngại nói vì sợ sai",
+        solution:
+          "Người bản xứ không quan tâm lỗi ngữ pháp nhỏ — họ quan tâm mày có communicate được không. Lỗi = feedback.",
+      },
     ],
     weeklyReview: [
       "Record 2 phút mô tả 1 chủ đề (gia đình, công việc, dự án web)",
@@ -285,7 +397,7 @@ export const STUDY_PHASES: StudyPhase[] = [
     cefrFrom: "B1",
     cefrTo: "B2",
     color: "#f59e0b",
-    gradient: "from-amber-500 to-orange-500",
+    gradient: "from-warning to-warning",
     emoji: "🚀",
     goal: "Business/tech English, pitch SaaS, email US clients, xem YouTube tech không sub",
     vocabTarget: 4000,
@@ -329,7 +441,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "listening",
         icon: "👂",
         title: "Immersion Input",
-        description: "Podcast tốc độ thường (Indie Hackers, How I Built This, Darknet Diaries), YouTube tech không sub",
+        description:
+          "Podcast tốc độ thường (Indie Hackers, How I Built This, Darknet Diaries), YouTube tech không sub",
         resource: "Indie Hackers Podcast / Darknet Diaries / Fireship",
       },
       {
@@ -337,7 +450,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "reading",
         icon: "📖",
         title: "Tech & Business Reading",
-        description: "HackerNews, Product Hunt, The Guardian tech section, Y Combinator startup docs",
+        description:
+          "HackerNews, Product Hunt, The Guardian tech section, Y Combinator startup docs",
         resource: "HackerNews / Indie Hackers / TechCrunch",
       },
       {
@@ -345,7 +459,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "vocabulary",
         icon: "🃏",
         title: "Business & Tech Vocab",
-        description: "Academic Word List (AWL), SaaS terminology, pitch deck vocabulary, email phrases",
+        description:
+          "Academic Word List (AWL), SaaS terminology, pitch deck vocabulary, email phrases",
         resource: "AtoEnglish — Business deck",
       },
       {
@@ -353,7 +468,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "speaking",
         icon: "🎙️",
         title: "Structured Output",
-        description: "Record 2–3 phút pitch AtoEnglish, Italki tutor 1x/tuần feedback, Discord tech community",
+        description:
+          "Record 2–3 phút pitch AtoEnglish, Italki tutor 1x/tuần feedback, Discord tech community",
         resource: "Italki / Cambly / Discord",
       },
       {
@@ -361,22 +477,75 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "writing",
         icon: "✍️",
         title: "Business Writing",
-        description: "Viết cold email, product descriptions, GitHub README, indie hacker posts. Edit với Grammarly",
+        description:
+          "Viết cold email, product descriptions, GitHub README, indie hacker posts. Edit với Grammarly",
         resource: "Grammarly / ChatGPT review",
       },
     ],
     resources: [
-      { name: "Indie Hackers Podcast", url: "https://www.indiehackers.com/podcast", type: "podcast", description: "Founders build SaaS từ 0 — nghe story + tech English thực", free: true },
-      { name: "Fireship", url: "https://www.youtube.com/@Fireship", type: "youtube", description: "Tech YouTube nhanh, funny, authentic — rất tốt cho immersion", free: true },
-      { name: "HackerNews", url: "https://news.ycombinator.com", type: "website", description: "Đọc + comment về startup, tech — authentic business English", free: true },
-      { name: "Italki", url: "https://www.italki.com", type: "app", description: "Tutor 1-on-1 — book 1–2 buổi/tháng để feedback pronunciation & business talk", free: false },
-      { name: "All Ears English Business", url: "https://www.allearsenglish.com", type: "podcast", description: "Business English podcast — email, meetings, small talk", free: true },
-      { name: "The Alchemist (English)", type: "book", description: "Tiểu thuyết ngắn dễ đọc — bắt đầu đọc sách thật không graded", free: false },
+      {
+        name: "Indie Hackers Podcast",
+        url: "https://www.indiehackers.com/podcast",
+        type: "podcast",
+        description:
+          "Founders build SaaS từ 0 — nghe story + tech English thực",
+        free: true,
+      },
+      {
+        name: "Fireship",
+        url: "https://www.youtube.com/@Fireship",
+        type: "youtube",
+        description:
+          "Tech YouTube nhanh, funny, authentic — rất tốt cho immersion",
+        free: true,
+      },
+      {
+        name: "HackerNews",
+        url: "https://news.ycombinator.com",
+        type: "website",
+        description:
+          "Đọc + comment về startup, tech — authentic business English",
+        free: true,
+      },
+      {
+        name: "Italki",
+        url: "https://www.italki.com",
+        type: "app",
+        description:
+          "Tutor 1-on-1 — book 1–2 buổi/tháng để feedback pronunciation & business talk",
+        free: false,
+      },
+      {
+        name: "All Ears English Business",
+        url: "https://www.allearsenglish.com",
+        type: "podcast",
+        description: "Business English podcast — email, meetings, small talk",
+        free: true,
+      },
+      {
+        name: "The Alchemist (English)",
+        type: "book",
+        description:
+          "Tiểu thuyết ngắn dễ đọc — bắt đầu đọc sách thật không graded",
+        free: false,
+      },
     ],
     vietnameseTips: [
-      { problem: "Business email nghe 'robotic' hoặc quá formal", solution: "Học chunks: 'I hope this finds you well', 'Just checking in', 'Happy to chat'. Copy style email của founder Mỹ mày follow." },
-      { problem: "Không biết idioms khi nghe podcast", solution: "Note lại 1 idiom/ngày từ input. Ví dụ: 'hit the ground running', 'low-hanging fruit'. Dùng lại trong writing." },
-      { problem: "Accent người Mỹ nói nhanh, nuốt từ", solution: "Shadowing podcast từng câu ngắn. 'gonna' = going to, 'wanna' = want to, 'hafta' = have to." },
+      {
+        problem: "Business email nghe 'robotic' hoặc quá formal",
+        solution:
+          "Học chunks: 'I hope this finds you well', 'Just checking in', 'Happy to chat'. Copy style email của founder Mỹ mày follow.",
+      },
+      {
+        problem: "Không biết idioms khi nghe podcast",
+        solution:
+          "Note lại 1 idiom/ngày từ input. Ví dụ: 'hit the ground running', 'low-hanging fruit'. Dùng lại trong writing.",
+      },
+      {
+        problem: "Accent người Mỹ nói nhanh, nuốt từ",
+        solution:
+          "Shadowing podcast từng câu ngắn. 'gonna' = going to, 'wanna' = want to, 'hafta' = have to.",
+      },
     ],
     weeklyReview: [
       "Record elevator pitch AtoEnglish 2 phút — nghe lại, note điểm cải thiện",
@@ -396,7 +565,7 @@ export const STUDY_PHASES: StudyPhase[] = [
     cefrFrom: "B2",
     cefrTo: "C1+",
     color: "#10b981",
-    gradient: "from-emerald-500 to-teal-500",
+    gradient: "from-primary to-primary",
     emoji: "🏆",
     goal: "Tự do tài chính qua English — giao dịch business quốc tế, đưa AtoEnglish ra thị trường Mỹ",
     vocabTarget: 8000,
@@ -440,7 +609,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "listening",
         icon: "👂",
         title: "Daily Immersion",
-        description: "Podcast, YouTube, audiobook — chọn cái thích, không cần 'học'. Não vẫn tiếp thu.",
+        description:
+          "Podcast, YouTube, audiobook — chọn cái thích, không cần 'học'. Não vẫn tiếp thu.",
         resource: "Any English content mày yêu thích",
       },
       {
@@ -448,7 +618,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "speaking",
         icon: "🎙️",
         title: "Active Output",
-        description: "Call với đối tác/user Mỹ, Italki conversation, community Discord, Twitter Spaces",
+        description:
+          "Call với đối tác/user Mỹ, Italki conversation, community Discord, Twitter Spaces",
         resource: "Italki / Twitter Spaces / Discord",
       },
       {
@@ -456,7 +627,8 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "vocabulary",
         icon: "🃏",
         title: "SRS Maintenance",
-        description: "Chỉ ôn cards due hôm nay — FSRS tự tính. Không cần học card mới nhiều.",
+        description:
+          "Chỉ ôn cards due hôm nay — FSRS tự tính. Không cần học card mới nhiều.",
         resource: "AtoEnglish Flashcards",
       },
       {
@@ -464,19 +636,55 @@ export const STUDY_PHASES: StudyPhase[] = [
         skill: "writing",
         icon: "✍️",
         title: "English-Only Writing",
-        description: "Journal, social posts, emails — viết hết bằng English. Đừng nghĩ bằng tiếng Việt nữa.",
+        description:
+          "Journal, social posts, emails — viết hết bằng English. Đừng nghĩ bằng tiếng Việt nữa.",
         resource: "Notion / Obsidian / Twitter",
       },
     ],
     resources: [
-      { name: "Twitter/X English Community", url: "https://twitter.com", type: "website", description: "Follow indie hackers, founders, devs Mỹ. Tweet bằng English.", free: true },
-      { name: "Product Hunt", url: "https://www.producthunt.com", type: "website", description: "Launch sản phẩm, đọc comments, network với founders", free: true },
-      { name: "Y Combinator Resources", url: "https://www.ycombinator.com/resources", type: "website", description: "Startup English — pitch deck, investor emails, product thinking", free: true },
-      { name: "Cambly", url: "https://www.cambly.com", type: "app", description: "On-demand conversation với native speakers — no scheduling", free: false },
+      {
+        name: "Twitter/X English Community",
+        url: "https://twitter.com",
+        type: "website",
+        description:
+          "Follow indie hackers, founders, devs Mỹ. Tweet bằng English.",
+        free: true,
+      },
+      {
+        name: "Product Hunt",
+        url: "https://www.producthunt.com",
+        type: "website",
+        description: "Launch sản phẩm, đọc comments, network với founders",
+        free: true,
+      },
+      {
+        name: "Y Combinator Resources",
+        url: "https://www.ycombinator.com/resources",
+        type: "website",
+        description:
+          "Startup English — pitch deck, investor emails, product thinking",
+        free: true,
+      },
+      {
+        name: "Cambly",
+        url: "https://www.cambly.com",
+        type: "app",
+        description:
+          "On-demand conversation với native speakers — no scheduling",
+        free: false,
+      },
     ],
     vietnameseTips: [
-      { problem: "Vẫn nghĩ bằng tiếng Việt rồi dịch", solution: "Set phone/laptop language = English. Inner monologue thực hành bằng English. Mô tả xung quanh mày bằng English khi đi bộ." },
-      { problem: "Plateau — thấy không tiến nữa", solution: "Đây là dấu hiệu tốt — não đang consolidate. Tăng output (nói nhiều hơn), đọc nội dung khó hơn 1 level." },
+      {
+        problem: "Vẫn nghĩ bằng tiếng Việt rồi dịch",
+        solution:
+          "Set phone/laptop language = English. Inner monologue thực hành bằng English. Mô tả xung quanh mày bằng English khi đi bộ.",
+      },
+      {
+        problem: "Plateau — thấy không tiến nữa",
+        solution:
+          "Đây là dấu hiệu tốt — não đang consolidate. Tăng output (nói nhiều hơn), đọc nội dung khó hơn 1 level.",
+      },
     ],
     weeklyReview: [
       "Gửi 1 cold outreach email cho US founder/user",
@@ -501,13 +709,19 @@ export function getPhaseForLevel(cefrLevel: string): StudyPhase {
 export function getPhaseProgress(
   cefrLevel: string,
   completedUnitIds: string[],
-  allUnits: { id: string; level: string }[]
+  allUnits: { id: string; level: string }[],
 ): { completed: number; total: number; percent: number } {
   const phase = getPhaseForLevel(cefrLevel);
   const phaseUnits = allUnits.filter((u) => phase.unitLevels.includes(u.level));
-  const completed = phaseUnits.filter((u) => completedUnitIds.includes(u.id)).length;
+  const completed = phaseUnits.filter((u) =>
+    completedUnitIds.includes(u.id),
+  ).length;
   const total = phaseUnits.length;
-  return { completed, total, percent: total > 0 ? Math.round((completed / total) * 100) : 0 };
+  return {
+    completed,
+    total,
+    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+  };
 }
 
 export const DAILY_TIPS: string[] = [

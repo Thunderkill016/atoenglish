@@ -61,7 +61,7 @@ import { unit39 } from "../src/lib/data/units/unit39";
 import { unit40 } from "../src/lib/data/units/unit40";
 import { unit41 } from "../src/lib/data/units/unit41";
 import { unit42 } from "../src/lib/data/units/unit42";
-import type { UnitData } from "../src/components/learn/UnitTemplate";
+import type { UnitData } from "../src/lib/lessons/lesson-spec";
 
 const UNITS: Record<string, UnitData> = {
   "unit-a0-1": unitA01,

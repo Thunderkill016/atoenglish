@@ -63,7 +63,7 @@ $$;
 
 CREATE TABLE IF NOT EXISTS public.learning_attempts (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id             uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id             uuid NOT NULL REFERENCES neon_auth.user(id) ON DELETE CASCADE,
   knowledge_item_id   text,
   capability_id       text,
   session_id          uuid,
@@ -95,7 +95,7 @@ CREATE INDEX IF NOT EXISTS learning_attempts_user_capability_idx
 
 CREATE TABLE IF NOT EXISTS public.learning_evidence_events (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id         uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id         uuid NOT NULL REFERENCES neon_auth.user(id) ON DELETE CASCADE,
   attempt_id      uuid NOT NULL REFERENCES public.learning_attempts(id) ON DELETE CASCADE,
   evidence_type   text NOT NULL CHECK (
     evidence_type IN ('recognition', 'retrieval', 'listening', 'production', 'repair', 'transfer', 'retention')
@@ -116,7 +116,7 @@ CREATE INDEX IF NOT EXISTS learning_evidence_attempt_idx
   ON public.learning_evidence_events(attempt_id);
 
 CREATE TABLE IF NOT EXISTS public.learner_skill_states (
-  user_id             uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id             uuid NOT NULL REFERENCES neon_auth.user(id) ON DELETE CASCADE,
   target_id           text NOT NULL,
   recognition         double precision NOT NULL DEFAULT 0 CHECK (recognition >= 0 AND recognition <= 1),
   retrieval           double precision NOT NULL DEFAULT 0 CHECK (retrieval >= 0 AND retrieval <= 1),
@@ -191,7 +191,7 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
-  v_user_id uuid := auth.uid();
+  v_user_id uuid := public.auth_uid();
   v_attempt_id uuid;
   v_confidence double precision;
   v_support_penalty double precision;

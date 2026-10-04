@@ -27,7 +27,7 @@ function evaluated(
   actionId: string,
   response: string,
   occurredAt: string,
-  options: { responseSource?: "speech" | "text" | null; supportUsed?: boolean; sequence?: number } = {},
+  options: { responseSource?: "speech" | "text" | null; supportLevelUsed?: number; sequence?: number } = {},
 ) {
   const lessonAction = action(actionId);
   return {
@@ -36,7 +36,7 @@ function evaluated(
     response,
     responseSource: options.responseSource ?? "speech",
     evaluation: evaluateNếpAction(lessonAction, response),
-    supportUsed: options.supportUsed ?? false,
+    supportLevelUsed: options.supportLevelUsed ?? 0,
     latencyMs: 1500,
     occurredAt,
     sequence: options.sequence,
@@ -57,7 +57,7 @@ describe("zero-path → core evidence wiring", () => {
 
   it("maps retrieval evidence to controlled-production carrying the cue as supportLevel", () => {
     const triple = toCoreEvidenceTriple(
-      evaluated("retrieve", "my name is hoang", "2026-09-21T10:01:00.000Z", { supportUsed: true }),
+      evaluated("retrieve", "my name is hoang", "2026-09-21T10:01:00.000Z", { supportLevelUsed: 1 }),
     );
     expect(triple!.claim).toBe("retrieve_form");
     expect(triple!.candidate.role).toBe("controlled-production");

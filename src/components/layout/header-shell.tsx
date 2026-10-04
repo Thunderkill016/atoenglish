@@ -15,17 +15,17 @@ type HeaderShellProps = {
   fullName?: string;
 };
 
-/** V2 minimal header — logo, 3-tab nav (desktop), theme, auth */
+/** V2 minimal header — logo, 4-tab nav (desktop), theme, auth */
 export function HeaderShell({ user, fullName }: HeaderShellProps) {
   const pathname = usePathname();
   const isLesson = /^\/learn\/unit/.test(pathname);
   if (isLesson) return null;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-[var(--minimal-canvas)]/90 dark:bg-background/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-[var(--minimal-canvas)]/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-[var(--minimal-content-max)] items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-6">
-          <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
+          <Link href="/learn" className="flex shrink-0 items-center gap-2">
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Sprout className="size-4" />
             </span>
@@ -57,7 +57,11 @@ export function HeaderShell({ user, fullName }: HeaderShellProps) {
               </form>
             </>
           ) : (
-            <MinimalButton href="/login?mode=login" variant="secondary" className="!min-h-9 !px-3 text-sm">
+            <MinimalButton
+              href="/login?mode=login"
+              variant="secondary"
+              className="!min-h-9 !px-3 text-sm"
+            >
               Đăng nhập
             </MinimalButton>
           )}

@@ -14,10 +14,10 @@ create extension if not exists "pgcrypto";
 create type public.cefr_level as enum ('A1', 'A2', 'B1', 'B2', 'C1');
 
 -- ---------------------------------------------------------------------------
--- 1. users — extends Supabase Auth (auth.users)
+-- 1. users — extends Supabase Auth (neon_auth.user)
 -- ---------------------------------------------------------------------------
 create table public.users (
-  id          uuid primary key references auth.users (id) on delete cascade,
+  id          uuid primary key references neon_auth.user (id) on delete cascade,
   email       text not null,
   display_name text,
   avatar_url  text,
@@ -25,7 +25,7 @@ create table public.users (
   updated_at  timestamptz not null default now()
 );
 
-comment on table public.users is 'Application profile linked 1:1 with auth.users';
+comment on table public.users is 'Application profile linked 1:1 with neon_auth.user';
 
 -- ---------------------------------------------------------------------------
 -- 2. user_progress — learning roadmap & gamification
@@ -149,10 +149,6 @@ begin
   return new;
 end;
 $$;
-
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
 
 -- ---------------------------------------------------------------------------
 -- Row Level Security (RLS)

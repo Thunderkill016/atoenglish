@@ -4,7 +4,7 @@ import { resolve } from "path";
 import { config } from "dotenv";
 
 // Load .env.local before tests run
-config({ path: resolve(__dirname, ".env.local") });
+config({ path: resolve(import.meta.dirname, ".env.local") });
 
 export default defineConfig({
   plugins: [react()],
@@ -20,7 +20,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": resolve(__dirname, "./src"),
+      "@": resolve(import.meta.dirname, "./src"),
     },
   },
 });

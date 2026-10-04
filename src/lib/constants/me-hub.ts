@@ -17,7 +17,7 @@ export type MeHubItem = {
 
 export const meHubStudy: MeHubItem[] = [
   {
-    href: "/progress",
+    href: "/me/progress",
     label: "Tiến độ",
     description: "Bài đã học và lịch ôn",
     icon: TrendingUp,
@@ -25,20 +25,20 @@ export const meHubStudy: MeHubItem[] = [
   {
     href: "/roadmap",
     label: "Lộ trình",
-    description: "A0 đến IELTS 6.5 theo sáu giai đoạn",
+    description: "Bốn giai đoạn theo CEFR",
     icon: Map,
   },
 ];
 
 export const meHubPractice: MeHubItem[] = [
   {
-    href: "/speaking",
+    href: "/me/speaking",
     label: "Luyện nói",
     description: "Shadowing và nói theo mẫu",
     icon: Mic,
   },
   {
-    href: "/writing",
+    href: "/me/writing",
     label: "Viết",
     description: "Bài viết có rubric và bằng chứng",
     icon: PenLine,
@@ -47,13 +47,13 @@ export const meHubPractice: MeHubItem[] = [
 
 export const meHubMore: MeHubItem[] = [
   {
-    href: "/grammar",
+    href: "/me/grammar",
     label: "Ngữ pháp",
     description: "Tra cứu chủ điểm",
     icon: BookOpen,
   },
   {
-    href: "/pronunciation",
+    href: "/me/pronunciation",
     label: "Phát âm IPA",
     description: "Nghe mẫu và tự luyện",
     icon: Mic,
@@ -62,7 +62,7 @@ export const meHubMore: MeHubItem[] = [
 
 export const meHubAccount: MeHubItem[] = [
   {
-    href: "/settings",
+    href: "/me/settings",
     label: "Cài đặt",
     description: "Học tập, ôn tập và giao diện",
     icon: Settings,

@@ -4,7 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS public.card_review_logs (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id     uuid NOT NULL REFERENCES neon_auth.user(id) ON DELETE CASCADE,
   card_id     uuid NOT NULL REFERENCES public.cards(id) ON DELETE CASCADE,
   rating      integer NOT NULL,          -- ts-fsrs Rating enum: 1=Again, 2=Hard, 3=Good, 4=Easy
   state       integer NOT NULL,          -- ts-fsrs State enum: 0=New, 1=Learning, 2=Review, 3=Relearning

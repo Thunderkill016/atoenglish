@@ -13,6 +13,7 @@ import type {
   LessonSpecV1,
   UnitData,
 } from "@/lib/lessons/lesson-spec";
+import { lemmaKey } from "@/lib/vocab/lemma";
 
 const SECTION_SKILLS: Record<number, LessonSkill> = {
   1: "vocabulary",
@@ -41,7 +42,10 @@ function buildActivities(unit: UnitData): LessonActivity[] {
     },
     srsTargets:
       section.id === 2
-        ? unit.vocab.map((item) => `${unit.unitId}:vocab:${item.id}`)
+        ? unit.vocab.map(
+            (item) =>
+              `vocab:${lemmaKey(item.word) ?? `${unit.unitId}:${item.id}`}`,
+          )
         : [],
   }));
 }
@@ -61,10 +65,7 @@ function buildAssets(unit: UnitData): LessonAsset[] {
   }));
 }
 
-function toPilotSpec(
-  unit: UnitData,
-  prerequisites: string[],
-): LessonSpecV1 {
+function toPilotSpec(unit: UnitData, prerequisites: string[]): LessonSpecV1 {
   const mission = getMissionForLesson(unit.unitId) ?? undefined;
   const missionActivityId = mission
     ? `${unit.unitId}:mission:${mission.id}`
@@ -93,7 +94,8 @@ function toPilotSpec(
                 "Không có transcript để kiểm tra nội dung; không suy đoán điểm phát âm.",
             },
             srsTargets: mission.targetChunks.map(
-              (chunk) => `${unit.unitId}:mission-chunk:${chunk.id}`,
+              (chunk) =>
+                `vocab:${lemmaKey(chunk.english) ?? `${unit.unitId}:mission-chunk:${chunk.id}`}`,
             ),
           },
         ]
@@ -148,8 +150,7 @@ function toPilotSpec(
             {
               id: "mission-based-speaking-v1",
               title: "AtoEnglish mission-based speaking contract",
-              note:
-                "Scenario, bounded chunks, controlled roleplay, feedback, retry, checkpoint and transfer testing.",
+              note: "Scenario, bounded chunks, controlled roleplay, feedback, retry, checkpoint and transfer testing.",
             },
           ]
         : []),
@@ -168,9 +169,7 @@ const PILOT_SOURCE_UNITS = [
   unitA06,
 ];
 
-export const PILOT_LESSON_ORDER = PILOT_SOURCE_UNITS.map(
-  (unit) => unit.unitId,
-);
+export const PILOT_LESSON_ORDER = PILOT_SOURCE_UNITS.map((unit) => unit.unitId);
 
 export const PILOT_LESSON_SPECS = Object.fromEntries(
   PILOT_SOURCE_UNITS.map((unit, index) => [

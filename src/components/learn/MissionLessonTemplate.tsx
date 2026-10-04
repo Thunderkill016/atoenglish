@@ -11,11 +11,7 @@ interface MissionLessonTemplateProps {
 
 export default function MissionLessonTemplate({
   lesson,
+  nextRoute,
 }: MissionLessonTemplateProps) {
-  return (
-    <MissionRunner
-      lesson={lesson}
-      nextRoute={`/learn/${lesson.id}/checkpoint`}
-    />
-  );
+  return <MissionRunner lesson={lesson} nextRoute={nextRoute} />;
 }

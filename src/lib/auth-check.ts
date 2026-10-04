@@ -1,32 +1,22 @@
 /**
- * Checks client-side if a Supabase auth session exists.
- * This reads cookies or localStorage keys to determine if the user has logged in,
- * avoiding the need to load the heavy Supabase client SDK on static public routes.
+ * Checks client-side if a Neon Auth session exists.
+ * The session cookies are HttpOnly (__Secure-neon-auth.*) so they are not
+ * readable via document.cookie — ask the Better Auth session endpoint
+ * instead, avoiding the need to load the auth client SDK on static routes.
  */
-export function checkHasSession(): boolean {
+export async function checkHasSession(): Promise<boolean> {
   if (typeof window === "undefined") return false;
 
-  // 1. Check cookies (Supabase SSR auth cookies start with "sb-")
   try {
-    const hasSbCookie = document.cookie
-      .split(";")
-      .some((c) => c.trim().startsWith("sb-"));
-    if (hasSbCookie) return true;
+    const res = await fetch("/api/auth/get-session", {
+      credentials: "include",
+    });
+    if (!res.ok) return false;
+    const data: unknown = await res.json();
+    if (data === null || typeof data !== "object") return false;
+    const { session, user } = data as { session?: unknown; user?: unknown };
+    return Boolean(session ?? user);
   } catch {
-    // Suppress cookie errors in environments where document.cookie is blocked
+    return false;
   }
-
-  // 2. Check localStorage (Supabase client fallback storage keys)
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
-        return true;
-      }
-    }
-  } catch {
-    // Suppress localStorage errors (e.g. storage disabled in private browsing)
-  }
-
-  return false;
 }

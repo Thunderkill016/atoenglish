@@ -7,6 +7,7 @@ on:
     paths:
       - "supabase/**"
       - "src/types/supabase.ts"
+      - "scripts/neon/**"
       - "scripts/**db**"
       - ".github/workflows/verify-db.yml"
   push:
@@ -14,6 +15,7 @@ on:
     paths:
       - "supabase/**"
       - "src/types/supabase.ts"
+      - "scripts/neon/**"
       - "scripts/**db**"
       - ".github/workflows/verify-db.yml"
   workflow_dispatch:
@@ -26,26 +28,95 @@ permissions:
   contents: read
 
 jobs:
-  database:
-    name: Fresh migrations, database lint, and RLS tests
+  # Static checks — no credentials required.
+  lint:
+    name: Migration lint and adapter check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Lint migrations (squawk)
+        run: npx --yes squawk-cli@1.5.0 "supabase/migrations/*.sql"
+
+      - name: Verify migrations still adapt cleanly for Neon
+        run: node scripts/neon/adapt-migrations.mjs --check
+
+      - name: Adapt pgTAP suites
+        run: node scripts/neon/adapt-tests.mjs
+
+  # Fresh-schema replay + trust-boundary suite on an ephemeral Neon branch.
+  # The branch is created from the linked parent (which carries the Neon-managed
+  # neon_auth schema, pg_session_jwt, and the Data API roles), then public +
+  # private are dropped so the replay exercises a genuinely fresh apply —
+  # the same sequence a new preview/production branch would follow.
+  #
+  # Requires repo secrets/vars:
+  #   secrets.NEON_API_KEY   — Neon API key with branch create/delete
+  #   vars.NEON_PROJECT_ID   — e.g. weathered-haze-10487148
+  neon-replay:
+    name: Neon branch replay + pgTAP trust-boundary suite
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
+    if: ${{ vars.NEON_PROJECT_ID != '' }}
+    env:
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+      BRANCH_NAME: verify-db-${{ github.run_id }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          version: 2.116.0
-          github-token: ${{ github.token }}
+          node-version: 24
 
-      - name: Start fresh local Postgres and apply all migrations
-        run: supabase db start
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
 
-      - name: Lint database functions and schema
-        run: supabase db lint --local --level error --fail-on error
+      - name: Install Neon CLI
+        run: npm i -g neon@latest
 
-      - name: Run pgTAP database and RLS tests
-        run: supabase test db --local
+      - name: Create ephemeral verify branch
+        run: neon branches create --project-id "$NEON_PROJECT_ID" --name "$BRANCH_NAME"
+
+      - name: Resolve branch connection string
+        id: conn
+        run: |
+          CS=$(neon connection-string "$BRANCH_NAME" --project-id "$NEON_PROJECT_ID" --pooled=false)
+          echo "url=$CS" >> "$GITHUB_OUTPUT"
+
+      - name: Reset public + private schemas for a fresh replay
+        env:
+          DATABASE_URL_UNPOOLED: ${{ steps.conn.outputs.url }}
+        run: |
+          node --input-type=module -e "
+          import { Pool } from '@neondatabase/serverless';
+          const pool = new Pool({ connectionString: process.env.DATABASE_URL_UNPOOLED });
+          const c = await pool.connect();
+          try {
+            await c.query('drop schema if exists public cascade');
+            await c.query('drop schema if exists private cascade');
+            await c.query('create schema public');
+            await c.query('grant all on schema public to public');
+            await c.query('create schema private');
+          } finally { c.release(); await pool.end(); }
+          "
+
+      - name: Apply compat bootstrap and replay all migrations
+        env:
+          DATABASE_URL_UNPOOLED: ${{ steps.conn.outputs.url }}
+        run: node scripts/neon/replay-migrations.mjs --bootstrap
+
+      - name: Run pgTAP trust-boundary + RLS suites
+        env:
+          DATABASE_URL_UNPOOLED: ${{ steps.conn.outputs.url }}
+        run: |
+          node scripts/neon/adapt-tests.mjs
+          node scripts/neon/run-pgtap.mjs
+
+      - name: Delete ephemeral branch
+        if: always()
+        run: |
+          neon branches delete "$BRANCH_NAME" --project-id "$NEON_PROJECT_ID" || true

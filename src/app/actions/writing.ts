@@ -69,17 +69,10 @@ export async function analyzeWriting(formData: {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      // Demo mode — return plausible mock response
+      // Honest degradation: no fabricated score presented as AI feedback.
       return {
-        success: true as const,
-        feedback: {
-          corrected: text,
-          errors: [],
-          improved: text + " (Demo mode — add GEMINI_API_KEY to enable AI feedback)",
-          score: 85,
-          encouragement_vn:
-            "Tốt lắm! Thêm GEMINI_API_KEY vào .env.local để bật phản hồi AI thực.",
-        } satisfies WritingFeedback,
+        success: false as const,
+        error: "Tính năng phản hồi AI chưa được cấu hình trên máy chủ.",
       };
     }
 

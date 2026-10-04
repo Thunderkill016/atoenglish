@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
-import { bottomNavItems } from "@/lib/constants/navigation";
+import { bottomNavItems, isSessionPath } from "@/lib/constants/navigation";
 
 interface BottomNavProps {
   /** Number of SRS cards due for review — shows badge on SRS tab */
@@ -27,24 +27,20 @@ interface BottomNavProps {
 export function BottomNav({ dueCardsCount = 0 }: BottomNavProps) {
   const pathname = usePathname();
 
-  // Hide during lesson pages (full-screen learning UI)
-  const isInLesson = /^\/learn\/unit/.test(pathname);
-  if (isInLesson) return null;
+  // Hide during session-runner pages (full-screen attempt UI)
+  if (isSessionPath(pathname)) return null;
 
   return (
     <nav
-      className="sm:hidden fixed bottom-0 left-0 right-0 z-50 h-16 bg-background/90 dark:bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-200/50 dark:border-zinc-800/50 flex items-stretch justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.3)]"
+      className="sm:hidden fixed bottom-0 left-0 right-0 z-50 h-16 bg-background/90 backdrop-blur-xl border-t border-border/50 flex items-stretch justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.04)]"
       aria-label="Điều hướng chính"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {bottomNavItems.map((item) => {
         const Icon = item.icon;
         const isActive =
-          pathname === item.href ||
-          (item.href === "/me" && pathname.startsWith("/settings")) ||
-          pathname.startsWith(item.href + "/");
-        const isFlashcards = item.href === "/flashcards";
-        const showBadge = isFlashcards && dueCardsCount > 0;
+          pathname === item.href || pathname.startsWith(item.href + "/");
+        const showBadge = item.href === "/review" && dueCardsCount > 0;
 
         return (
           <Link
@@ -59,7 +55,7 @@ export function BottomNav({ dueCardsCount = 0 }: BottomNavProps) {
             {isActive && (
               <motion.div
                 layoutId="activeBottomTabPill"
-                className="absolute inset-x-1.5 top-1 bottom-1 bg-primary/10 dark:bg-primary/15 rounded-xl -z-10"
+                className="absolute inset-x-1.5 top-1 bottom-1 bg-primary/10 rounded-xl -z-10"
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
               />
             )}
@@ -81,7 +77,7 @@ export function BottomNav({ dueCardsCount = 0 }: BottomNavProps) {
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1.5 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-black rounded-full px-0.5 shadow-sm shadow-red-500/30"
+                  className="absolute -top-1 -right-1.5 min-w-[16px] h-4 flex items-center justify-center bg-destructive text-white text-xs font-black rounded-full px-0.5 shadow-sm shadow-destructive/30"
                 >
                   {dueCardsCount > 99 ? "99+" : dueCardsCount}
                 </motion.span>
@@ -90,7 +86,7 @@ export function BottomNav({ dueCardsCount = 0 }: BottomNavProps) {
 
             {/* Label */}
             <span
-              className={`text-[9px] font-bold mt-0.5 tracking-tight transition-all duration-200 ${
+              className={`text-xs font-bold mt-0.5 tracking-tight transition-all duration-200 ${
                 isActive
                   ? "text-primary font-black"
                   : "text-muted-foreground group-hover:text-foreground"

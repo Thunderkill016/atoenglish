@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS public.push_subscriptions (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES neon_auth.user(id) ON DELETE CASCADE,
   endpoint    TEXT NOT NULL,
   keys        JSONB NOT NULL, -- { p256dh, auth }
   user_agent  TEXT,
