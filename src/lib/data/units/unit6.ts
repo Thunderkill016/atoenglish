@@ -37,18 +37,18 @@ export const unit6: UnitData = {
 
   // ── VOCABULARY: 8–20 words, pre-teach BEFORE dialogues; l1_interference_vn (A1 100%, B1+ ≥50%)
   vocab: [
-    { id: 1, word: "bedroom", emoji: "🛏️", phonetic: "/ˈbɛdruːm/", meaning: "phòng ngủ", example: "There are two bedrooms in my house.", example2: "My bedroom is on the second floor.", collocation: "master bedroom", audio: "/audio/unit6/bedroom.mp3" , l1_interference_vn: "⚠️ Stress: BED-room. 'There IS a bedroom' (số ít) — không phải 'There ARE a bedroom'." },
-    { id: 2, word: "kitchen", emoji: "🍳", phonetic: "/ˈkɪtʃɪn/", meaning: "nhà bếp", example: "The kitchen is next to the dining room.", example2: "She cooks in the kitchen every morning.", collocation: "kitchen table", audio: "/audio/unit6/kitchen.mp3" , l1_interference_vn: "⚠️ Âm /tʃ/ trong 'kitchen'. Người Việt hay đọc 'ki-chen' thay vì 'KITCH-in'." },
-    { id: 3, word: "living room", emoji: "🛋️", phonetic: "/ˈlɪvɪŋ ruːm/", meaning: "phòng khách", example: "We watch TV in the living room.", example2: "The living room has a big sofa.", collocation: "living room sofa", audio: "/audio/unit6/living_room.mp3" , l1_interference_vn: "⚠️ 2 từ riêng — không viết liền 'livingroom'. Stress: LIV-ing room." },
-    { id: 4, word: "bathroom", emoji: "🚿", phonetic: "/ˈbɑːθruːm/", meaning: "phòng tắm", example: "There is one bathroom on each floor.", example2: "He takes a shower in the bathroom.", collocation: "bathroom mirror", audio: "/audio/unit6/bathroom.mp3" , l1_interference_vn: "⚠️ Ở Mỹ 'bathroom' bao gồm cả toilet. 'Restroom/lavatory' dùng nơi công cộng." },
-    { id: 5, word: "table", emoji: "🪑", phonetic: "/ˈteɪbəl/", meaning: "cái bàn", example: "There is a table in the kitchen.", example2: "We eat dinner at the table.", collocation: "dining table", audio: "/audio/unit6/table.mp3" , l1_interference_vn: "⚠️ 'Table' (bàn ăn) ≠ 'desk' (bàn làm việc). 'Dining table' = bàn ăn cụ thể hơn." },
-    { id: 6, word: "chair", emoji: "🪑", phonetic: "/tʃɛər/", meaning: "cái ghế", example: "There are four chairs around the table.", example2: "Please sit on the chair.", collocation: "wooden chair", audio: "/audio/unit6/chair.mp3" , l1_interference_vn: "⚠️ Âm /tʃeər/ — 'ch' = /tʃ/. Âm /r/ cuối thường yếu nhưng không bỏ hẳn." },
-    { id: 7, word: "sofa", emoji: "🛋️", phonetic: "/ˈsəʊfə/", meaning: "ghế sofa", example: "I like sitting on the sofa to relax.", example2: "The sofa is very comfortable.", collocation: "comfortable sofa", audio: "/audio/unit6/sofa.mp3" , l1_interference_vn: "⚠️ 'Sofa' = 'couch' (Mỹ phổ biến hơn). Cả hai đều được chấp nhận trong giao tiếp." },
-    { id: 8, word: "window", emoji: "🪟", phonetic: "/ˈwɪndəʊ/", meaning: "cửa sổ", example: "There is a big window in my bedroom.", example2: "Please open the window for fresh air.", collocation: "open the window", audio: "/audio/unit6/window.mp3" , l1_interference_vn: "⚠️ 'Open the window' — cần mạo từ 'the' vì cái cửa sổ cụ thể đã được biết." },
-    { id: 9, word: "door", emoji: "🚪", phonetic: "/dɔːr/", meaning: "cánh cửa", example: "Please close the door.", example2: "There is a door between the rooms.", collocation: "front door / back door", audio: "/audio/unit6/door.mp3" , l1_interference_vn: "⚠️ Âm /r/ cuối — rõ hơn trong American, yếu hơn trong British. Không bỏ hoàn toàn." },
-    { id: 10, word: "lamp", emoji: "💡", phonetic: "/læmp/", meaning: "đèn", example: "There is a lamp on the desk.", example2: "The lamp gives warm light.", collocation: "bedside lamp", audio: "/audio/unit6/lamp.mp3" , l1_interference_vn: "⚠️ 'Lamp' (đèn bàn/đứng) ≠ 'light' (đèn nói chung). 'Turn on the lamp' vs 'turn on the light'." },
-    { id: 11, word: "wardrobe", emoji: "🪞", phonetic: "/ˈwɔːdrəʊb/", meaning: "tủ quần áo", example: "There is a wardrobe in the corner.", example2: "My clothes are in the wardrobe.", collocation: "built-in wardrobe", audio: "/audio/unit6/wardrobe.mp3" , l1_interference_vn: "⚠️ 'Wardrobe' (Anh) = 'closet' (Mỹ). Phân biệt với 'cabinet' (tủ nhỏ trong bếp/nhà bếp)." },
-    { id: 12, word: "garden", emoji: "🌿", phonetic: "/ˈɡɑːdən/", meaning: "khu vườn", example: "There is a small garden behind the house.", example2: "I love sitting in the garden.", collocation: "flower garden / back garden", audio: "/audio/unit6/garden.mp3" , l1_interference_vn: "⚠️ 'In the garden' — dùng 'in', không phải 'at'. 'Garden' (Anh) = 'yard' (Mỹ)." },
+    { id: 1, word: "bedroom", emoji: "🛏️", phonetic: "/ˈbɛdruːm/", meaning: "phòng ngủ", example: "There are two bedrooms in my house.", example2: "My bedroom is on the second floor.", collocation: "master bedroom", audio: "/audio/unit-6/bedroom.mp3" , l1_interference_vn: "⚠️ Stress: BED-room. 'There IS a bedroom' (số ít) — không phải 'There ARE a bedroom'." },
+    { id: 2, word: "kitchen", emoji: "🍳", phonetic: "/ˈkɪtʃɪn/", meaning: "nhà bếp", example: "The kitchen is next to the dining room.", example2: "She cooks in the kitchen every morning.", collocation: "kitchen table", audio: "/audio/unit-6/kitchen.mp3" , l1_interference_vn: "⚠️ Âm /tʃ/ trong 'kitchen'. Người Việt hay đọc 'ki-chen' thay vì 'KITCH-in'." },
+    { id: 3, word: "living room", emoji: "🛋️", phonetic: "/ˈlɪvɪŋ ruːm/", meaning: "phòng khách", example: "We watch TV in the living room.", example2: "The living room has a big sofa.", collocation: "living room sofa", audio: "/audio/unit-6/living_room.mp3" , l1_interference_vn: "⚠️ 2 từ riêng — không viết liền 'livingroom'. Stress: LIV-ing room." },
+    { id: 4, word: "bathroom", emoji: "🚿", phonetic: "/ˈbɑːθruːm/", meaning: "phòng tắm", example: "There is one bathroom on each floor.", example2: "He takes a shower in the bathroom.", collocation: "bathroom mirror", audio: "/audio/unit-6/bathroom.mp3" , l1_interference_vn: "⚠️ Ở Mỹ 'bathroom' bao gồm cả toilet. 'Restroom/lavatory' dùng nơi công cộng." },
+    { id: 5, word: "table", emoji: "🪑", phonetic: "/ˈteɪbəl/", meaning: "cái bàn", example: "There is a table in the kitchen.", example2: "We eat dinner at the table.", collocation: "dining table", audio: "/audio/unit-6/table.mp3" , l1_interference_vn: "⚠️ 'Table' (bàn ăn) ≠ 'desk' (bàn làm việc). 'Dining table' = bàn ăn cụ thể hơn." },
+    { id: 6, word: "chair", emoji: "🪑", phonetic: "/tʃɛər/", meaning: "cái ghế", example: "There are four chairs around the table.", example2: "Please sit on the chair.", collocation: "wooden chair", audio: "/audio/unit-6/chair.mp3" , l1_interference_vn: "⚠️ Âm /tʃeər/ — 'ch' = /tʃ/. Âm /r/ cuối thường yếu nhưng không bỏ hẳn." },
+    { id: 7, word: "sofa", emoji: "🛋️", phonetic: "/ˈsəʊfə/", meaning: "ghế sofa", example: "I like sitting on the sofa to relax.", example2: "The sofa is very comfortable.", collocation: "comfortable sofa", audio: "/audio/unit-6/sofa.mp3" , l1_interference_vn: "⚠️ 'Sofa' = 'couch' (Mỹ phổ biến hơn). Cả hai đều được chấp nhận trong giao tiếp." },
+    { id: 8, word: "window", emoji: "🪟", phonetic: "/ˈwɪndəʊ/", meaning: "cửa sổ", example: "There is a big window in my bedroom.", example2: "Please open the window for fresh air.", collocation: "open the window", audio: "/audio/unit-6/window.mp3" , l1_interference_vn: "⚠️ 'Open the window' — cần mạo từ 'the' vì cái cửa sổ cụ thể đã được biết." },
+    { id: 9, word: "door", emoji: "🚪", phonetic: "/dɔːr/", meaning: "cánh cửa", example: "Please close the door.", example2: "There is a door between the rooms.", collocation: "front door / back door", audio: "/audio/unit-6/door.mp3" , l1_interference_vn: "⚠️ Âm /r/ cuối — rõ hơn trong American, yếu hơn trong British. Không bỏ hoàn toàn." },
+    { id: 10, word: "lamp", emoji: "💡", phonetic: "/læmp/", meaning: "đèn", example: "There is a lamp on the desk.", example2: "The lamp gives warm light.", collocation: "bedside lamp", audio: "/audio/unit-6/lamp.mp3" , l1_interference_vn: "⚠️ 'Lamp' (đèn bàn/đứng) ≠ 'light' (đèn nói chung). 'Turn on the lamp' vs 'turn on the light'." },
+    { id: 11, word: "wardrobe", emoji: "🪞", phonetic: "/ˈwɔːdrəʊb/", meaning: "tủ quần áo", example: "There is a wardrobe in the corner.", example2: "My clothes are in the wardrobe.", collocation: "built-in wardrobe", audio: "/audio/unit-6/wardrobe.mp3" , l1_interference_vn: "⚠️ 'Wardrobe' (Anh) = 'closet' (Mỹ). Phân biệt với 'cabinet' (tủ nhỏ trong bếp/nhà bếp)." },
+    { id: 12, word: "garden", emoji: "🌿", phonetic: "/ˈɡɑːdən/", meaning: "khu vườn", example: "There is a small garden behind the house.", example2: "I love sitting in the garden.", collocation: "flower garden / back garden", audio: "/audio/unit-6/garden.mp3" , l1_interference_vn: "⚠️ 'In the garden' — dùng 'in', không phải 'at'. 'Garden' (Anh) = 'yard' (Mỹ)." },
   ],
 
   // ── DIALOGUES: ≥1 dialogue AFTER vocab (98% coverage)
@@ -56,7 +56,7 @@ export const unit6: UnitData = {
     {
       id: 1,
       title: "Mô tả căn hộ mới",
-      audio: "/audio/unit6/dialogue_1.mp3",
+      audio: "/audio/unit-6/dialogue_1.mp3",
       desc: "Hoa cho bạn xem căn hộ mới của cô ấy qua video call.",
       lines: [
         { id: "d1-1", speaker: "Hoa", text: "Welcome to my new apartment! This is the living room.", translation: "Chào mừng đến với căn hộ mới của mình! Đây là phòng khách." },
@@ -71,7 +71,7 @@ export const unit6: UnitData = {
     {
       id: 2,
       title: "Tìm đồ trong nhà",
-      audio: "/audio/unit6/dialogue_2.mp3",
+      audio: "/audio/unit-6/dialogue_2.mp3",
       desc: "Minh đang hỏi mẹ về vị trí đồ vật trong nhà.",
       lines: [
         { id: "d2-1", speaker: "Minh", text: "Mum, where is my bag?", translation: "Mẹ ơi, túi của con ở đâu vậy?" },

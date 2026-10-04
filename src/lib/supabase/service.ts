@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/serverless";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
 /**
  * Service-side RPC path for functions the hardened schema grants to
@@ -12,16 +12,22 @@ import { neon } from "@neondatabase/serverless";
  * verified through the normal user-scoped client; never send it to the
  * browser.
  */
-const databaseUrl =
-  process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
+// Lazily created inside rpcService: workerd evaluates module scope on every
+// isolate boot, so a missing env must not crash unrelated route bundles.
+let sql: NeonQueryFunction<false, false> | null = null;
 
-if (!databaseUrl) {
-  throw new Error(
-    "DATABASE_URL (or DATABASE_URL_UNPOOLED) is required for service RPC calls",
-  );
+function getSql() {
+  if (sql) return sql;
+  const databaseUrl =
+    process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error(
+      "DATABASE_URL (or DATABASE_URL_UNPOOLED) is required for service RPC calls",
+    );
+  }
+  sql = neon(databaseUrl);
+  return sql;
 }
-
-const sql = neon(databaseUrl);
 
 const FN_NAME_RE = /^[a-z][a-z0-9_]*$/;
 const ARG_NAME_RE = /^p_[a-z0-9_]+$/;
@@ -53,7 +59,7 @@ export async function rpcService<T = unknown>(
     .map((k, i) => `${k} => $${i + 1}`)
     .join(", ");
   try {
-    const rows = await sql.query(
+    const rows = await getSql().query(
       `select public.${fn}(${signature}) as result`,
       keys.map((k) => args[k]),
     );

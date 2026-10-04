@@ -43,15 +43,15 @@
     "dev:vinext": "vite dev --port 3001",
     "build:vinext": "vite build",
     "start:vinext": "vite preview",
-    "deploy:vinext": "vinext-cloudflare deploy"
+    "deploy:vinext": "node scripts/deploy-cf.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@neon/config": "^1.8.3",
     "@neon/env": "^1.5.0",
+    "@neondatabase/auth": "0.5.0-beta",
     "@neondatabase/neon-js": "^0.7.0-beta",
     "@neondatabase/serverless": "^1.2.0",
-    "@sentry/nextjs": "^10.59.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "class-variance-authority": "^0.7.1",

@@ -109,8 +109,8 @@ For the question **“what is actually running for learners?”**, GitHub alone 
 Release-sensitive claims must reconcile:
 
 1. exact GitHub commit;
-2. exact Supabase migration/runtime state;
-3. exact Vercel production deployment;
+2. exact Neon production-branch migration/runtime state;
+3. exact Cloudflare Worker production deployment;
 4. relevant production health/smoke/runtime verification.
 
 CI green, a preview deployment, or a migration file present in the repository does not prove production is synchronized.
@@ -162,7 +162,7 @@ Inspect current `main` code/tests/migrations/configuration.
 
 ### Production conflict
 
-Verify the exact deployed runtime and reconcile GitHub/Supabase/Vercel state.
+Verify the exact deployed runtime and reconcile GitHub/Neon/Cloudflare state.
 
 ### Work-state conflict
 

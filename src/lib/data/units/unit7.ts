@@ -37,18 +37,18 @@ export const unit7: UnitData = {
 
   // ── VOCABULARY: 8–20 words, pre-teach BEFORE dialogues; l1_interference_vn (A1 100%, B1+ ≥50%)
   vocab: [
-    { id: 1, word: "price", emoji: "💰", phonetic: "/praɪs/", meaning: "giá cả", example: "What is the price of this bag?", example2: "The price is very reasonable.", collocation: "price tag / half price", audio: "/audio/unit7/price.mp3" , l1_interference_vn: "⚠️ Âm /pr/ người Việt hay tách: 'puh-rice'. Luyện nối: 'price' không phải 'p-rice'." },
-    { id: 2, word: "cheap", emoji: "✅", phonetic: "/tʃiːp/", meaning: "rẻ", example: "This shirt is very cheap.", example2: "I found a cheap flight to London.", collocation: "cheap price / dirt cheap", audio: "/audio/unit7/cheap.mp3" , l1_interference_vn: "⚠️ 'Cheap' mô tả giá thấp (trung tính). Khi mô tả người = keo kiệt — chú ý ngữ cảnh." },
-    { id: 3, word: "expensive", emoji: "💎", phonetic: "/ɪkˈspensɪv/", meaning: "đắt tiền", example: "These shoes are too expensive.", example2: "Eating out every day is expensive.", collocation: "too expensive / very expensive", audio: "/audio/unit7/expensive.mp3" , l1_interference_vn: "⚠️ Stress: ex-PEN-sive (âm 2). Người Việt hay đọc 'EX-pen-sive' — stress âm 1." },
-    { id: 4, word: "discount", emoji: "🏷️", phonetic: "/ˈdɪskaʊnt/", meaning: "giảm giá", example: "Can I have a discount?", example2: "There is a 20% discount today.", collocation: "student discount / get a discount", audio: "/audio/unit7/discount.mp3" , l1_interference_vn: "⚠️ DIS-count (danh từ) vs dis-COUNT (động từ). 'A 10% discount' (n) vs 'discount the price' (v)." },
-    { id: 5, word: "receipt", emoji: "🧾", phonetic: "/rɪˈsiːt/", meaning: "hóa đơn", example: "Can I have a receipt, please?", example2: "Keep your receipt for returns.", collocation: "sales receipt", audio: "/audio/unit7/receipt.mp3" , l1_interference_vn: "⚠️ 'p' hoàn toàn CÂM — đọc /rɪˈsiːt/. Không đọc 'rê-cept' hay 're-seipt'." },
-    { id: 6, word: "size", emoji: "📏", phonetic: "/saɪz/", meaning: "kích cỡ", example: "What size do you need?", example2: "I wear a medium size.", collocation: "what size / size medium/large", audio: "/audio/unit7/size.mp3" , l1_interference_vn: "⚠️ Âm cuối /z/ (có rung), không phải /s/. 'What size are you?' không phải 'What is your size?'" },
-    { id: 7, word: "try on", emoji: "👗", phonetic: "/traɪ ɒn/", meaning: "thử đồ", example: "Can I try this on?", example2: "I want to try on the blue dress.", collocation: "try on clothes", audio: "/audio/unit7/try_on.mp3" , l1_interference_vn: "⚠️ Phrasal verb tách được: 'try it on' hoặc 'try on the shirt'. Không chỉ nói 'try'." },
-    { id: 8, word: "pay", emoji: "💳", phonetic: "/peɪ/", meaning: "trả tiền", example: "How would you like to pay?", example2: "I usually pay by card.", collocation: "pay by cash / pay by card", audio: "/audio/unit7/pay.mp3" , l1_interference_vn: "⚠️ 'Pay FOR something': 'I paid FOR the shirt'. Không phải 'I paid the shirt' (thiếu 'for')." },
-    { id: 9, word: "change", emoji: "🪙", phonetic: "/tʃeɪndʒ/", meaning: "tiền thối", example: "Here is your change.", example2: "I don't have any change.", collocation: "give change / keep the change", audio: "/audio/unit7/change.mp3" , l1_interference_vn: "⚠️ 'Change' (tiền thối) vs 'change' (thay đổi) — phân biệt qua ngữ cảnh. 'Keep the change'." },
-    { id: 10, word: "shopping cart", emoji: "🛒", phonetic: "/ˈʃɒpɪŋ kɑːt/", meaning: "xe đẩy hàng", example: "Put it in the shopping cart.", example2: "The shopping cart is full.", collocation: "fill the shopping cart", audio: "/audio/unit7/shopping_cart.mp3", l1_interference_vn: "⚠️ Anh-Mỹ: 'shopping cart'. Anh-Anh: 'shopping trolley'. Cả hai đều đúng — tùy region." },
-    { id: 11, word: "cash", emoji: "💵", phonetic: "/kæʃ/", meaning: "tiền mặt", example: "Do you accept cash?", example2: "I only have cash today.", collocation: "pay in cash", audio: "/audio/unit7/cash.mp3" , l1_interference_vn: "⚠️ 'Pay in cash' hoặc 'pay cash' — không phải 'pay by cash'. 'By' dùng với 'card'." },
-    { id: 12, word: "sale", emoji: "📢", phonetic: "/seɪl/", meaning: "giảm giá / đợt sale", example: "The shop has a sale today.", example2: "I bought this on sale.", collocation: "on sale / end-of-season sale", audio: "/audio/unit7/sale.mp3", l1_interference_vn: "⚠️ 'On sale' = đang giảm giá. 'For sale' = đang bán (chưa mua). Hai cụm hoàn toàn khác nhau!" },
+    { id: 1, word: "price", emoji: "💰", phonetic: "/praɪs/", meaning: "giá cả", example: "What is the price of this bag?", example2: "The price is very reasonable.", collocation: "price tag / half price", audio: "/audio/unit-7/price.mp3" , l1_interference_vn: "⚠️ Âm /pr/ người Việt hay tách: 'puh-rice'. Luyện nối: 'price' không phải 'p-rice'." },
+    { id: 2, word: "cheap", emoji: "✅", phonetic: "/tʃiːp/", meaning: "rẻ", example: "This shirt is very cheap.", example2: "I found a cheap flight to London.", collocation: "cheap price / dirt cheap", audio: "/audio/unit-7/cheap.mp3" , l1_interference_vn: "⚠️ 'Cheap' mô tả giá thấp (trung tính). Khi mô tả người = keo kiệt — chú ý ngữ cảnh." },
+    { id: 3, word: "expensive", emoji: "💎", phonetic: "/ɪkˈspensɪv/", meaning: "đắt tiền", example: "These shoes are too expensive.", example2: "Eating out every day is expensive.", collocation: "too expensive / very expensive", audio: "/audio/unit-7/expensive.mp3" , l1_interference_vn: "⚠️ Stress: ex-PEN-sive (âm 2). Người Việt hay đọc 'EX-pen-sive' — stress âm 1." },
+    { id: 4, word: "discount", emoji: "🏷️", phonetic: "/ˈdɪskaʊnt/", meaning: "giảm giá", example: "Can I have a discount?", example2: "There is a 20% discount today.", collocation: "student discount / get a discount", audio: "/audio/unit-7/discount.mp3" , l1_interference_vn: "⚠️ DIS-count (danh từ) vs dis-COUNT (động từ). 'A 10% discount' (n) vs 'discount the price' (v)." },
+    { id: 5, word: "receipt", emoji: "🧾", phonetic: "/rɪˈsiːt/", meaning: "hóa đơn", example: "Can I have a receipt, please?", example2: "Keep your receipt for returns.", collocation: "sales receipt", audio: "/audio/unit-7/receipt.mp3" , l1_interference_vn: "⚠️ 'p' hoàn toàn CÂM — đọc /rɪˈsiːt/. Không đọc 'rê-cept' hay 're-seipt'." },
+    { id: 6, word: "size", emoji: "📏", phonetic: "/saɪz/", meaning: "kích cỡ", example: "What size do you need?", example2: "I wear a medium size.", collocation: "what size / size medium/large", audio: "/audio/unit-7/size.mp3" , l1_interference_vn: "⚠️ Âm cuối /z/ (có rung), không phải /s/. 'What size are you?' không phải 'What is your size?'" },
+    { id: 7, word: "try on", emoji: "👗", phonetic: "/traɪ ɒn/", meaning: "thử đồ", example: "Can I try this on?", example2: "I want to try on the blue dress.", collocation: "try on clothes", audio: "/audio/unit-7/try_on.mp3" , l1_interference_vn: "⚠️ Phrasal verb tách được: 'try it on' hoặc 'try on the shirt'. Không chỉ nói 'try'." },
+    { id: 8, word: "pay", emoji: "💳", phonetic: "/peɪ/", meaning: "trả tiền", example: "How would you like to pay?", example2: "I usually pay by card.", collocation: "pay by cash / pay by card", audio: "/audio/unit-7/pay.mp3" , l1_interference_vn: "⚠️ 'Pay FOR something': 'I paid FOR the shirt'. Không phải 'I paid the shirt' (thiếu 'for')." },
+    { id: 9, word: "change", emoji: "🪙", phonetic: "/tʃeɪndʒ/", meaning: "tiền thối", example: "Here is your change.", example2: "I don't have any change.", collocation: "give change / keep the change", audio: "/audio/unit-7/change.mp3" , l1_interference_vn: "⚠️ 'Change' (tiền thối) vs 'change' (thay đổi) — phân biệt qua ngữ cảnh. 'Keep the change'." },
+    { id: 10, word: "shopping cart", emoji: "🛒", phonetic: "/ˈʃɒpɪŋ kɑːt/", meaning: "xe đẩy hàng", example: "Put it in the shopping cart.", example2: "The shopping cart is full.", collocation: "fill the shopping cart", audio: "/audio/unit-7/shopping_cart.mp3", l1_interference_vn: "⚠️ Anh-Mỹ: 'shopping cart'. Anh-Anh: 'shopping trolley'. Cả hai đều đúng — tùy region." },
+    { id: 11, word: "cash", emoji: "💵", phonetic: "/kæʃ/", meaning: "tiền mặt", example: "Do you accept cash?", example2: "I only have cash today.", collocation: "pay in cash", audio: "/audio/unit-7/cash.mp3" , l1_interference_vn: "⚠️ 'Pay in cash' hoặc 'pay cash' — không phải 'pay by cash'. 'By' dùng với 'card'." },
+    { id: 12, word: "sale", emoji: "📢", phonetic: "/seɪl/", meaning: "giảm giá / đợt sale", example: "The shop has a sale today.", example2: "I bought this on sale.", collocation: "on sale / end-of-season sale", audio: "/audio/unit-7/sale.mp3", l1_interference_vn: "⚠️ 'On sale' = đang giảm giá. 'For sale' = đang bán (chưa mua). Hai cụm hoàn toàn khác nhau!" },
   ],
 
   // ── DIALOGUES: ≥1 dialogue AFTER vocab (98% coverage)
@@ -56,7 +56,7 @@ export const unit7: UnitData = {
     {
       id: 1,
       title: "Tại cửa hàng quần áo",
-      audio: "/audio/unit7/dialogue_1.mp3",
+      audio: "/audio/unit-7/dialogue_1.mp3",
       desc: "Linh đang mua sắm tại một cửa hàng quần áo.",
       lines: [
         { id: "d1-1", speaker: "Staff", text: "Hello! Can I help you?", translation: "Xin chào! Tôi có thể giúp gì cho bạn?" },
@@ -71,7 +71,7 @@ export const unit7: UnitData = {
     {
       id: 2,
       title: "Tại chợ",
-      audio: "/audio/unit7/dialogue_2.mp3",
+      audio: "/audio/unit-7/dialogue_2.mp3",
       desc: "Tom đang mua hoa quả tại chợ địa phương.",
       lines: [
         { id: "d2-1", speaker: "Tom", text: "How much are these mangoes?", translation: "Những quả xoài này giá bao nhiêu?" },

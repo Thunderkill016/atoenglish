@@ -80,7 +80,7 @@ export const unit19: UnitData = {
       example: "A major incident occurred during the system upgrade.",
       example2: "She reported the incident to her manager immediately.",
       collocation: "critical incident / report an incident",
-      audio: "/audio/unit19/incident.mp3",
+      audio: "/audio/unit-19/incident.mp3",
     },
     {
       id: 2,
@@ -92,7 +92,7 @@ export const unit19: UnitData = {
       example: "I was fixing the bug. Meanwhile, the team was waiting.",
       example2: "She prepared the slides; meanwhile, he arranged the room.",
       collocation: "meanwhile, back at / in the meanwhile",
-      audio: "/audio/unit19/meanwhile.mp3",
+      audio: "/audio/unit-19/meanwhile.mp3",
     },
     {
       id: 3,
@@ -104,7 +104,7 @@ export const unit19: UnitData = {
       example: "We were in the middle of the meeting when suddenly the fire alarm went off.",
       example2: "Suddenly, the client changed all the requirements.",
       collocation: "quite suddenly / happen suddenly",
-      audio: "/audio/unit19/suddenly.mp3",
+      audio: "/audio/unit-19/suddenly.mp3",
     },
     {
       id: 4,
@@ -116,7 +116,7 @@ export const unit19: UnitData = {
       example: "He interrupted my presentation with an urgent question.",
       example2: "Sorry to interrupt, but there's an important call for you.",
       collocation: "interrupt a meeting / interrupt someone",
-      audio: "/audio/unit19/interrupt.mp3",
+      audio: "/audio/unit-19/interrupt.mp3",
     },
     {
       id: 5,
@@ -128,7 +128,7 @@ export const unit19: UnitData = {
       example: "My colleague was handling the client when I arrived.",
       example2: "A colleague suggested a better approach to the problem.",
       collocation: "senior colleague / work with colleagues",
-      audio: "/audio/unit19/colleague.mp3",
+      audio: "/audio/unit-19/colleague.mp3",
     },
     {
       id: 6,
@@ -140,7 +140,7 @@ export const unit19: UnitData = {
       example: "We were rushing to meet the deadline when the system crashed.",
       example2: "Missing a deadline can damage your professional reputation.",
       collocation: "meet a deadline / miss a deadline / tight deadline",
-      audio: "/audio/unit19/deadline.mp3",
+      audio: "/audio/unit-19/deadline.mp3",
     },
     {
       id: 7,
@@ -152,7 +152,7 @@ export const unit19: UnitData = {
       example: "We managed to resolve the issue before the client noticed.",
       example2: "The team worked together to resolve the conflict quickly.",
       collocation: "resolve a problem / resolve a conflict",
-      audio: "/audio/unit19/resolve.mp3",
+      audio: "/audio/unit-19/resolve.mp3",
     },
     {
       id: 8,
@@ -164,7 +164,7 @@ export const unit19: UnitData = {
       example: "I was in a meeting when an urgent email arrived.",
       example2: "The manager sent an urgent message to the entire team.",
       collocation: "urgent matter / urgent meeting / treat as urgent",
-      audio: "/audio/unit19/urgent.mp3",
+      audio: "/audio/unit-19/urgent.mp3",
     },
     {
       id: 9,
@@ -176,7 +176,7 @@ export const unit19: UnitData = {
       example: "Fortunately, I had saved a backup of all the files.",
       example2: "We were worried, but fortunately everything worked out.",
       collocation: "fortunately for us / fortunately enough",
-      audio: "/audio/unit19/fortunately.mp3",
+      audio: "/audio/unit-19/fortunately.mp3",
     },
     {
       id: 10,
@@ -188,7 +188,7 @@ export const unit19: UnitData = {
       example: "She was handling three projects at the same time.",
       example2: "Can you handle this client while I'm in the meeting?",
       collocation: "handle a situation / handle pressure / handle complaints",
-      audio: "/audio/unit19/handle.mp3",
+      audio: "/audio/unit-19/handle.mp3",
     },
     {
       id: 11,
@@ -200,7 +200,7 @@ export const unit19: UnitData = {
       example: "Everything was in chaos when the server went down.",
       example2: "The office was in complete chaos after the power cut.",
       collocation: "complete chaos / cause chaos / in chaos",
-      audio: "/audio/unit19/chaos.mp3",
+      audio: "/audio/unit-19/chaos.mp3",
     },
     {
       id: 12,
@@ -212,7 +212,7 @@ export const unit19: UnitData = {
       example: "It took two hours to recover all the lost data.",
       example2: "The company quickly recovered from the IT incident.",
       collocation: "recover data / recover from a setback / full recovery",
-      audio: "/audio/unit19/recover.mp3",
+      audio: "/audio/unit-19/recover.mp3",
     },
   ],
 
@@ -222,7 +222,7 @@ export const unit19: UnitData = {
     {
       id: 1,
       title: "Sự cố hệ thống",
-      audio: "/audio/unit19/dialogue_1.mp3",
+      audio: "/audio/unit-19/dialogue_1.mp3",
       desc: "Minh kể lại sự cố IT nghiêm trọng trong buổi phỏng vấn.",
       lines: [
         {
@@ -266,7 +266,7 @@ export const unit19: UnitData = {
     {
       id: 2,
       title: "Trễ chuyến bay",
-      audio: "/audio/unit19/dialogue_2.mp3",
+      audio: "/audio/unit-19/dialogue_2.mp3",
       desc: "Lan kể cho Tom nghe về chuyến công tác bị sự cố.",
       lines: [
         {

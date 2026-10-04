@@ -74,8 +74,8 @@ Do not expand a bounded task into adjacent product work unless the owner explici
 4. Merge or deploy only with explicit owner authorization and exact-head verification.
 5. Never expose secrets or commit local environment files.
 6. Do not write production DB state during ordinary audit/review work.
-7. Treat GitHub `main`, CI, Supabase production and Vercel production as distinct states until explicitly reconciled.
-8. Before release, identify the exact GitHub commit, Supabase migration/runtime state and Vercel production deployment.
+7. Treat GitHub `main`, CI, Neon production branch and Cloudflare Worker production as distinct states until explicitly reconciled.
+8. Before release, identify the exact GitHub commit, Neon migration/runtime state and Cloudflare Worker production deployment.
 
 ## Autonomy
 
@@ -100,7 +100,7 @@ Evidence may change implementation choices inside the active direction. It does 
 
 ## Technical baseline
 
-The repository is a Next.js/React/TypeScript/Supabase application with Vitest, Playwright and GitHub Verify checks. Existing code, config, migrations and tests are the implementation source of truth.
+The repository is a Next.js/React/TypeScript application deployed on Cloudflare Workers (vinext) with Neon Postgres + Neon Managed Auth, Vitest, Playwright and GitHub Verify checks. Existing code, config, migrations and tests are the implementation source of truth.
 
 Common checks:
 

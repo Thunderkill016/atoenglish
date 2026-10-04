@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { captureException } from "@/lib/report-error";
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -12,8 +13,7 @@ interface ErrorProps {
 
 export default function UnitError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // Error already caught by Next.js error boundary — no logging needed
-    void error;
+    captureException(error, { tags: { location: "unit" } });
   }, [error]);
 
   return (

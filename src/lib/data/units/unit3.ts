@@ -58,7 +58,7 @@ export const unit3: UnitData = {
       phonetic: "/ˈmʌð.ər/",
       meaning: "Mẹ",
       example: "My mother is a teacher.",
-      audio: "/audio/unit3/mother.mp3"
+      audio: "/audio/unit-3/mother.mp3"
     , l1_interference_vn: "⚠️ Âm /ð/ trong 'mo-THER' — lưỡi chạm răng có rung. Người Việt hay đọc thành /mɒdər/." },
     {
       id: 2,
@@ -66,7 +66,7 @@ export const unit3: UnitData = {
       phonetic: "/ˈfɑː.ðər/",
       meaning: "Bố",
       example: "My father loves cooking.",
-      audio: "/audio/unit3/father.mp3"
+      audio: "/audio/unit-3/father.mp3"
     , l1_interference_vn: "⚠️ Âm /ð/ trong 'fa-THER'. Âm /f/ đầu cũng hay bị đọc thành /ph/ như tiếng Việt." },
     {
       id: 3,
@@ -74,7 +74,7 @@ export const unit3: UnitData = {
       phonetic: "/ˈbrʌð.ər/",
       meaning: "Anh/Em trai",
       example: "I have one older brother.",
-      audio: "/audio/unit3/brother.mp3"
+      audio: "/audio/unit-3/brother.mp3"
     , l1_interference_vn: "⚠️ 'Brother' = cả anh lẫn em trai. Cần 'older/younger brother' để phân biệt như tiếng Việt." },
     {
       id: 4,
@@ -82,7 +82,7 @@ export const unit3: UnitData = {
       phonetic: "/ˈsɪs.tər/",
       meaning: "Chị/Em gái",
       example: "She is my younger sister.",
-      audio: "/audio/unit3/sister.mp3"
+      audio: "/audio/unit-3/sister.mp3"
     , l1_interference_vn: "⚠️ 'Sister' = cả chị lẫn em gái. Thêm 'older/younger sister' khi cần phân biệt." },
     {
       id: 5,
@@ -90,7 +90,7 @@ export const unit3: UnitData = {
       phonetic: "/ˈpeə.rənts/",
       meaning: "Bố mẹ",
       example: "My parents live in Da Nang.",
-      audio: "/audio/unit3/parents.mp3"
+      audio: "/audio/unit-3/parents.mp3"
     , l1_interference_vn: "⚠️ 'Parents' luôn số nhiều — không nói 'my parent' để chỉ cả bố và mẹ." },
     {
       id: 6,
@@ -98,7 +98,7 @@ export const unit3: UnitData = {
       phonetic: "/frend/",
       meaning: "Bạn bè",
       example: "We are good friends.",
-      audio: "/audio/unit3/friend.mp3",
+      audio: "/audio/unit-3/friend.mp3",
       l1_interference_vn: "⚠️ 'Friend' vs 'boyfriend/girlfriend'. 'My friend' = bạn bè. 'My boyfriend/girlfriend' = người yêu. KHÔNG dùng 'friend' cho người yêu.",
     },
     {
@@ -107,7 +107,7 @@ export const unit3: UnitData = {
       phonetic: "/ˈklɑːs.meɪt/",
       meaning: "Bạn cùng lớp",
       example: "Minh is my classmate.",
-      audio: "/audio/unit3/classmate.mp3",
+      audio: "/audio/unit-3/classmate.mp3",
       l1_interference_vn: "⚠️ 'Classmate' = bạn cùng lớp. 'Colleague/coworker' = đồng nghiệp. 'Teammate' = đồng đội. Không thể dùng thay thế.",
     },
     {
@@ -116,7 +116,7 @@ export const unit3: UnitData = {
       phonetic: "/ˈhæp.i/",
       meaning: "Hạnh phúc",
       example: "They are a happy family.",
-      audio: "/audio/unit3/happy.mp3",
+      audio: "/audio/unit-3/happy.mp3",
       l1_interference_vn: "⚠️ 'Happy about/with': 'I'm happy with the result'. 'Happy to do': 'I'm happy to help'. KHÔNG 'happy of'.",
     },
     {
@@ -125,7 +125,7 @@ export const unit3: UnitData = {
       phonetic: "/maɪ/",
       meaning: "Của tôi",
       example: "This is my book.",
-      audio: "/audio/unit3/my.mp3",
+      audio: "/audio/unit-3/my.mp3",
       l1_interference_vn: "⚠️ 'My' luôn đứng trước danh từ: 'my book', 'my friend'. KHÔNG dùng sau danh từ như tiếng Việt ('sách của tôi' ≠ 'book my').",
     },
     {
@@ -134,7 +134,7 @@ export const unit3: UnitData = {
       phonetic: "/jɔːr/",
       meaning: "Của bạn",
       example: "What is your phone number?",
-      audio: "/audio/unit3/your.mp3",
+      audio: "/audio/unit-3/your.mp3",
       l1_interference_vn: "⚠️ 'Your' = của bạn (số ít/nhiều đều dùng 'your'). KHÔNG nhầm 'your' (sở hữu) với 'you're' (you are).",
     },
     {
@@ -143,7 +143,7 @@ export const unit3: UnitData = {
       phonetic: "/hɪz/",
       meaning: "Của anh ấy",
       example: "His name is Peter.",
-      audio: "/audio/unit3/his.mp3",
+      audio: "/audio/unit-3/his.mp3",
       l1_interference_vn: "⚠️ 'His' = của anh ấy (sở hữu) VÀ là đại từ tân ngữ: 'That's his book' / 'That book is his'. Cả hai đều đúng.",
     },
     {
@@ -152,7 +152,7 @@ export const unit3: UnitData = {
       phonetic: "/hɜːr/",
       meaning: "Của cô ấy",
       example: "Her hair is brown.",
-      audio: "/audio/unit3/her.mp3",
+      audio: "/audio/unit-3/her.mp3",
       l1_interference_vn: "⚠️ 'Her' = của cô ấy (sở hữu) VÀ tân ngữ: 'I like her' / 'her book'. Phân biệt: 'She likes him' vs 'He likes her'."
     }
   ],
@@ -162,7 +162,7 @@ export const unit3: UnitData = {
     {
       id: 1,
       title: "Hội thoại: Meet My Family",
-      audio: "/audio/unit3/dialogue1.mp3",
+      audio: "/audio/unit-3/dialogue1.mp3",
       desc: "Tom và Anna trò chuyện về bức ảnh chụp gia đình của Anna.",
       lines: [
         {
@@ -207,7 +207,7 @@ export const unit3: UnitData = {
     {
       id: 2,
       title: "Giới thiệu anh trai tại công ty",
-      audio: "/audio/unit3/dialogue_2.mp3",
+      audio: "/audio/unit-3/dialogue_2.mp3",
       desc: "Anna giới thiệu em trai với đồng nghiệp.",
       lines: [
         { id: "l7", speaker: "Anna", text: "This is my brother Ben. He works at our branch office.", translation: "Đây là em trai tôi Ben. Anh ấy làm việc tại chi nhánh công ty." },

@@ -52,18 +52,18 @@ export const unit2: UnitData = {
 
   // ── VOCABULARY: 8–20 words, pre-teach BEFORE dialogues; l1_interference_vn (A1 100%, B1+ ≥50%)
   vocab: [
-    { id: 1, word: "name", emoji: "🏷️", phonetic: "/neɪm/", meaning: "tên", example: "What's your name?", example2: "My name is Minh.", collocation: "first name / last name", audio: "/audio/unit2/name.mp3" , l1_interference_vn: "⚠️ 'What's your name?' không phải 'What is your name are?' — lỗi to be rất phổ biến." },
-    { id: 2, word: "age", emoji: "🎂", phonetic: "/eɪdʒ/", meaning: "tuổi", example: "What's your age?", example2: "She is 25 years old.", collocation: "at the age of", audio: "/audio/unit2/age.mp3" , l1_interference_vn: "⚠️ Hỏi tuổi: 'How old are you?' không phải 'How age are you?' — dùng 'old', không phải 'age'." },
-    { id: 3, word: "job", emoji: "💼", phonetic: "/dʒɒb/", meaning: "nghề nghiệp / công việc", example: "What is your job?", example2: "My job is very interesting.", collocation: "full-time job", audio: "/audio/unit2/job.mp3" , l1_interference_vn: "⚠️ Cách hỏi tự nhiên nhất: 'What do you do?' — không phải 'What is your job?' (nghe formal)." },
-    { id: 4, word: "student", emoji: "🎓", phonetic: "/ˈstjuːdənt/", meaning: "học sinh / sinh viên", example: "I am a student.", example2: "She is a university student.", collocation: "student ID", audio: "/audio/unit2/student.mp3" , l1_interference_vn: "⚠️ Âm /st/ đầu — không thêm 'ư' trước: đừng nói 'ư-student'. Nối âm: 'student'." },
-    { id: 5, word: "teacher", emoji: "👩‍🏫", phonetic: "/ˈtiːtʃər/", meaning: "giáo viên", example: "He is an English teacher.", example2: "My teacher is very kind.", collocation: "English teacher", audio: "/audio/unit2/teacher.mp3", l1_interference_vn: "⚠️ 'Teacher' đứng trước tên KHÔNG dùng 'the': 'Teacher Lan' sai — nói 'Ms/Mr Lan'. Trong lớp gọi là 'the teacher' (có 'the')." },
-    { id: 6, word: "doctor", emoji: "👨‍⚕️", phonetic: "/ˈdɒktər/", meaning: "bác sĩ", example: "She is a doctor.", example2: "The doctor helps sick people.", collocation: "see a doctor", audio: "/audio/unit2/doctor.mp3" , l1_interference_vn: "⚠️ 'See a doctor' (đi khám) — không phải 'go to doctor'. Cần mạo từ 'a' và động từ 'see'." },
-    { id: 7, word: "address", emoji: "🏠", phonetic: "/ˈædrɛs/", meaning: "địa chỉ", example: "What is your address?", example2: "My address is 12 Nguyen Hue Street.", collocation: "home address", audio: "/audio/unit2/address.mp3" , l1_interference_vn: "⚠️ Stress âm đầu: AD-dress (danh từ). Người Việt hay đọc 'a-DRESS' — sai stress." },
-    { id: 8, word: "phone number", emoji: "📱", phonetic: "/fəʊn ˈnʌmbər/", meaning: "số điện thoại", example: "What's your phone number?", example2: "I'll give you my phone number.", collocation: "mobile phone number", audio: "/audio/unit2/phone_number.mp3" , l1_interference_vn: "⚠️ Trong văn nói: 'phone number', không phải 'telephone number'. 'Tel.' dùng trong văn viết." },
-    { id: 9, word: "nationality", emoji: "🌏", phonetic: "/ˌnæʃəˈnælɪti/", meaning: "quốc tịch", example: "What is your nationality?", example2: "My nationality is Vietnamese.", collocation: "Vietnamese nationality", audio: "/audio/unit2/nationality.mp3" , l1_interference_vn: "⚠️ Stress: na-tion-AL-i-ty (âm 3). Người Việt hay bỏ âm /æl/ giữa câu." },
-    { id: 10, word: "email", emoji: "📧", phonetic: "/ˈiːmeɪl/", meaning: "địa chỉ email", example: "What's your email address?", example2: "Send me an email, please.", collocation: "email address", audio: "/audio/unit2/email.mp3" , l1_interference_vn: "⚠️ Đọc /ˈiːmeɪl/ — âm 'E' dài ở đầu. Nhiều người Việt đọc ngắn thành /e-meil/." },
-    { id: 11, word: "married", emoji: "💍", phonetic: "/ˈmærid/", meaning: "đã kết hôn", example: "Are you married?", example2: "He got married last year.", collocation: "get married", audio: "/audio/unit2/married.mp3" , l1_interference_vn: "⚠️ 'Are you married?' không phải 'Are you marry?' — dùng tính từ 'married'." },
-    { id: 12, word: "single", emoji: "🙋", phonetic: "/ˈsɪŋɡəl/", meaning: "độc thân", example: "I am single.", example2: "Are you single or married?", collocation: "single person", audio: "/audio/unit2/single.mp3" , l1_interference_vn: "⚠️ 'I'm single' = chưa kết hôn (độc thân). 'Single' còn nghĩa khác tùy context." },
+    { id: 1, word: "name", emoji: "🏷️", phonetic: "/neɪm/", meaning: "tên", example: "What's your name?", example2: "My name is Minh.", collocation: "first name / last name", audio: "/audio/unit-2/name.mp3" , l1_interference_vn: "⚠️ 'What's your name?' không phải 'What is your name are?' — lỗi to be rất phổ biến." },
+    { id: 2, word: "age", emoji: "🎂", phonetic: "/eɪdʒ/", meaning: "tuổi", example: "What's your age?", example2: "She is 25 years old.", collocation: "at the age of", audio: "/audio/unit-2/age.mp3" , l1_interference_vn: "⚠️ Hỏi tuổi: 'How old are you?' không phải 'How age are you?' — dùng 'old', không phải 'age'." },
+    { id: 3, word: "job", emoji: "💼", phonetic: "/dʒɒb/", meaning: "nghề nghiệp / công việc", example: "What is your job?", example2: "My job is very interesting.", collocation: "full-time job", audio: "/audio/unit-2/job.mp3" , l1_interference_vn: "⚠️ Cách hỏi tự nhiên nhất: 'What do you do?' — không phải 'What is your job?' (nghe formal)." },
+    { id: 4, word: "student", emoji: "🎓", phonetic: "/ˈstjuːdənt/", meaning: "học sinh / sinh viên", example: "I am a student.", example2: "She is a university student.", collocation: "student ID", audio: "/audio/unit-2/student.mp3" , l1_interference_vn: "⚠️ Âm /st/ đầu — không thêm 'ư' trước: đừng nói 'ư-student'. Nối âm: 'student'." },
+    { id: 5, word: "teacher", emoji: "👩‍🏫", phonetic: "/ˈtiːtʃər/", meaning: "giáo viên", example: "He is an English teacher.", example2: "My teacher is very kind.", collocation: "English teacher", audio: "/audio/unit-2/teacher.mp3", l1_interference_vn: "⚠️ 'Teacher' đứng trước tên KHÔNG dùng 'the': 'Teacher Lan' sai — nói 'Ms/Mr Lan'. Trong lớp gọi là 'the teacher' (có 'the')." },
+    { id: 6, word: "doctor", emoji: "👨‍⚕️", phonetic: "/ˈdɒktər/", meaning: "bác sĩ", example: "She is a doctor.", example2: "The doctor helps sick people.", collocation: "see a doctor", audio: "/audio/unit-2/doctor.mp3" , l1_interference_vn: "⚠️ 'See a doctor' (đi khám) — không phải 'go to doctor'. Cần mạo từ 'a' và động từ 'see'." },
+    { id: 7, word: "address", emoji: "🏠", phonetic: "/ˈædrɛs/", meaning: "địa chỉ", example: "What is your address?", example2: "My address is 12 Nguyen Hue Street.", collocation: "home address", audio: "/audio/unit-2/address.mp3" , l1_interference_vn: "⚠️ Stress âm đầu: AD-dress (danh từ). Người Việt hay đọc 'a-DRESS' — sai stress." },
+    { id: 8, word: "phone number", emoji: "📱", phonetic: "/fəʊn ˈnʌmbər/", meaning: "số điện thoại", example: "What's your phone number?", example2: "I'll give you my phone number.", collocation: "mobile phone number", audio: "/audio/unit-2/phone_number.mp3" , l1_interference_vn: "⚠️ Trong văn nói: 'phone number', không phải 'telephone number'. 'Tel.' dùng trong văn viết." },
+    { id: 9, word: "nationality", emoji: "🌏", phonetic: "/ˌnæʃəˈnælɪti/", meaning: "quốc tịch", example: "What is your nationality?", example2: "My nationality is Vietnamese.", collocation: "Vietnamese nationality", audio: "/audio/unit-2/nationality.mp3" , l1_interference_vn: "⚠️ Stress: na-tion-AL-i-ty (âm 3). Người Việt hay bỏ âm /æl/ giữa câu." },
+    { id: 10, word: "email", emoji: "📧", phonetic: "/ˈiːmeɪl/", meaning: "địa chỉ email", example: "What's your email address?", example2: "Send me an email, please.", collocation: "email address", audio: "/audio/unit-2/email.mp3" , l1_interference_vn: "⚠️ Đọc /ˈiːmeɪl/ — âm 'E' dài ở đầu. Nhiều người Việt đọc ngắn thành /e-meil/." },
+    { id: 11, word: "married", emoji: "💍", phonetic: "/ˈmærid/", meaning: "đã kết hôn", example: "Are you married?", example2: "He got married last year.", collocation: "get married", audio: "/audio/unit-2/married.mp3" , l1_interference_vn: "⚠️ 'Are you married?' không phải 'Are you marry?' — dùng tính từ 'married'." },
+    { id: 12, word: "single", emoji: "🙋", phonetic: "/ˈsɪŋɡəl/", meaning: "độc thân", example: "I am single.", example2: "Are you single or married?", collocation: "single person", audio: "/audio/unit-2/single.mp3" , l1_interference_vn: "⚠️ 'I'm single' = chưa kết hôn (độc thân). 'Single' còn nghĩa khác tùy context." },
   ],
 
   // ── DIALOGUES: ≥1 dialogue AFTER vocab (98% coverage)
@@ -71,7 +71,7 @@ export const unit2: UnitData = {
     {
       id: 1,
       title: "Điền form đăng ký",
-      audio: "/audio/unit2/dialogue_1.mp3",
+      audio: "/audio/unit-2/dialogue_1.mp3",
       desc: "Nam đang giúp Lily điền vào mẫu đăng ký học tiếng Anh.",
       lines: [
         { id: "d1-1", speaker: "Nam", text: "What's your full name?", translation: "Họ và tên đầy đủ của bạn là gì?" },
@@ -85,7 +85,7 @@ export const unit2: UnitData = {
     {
       id: 2,
       title: "Gặp đồng nghiệp mới",
-      audio: "/audio/unit2/dialogue_2.mp3",
+      audio: "/audio/unit-2/dialogue_2.mp3",
       desc: "Hoa gặp đồng nghiệp mới tên Tom trong ngày đầu đi làm.",
       lines: [
         { id: "d2-1", speaker: "Tom", text: "Hi! I'm Tom. Nice to meet you.", translation: "Chào! Mình là Tom. Rất vui được gặp bạn." },

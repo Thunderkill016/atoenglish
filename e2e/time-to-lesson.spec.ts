@@ -11,7 +11,7 @@ import {
  * Target after P2: ≤2 taps, ≤10s to section 1 (Khởi động).
  */
 test.describe("Time-to-lesson baseline", () => {
-  test.skip(!hasE2EAdminCredentials(), "Requires Supabase admin for E2E user");
+  test.skip(!hasE2EAdminCredentials(), "Requires Neon admin credentials for E2E user");
 
   test.beforeEach(async () => {
     const userId = await ensureE2ETestUser();

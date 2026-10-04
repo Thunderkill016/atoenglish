@@ -49,7 +49,7 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET and cross-origin requests
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
-  // 1. Network-only: Supabase API, auth routes, server actions
+  // 1. Network-only: Data API, auth routes, server actions
   if (
     url.pathname.startsWith("/auth") ||
     url.pathname.startsWith("/api/") ||

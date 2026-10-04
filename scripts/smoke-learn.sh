@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/smoke-learn.sh
-# Production smoke test for /learn B2 unit (post TASK-036 audio rewrite).
+# Production smoke test for /learn B2 unit (audio paths are canonical unit-N since the Cloudflare migration).
 # Verifies curl 200 for learn page (follows redirect) and sample static audio.
 # Usage: SMOKE_URL=<deployed-origin> bash scripts/smoke-learn.sh
 # Or: SMOKE_URL=<origin> npm run smoke:learn
@@ -36,7 +36,8 @@ check_200() {
 
 ok=1
 check_200 "${PROD_URL}/learn/unit-33" "/learn/unit-33 (B2 protected → login 200 after follow)" || ok=0
-check_200 "${PROD_URL}/audio/unit33/hypothetical.mp3" "/audio/unit33/hypothetical.mp3 (static MP3 via unitN→unit-N rewrite)" || ok=0
+check_200 "${PROD_URL}/audio/unit-33/hypothetical.mp3" "/audio/unit-33/hypothetical.mp3 (static MP3, canonical hyphenated path)" || ok=0
+check_200 "${PROD_URL}/api/health" "/api/health (Neon Data API connectivity)" || ok=0
 
 echo ""
 if [[ "$ok" == "1" ]]; then

@@ -4,13 +4,16 @@ import { createClient } from "@/lib/supabase/server";
 export const runtime = "edge";
 export const revalidate = 0;
 
-// Cloudflare Workers exposes deployment version metadata as JSON; fall back
-// to "local" outside Workers (dev server, tests).
+// Cloudflare Workers exposes deployment version metadata through a binding
+// ({id, tag, timestamp}); fall back to "local" outside Workers (dev, tests).
 function workerVersion(): string {
-  const meta = process.env.CF_VERSION_METADATA;
+  const meta: unknown = process.env.CF_VERSION_METADATA;
   if (!meta) return "local";
   try {
-    const id = (JSON.parse(meta) as { id?: string }).id;
+    const id =
+      typeof meta === "string"
+        ? (JSON.parse(meta) as { id?: string }).id
+        : (meta as { id?: string }).id;
     return id?.slice(0, 7) ?? "local";
   } catch {
     return "local";

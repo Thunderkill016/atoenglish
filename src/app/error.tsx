@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { captureException } from "@/lib/report-error";
 
 /**
  * Root-level error boundary — catches unexpected errors in root-segment pages.
@@ -16,7 +17,9 @@ export default function RootError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => { void error; }, [error]);
+  useEffect(() => {
+    captureException(error, { tags: { location: "root" } });
+  }, [error]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-950 px-6 text-center text-white">

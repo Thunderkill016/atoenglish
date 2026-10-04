@@ -1,5 +1,3 @@
-import { withSentryConfig } from "@sentry/nextjs";
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -23,12 +21,15 @@ const nextConfig = {
       },
     ],
   },
-  // Rewrite legacy no-hyphen audio paths (data declares /audio/unit19/...) to actual folders (unit-19/)
-  // This makes native MP3 probe return 200; playUnitAudio uses native instead of TTS fallback.
+  // Back-compat: old /audio/unit19/... links keep working — canonical data
+  // paths are already hyphenated (/audio/unit-19/...). Kept for stale
+  // bookmarks/cached pages; vinext serves the canonical paths directly.
   async rewrites() {
     return [
       {
-        source: "/audio/unit(\\d+)/(.*)",
+        // [0-9] not \d: vinext serializes the source into a template literal,
+        // which double-escapes backslashes and breaks \d at runtime.
+        source: "/audio/unit([0-9]+)/(.*)",
         destination: "/audio/unit-$1/$2",
       },
     ];
@@ -38,17 +39,17 @@ const nextConfig = {
 
     // In production: no unsafe-eval. In dev: Next.js HMR needs it.
     const scriptSrc = isDev
-      ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://browser.sentry-cdn.com; "
-      : "script-src 'self' 'unsafe-inline' https://browser.sentry-cdn.com https://va.vercel-scripts.com; ";
+      ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'; "
+      : "script-src 'self' 'unsafe-inline'; ";
 
     const csp = [
       "default-src 'self'; ",
       scriptSrc,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; ",
-      "img-src 'self' blob: data: https://lh3.googleusercontent.com https://*.supabase.co https://i.ytimg.com; ",
+      "img-src 'self' blob: data: https://lh3.googleusercontent.com https://i.ytimg.com; ",
       "frame-src https://www.youtube-nocookie.com; ",
       "font-src 'self' data: https://fonts.gstatic.com; ",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://*.upstash.io https://vitals.vercel-insights.com; ",
+      "connect-src 'self' https://*.neon.tech wss://*.neon.tech https://*.upstash.io; ",
       "media-src 'self' blob: data:; ",
       "object-src 'none'; ",
       "worker-src 'self' blob:; ",
@@ -86,15 +87,4 @@ const nextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  silent: !process.env.CI,
-  widenClientFileUpload: true,
-  hideSourceMaps: true,
-  disableServerWebpackPlugin: !process.env.NEXT_PUBLIC_SENTRY_DSN,
-  disableClientWebpackPlugin: !process.env.NEXT_PUBLIC_SENTRY_DSN,
-  webpack: {
-    autoInstrumentServerFunctions: true,
-  },
-});
+export default nextConfig;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
+import { captureException } from "@/lib/report-error";
 import { motion } from "framer-motion";
 import { AlertTriangle, RefreshCcw, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
@@ -14,7 +14,7 @@ export default function PlacementTestError({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error, { tags: { location: "placement-test" } });
+    captureException(error, { tags: { location: "placement-test" } });
   }, [error]);
 
   return (

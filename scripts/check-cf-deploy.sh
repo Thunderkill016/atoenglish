@@ -2,7 +2,8 @@
 # scripts/check-cf-deploy.sh
 # Usage: npm run check-deploy
 # Polls the Cloudflare Workers deployment for the latest version and reports status.
-# Requires: cf CLI authenticated (`cf auth login`) OR CF_API_TOKEN env var.
+# Requires: wrangler auth — `npx wrangler login` OR CLOUDFLARE_API_TOKEN env var.
+# (cf CLI has no `deployments list` equivalent yet, so this poller uses wrangler.)
 
 set -euo pipefail
 

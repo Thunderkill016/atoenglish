@@ -33,6 +33,27 @@ function toCompatUser(user: NeonUser) {
   };
 }
 
+// Anonymous Data API token (Neon's equivalent of the Supabase anon-key JWT).
+// The managed auth service issues short-lived JWTs with role "anonymous" from
+// an unauthenticated endpoint, so cache one per isolate until near expiry.
+let anonymousToken: { token: string; expiresAt: number } | null = null;
+
+async function getAnonymousToken(): Promise<string | null> {
+  if (anonymousToken && anonymousToken.expiresAt - 60 > Date.now() / 1000) {
+    return anonymousToken.token;
+  }
+  try {
+    const res = await fetch(`${process.env.NEON_AUTH_BASE_URL}/token/anonymous`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { token?: string; expires_at?: number };
+    if (!data.token || !data.expires_at) return null;
+    anonymousToken = { token: data.token, expiresAt: data.expires_at };
+    return data.token;
+  } catch {
+    return null;
+  }
+}
+
 async function getCompatSession() {
   // Anonymous callers (the majority for this guest-first app) have no session
   // cookie — skip the upstream auth round-trip entirely. When cookies() is
@@ -57,12 +78,13 @@ export async function createClient() {
     dataApi: {
       url: process.env.NEON_DATA_API_URL!,
       getToken: async () => {
-        // No session cookie → anonymous request (RLS still enforces).
+        // No session cookie → anonymous request. Neon still requires a JWT
+        // carrying role "anonymous" (RLS keeps enforcing row isolation).
         try {
           const jar = await cookies();
-          if (!jar.get(NEON_AUTH_SESSION_COOKIE_NAME)) return null;
+          if (!jar.get(NEON_AUTH_SESSION_COOKIE_NAME)) return getAnonymousToken();
         } catch {
-          return null;
+          return getAnonymousToken();
         }
         // Neon Auth `GET /token` returns the Data API JWT for the session.
         const { data } = await (await getAuth()).token({});

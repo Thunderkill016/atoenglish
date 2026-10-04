@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
+import { captureException } from "@/lib/report-error";
 import { motion } from "framer-motion";
 import { AlertTriangle, RefreshCcw } from "lucide-react";
 
@@ -13,7 +13,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    captureException(error);
   }, [error]);
 
   return (
