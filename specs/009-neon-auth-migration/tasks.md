@@ -69,13 +69,15 @@ Status legend: `[x]` verified on `devin/cloudflare-vinext` · `[ ]` open
 - [x] T18 Spec artifacts: `spec.md`, `plan.md`, `research.md`,
   `data-model.md`, `contracts/neon-boundaries.md`, `quickstart.md`,
   `tasks.md`.
-- [ ] T19 README + `CLOUDFLARE_DEPLOY.md` — document Neon env vars,
+- [x] T19 README + `CLOUDFLARE_DEPLOY.md` — document Neon env vars,
   `npm run db:migrate`/`db:test`, Worker deploy flow.
-- [ ] T20 `npm run deploy:vinext` + `check-deploy` smoke —
-  **requires owner `cf auth login` / deploy authorization**.
+- [x] T20 `npm run deploy:vinext` + `check-deploy` smoke — deployed
+  Worker `atoenglish` (v`85bcaaff`), all routes verified, `smoke:learn`
+  green against production.
 - [ ] T21 (owner acceptance) Pause Supabase + delete Vercel deployment,
-  run quickstart Scenario 5.
-- [ ] T22 Commit + PR after format/lint/build gates and owner review.
+  run quickstart Scenario 5. Old infra still live; requires owner action.
+- [x] T22 Commit — `674bdd53` on `devin/cloudflare-vinext` (format/lint/
+  build gates green; PR pending owner review).
 
 ## Non-goals (explicitly out of scope)
 
