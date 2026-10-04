@@ -27,6 +27,12 @@ import {
   legacyContractLessonId,
   resolveLegacyContract,
 } from "@/lib/nep/legacy-unit-contract.v1";
+import {
+  isMissionLesson,
+  legacyUnitEntry,
+  legacyUnitSlugs,
+} from "@/lib/lessons/legacy-unit-registry";
+import { nepLessonRegistryV1 } from "@/lib/nep/lesson-registry.v1";
 import { createZeroPathSessionPersistence } from "@/lib/nep/zero-path-session-persistence";
 import { zeroPathLessonIndex } from "@/lib/nep/zero-path-pilot.v1";
 import { createRateLimiter } from "@/lib/security/rate-limit";
@@ -387,7 +393,22 @@ export async function getZeroPathReviewIndex(): Promise<ZeroPathReviewIndex> {
     }))
     .filter((row) => row.exerciseType.length > 0 && row.createdAt.length > 0);
 
-  return { signedIn: true, states: deriveZeroPathReviewStates(attempts) };
+  // Review scheduling spans both canonical registry lessons and compiled
+  // legacy units — a learner's attempt history is the single source either
+  // way, so the queue must watch every resolvable lesson id.
+  const lessonIds = [
+    ...nepLessonRegistryV1.map((lesson) => lesson.id),
+    ...legacyUnitSlugs()
+      .filter((slug) => {
+        const entry = legacyUnitEntry(slug);
+        return entry ? !isMissionLesson(entry.data) : false;
+      })
+      .map(legacyContractLessonId),
+  ];
+  return {
+    signedIn: true,
+    states: deriveZeroPathReviewStates(attempts, { lessonIds }),
+  };
 }
 
 /**

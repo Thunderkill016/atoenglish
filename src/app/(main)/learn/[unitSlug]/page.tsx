@@ -40,10 +40,13 @@ export async function generateMetadata({
 
 export default async function UnitPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ unitSlug: string }>;
+  searchParams: Promise<{ mode?: string }>;
 }) {
   const { unitSlug } = await params;
+  const { mode: requestedMode } = await searchParams;
   const entry = legacyUnitEntry(unitSlug);
   if (!entry) notFound();
 
@@ -72,6 +75,11 @@ export default async function UnitPage({
   const envelope = zeroPathLessonEnvelope(legacyContractLessonId(unitSlug));
   if (!envelope) notFound();
 
+  // Review mode is a server-bound flag: the session's persisted mode decides
+  // whether attempts mint retention evidence — the client param only picks
+  // which kind of session to start or resume.
+  const mode = requestedMode === "review" ? "review" : "learn";
+
   // Continue an open durable session for this lesson when one exists — a
   // learner who leaves mid-unit resumes at the first unanswered action.
   let resume: {
@@ -82,7 +90,7 @@ export default async function UnitPage({
     const openSessions = await listZeroPathOpenSessions();
     const existing = openSessions.find(
       (session) =>
-        session.lesson_id === envelope.lessonId && session.mode === "learn",
+        session.lesson_id === envelope.lessonId && session.mode === mode,
     );
     if (existing) {
       const state = await getZeroPathResumeState(existing.id);
@@ -99,6 +107,7 @@ export default async function UnitPage({
     <div className="mx-auto w-full max-w-2xl px-4 py-6">
       <ZeroPathSession
         lesson={envelope}
+        mode={mode}
         resume={resume}
         completion={{ unitSlug, nextHref: nextRoute }}
       />

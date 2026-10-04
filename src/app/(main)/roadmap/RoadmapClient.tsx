@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 interface Props {
   nextUnitRoute: string;
   nextUnitTitle?: string;
+  nextUnitLevel?: string;
   userLevel: string;
   completedUnitIds: string[];
   startingUnitIndex?: number;
@@ -36,12 +37,16 @@ interface Props {
 export default function RoadmapClient({
   nextUnitRoute,
   nextUnitTitle,
+  nextUnitLevel,
   userLevel,
   completedUnitIds,
   startingUnitIndex = 0,
   placementCompleted = false,
 }: Props) {
-  const currentPhase = getPhaseForLevel(userLevel);
+  // Position on the roadmap comes from the next unfinished unit — an observed
+  // fact — never from the claimed `current_level`, which is only an intake
+  // estimate until evidence exists.
+  const currentPhase = getPhaseForLevel(nextUnitLevel ?? "B2");
   const [expandedPhase, setExpandedPhase] = useState<number>(currentPhase.id);
   const entryUnit = startingUnitIndex > 0 ? UNITS[startingUnitIndex] : null;
   const todayTip = DAILY_TIPS[new Date().getDate() % DAILY_TIPS.length]!;
@@ -51,12 +56,16 @@ export default function RoadmapClient({
   const guestCompleted = typeof window !== 'undefined' ? (() => { try { return JSON.parse(localStorage.getItem('guest_completed_units') || '[]'); } catch { return []; } })() : [];
   const effectiveCompleted = Array.from(new Set([...(completedUnitIds || []), ...guestCompleted]));
 
-  const overallProgress = getPhaseProgress(userLevel, effectiveCompleted, allUnits);
+  const overallProgress = getPhaseProgress(
+    nextUnitLevel ?? "B2",
+    effectiveCompleted,
+    allUnits,
+  );
 
   return (
     <SecondaryPageShell
       title="Lộ trình"
-      subtitle={`${userLevel} · ${currentPhase.title} · ${overallProgress.completed}/${overallProgress.total} unit`}
+      subtitle={`${currentPhase.title} · ${overallProgress.completed}/${overallProgress.total} unit${placementCompleted ? ` · điểm xuất phát ${userLevel}` : ""}`}
     >
       <div className="space-y-5 pb-16">
         {nextUnitTitle && (
@@ -70,15 +79,15 @@ export default function RoadmapClient({
 
         <div className="rounded-xl border border-border/60 bg-card px-4">
           <StatLine
-            label="Giai đoạn hiện tại"
+            label="Giai đoạn đang học"
             value={currentPhase.title}
-            caption={`${currentPhase.months} · ${currentPhase.cefrFrom} → ${currentPhase.cefrTo}`}
+            caption={`${currentPhase.months} · ${currentPhase.cefrFrom} → ${currentPhase.cefrTo} · theo bài tiếp theo`}
           />
           {placementCompleted && entryUnit && (
             <StatLine
               label="Điểm bắt đầu"
               value={entryUnit.title}
-              caption="Đã xác định trình độ"
+              caption="Từ bài kiểm tra đầu vào"
             />
           )}
         </div>

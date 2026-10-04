@@ -174,6 +174,7 @@ export async function getProgressStats() {
         streak: progress?.streak || 0,
         bestStreak: progress?.best_streak || 0,
         currentLevel: progress?.current_level || "A0",
+        placementCompletedAt: (progress as { placement_completed_at?: string | null } | null)?.placement_completed_at ?? null,
         totalCards,
         cardsByState,
         completedUnits: completedRes.count || 0,

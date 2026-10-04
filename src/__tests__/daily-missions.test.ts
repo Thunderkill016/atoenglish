@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildDailyMissions,
   countCompletedMissions,
-} from "@/lib/dashboard/daily-missions";
+} from "@/lib/learn/daily-missions";
 
 const baseInput = {
   currentUnit: {
@@ -11,7 +11,7 @@ const baseInput = {
     progress: 40,
     route: "/learn/unit-1",
   },
-  dueCardsCount: 5,
+  dueReviewCount: 5,
   lessonCompletedToday: false,
   srsReviewedToday: false,
   quizDoneToday: false,
@@ -32,7 +32,7 @@ describe("buildDailyMissions", () => {
   });
 
   it("marks SRS done when no cards are due", () => {
-    const missions = buildDailyMissions({ ...baseInput, dueCardsCount: 0 });
+    const missions = buildDailyMissions({ ...baseInput, dueReviewCount: 0 });
     const srs = missions.find((m) => m.id === "srs");
     expect(srs?.completed).toBe(true);
   });
@@ -49,7 +49,7 @@ describe("buildDailyMissions", () => {
   it("reflects lesson, quiz, and speaking flags from server", () => {
     const missions = buildDailyMissions({
       ...baseInput,
-      dueCardsCount: 0,
+      dueReviewCount: 0,
       lessonCompletedToday: true,
       quizDoneToday: true,
       speakingDoneToday: true,

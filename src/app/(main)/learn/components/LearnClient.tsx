@@ -5,7 +5,6 @@ import {
   CheckCircle,
   ChevronDown,
   Lock,
-  RefreshCcw,
 } from "lucide-react";
 import {
   ContinueCard,
@@ -27,20 +26,11 @@ interface UnitStatus {
   starCount?: number;
 }
 
-interface DueTransfer {
-  id: string;
-  label: string;
-  description: string;
-  href: string;
-}
-
 interface LearnClientProps {
-  userLevel: string;
   totalXp: number;
   completedUnitIds: string[];
   activeUnitId: string;
   isGuest: boolean;
-  dueTransfers: DueTransfer[];
   unitStatuses: UnitStatus[];
 }
 
@@ -53,12 +43,10 @@ const FUTURE_STAGES = [
 ];
 
 export default function LearnClient({
-  userLevel,
   totalXp,
   completedUnitIds,
   activeUnitId,
   isGuest,
-  dueTransfers,
   unitStatuses,
 }: LearnClientProps) {
   const activeUnit =
@@ -67,23 +55,9 @@ export default function LearnClient({
   return (
     <SecondaryPageShell
       title="Bài học"
-      subtitle={`${completedUnitIds.length}/6 bài A0 · ${userLevel} · ${totalXp.toLocaleString()} XP`}
+      subtitle={`${completedUnitIds.length}/6 bài A0 · ${totalXp.toLocaleString()} XP`}
     >
       <div className="space-y-6 pb-16">
-        {dueTransfers.length > 0 && (
-          <ListSection title={`Kiểm tra giao tiếp đến hạn · ${dueTransfers.length}`}>
-            {dueTransfers.map((transfer) => (
-              <PrimaryRow
-                key={transfer.id}
-                href={transfer.href}
-                label={transfer.label}
-                description={transfer.description}
-                icon={RefreshCcw}
-              />
-            ))}
-          </ListSection>
-        )}
-
         <ContinueCard
           title={activeUnit.title}
           description={

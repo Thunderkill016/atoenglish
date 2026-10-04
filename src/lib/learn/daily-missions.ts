@@ -13,7 +13,12 @@ export type DailyMissionInput = {
     progress: number;
     route: string;
   };
-  dueCardsCount: number;
+  /**
+   * Total due review work across the unified `/review` queue — SRS cards,
+   * due lesson reviews and transfer probes — so the mission row reflects
+   * everything waiting, not only flashcards.
+   */
+  dueReviewCount: number;
   lessonCompletedToday: boolean;
   srsReviewedToday: boolean;
   quizDoneToday: boolean;
@@ -21,7 +26,7 @@ export type DailyMissionInput = {
 };
 
 export function buildDailyMissions(input: DailyMissionInput): DailyMission[] {
-  const srsDone = input.dueCardsCount === 0 || input.srsReviewedToday;
+  const reviewDone = input.dueReviewCount === 0 || input.srsReviewedToday;
 
   return [
     {
@@ -36,11 +41,11 @@ export function buildDailyMissions(input: DailyMissionInput): DailyMission[] {
       id: "srs",
       kind: "task",
       label:
-        input.dueCardsCount > 0
-          ? `Ôn tập ${input.dueCardsCount} thẻ SRS`
-          : "Ôn tập SRS (đã xong hôm nay!)",
+        input.dueReviewCount > 0
+          ? `Ôn tập — ${input.dueReviewCount} mục đến hạn`
+          : "Ôn tập (không có gì đến hạn)",
       href: "/review",
-      completed: srsDone,
+      completed: reviewDone,
     },
     {
       id: "quiz",

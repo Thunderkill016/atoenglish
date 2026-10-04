@@ -4,6 +4,13 @@ import { BookOpen, Layers, Mic } from "lucide-react";
 import { getDailyActivity, getProgressStats } from "@/app/actions/stats";
 import { SecondaryPageShell, StatLine, ListSection } from "@/components/design-system";
 import { ActivityHeatmap } from "@/components/progress/ActivityHeatmap";
+import { createClient } from "@/lib/supabase/server";
+import {
+  readSkillStateRow,
+  type SkillStateRow,
+} from "@/lib/progress/skill-evidence";
+import { legacyUnitEntry } from "@/lib/lessons/legacy-unit-registry";
+import { LEGACY_CONTRACT_ID_PREFIX } from "@/lib/nep/legacy-unit-contract.v1";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +20,33 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
+function skillTargetLabel(targetId: string): string {
+  if (targetId.startsWith(LEGACY_CONTRACT_ID_PREFIX)) {
+    const slug = targetId.slice(LEGACY_CONTRACT_ID_PREFIX.length);
+    return legacyUnitEntry(slug)?.data.title ?? targetId;
+  }
+  return targetId;
+}
+
 export default async function ProgressPage() {
-  const [statsRes, activityRes] = await Promise.all([
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [statsRes, activityRes, skillStatesRes] = await Promise.all([
     getProgressStats(),
     getDailyActivity(),
+    user
+      ? supabase
+          .from("learner_skill_states")
+          .select(
+            "target_id, recognition, retrieval, listening, production, repair, transfer, retention, evidence_count, last_evidence_at",
+          )
+          .eq("user_id", user.id)
+          .order("last_evidence_at", { ascending: false })
+          .limit(20)
+      : Promise.resolve({ data: null }),
   ]);
 
   const stats = statsRes.stats ?? {
@@ -24,12 +54,18 @@ export default async function ProgressPage() {
     streak: 0,
     bestStreak: 0,
     currentLevel: "A1",
+    placementCompletedAt: null as string | null,
     totalCards: 0,
     cardsByState: { new: 0, learning: 0, review: 0, relearning: 0 },
     completedUnits: 0,
     totalSpeakingSessions: 0,
     streakFreezeCount: 0,
   };
+  const placementDone = Boolean(stats.placementCompletedAt);
+
+  const skillEvidence = ((skillStatesRes.data ?? []) as SkillStateRow[]).map(
+    (row) => ({ read: readSkillStateRow(row), label: skillTargetLabel(row.target_id) }),
+  );
 
   const activityDays = activityRes.days ?? [];
   const totalActiveDays = activityDays.filter((day) => day.xp > 0).length;
@@ -56,16 +92,18 @@ export default async function ProgressPage() {
   return (
     <SecondaryPageShell
       title="Tiến độ học"
-      subtitle={`Trình độ ${stats.currentLevel} · ${stats.completedUnits} bài đã hoàn thành`}
+      subtitle={`${stats.completedUnits} bài đã hoàn thành${placementDone ? ` · Trình độ đầu vào ${stats.currentLevel}` : ""}`}
     >
       <div className="space-y-5 pb-16 sm:space-y-8">
         <ListSection title="Tổng quan">
           <div className="rounded-xl border border-border/60 bg-card px-4">
-            <StatLine
-              label="Trình độ hiện tại"
-              value={stats.currentLevel}
-              caption="Mức học hiện đang được sử dụng"
-            />
+            {placementDone ? (
+              <StatLine
+                label="Trình độ đầu vào"
+                value={stats.currentLevel}
+                caption="Từ bài kiểm tra đầu vào — không phải thước đo tiến độ"
+              />
+            ) : null}
             <StatLine
               label="Bài đã hoàn thành"
               value={`${stats.completedUnits} bài`}
@@ -89,6 +127,41 @@ export default async function ProgressPage() {
           totalActiveDays={totalActiveDays}
           longestStreak={longestStudyRun}
         />
+
+        {skillEvidence.length > 0 ? (
+          <ListSection title="Bằng chứng kỹ năng">
+            <p className="px-1 pb-1 text-[var(--minimal-caption-size)] text-muted-foreground leading-relaxed">
+              Ghi nhận từ các lượt trả lời được chấm — đây là tín hiệu quan sát,
+              không phải điểm thành tích.
+            </p>
+            {skillEvidence.map(({ read, label }) => (
+              <div
+                key={read.targetId}
+                className="rounded-xl border border-border/60 bg-card px-4 py-3"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="text-[var(--minimal-body-size)] font-semibold text-foreground">
+                    {label}
+                  </p>
+                  <span className="shrink-0 text-[var(--minimal-caption-size)] text-muted-foreground">
+                    {read.evidenceCount} lần quan sát
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {read.observedChannels.map((channel) => (
+                    <span
+                      key={channel.channel}
+                      title={channel.bandLabel}
+                      className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                    >
+                      {channel.label} · {channel.bandLabel}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </ListSection>
+        ) : null}
 
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
           <section className="rounded-3xl border border-zinc-200/60 bg-white/60 p-5 dark:border-zinc-800/60 dark:bg-zinc-900/30 sm:p-7">

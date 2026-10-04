@@ -113,14 +113,14 @@ export default function WeeklyReportClient({ report }: { report: WeeklyReportDat
           href="/learn"
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-400 transition-colors"
         >
-          Về Dashboard
+          Về Học
         </Link>
       </div>
     );
   }
 
   const {
-    streak, currentLevel,
+    streak,
     lessonsThisWeek, cardsThisWeek, activeDaysThisWeek,
     lessonsLastWeek, cardsLastWeek, activeDaysLastWeek,
     ratingBreakdown, dailyActivity,
@@ -162,8 +162,7 @@ export default function WeeklyReportClient({ report }: { report: WeeklyReportDat
               Báo Cáo Tuần
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Tổng kết 7 ngày học tập của bạn — cấp độ{" "}
-              <span className="font-black text-zinc-700 dark:text-zinc-200">{currentLevel}</span>
+              Tổng kết 7 ngày học tập của bạn
             </p>
           </div>
           {/* Week grade badge */}

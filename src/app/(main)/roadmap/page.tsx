@@ -46,6 +46,7 @@ export default async function RoadmapPage() {
       <RoadmapClient
         nextUnitRoute={nextUnitRoute}
         nextUnitTitle={nextUnit?.title}
+        nextUnitLevel={nextUnit?.level}
         userLevel={userLevel}
         completedUnitIds={completedIds}
         startingUnitIndex={startingUnitIndex}

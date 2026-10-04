@@ -6,7 +6,7 @@ import { ArrowRight, BookOpen, CheckCircle2, Circle } from "lucide-react";
 import {
   countCompletedMissions,
   type DailyMission,
-} from "@/lib/dashboard/daily-missions";
+} from "@/lib/learn/daily-missions";
 import { cn } from "@/lib/utils";
 
 interface TodayMissionProps {

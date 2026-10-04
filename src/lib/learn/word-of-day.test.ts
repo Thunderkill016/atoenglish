@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alignWordOfDayTopic } from "@/lib/dashboard/word-of-day";
+import { alignWordOfDayTopic } from "@/lib/learn/word-of-day";
 import type { VocabularyItem } from "@/lib/constants/vocabulary";
 
 const legacyWord: VocabularyItem = {
