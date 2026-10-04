@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createRateLimiter } from "@/lib/security/rate-limit";
+import { geminiGenerateUrl } from "@/lib/ai/gemini";
 import { z } from "zod";
 
 const grammarNoteLimiter = createRateLimiter(10, 60_000, "grammar-notes");
@@ -15,10 +16,10 @@ const grammarNoteSchema = z.object({
 });
 
 export interface GrammarNoteResult {
-  explanation_vn: string;  // 1-3 sentence Vietnamese grammar note for wrong answer
-  rule_vn: string;         // Short rule summary in Vietnamese
+  explanation_vn: string; // 1-3 sentence Vietnamese grammar note for wrong answer
+  rule_vn: string; // Short rule summary in Vietnamese
   example_correct: string; // Correct example sentence
-  example_wrong: string;   // Wrong example (the mistake pattern)
+  example_wrong: string; // Wrong example (the mistake pattern)
 }
 
 /**
@@ -36,14 +37,21 @@ export async function generateGrammarNote(params: {
 }) {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ?? "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ?? "127.0.0.1";
     const rateCheck = await grammarNoteLimiter.check(ip);
     if (!rateCheck.success) {
-      return { success: false as const, error: "Quá nhiều yêu cầu. Thử lại sau 1 phút." };
+      return {
+        success: false as const,
+        error: "Quá nhiều yêu cầu. Thử lại sau 1 phút.",
+      };
     }
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return { success: false as const, error: "Bạn cần đăng nhập." };
     }
@@ -90,27 +98,27 @@ Requirements:
 - Focus on the specific grammar point, not general advice
 - Appropriate for ${cefr_level} learners`;
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.3,
-            maxOutputTokens: 400,
-          },
-        }),
-      }
-    );
+    const res = await fetch(geminiGenerateUrl("gemini-2.0-flash", apiKey), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.3,
+          maxOutputTokens: 400,
+        },
+      }),
+    });
 
     if (!res.ok) {
-      return { success: false as const, error: "Không thể kết nối AI. Thử lại sau." };
+      return {
+        success: false as const,
+        error: "Không thể kết nối AI. Thử lại sau.",
+      };
     }
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
     };
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";

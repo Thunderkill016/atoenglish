@@ -19,6 +19,11 @@ export default defineConfig({
       VINEXT_KV_CACHE: bindings.kv({ id: "4db63c0fc952467ab758ce7ae776d4fd" }),
       // Worker version metadata ({id, tag, timestamp}) for /api/health.
       CF_VERSION_METADATA: bindings.versionMetadata(),
+      // Route Gemini calls through the `atoenglish` AI Gateway: request logs,
+      // 1h response caching on identical bodies, 100 req/min rate limit.
+      CF_AI_GATEWAY_BASE: bindings.text(
+        "https://gateway.ai.cloudflare.com/v1/6b09234492f82347abfe983b158626b2/atoenglish/google-ai-studio",
+      ),
     },
   }),
 });

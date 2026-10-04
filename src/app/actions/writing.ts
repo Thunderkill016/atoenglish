@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createRateLimiter } from "@/lib/security/rate-limit";
+import { geminiGenerateUrl } from "@/lib/ai/gemini";
 import { z } from "zod";
 
 const writingLimiter = createRateLimiter(15, 60_000, "writing");
@@ -13,16 +14,16 @@ const improveSchema = z.object({
 });
 
 export interface WritingFeedback {
-  corrected: string;         // Corrected version of the sentence(s)
+  corrected: string; // Corrected version of the sentence(s)
   errors: {
-    original: string;        // Exact erroneous phrase
-    correction: string;      // Fixed version
-    explanation_vn: string;  // Vietnamese explanation
+    original: string; // Exact erroneous phrase
+    correction: string; // Fixed version
+    explanation_vn: string; // Vietnamese explanation
     type: "grammar" | "vocabulary" | "spelling" | "word_order";
   }[];
-  improved: string;          // A more natural / advanced rephrasing
-  score: number;             // 0–100 accuracy score
-  encouragement_vn: string;  // Short Vietnamese motivational comment
+  improved: string; // A more natural / advanced rephrasing
+  score: number; // 0–100 accuracy score
+  encouragement_vn: string; // Short Vietnamese motivational comment
 }
 
 /**
@@ -105,7 +106,7 @@ Rules:
 - Keep the improved version comprehensible for ${level} learners`;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      geminiGenerateUrl("gemini-1.5-flash", apiKey),
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,14 +114,14 @@ Rules:
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: { responseMimeType: "application/json" },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       return { success: false as const, error: "Lỗi kết nối Gemini API." };
     }
 
-    const resData = await response.json() as {
+    const resData = (await response.json()) as {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
     };
     const raw = resData.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -152,20 +153,24 @@ const saveSchema = z.object({
  * tags includes ['writing-practice', level] for filtering later.
  */
 export async function saveWritingSentence(params: {
-  sentence_en: string;  // corrected English sentence
-  meaning_vn: string;   // original learner text (saved as "meaning" for reference)
+  sentence_en: string; // corrected English sentence
+  meaning_vn: string; // original learner text (saved as "meaning" for reference)
   level: "A1" | "A2" | "B1" | "B2";
 }) {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ?? "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ?? "127.0.0.1";
     const rateCheck = await saveLimiter.check(ip);
     if (!rateCheck.success) {
       return { success: false as const, error: "Quá nhiều yêu cầu." };
     }
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return { success: false as const, error: "Bạn cần đăng nhập." };
     }
@@ -219,8 +224,12 @@ export async function getUserSentences(tag?: string): Promise<{
 }> {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return { success: false, error: "Bạn cần đăng nhập." };
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user)
+      return { success: false, error: "Bạn cần đăng nhập." };
 
     let query = supabase
       .from("user_sentences")
@@ -257,15 +266,22 @@ export async function deleteUserSentence(id: string): Promise<{
 }> {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ?? "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ?? "127.0.0.1";
     const rateCheck = await deleteLimiter.check(ip);
-    if (!rateCheck.success) return { success: false, error: "Quá nhiều yêu cầu." };
+    if (!rateCheck.success)
+      return { success: false, error: "Quá nhiều yêu cầu." };
 
-    if (!id || typeof id !== "string") return { success: false, error: "ID không hợp lệ." };
+    if (!id || typeof id !== "string")
+      return { success: false, error: "ID không hợp lệ." };
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return { success: false, error: "Bạn cần đăng nhập." };
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user)
+      return { success: false, error: "Bạn cần đăng nhập." };
 
     const { error } = await supabase
       .from("user_sentences")
