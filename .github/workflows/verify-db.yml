@@ -91,16 +91,16 @@ jobs:
         env:
           DATABASE_URL_UNPOOLED: ${{ steps.conn.outputs.url }}
         run: |
+          # Purge user objects only — `drop schema public cascade` would also
+          # drop the Neon-managed extensions living in `public` (pg_session_jwt,
+          # pgcrypto, vector) and take the `auth` schema down with them.
           node --input-type=module -e "
+          import { readFileSync } from 'node:fs';
           import { Pool } from '@neondatabase/serverless';
           const pool = new Pool({ connectionString: process.env.DATABASE_URL_UNPOOLED });
           const c = await pool.connect();
           try {
-            await c.query('drop schema if exists public cascade');
-            await c.query('drop schema if exists private cascade');
-            await c.query('create schema public');
-            await c.query('grant all on schema public to public');
-            await c.query('create schema private');
+            await c.query(readFileSync('scripts/neon/reset-for-replay.sql', 'utf8'));
           } finally { c.release(); await pool.end(); }
           "
 
