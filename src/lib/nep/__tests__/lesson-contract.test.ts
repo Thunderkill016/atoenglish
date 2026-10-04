@@ -7,6 +7,39 @@ describe("Nếp lesson contract QA", () => {
     expect(qaLesson(firstMeetingLessonV1).filter((issue) => issue.severity === "error")).toEqual([]);
   });
 
+  it("flags no hard leaks in the first-meeting slice and warns on prompt overlap", () => {
+    const issues = qaLesson(firstMeetingLessonV1);
+    expect(issues.filter((issue) => issue.severity === "error")).toEqual([]);
+    // Scenario prompts legitimately contain target language (partner turns,
+    // utterances to classify) — overlap is recorded as a warning, not an error.
+    const warnings = issues.filter((issue) => issue.code === "PROMPT_OVERLAPS_TARGET");
+    expect(warnings.length).toBeGreaterThan(0);
+  });
+
+  it("rejects support content that hands over a satisfying signal", () => {
+    const broken = {
+      ...firstMeetingLessonV1,
+      actions: firstMeetingLessonV1.actions.map((action) =>
+        action.kind === "retrieve"
+          ? { ...action, supportLadder: ["Bắt đầu bằng 'My name is …'"] }
+          : action,
+      ),
+    };
+    expect(qaLesson(broken).map((issue) => issue.code)).toContain("SUPPORT_LEAKS_ANSWER");
+  });
+
+  it("rejects an instruction that contains the answer", () => {
+    const broken = {
+      ...firstMeetingLessonV1,
+      actions: firstMeetingLessonV1.actions.map((action) =>
+        action.kind === "repair"
+          ? { ...action, instruction: "Say 'could you say that again' to ask for repetition." }
+          : action,
+      ),
+    };
+    expect(qaLesson(broken).map((issue) => issue.code)).toContain("SURFACE_LEAKS_ANSWER");
+  });
+
   it("rejects a recognition-only lesson that claims the speaking flow", () => {
     const broken = {
       ...firstMeetingLessonV1,

@@ -73,7 +73,10 @@ export const greetCloseLessonV1: LessonContract = {
       instruction: "From the Vietnamese cue, say the short English greeting and acknowledgement aloud.",
       modality: "speech",
       prompt: "Chào. Rất vui được gặp bạn.",
-      supportVi: "Thử nhớ trước khi xem lại mẫu câu.",
+      supportLadder: [
+        "Hai cụm cần nói đều đã xuất hiện ở bước 'Để ý mẫu câu'.",
+        "Nhịp: [chào ngắn] + [câu cảm ơn khi gặp].",
+      ],
       targetSignals: [...greetingSignals, ...acknowledgementSignals],
       requiredSignalGroups: [greetingSignals, acknowledgementSignals],
       assessment: {
@@ -87,9 +90,12 @@ export const greetCloseLessonV1: LessonContract = {
       id: "produce",
       kind: "produce",
       title: "Open and close the interaction aloud",
-      instruction: "Greet Maya, acknowledge the meeting, then end the short interaction with a goodbye.",
+      instruction: "Greet Maya, acknowledge the meeting, then close the short interaction.",
       modality: "speech",
       prompt: "Maya: Hi, I'm Maya. Nice to meet you. [A moment later, you both leave.]",
+      supportLadder: [
+        "Cần đủ ba phần: chào lại + đáp lời gặp + chào tạm biệt.",
+      ],
       targetSignals: [...greetingSignals, ...acknowledgementSignals, ...closingSignals],
       requiredSignalGroups: [greetingSignals, acknowledgementSignals, closingSignals],
       assessment: {

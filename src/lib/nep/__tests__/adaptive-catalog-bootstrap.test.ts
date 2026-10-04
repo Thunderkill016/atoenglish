@@ -103,20 +103,21 @@ describe("adaptive catalog bootstrap V1", () => {
       actionId: "retrieve",
       response: "Hi. Nice to meet you.",
       responseSource: "speech",
-      supportUsed: false,
+      idempotencyKey: crypto.randomUUID(),
+      supportLevelUsed: 0,
       latencyMs: 800,
     });
     const compiled = compileCanonicalNếpPracticeAttempt(parsed)!;
 
-    expect(compiled.evaluation.success).toBe(true);
-    expect(compiled.record.attempt).toMatchObject({
+    expect(compiled.evaluation!.success).toBe(true);
+    expect(compiled.record!.attempt).toMatchObject({
       capabilityId: "CAP-001",
       exerciseType: "nep:retrieve",
       responseModality: "speech",
       correct: true,
       responseText: null,
     });
-    expect(compiled.record.candidate).toMatchObject({
+    expect(compiled.record!.candidate).toMatchObject({
       type: "retrieval",
       targetId: "CAP-001",
       success: true,

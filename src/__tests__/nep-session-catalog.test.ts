@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { greetCloseLessonV1 } from "@/lib/nep/bootstrap-lessons.v1";
+import { confirmUnderstandingLessonV1 } from "@/lib/nep/confirm-lesson.v1";
 import { firstMeetingLessonV1 } from "@/lib/nep/lesson-contract";
 import { nepSessionCatalogV1 } from "@/lib/nep/session-catalog.v1";
 
@@ -52,12 +54,25 @@ describe("Nếp session catalog v1", () => {
 
   it("keeps bootstrap candidates prerequisite-free while preserving evaluation metadata", () => {
     const bootstrapCandidates = nepSessionCatalogV1.filter(
-      (candidate) => candidate.metadata?.lessonId !== firstMeetingLessonV1.id,
+      (candidate) => candidate.metadata?.lessonId === greetCloseLessonV1.id,
     );
 
     expect(bootstrapCandidates.length).toBeGreaterThan(0);
     for (const candidate of bootstrapCandidates) {
       expect(candidate.prerequisiteTargetIds).toEqual([]);
+      expect(candidate.metadata?.contextId).toBeTypeOf("string");
+      expect(candidate.metadata?.evaluator).toBeTypeOf("string");
+    }
+  });
+
+  it("keeps confirm-understanding prerequisites on the repair capability", () => {
+    const candidates = nepSessionCatalogV1.filter(
+      (candidate) => candidate.metadata?.lessonId === confirmUnderstandingLessonV1.id,
+    );
+
+    expect(candidates.length).toBeGreaterThan(0);
+    for (const candidate of candidates) {
+      expect(candidate.prerequisiteTargetIds).toEqual(["CAP-003"]);
       expect(candidate.metadata?.contextId).toBeTypeOf("string");
       expect(candidate.metadata?.evaluator).toBeTypeOf("string");
     }

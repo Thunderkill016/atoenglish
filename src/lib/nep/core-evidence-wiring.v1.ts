@@ -161,7 +161,7 @@ export type CoreEvidenceTriple = {
  * e.g. post-reveal retries), which must not mint evidence.
  */
 export function toCoreEvidenceTriple(input: ZeroPathEvidenceInput): CoreEvidenceTriple | null {
-  const { lesson, action, responseSource, evaluation, supportUsed, latencyMs } = input;
+  const { lesson, action, responseSource, evaluation, supportLevelUsed, latencyMs } = input;
   const assessment = action.assessment;
   if (!assessment || !assessment.evidenceType) return null;
 
@@ -171,7 +171,7 @@ export function toCoreEvidenceTriple(input: ZeroPathEvidenceInput): CoreEvidence
   const taskId = `nep:${lesson.id}@v${lesson.version}:${action.id}`;
   const eventId = input.eventId ?? `evt:${taskId}:${input.occurredAt}:${sequence}`;
   const observationId = `obs:${taskId}:${input.occurredAt}:${sequence}`;
-  const supportLevel = supportUsed ? 1 : 0;
+  const supportLevel = supportLevelUsed;
   const contextTags = [
     `lesson:${lesson.id}`,
     `cap:${assessment.targetCapabilityId}`,

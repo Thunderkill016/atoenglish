@@ -14,9 +14,10 @@ function submission(overrides: Record<string, unknown> = {}) {
     lessonId: firstMeetingLessonV1.id,
     lessonVersion: firstMeetingLessonV1.version,
     actionId: "produce",
+    idempotencyKey: crypto.randomUUID(),
     response: "My name is Hoang.",
     responseSource: "speech" as const,
-    supportUsed: false,
+    supportLevelUsed: 0,
     latencyMs: 900,
     ...overrides,
   };
@@ -47,15 +48,15 @@ describe("trusted Nếp practice execution V1", () => {
     }));
     const compiled = compileCanonicalNếpPracticeAttempt(parsed)!;
 
-    expect(compiled.evaluation.success).toBe(true);
-    expect(compiled.record.attempt).toMatchObject({
+    expect(compiled.evaluation!.success).toBe(true);
+    expect(compiled.record!.attempt).toMatchObject({
       capabilityId: "CAP-002",
       exerciseType: "nep:produce",
       correct: true,
       responseModality: "speech",
       responseText: null,
     });
-    expect(compiled.record.candidate).toMatchObject({
+    expect(compiled.record!.candidate).toMatchObject({
       type: "production",
       targetId: "CAP-002",
       success: true,
@@ -67,7 +68,7 @@ describe("trusted Nếp practice execution V1", () => {
     const parsed = NếpPracticeSubmissionSchema.parse(submission({ response: raw }));
     const compiled = compileCanonicalNếpPracticeAttempt(parsed)!;
 
-    expect(compiled.record.attempt.responseText).toBeNull();
+    expect(compiled.record!.attempt.responseText).toBeNull();
     expect(JSON.stringify(compiled.record)).not.toContain(raw);
   });
 
@@ -75,12 +76,12 @@ describe("trusted Nếp practice execution V1", () => {
     const parsed = NếpPracticeSubmissionSchema.parse(submission({ responseSource: "text" }));
     const compiled = compileCanonicalNếpPracticeAttempt(parsed)!;
 
-    expect(compiled.evaluation.success).toBe(true);
-    expect(compiled.record.attempt.responseModality).toBe("text");
-    expect(compiled.record.candidate).not.toBeNull();
+    expect(compiled.evaluation!.success).toBe(true);
+    expect(compiled.record!.attempt.responseModality).toBe("text");
+    expect(compiled.record!.candidate).not.toBeNull();
     expect(materializeEvidence({
-      attempt: compiled.record.attempt,
-      candidate: compiled.record.candidate!,
+      attempt: compiled.record!.attempt,
+      candidate: compiled.record!.candidate!,
     })).toBeNull();
   });
 
@@ -91,13 +92,40 @@ describe("trusted Nếp practice execution V1", () => {
     }));
     const compiled = compileCanonicalNếpPracticeAttempt(parsed)!;
 
-    expect(compiled.record.attempt.revealUsed).toBe(true);
-    expect(compiled.record.candidate).toBeNull();
+    expect(compiled.record!.attempt.revealUsed).toBe(true);
+    expect(compiled.record!.candidate).toBeNull();
   });
 
   it("rejects unknown canonical lesson/action identity", () => {
     const parsed = NếpPracticeSubmissionSchema.parse(submission({ actionId: "fake-action" }));
     expect(compileCanonicalNếpPracticeAttempt(parsed)).toBeNull();
+  });
+
+  it("clamps claimed support level to the action's canonical ladder", () => {
+    const parsed = NếpPracticeSubmissionSchema.parse(submission({
+      actionId: "retrieve",
+      response: "my name is hoang",
+      supportLevelUsed: 16,
+    }));
+    const compiled = compileCanonicalNếpPracticeAttempt(parsed)!;
+
+    // retrieve declares a 2-rung ladder — the client cannot claim more.
+    expect(compiled.supportLevelUsed).toBe(2);
+    expect(compiled.record!.attempt.supportLevel).toBe(2);
+  });
+
+  it("keeps non-respondable actions non-submittable while self-report compiles without evaluation", () => {
+    const context = NếpPracticeSubmissionSchema.parse(submission({ actionId: "context", response: "" }));
+    expect(compileCanonicalNếpPracticeAttempt(context)).toBeNull();
+
+    const reflect = NếpPracticeSubmissionSchema.parse(submission({
+      actionId: "reflect",
+      response: "Tôi cần luyện lại buổi này",
+    }));
+    const compiled = compileCanonicalNếpPracticeAttempt(reflect)!;
+    expect(compiled.evaluation).toBeNull();
+    expect(compiled.record).toBeNull();
+    expect(compiled.feedback).toContain("tự đánh giá");
   });
 
   it("resolves a planner candidate to a learner-safe practice envelope", () => {

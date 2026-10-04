@@ -21,12 +21,14 @@ export type ZeroPathActionEnvelope = {
   readonly model: string | null;
   readonly choices: readonly string[];
   readonly supportVi: string | null;
+  /** Ordered support rungs the learner may reveal one at a time (0 = none used). */
+  readonly supportSteps: readonly string[];
   readonly revealsAnswer: boolean;
   readonly changedContext: boolean;
   /**
-   * Whether this action collects a learner response (any assessed/attempt-only
-   * action). Attempt-only actions like `retry` still collect a response and
-   * return feedback — they just mint no evidence.
+   * Whether this action collects a learner response (any assessed, attempt-only
+   * or unassessed self-report action). Attempt-only actions like `retry` still
+   * collect a response and return feedback — they just mint no evidence.
    */
   readonly respondable: boolean;
 };
@@ -38,6 +40,21 @@ export type ZeroPathLessonEnvelope = {
   readonly learnerCanDo: string;
   readonly actions: readonly ZeroPathActionEnvelope[];
 };
+
+export type ZeroPathLessonIndexEntry = {
+  readonly lessonId: string;
+  readonly mission: string;
+  readonly learnerCanDo: string;
+};
+
+/** Learner-safe index of registered lessons for session pickers. */
+export function zeroPathLessonIndex(): readonly ZeroPathLessonIndexEntry[] {
+  return nepLessonRegistryV1.map((lesson) => ({
+    lessonId: lesson.id,
+    mission: lesson.mission,
+    learnerCanDo: lesson.learnerCanDo,
+  }));
+}
 
 export function zeroPathLessonEnvelope(
   lessonId: string = ZERO_PATH_PILOT_LESSON_ID,
@@ -60,9 +77,10 @@ export function zeroPathLessonEnvelope(
       model: action.model ?? null,
       choices: [...(action.choices ?? [])],
       supportVi: action.supportVi ?? null,
+      supportSteps: action.supportLadder ?? (action.supportVi ? [action.supportVi] : []),
       revealsAnswer: action.revealsAnswer === true,
       changedContext: action.changedContext === true,
-      respondable: action.assessment != null,
+      respondable: action.assessment != null || action.collectsResponse === true,
     })),
   };
 }

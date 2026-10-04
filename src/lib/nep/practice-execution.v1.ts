@@ -10,10 +10,26 @@ export const NếpPracticeSubmissionSchema = z.object({
   lessonId: z.string().trim().min(1).max(160),
   lessonVersion: z.number().int().positive(),
   actionId: z.string().trim().min(1).max(120),
+  /**
+   * Client-minted attempt idempotency key: retrying the same submission must
+   * not mint evidence twice. Also used as the evidence eventId.
+   */
+  idempotencyKey: z.string().uuid(),
   response: z.string().max(1200),
   responseSource: z.enum(["speech", "text"]).nullable(),
-  supportUsed: z.boolean(),
+  /**
+   * Highest support-ladder rung the learner revealed (0 = none). Server clamps
+   * this to the action's canonical ladder length — the client cannot claim a
+   * level that does not exist.
+   */
+  supportLevelUsed: z.number().int().min(0).max(16),
   latencyMs: z.number().finite().min(0).max(60 * 60 * 1000),
+  /**
+   * Marks a delayed re-observation of a previously introduced lesson.
+   * Only trusted callers may set this — the zero-path action injects it from
+   * the server-bound session mode, so a client cannot relabel its own attempts.
+   */
+  reviewMode: z.boolean().optional(),
 });
 
 export type NếpPracticeSubmission = z.infer<typeof NếpPracticeSubmissionSchema>;
@@ -84,15 +100,38 @@ export function resolveNếpPlannedPractice(candidateId: string): NếpPracticeE
   };
 }
 
+/** Canonical support-ladder length for an action (supportVi counts as one rung). */
+export function nepSupportLadderLength(action: LessonAction): number {
+  return action.supportLadder?.length ?? (action.supportVi ? 1 : 0);
+}
+
 /**
  * Server-authoritative compilation of one learner response.
  * The caller supplies only observed interaction data. Correctness, learning target, evidence type,
  * evaluator identity, reveal semantics and remediation metadata are all recomputed from canonical
  * content on the server.
+ *
+ * Returns `evaluation: null` for unassessed respondable actions (self-report
+ * channel such as reflect): the response is recorded as a submission but can
+ * never mint evidence.
  */
 export function compileCanonicalNếpPracticeAttempt(input: NếpPracticeSubmission) {
   const resolved = resolveNếpAction(input.lessonId, input.lessonVersion, input.actionId);
-  if (!resolved?.action.assessment) return null;
+  if (!resolved) return null;
+
+  const supportLevelUsed = Math.min(input.supportLevelUsed, nepSupportLadderLength(resolved.action));
+
+  if (!resolved.action.assessment) {
+    if (!resolved.action.collectsResponse) return null;
+    return {
+      lesson: resolved.lesson,
+      action: resolved.action,
+      evaluation: null,
+      feedback: "Đã ghi nhận tự đánh giá của bạn.",
+      record: null,
+      supportLevelUsed,
+    };
+  }
 
   const evaluation = evaluateNếpAction(resolved.action, input.response);
   const feedback = feedbackForNếpEvaluation(resolved.action, evaluation);
@@ -102,8 +141,9 @@ export function compileCanonicalNếpPracticeAttempt(input: NếpPracticeSubmiss
     response: input.response,
     responseSource: input.responseSource as NếpResponseSource,
     evaluation,
-    supportUsed: input.supportUsed,
+    supportLevelUsed,
     latencyMs: input.latencyMs,
+    reviewMode: input.reviewMode === true,
   });
   if (!record) return null;
 
@@ -113,6 +153,7 @@ export function compileCanonicalNếpPracticeAttempt(input: NếpPracticeSubmiss
     evaluation,
     feedback,
     record,
+    supportLevelUsed,
   };
 }
 

@@ -31,6 +31,8 @@ export type ZeroPathSessionReadModel = {
   readonly submissions: number;
   readonly evidenceMinted: number;
   readonly skippedAttemptOnly: number;
+  /** Unassessed self-report responses (reflect channel). Never evidence. */
+  readonly selfReports: number;
   readonly rejectedCount: number;
   readonly constructs: readonly SessionConstructRead[];
 };
@@ -39,6 +41,7 @@ export type SessionReadModelInput = {
   readonly sessionId: string;
   readonly submissions: number;
   readonly skippedAttemptOnly: number;
+  readonly selfReports: number;
   readonly rejectedBeforeProjection: number;
   readonly accepted: readonly ReferenceCoreEvidence[];
   readonly claimsByTarget: ReadonlyMap<string, ReadonlySet<ZeroPathClaimId>>;
@@ -67,6 +70,7 @@ export function buildSessionReadModel(input: SessionReadModelInput): ZeroPathSes
     submissions: input.submissions,
     evidenceMinted: input.accepted.length,
     skippedAttemptOnly: input.skippedAttemptOnly,
+    selfReports: input.selfReports,
     rejectedCount: input.rejectedBeforeProjection + projected.rejectedEvents.length,
     constructs,
   };

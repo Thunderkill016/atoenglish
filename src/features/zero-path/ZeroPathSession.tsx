@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { submitZeroPathResponse } from "@/app/actions/zero-path";
-import type { ReferenceCoreEvidence } from "@/lib/core/certified-evidence";
-import { buildEnglishOntologyV1 } from "@/lib/core/ontology-seed";
 import {
-  buildSessionReadModel,
-  type ZeroPathSessionReadModel,
-} from "@/lib/nep/session-read-model";
+  getZeroPathReadModel,
+  startZeroPathPilotSession,
+  submitZeroPathResponse,
+} from "@/app/actions/zero-path";
+import type { ZeroPathSessionReadModel } from "@/lib/nep/session-read-model";
 import type { ZeroPathClaimId } from "@/lib/nep/core-evidence-wiring.v1";
-import type { ZeroPathLessonEnvelope } from "@/lib/nep/zero-path-pilot.v1";
+import type {
+  ZeroPathActionEnvelope,
+  ZeroPathLessonEnvelope,
+} from "@/lib/nep/zero-path-pilot.v1";
 
 const ACTIVITY_LABELS: Record<string, string> = {
   "reading-reception": "Đọc hiểu",
@@ -39,51 +41,72 @@ const CLAIM_LABELS: Record<ZeroPathClaimId, string> = {
   use_novel_context: "Dùng trong ngữ cảnh mới",
 };
 
+const KIND_LABELS: Record<ZeroPathActionEnvelope["kind"], string> = {
+  context: "Bối cảnh",
+  comprehend: "Đọc hiểu",
+  notice: "Để ý mẫu câu",
+  retrieve: "Nhớ lại",
+  produce: "Tự nói",
+  feedback: "Gợi ý",
+  repair: "Xử lý khó khăn",
+  retry: "Thử lại",
+  transfer: "Ngữ cảnh mới",
+  reflect: "Tự đánh giá",
+};
+
 type StepState =
   | { readonly phase: "answering" }
-  | { readonly phase: "feedback"; readonly feedback: string };
+  | {
+      readonly phase: "feedback";
+      readonly feedback: string;
+      /** neutral = unassessed self-report or transport-level outcome. */
+      readonly verdict: "correct" | "incorrect" | "neutral";
+    };
 
-export function ZeroPathSession({ lesson }: { lesson: ZeroPathLessonEnvelope }) {
+export function ZeroPathSession({
+  lesson,
+  mode = "learn",
+}: {
+  lesson: ZeroPathLessonEnvelope;
+  /** Server-bound session mode: "review" marks attempts as delayed re-observation. */
+  mode?: "learn" | "review";
+}) {
+  const [started, setStarted] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [step, setStep] = useState<StepState>({ phase: "answering" });
   const [response, setResponse] = useState("");
-  const [supportRevealed, setSupportRevealed] = useState(false);
+  const [supportLevel, setSupportLevel] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [finished, setFinished] = useState(false);
+  const [model, setModel] = useState<ZeroPathSessionReadModel | null>(null);
   const actionStartedAt = useRef(0);
-  const sequence = useRef(0);
-  const sessionId = `zp-${useId().replace(/:/g, "")}`;
-  const [accum, setAccum] = useState<{
-    accepted: ReferenceCoreEvidence[];
-    claimsByTarget: Map<string, Set<ZeroPathClaimId>>;
-    submissions: number;
-    skippedAttemptOnly: number;
-    rejected: number;
-  }>({
-    accepted: [],
-    claimsByTarget: new Map(),
-    submissions: 0,
-    skippedAttemptOnly: 0,
-    rejected: 0,
-  });
-  const ontology = useMemo(() => {
-    const built = buildEnglishOntologyV1();
-    return built.ok ? built.graph : null;
-  }, []);
+  const idempotencyKey = useRef(crypto.randomUUID());
+
+  useEffect(() => {
+    actionStartedAt.current = Date.now();
+    idempotencyKey.current = crypto.randomUUID();
+  }, [index]);
+
+  async function start() {
+    const result = await startZeroPathPilotSession(mode === "review" ? "review" : undefined);
+    setSessionId(result.sessionId);
+    setStarted(true);
+  }
 
   const action = lesson.actions[index];
   const isLast = index >= lesson.actions.length - 1;
 
-  useEffect(() => {
-    actionStartedAt.current = Date.now();
-  }, [index]);
-
   function advance() {
     setResponse("");
-    setSupportRevealed(false);
+    setSupportLevel(0);
     setStep({ phase: "answering" });
-    if (isLast) setFinished(true);
-    else setIndex(index + 1);
+    if (isLast && sessionId) {
+      void getZeroPathReadModel(sessionId).then((readModel) => {
+        if (readModel) setModel(readModel);
+      });
+    } else {
+      setIndex(index + 1);
+    }
   }
 
   async function submit(rawResponse: string) {
@@ -91,190 +114,259 @@ export function ZeroPathSession({ lesson }: { lesson: ZeroPathLessonEnvelope }) 
       advance();
       return;
     }
+    if (!sessionId) return;
     setSubmitting(true);
     try {
-      const result = await submitZeroPathResponse({
+      const result = await submitZeroPathResponse(sessionId, {
         lessonId: lesson.lessonId,
         lessonVersion: lesson.lessonVersion,
         actionId: action.actionId,
+        idempotencyKey: idempotencyKey.current,
         response: rawResponse,
         responseSource: rawResponse.trim() ? "text" : null,
-        supportUsed: supportRevealed,
+        supportLevelUsed: supportLevel,
         latencyMs: Math.max(0, Date.now() - actionStartedAt.current),
-        sequence: sequence.current++,
       });
-      setAccum((prev) => {
-        if (
-          result.kind === "rate-limited" ||
-          result.kind === "invalid-input" ||
-          result.kind === "unresolvable"
-        ) {
-          return prev;
-        }
-        const next = { ...prev, submissions: prev.submissions + 1 };
-        if (result.kind === "evidence") {
-          next.accepted = [...prev.accepted, result.evidence];
-          next.claimsByTarget = new Map(prev.claimsByTarget);
-          const set = new Set(next.claimsByTarget.get(result.evidence.targetId));
-          set.add(result.claim);
-          next.claimsByTarget.set(result.evidence.targetId, set);
-        } else if (result.kind === "attempt-only") {
-          next.skippedAttemptOnly = prev.skippedAttemptOnly + 1;
-        } else {
-          next.rejected = prev.rejected + 1;
-        }
-        return next;
-      });
+      const evaluation = "evaluation" in result ? result.evaluation : null;
       setStep({
         phase: "feedback",
-        feedback: "feedback" in result ? result.feedback : "Không ghi nhận được câu trả lời. Thử lại nhé.",
+        feedback:
+          "feedback" in result
+            ? result.feedback
+            : "Không ghi nhận được câu trả lời. Thử lại nhé.",
+        verdict:
+          evaluation == null
+            ? "neutral"
+            : evaluation.success
+              ? "correct"
+              : "incorrect",
       });
     } finally {
       setSubmitting(false);
     }
   }
 
-  const model: ZeroPathSessionReadModel | null =
-    finished && ontology
-      ? buildSessionReadModel({
-          sessionId,
-          submissions: accum.submissions,
-          skippedAttemptOnly: accum.skippedAttemptOnly,
-          rejectedBeforeProjection: accum.rejected,
-          accepted: accum.accepted,
-          claimsByTarget: accum.claimsByTarget,
-          ontology,
-        })
-      : null;
-
   if (model) return <SessionSummary model={model} />;
+
+  if (!started) {
+    return (
+      <section
+        aria-label="Giới thiệu buổi học"
+        className="flex min-h-[68vh] flex-col justify-center space-y-5"
+      >
+        <div className="space-y-3">
+          <p className="text-xs font-bold uppercase tracking-widest text-sky-600">
+            {mode === "review" ? "Buổi ôn tập" : "Buổi học"}
+          </p>
+          <h2 className="text-xl font-bold text-foreground">{lesson.mission}</h2>
+          <p className="text-sm text-muted-foreground">
+            Mục tiêu: {lesson.learnerCanDo}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {mode === "review"
+              ? `${lesson.actions.length} bước — ôn lại sau một thời gian giúp đánh giá khả năng ghi nhớ.`
+              : `${lesson.actions.length} bước — đáp án luôn ẩn cho đến khi bạn thử, và có thể gõ thay vì nói.`}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void start()}
+          className="w-full rounded-2xl bg-sky-500 px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-sky-600 active:translate-y-0.5 active:shadow-none"
+        >
+          Bắt đầu
+        </button>
+      </section>
+    );
+  }
 
   if (!action) {
     return (
-      <p className="text-sm text-stone-500">
+      <p className="text-sm text-muted-foreground">
         Không tải được bài học pilot. Thử tải lại trang.
       </p>
     );
   }
 
   return (
-    <section className="space-y-5" aria-label="Bài học zero-path">
-      <p className="text-xs font-medium uppercase tracking-wide text-stone-400">
-        Bước {index + 1}/{lesson.actions.length} · {action.kind}
-      </p>
-      <h2 className="text-lg font-semibold text-stone-900">{action.title}</h2>
-      <p className="text-sm text-stone-600">{action.instruction}</p>
-      {action.prompt ? (
-        <p className="rounded-xl bg-stone-100 px-4 py-3 text-base text-stone-800">{action.prompt}</p>
-      ) : null}
-      {action.model ? (
-        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-base text-emerald-900">{action.model}</p>
-      ) : null}
+    <section aria-label="Bài học zero-path" className="flex min-h-[68vh] flex-col">
+      <ProgressBar current={index} total={lesson.actions.length} />
 
-      {action.respondable && action.supportVi ? (
-        <div>
-          {supportRevealed ? (
-            <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">{action.supportVi}</p>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setSupportRevealed(true)}
-              className="text-sm font-medium text-amber-700 underline underline-offset-2"
-            >
-              Hiện hỗ trợ tiếng Việt
-            </button>
-          )}
-        </div>
-      ) : null}
-      {!action.respondable && action.supportVi ? (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">{action.supportVi}</p>
-      ) : null}
+      <div className="flex-1 space-y-5 py-6">
+        <p className="text-xs font-bold uppercase tracking-widest text-sky-600">
+          {KIND_LABELS[action.kind] ?? action.kind}
+        </p>
+        <h2 className="text-xl font-bold text-foreground">{action.title}</h2>
+        <p className="text-sm text-muted-foreground">{action.instruction}</p>
+        {action.prompt ? (
+          <p className="rounded-2xl border-2 border-border bg-card px-5 py-4 text-lg font-medium text-foreground">
+            {action.prompt}
+          </p>
+        ) : null}
+        {action.model ? (
+          <p className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950 px-5 py-4 text-lg font-medium text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
+            {action.model}
+          </p>
+        ) : null}
 
-      {step.phase === "feedback" ? (
-        <div className="space-y-4">
-          <p className="rounded-xl bg-sky-50 px-4 py-3 text-sm text-sky-900">{step.feedback}</p>
-          <button
-            type="button"
-            onClick={advance}
-            className="w-full rounded-xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white"
-          >
-            {isLast ? "Xem bằng chứng buổi học" : "Tiếp tục"}
-          </button>
-        </div>
-      ) : action.respondable ? (
-        <div className="space-y-3">
-          {action.choices.length > 0 ? (
-            <div className="grid gap-2">
+        {action.respondable && action.supportSteps.length > 0 ? (
+          <div className="space-y-2">
+            {action.supportSteps.slice(0, supportLevel).map((rung, rungIndex) => (
+              <p
+                key={rungIndex}
+                className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+              >
+                {rung}
+              </p>
+            ))}
+            {supportLevel < action.supportSteps.length ? (
+              <button
+                type="button"
+                onClick={() => setSupportLevel(supportLevel + 1)}
+                className="text-sm font-semibold text-amber-700 dark:text-amber-300 underline dark:text-amber-400 underline-offset-2"
+              >
+                {supportLevel === 0 ? "Cần gợi ý?" : "Gợi ý thêm"}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {!action.respondable && action.supportVi ? (
+          <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+            {action.supportVi}
+          </p>
+        ) : null}
+
+        {step.phase === "answering" && action.respondable ? (
+          action.choices.length > 0 ? (
+            <div className="grid gap-2.5">
               {action.choices.map((choice) => (
                 <button
                   key={choice}
                   type="button"
-                  disabled={submitting}
+                  disabled={submitting || !sessionId}
                   onClick={() => void submit(choice)}
-                  className="rounded-xl border border-stone-200 px-4 py-3 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 disabled:opacity-50"
+                  className="rounded-2xl border-2 border-border bg-card px-5 py-4 text-left text-base font-semibold text-foreground shadow-[0_2px_0_0_var(--border)] transition hover:border-sky-300 hover:bg-sky-50 active:translate-y-0.5 active:shadow-none disabled:opacity-50"
                 >
                   {choice}
                 </button>
               ))}
             </div>
           ) : (
-            <>
-              <textarea
-                value={response}
-                onChange={(event) => setResponse(event.target.value)}
-                rows={2}
-                placeholder="Gõ câu tiếng Anh của bạn…"
-                className="w-full rounded-xl border border-stone-300 px-4 py-3 text-base text-stone-900 focus:border-stone-500 focus:outline-none"
-              />
-              <button
-                type="button"
-                disabled={submitting || !response.trim()}
-                onClick={() => void submit(response)}
-                className="w-full rounded-xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                {submitting ? "Đang chấm…" : "Gửi câu trả lời"}
-              </button>
-            </>
-          )}
+            <textarea
+              value={response}
+              onChange={(event) => setResponse(event.target.value)}
+              rows={2}
+              placeholder="Gõ câu tiếng Anh của bạn…"
+              className="w-full rounded-2xl border-2 border-border bg-muted/50 px-5 py-4 text-lg text-foreground focus:border-sky-400 focus:bg-white focus:outline-none"
+            />
+          )
+        ) : null}
+      </div>
+
+      {step.phase === "feedback" ? (
+        <div
+          className={`sticky bottom-0 -mx-4 space-y-3 border-t-4 px-4 py-5 sm:mx-0 sm:rounded-t-3xl sm:border-x-4 ${
+            step.verdict === "correct"
+              ? "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950"
+              : step.verdict === "incorrect"
+                ? "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950"
+                : "border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-950"
+          }`}
+          role="status"
+        >
+          <p
+            className={`text-base font-bold ${
+              step.verdict === "correct"
+                ? "text-emerald-700 dark:text-emerald-300"
+                : step.verdict === "incorrect"
+                  ? "text-amber-700 dark:text-amber-300"
+                  : "text-sky-700 dark:text-sky-300"
+            }`}
+          >
+            {step.verdict === "correct"
+              ? "Chính xác!"
+              : step.verdict === "incorrect"
+                ? "Gần được rồi"
+                : "Đã ghi nhận"}
+          </p>
+          <p className="text-sm text-foreground">{step.feedback}</p>
+          <button
+            type="button"
+            onClick={advance}
+            className={`w-full rounded-2xl px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(0,0,0,0.15)] transition active:translate-y-0.5 active:shadow-none ${
+              step.verdict === "correct"
+                ? "bg-emerald-500 hover:bg-emerald-600"
+                : step.verdict === "incorrect"
+                  ? "bg-amber-500 hover:bg-amber-600"
+                  : "bg-sky-500 hover:bg-sky-600"
+            }`}
+          >
+            {isLast ? "Xem bằng chứng buổi học" : "Tiếp tục"}
+          </button>
         </div>
-      ) : (
+      ) : action.respondable && action.choices.length === 0 ? (
+        <button
+          type="button"
+          disabled={submitting || !response.trim() || !sessionId}
+          onClick={() => void submit(response)}
+          className="w-full rounded-2xl bg-sky-500 px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-sky-600 active:translate-y-0.5 active:shadow-none disabled:opacity-40"
+        >
+          {submitting ? "Đang chấm…" : "Kiểm tra"}
+        </button>
+      ) : !action.respondable ? (
         <button
           type="button"
           onClick={advance}
-          className="w-full rounded-xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white"
+          className="w-full rounded-2xl bg-sky-500 px-5 py-3.5 text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-sky-600 active:translate-y-0.5 active:shadow-none"
         >
           {isLast ? "Xem bằng chứng buổi học" : "Tiếp tục"}
         </button>
-      )}
+      ) : null}
     </section>
+  );
+}
+
+function ProgressBar({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex gap-1.5 pt-2" aria-hidden="true">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={`h-2.5 flex-1 rounded-full ${
+            i <= current ? "bg-emerald-400" : "bg-muted"
+          }`}
+        />
+      ))}
+    </div>
   );
 }
 
 function SessionSummary({ model }: { model: ZeroPathSessionReadModel }) {
   return (
     <section className="space-y-5" aria-label="Bằng chứng buổi học">
-      <h2 className="text-lg font-semibold text-stone-900">Bằng chứng buổi học</h2>
-      <p className="text-sm text-stone-600">
-        {model.evidenceMinted} bằng chứng được ghi nhận từ {model.submissions} lượt trả lời.
-        {model.skippedAttemptOnly > 0
-          ? ` ${model.skippedAttemptOnly} lượt luyện tập không tạo bằng chứng.`
-          : ""}
-        {model.rejectedCount > 0 ? ` ${model.rejectedCount} bằng chứng bị từ chối.` : ""}
-      </p>
+      <h2 className="text-xl font-bold text-foreground">Bằng chứng buổi học</h2>
+      <div className="rounded-3xl bg-emerald-500 px-6 py-8 text-center text-white">
+        <p className="text-3xl font-black">{model.evidenceMinted}</p>
+        <p className="mt-1 text-sm font-semibold opacity-90">
+          bằng chứng ghi nhận được · {model.submissions} lượt trả lời
+        </p>
+      </div>
       <ul className="space-y-3">
         {model.constructs.map((construct) => {
           const key = construct.targetId.split(".").pop() ?? construct.targetId;
           return (
-            <li key={construct.targetId} className="rounded-xl border border-stone-200 px-4 py-3">
-              <p className="text-sm font-semibold text-stone-900">
+            <li
+              key={construct.targetId}
+              className="rounded-2xl border-2 border-border bg-card px-5 py-4"
+            >
+              <p className="text-sm font-bold text-foreground">
                 {ACTIVITY_LABELS[key] ?? key}
               </p>
-              <p className="text-sm text-stone-600">
+              <p className="text-sm text-muted-foreground">
                 {construct.read.evidenceCount} bằng chứng ·{" "}
                 {STATUS_LABELS[construct.read.sourceStatus] ?? construct.read.sourceStatus}
               </p>
               {construct.claims.length > 0 ? (
-                <p className="mt-1 text-xs text-stone-500">
+                <p className="mt-1 text-xs font-medium text-muted-foreground">
                   {construct.claims.map((claim) => CLAIM_LABELS[claim] ?? claim).join(" · ")}
                 </p>
               ) : null}
@@ -282,7 +374,18 @@ function SessionSummary({ model }: { model: ZeroPathSessionReadModel }) {
           );
         })}
       </ul>
-      <p className="text-xs text-stone-400">
+      {model.skippedAttemptOnly > 0 || model.selfReports > 0 || model.rejectedCount > 0 ? (
+        <p className="text-xs text-muted-foreground">
+          {model.skippedAttemptOnly > 0
+            ? `${model.skippedAttemptOnly} lượt luyện tập không tạo bằng chứng. `
+            : ""}
+          {model.selfReports > 0
+            ? `${model.selfReports} tự đánh giá đã ghi nhận. `
+            : ""}
+          {model.rejectedCount > 0 ? `${model.rejectedCount} bằng chứng bị từ chối.` : ""}
+        </p>
+      ) : null}
+      <p className="text-xs text-muted-foreground">
         Đây là bằng chứng quan sát được, không phải điểm số hay mức thành thạo.
       </p>
     </section>

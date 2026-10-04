@@ -44,6 +44,18 @@ export type RecordNếpPracticeAttemptResult =
     }
   | {
       success: true;
+      persisted: false;
+      /** Unassessed self-report channel — recorded nowhere, mints nothing. */
+      persistence: "self-report";
+      attemptId: null;
+      evaluation: null;
+      feedback: string;
+      evidenceRecorded: false;
+      evidenceType: null;
+      evidenceRejection: null;
+    }
+  | {
+      success: true;
       persisted: true;
       persistence: "database";
       attemptId: string | null;
@@ -88,6 +100,22 @@ function isTransferPolicyRejection(message: string): boolean {
     || message.includes("Evidence context must match attempted context");
 }
 
+function isClientEvidenceRejection(message: string): boolean {
+  return message.includes("Client-supplied mastery evidence is not accepted");
+}
+
+/**
+ * Evidence may be dropped while the attempt itself remains valid:
+ * - transfer lost the changed-context race, or
+ * - the hardened RPC wrapper refused caller-supplied evidence args from a
+ *   Data API boundary (evidence writes need a trusted DB context — the
+ *   attempt record itself is still legitimate append-only history).
+ */
+function isEvidenceWriteRejection(message: string, evidenceType: EvidenceType): boolean {
+  if (isClientEvidenceRejection(message)) return true;
+  return evidenceType === "transfer" && isTransferPolicyRejection(message);
+}
+
 /**
  * Trusted Nếp execution boundary.
  *
@@ -121,6 +149,19 @@ export async function recordNếpPracticeAttempt(
     }
 
     const { record, evaluation, feedback } = compiled;
+    if (!record || !evaluation) {
+      return {
+        success: true,
+        persisted: false,
+        persistence: "self-report",
+        attemptId: null,
+        evaluation: null,
+        feedback,
+        evidenceRecorded: false,
+        evidenceType: null,
+        evidenceRejection: null,
+      };
+    }
     const { attempt, candidate } = record;
     const evidence = candidate
       ? materializeEvidence({
@@ -153,9 +194,10 @@ export async function recordNếpPracticeAttempt(
     let evidenceRejection: string | null = null;
 
     // A changed-context decision depends on persisted history and can lose a race between
-    // concurrent requests. Preserve the immutable attempt even when the DB correctly rejects
-    // only transfer evidence. Infrastructure/permission errors are never downgraded.
-    if (error && evidence?.type === "transfer" && isTransferPolicyRejection(error.message)) {
+    // concurrent requests, and Data API callers cannot write evidence args at all (see the
+    // hardening migration). Preserve the immutable attempt when only the evidence write is
+    // rejected. Infrastructure/permission errors are never downgraded.
+    if (error && evidence && isEvidenceWriteRejection(error.message, evidence.type)) {
       evidenceRejection = error.message;
       const retry = await rpcClient.rpc("record_learning_attempt", rpcArgs(attempt, null));
       data = retry.data;

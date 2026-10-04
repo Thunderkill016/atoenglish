@@ -1,51 +1,61 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
-import { compileCanonicalNếpPracticeAttempt } from "@/lib/nep/practice-execution.v1";
-import { toLearnerStateEvidence } from "@/lib/nep/core-evidence-wiring.v1";
+import { createZeroPathSession } from "@/lib/nep/session-runner.v1";
 import { zeroPathLessonEnvelope } from "@/lib/nep/zero-path-pilot.v1";
 
 import { ZeroPathSession } from "./ZeroPathSession";
 
-// The component test exercises the real canonical compile + wiring pipeline;
-// only the server-action transport hop is mocked.
-vi.mock("@/app/actions/zero-path", () => ({
-  submitZeroPathResponse: async (input: {
-    lessonId: string;
-    lessonVersion: number;
-    actionId: string;
-    response: string;
-    responseSource: "speech" | "text" | null;
-    supportUsed: boolean;
-    latencyMs: number;
-    sequence: number;
-  }) => {
-    const compiled = compileCanonicalNếpPracticeAttempt(input);
-    if (!compiled) return { kind: "unresolvable" as const };
-    const result = toLearnerStateEvidence({
-      lesson: compiled.lesson,
-      action: compiled.action,
-      response: input.response,
-      responseSource: input.responseSource,
-      evaluation: compiled.evaluation,
-      supportUsed: input.supportUsed,
-      latencyMs: input.latencyMs,
-      occurredAt: new Date().toISOString(),
-      sequence: input.sequence,
-    });
-    const base = { evaluation: compiled.evaluation, feedback: compiled.feedback };
-    if (!result) return { kind: "attempt-only" as const, ...base };
-    if (!result.ok) {
-      return {
-        kind: "invalid-evidence" as const,
-        claim: result.claim,
-        problems: result.problems.map((p) => JSON.stringify(p)),
-        ...base,
-      };
-    }
-    return { kind: "evidence" as const, claim: result.claim, evidence: result.evidence, ...base };
-  },
-}));
+// The component test exercises the real session runner + wiring pipeline;
+// only the server-action transport hop is mocked (a per-session runner map).
+vi.mock("@/app/actions/zero-path", () => {
+  const runners = new Map<string, ReturnType<typeof createZeroPathSession>>();
+  let counter = 0;
+  return {
+    startZeroPathPilotSession: async () => {
+      const sessionId = `test-${counter++}`;
+      runners.set(sessionId, createZeroPathSession({ sessionId }));
+      return { sessionId };
+    },
+    submitZeroPathResponse: async (
+      sessionId: string,
+      input: Parameters<ReturnType<typeof createZeroPathSession>["recordSubmission"]>[0],
+    ) => {
+      const runner = runners.get(sessionId);
+      if (!runner) return { kind: "no-session" as const };
+      const outcome = runner.recordSubmission(input);
+      switch (outcome.kind) {
+        case "rejected":
+          return { kind: "unresolvable" as const };
+        case "duplicate":
+          return {
+            kind: "duplicate" as const,
+            evaluation: "evaluation" in outcome.prior ? outcome.prior.evaluation : null,
+            feedback:
+              "feedback" in outcome.prior
+                ? outcome.prior.feedback
+                : "Lượt này đã được ghi nhận trước đó.",
+          };
+        case "self-report":
+          return { kind: "self-report" as const, feedback: outcome.feedback };
+        case "attempt-only":
+          return { kind: "attempt-only" as const, evaluation: outcome.evaluation, feedback: outcome.feedback };
+        case "evidence":
+          return { kind: "evidence" as const, claim: outcome.claim, evaluation: outcome.evaluation, feedback: outcome.feedback };
+        case "invalid-evidence":
+          return {
+            kind: "invalid-evidence" as const,
+            claim: outcome.claim,
+            problems: outcome.problems.map((p) => JSON.stringify(p)),
+            evaluation: outcome.evaluation,
+            feedback: outcome.feedback,
+          };
+      }
+    },
+    getZeroPathReadModel: async (sessionId: string) =>
+      runners.get(sessionId)?.readModel() ?? null,
+  };
+});
 
 const lesson = zeroPathLessonEnvelope();
 if (!lesson) throw new Error("pilot lesson envelope missing");
@@ -62,6 +72,13 @@ function clickButton(container: HTMLElement, text: string) {
   );
   expect(button, `button "${text}"`).toBeTruthy();
   button!.click();
+}
+
+function typeAndSubmit(container: HTMLElement, text: string) {
+  const textarea = container.querySelector("textarea")!;
+  const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
+  setter.call(textarea, text);
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 describe("ZeroPathSession", () => {
@@ -83,85 +100,68 @@ describe("ZeroPathSession", () => {
     await act(async () => {
       root.render(<ZeroPathSession lesson={lesson} />);
     });
+    // Orientation: can-do outcome + step count shown before any action.
+    expect(container.textContent).toContain(lesson.learnerCanDo);
+    expect(container.textContent).toContain(`${lesson.actions.length} bước`);
+    clickButton(container, "Bắt đầu");
+    await flush();
 
-    // context (non-assessed): shows scripted model, advances locally.
+    // context (non-respondable): shows scripted model, advances locally.
     expect(container.textContent).toContain("Hi, I'm Maya");
     clickButton(container, "Tiếp tục");
     await flush();
 
-    // comprehend (assessed, choice): click a choice → feedback → continue.
+    // comprehend (respondable, choice): click a choice → feedback → continue.
     clickButton(container, "name");
     await flush();
-    expect(container.textContent).toContain("Bước");
     clickButton(container, "Tiếp tục");
     await flush();
 
-    // notice (non-assessed): continue.
+    // notice (non-respondable): continue.
     clickButton(container, "Tiếp tục");
     await flush();
 
-    // retrieve (assessed, free text): type a response and submit.
-    const textarea = container.querySelector("textarea")!;
-    await act(async () => {
-      // React 19 onChange
-      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
-      setter.call(textarea, "my name is hoang");
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    clickButton(container, "Gửi");
+    // retrieve: free text.
+    await act(async () => typeAndSubmit(container, "my name is hoang"));
+    clickButton(container, "Kiểm tra");
     await flush();
     clickButton(container, "Tiếp tục");
     await flush();
 
     // produce: free text.
-    const textarea2 = container.querySelector("textarea")!;
-    await act(async () => {
-      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
-      setter.call(textarea2, "my name is hoang");
-      textarea2.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    clickButton(container, "Gửi");
+    await act(async () => typeAndSubmit(container, "my name is hoang"));
+    clickButton(container, "Kiểm tra");
     await flush();
     clickButton(container, "Tiếp tục");
     await flush();
 
-    // feedback (non-assessed): continue.
+    // feedback (non-respondable): continue.
     clickButton(container, "Tiếp tục");
     await flush();
 
     // repair: free text with repair signal.
-    const textarea3 = container.querySelector("textarea")!;
-    await act(async () => {
-      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
-      setter.call(textarea3, "sorry could you say that again");
-      textarea3.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    clickButton(container, "Gửi");
+    await act(async () => typeAndSubmit(container, "sorry could you say that again"));
+    clickButton(container, "Kiểm tra");
     await flush();
     clickButton(container, "Tiếp tục");
     await flush();
 
-    // retry is attempt-only: respondable (collects a response + feedback)
-    // but mints no evidence.
-    const textareaRetry = container.querySelector("textarea")!;
-    await act(async () => {
-      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
-      setter.call(textareaRetry, "my name is hoang");
-      textareaRetry.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    clickButton(container, "Gửi");
+    // retry is attempt-only: respondable (feedback) but mints no evidence.
+    await act(async () => typeAndSubmit(container, "my name is hoang"));
+    clickButton(container, "Kiểm tra");
     await flush();
     clickButton(container, "Tiếp tục");
     await flush();
 
     // transfer: free text.
-    const textarea4 = container.querySelector("textarea")!;
-    await act(async () => {
-      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
-      setter.call(textarea4, "could you say that again my name is hoang");
-      textarea4.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    clickButton(container, "Gửi");
+    await act(async () => typeAndSubmit(container, "could you say that again my name is hoang"));
+    clickButton(container, "Kiểm tra");
+    await flush();
+    clickButton(container, "Tiếp tục");
+    await flush();
+
+    // reflect: unassessed self-report — mints no evidence, neutral feedback.
+    clickButton(container, "Tôi làm được nhưng còn chậm");
     await flush();
     clickButton(container, "Xem bằng chứng buổi học");
     await flush();

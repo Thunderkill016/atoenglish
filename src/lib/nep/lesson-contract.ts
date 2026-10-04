@@ -1,5 +1,6 @@
 import type { EvidenceType } from "../learning/evidence";
 import type { EvidenceChannel } from "./capabilities.v1";
+import { normalizeNếpResponse } from "./evaluator";
 
 export type ProvenanceKind = "source_derived" | "product_inference";
 export type LessonModality = "listen" | "read" | "speech" | "text" | "choice";
@@ -12,7 +13,8 @@ export type LessonActionKind =
   | "feedback"
   | "repair"
   | "retry"
-  | "transfer";
+  | "transfer"
+  | "reflect";
 
 export type LessonAssessment = {
   /** Capability that this exact learner response attempted to demonstrate. */
@@ -33,6 +35,17 @@ export type LessonAction = {
   prompt?: string;
   model?: string;
   supportVi?: string;
+  /**
+   * Ordered support rungs (index 0 = level 1). The learner reveals them one at a
+   * time; the highest level reached is recorded with the attempt. Rungs must
+   * scaffold below the answer — a rung containing a satisfying signal is a leak.
+   */
+  supportLadder?: readonly string[];
+  /**
+   * The action collects a learner response without assessment — self-report
+   * channel (e.g. reflect). Never mints evidence.
+   */
+  collectsResponse?: boolean;
   /** Learner-visible options. Correctness is still determined from hidden targetSignals. */
   choices?: string[];
   targetSignals?: string[];
@@ -83,6 +96,34 @@ const evaluatedKinds = new Set<LessonActionKind>([
 
 function hasEvaluatorTargets(action: LessonAction) {
   return (action.targetSignals?.length ?? 0) > 0 || (action.requiredSignalGroups?.some((group) => group.length > 0) ?? false);
+}
+
+/** Every member that can satisfy a required signal group on this action. */
+function satisfyingSignals(action: LessonAction): string[] {
+  const groups = action.requiredSignalGroups
+    ?? (action.targetSignals && action.targetSignals.length > 0 ? [action.targetSignals] : []);
+  return groups.flat();
+}
+
+/**
+ * Leak-check normalization: like the evaluator's but drops apostrophes so a
+ * quoted signal ('My name is…') still matches, then collapses whitespace.
+ */
+function normalizeForLeakCheck(value: string) {
+  return normalizeNếpResponse(value).replace(/'/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Word-boundary substring check on normalized text. Signals shorter than 4
+ * normalized characters are skipped: on Vietnamese support text, stripped
+ * diacritics produce phantom short tokens ("hiện" → "hi n" ≈ "hi"), so
+ * two/three-letter signals would fire false positives. Substantive target
+ * chunks are still checked.
+ */
+function containsSignal(normalizedText: string, signal: string) {
+  const normalizedSignal = normalizeForLeakCheck(signal);
+  if (normalizedSignal.length < 4) return false;
+  return ` ${normalizedText} `.includes(` ${normalizedSignal} `);
 }
 
 export function qaLesson(lesson: LessonContract): QaIssue[] {
@@ -145,6 +186,26 @@ export function qaLesson(lesson: LessonContract): QaIssue[] {
     }
     if (action.assessment && !declaredTargets.has(action.assessment.targetCapabilityId)) {
       issues.push({ severity: "error", code: "ASSESSMENT_TARGET_UNDECLARED", message: `${action.id} targets ${action.assessment.targetCapabilityId}, which is not the lesson capability or an embedded capability.`, provenance: "product_inference" });
+    }
+    if (action.supportLadder && action.supportLadder.some((rung) => !rung.trim())) {
+      issues.push({ severity: "error", code: "SUPPORT_LADDER_EMPTY", message: `${action.id} support ladder must contain only non-empty rungs.`, provenance: "product_inference" });
+    }
+    if (evaluatedKinds.has(action.kind)) {
+      const signals = satisfyingSignals(action);
+      const leaksIn = (text: string | undefined) =>
+        text != null && signals.some((signal) => containsSignal(normalizeForLeakCheck(text), signal));
+      if (leaksIn(action.title) || leaksIn(action.instruction) || leaksIn(action.model)) {
+        issues.push({ severity: "error", code: "SURFACE_LEAKS_ANSWER", message: `${action.id} exposes a satisfying target signal in its title, instruction or model.`, provenance: "source_derived" });
+      }
+      if (leaksIn(action.supportVi) || (action.supportLadder ?? []).some((rung) => leaksIn(rung))) {
+        issues.push({ severity: "error", code: "SUPPORT_LEAKS_ANSWER", message: `${action.id} support content contains a satisfying target signal — hints must scaffold below the answer.`, provenance: "source_derived" });
+      }
+      // Prompt overlap is a warning, not an error: scenario stimuli (a partner
+      // turn, an utterance to classify) legitimately contain target language.
+      // The warning records contamination risk in signal-based evaluation.
+      if (leaksIn(action.prompt)) {
+        issues.push({ severity: "warning", code: "PROMPT_OVERLAPS_TARGET", message: `${action.id} prompt contains a satisfying target signal; review whether the response can be satisfied by echoing the prompt.`, provenance: "product_inference" });
+      }
     }
     if (action.modality === "choice") {
       const choices = action.choices ?? [];
@@ -241,6 +302,7 @@ export const firstMeetingLessonV1: LessonContract = {
       modality: "choice",
       prompt: "What's your name?",
       choices: ["name", "job", "country"],
+      supportLadder: ["Đọc kỹ câu hỏi — nó yêu cầu loại thông tin gì?"],
       targetSignals: ["name"],
       assessment: {
         targetCapabilityId: "CAP-002",
@@ -265,7 +327,10 @@ export const firstMeetingLessonV1: LessonContract = {
       instruction: "From the Vietnamese cue, say the English line from memory.",
       modality: "speech",
       prompt: "Chào. Tôi tên là Hoàng.",
-      supportVi: "Không hiện đáp án trước lần thử đầu.",
+      supportLadder: [
+        "Câu cần nói đã xuất hiện ở bước 'Để ý mẫu câu' — nhớ lại cấu trúc rồi nói.",
+        "Gợi ý nhịp câu: [cụm giới thiệu] + tên của bạn.",
+      ],
       targetSignals: introduceSignals,
       requiredSignalGroups: [introduceSignals],
       assessment: {
@@ -282,6 +347,10 @@ export const firstMeetingLessonV1: LessonContract = {
       instruction: "Say the response aloud. Browser transcript is used only to check target-language coverage.",
       modality: "speech",
       prompt: "Hi, I'm Maya. What's your name?",
+      supportLadder: [
+        "Bạn vừa nói câu này ở bước Nhớ lại — dùng cùng cấu trúc đó.",
+        "Đặt tên của bạn ngay sau cụm giới thiệu.",
+      ],
       targetSignals: introduceSignals,
       requiredSignalGroups: [introduceSignals],
       assessment: {
@@ -306,7 +375,11 @@ export const firstMeetingLessonV1: LessonContract = {
       title: "Repair the breakdown yourself",
       instruction: "The colleague's next turn is unclear. Ask for repetition before continuing.",
       modality: "speech",
-      prompt: "Sorry — [you missed the question].",
+      prompt: "[You missed the colleague's question.]",
+      supportLadder: [
+        "Nhiệm vụ: yêu cầu người đối thoại lặp lại câu hỏi.",
+        "Gợi ý mở đầu: 'Could you…'",
+      ],
       targetSignals: repairSignals,
       requiredSignalGroups: [repairSignals],
       assessment: {
@@ -323,6 +396,10 @@ export const firstMeetingLessonV1: LessonContract = {
       instruction: "Use the repair move, then introduce yourself again.",
       modality: "speech",
       prompt: "Let's try that again. What's your name?",
+      supportLadder: [
+        "Cần đủ hai phần: xin nhắc lại trước, rồi giới thiệu tên.",
+        "Xem lại các cụm ở bước 'Để ý mẫu câu' nếu cần.",
+      ],
       targetSignals: [...repairSignals, ...introduceSignals],
       requiredSignalGroups: [repairSignals, introduceSignals],
       assessment: {
@@ -342,12 +419,28 @@ export const firstMeetingLessonV1: LessonContract = {
       targetSignals: [...repairSignals, ...introduceSignals],
       requiredSignalGroups: [repairSignals, introduceSignals],
       changedContext: true,
+      supportLadder: [
+        "Tình huống đổi thứ tự — vẫn cần đủ hai phần như cũ.",
+      ],
       assessment: {
         targetCapabilityId: "CAP-002",
         evidenceType: "transfer",
         contextId: "first-meeting:changed-order-name-question:v1",
         evaluator: "nep-target-signal-v1",
       },
+    },
+    {
+      id: "reflect",
+      kind: "reflect",
+      title: "Tự đánh giá cuối buổi",
+      instruction: "Chọn mức mô tả đúng nhất — tự đánh giá không có đáp án đúng và không tạo bằng chứng.",
+      modality: "choice",
+      choices: [
+        "Tôi giới thiệu được tên mình và xin nhắc lại khi cần",
+        "Tôi làm được nhưng còn chậm",
+        "Tôi cần luyện lại buổi này",
+      ],
+      collectsResponse: true,
     },
   ],
 };
