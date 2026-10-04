@@ -40,7 +40,7 @@ jobs:
           node-version: 24
 
       - name: Lint migrations (squawk)
-        run: npx --yes squawk-cli@1.5.0 --pg-version 18 supabase/migrations
+        run: npx --yes squawk-cli@1.5.0 "supabase/migrations/*.sql"
 
       - name: Verify migrations still adapt cleanly for Neon
         run: node scripts/neon/adapt-migrations.mjs --check
