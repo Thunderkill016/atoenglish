@@ -8,7 +8,7 @@ import {
   stripLegacyHtml,
 } from "./legacy-unit-contract.v1";
 import { evaluateNếpAction } from "./evaluator";
-import type { LessonAction } from "./lesson-contract";
+import { qaLesson, type LessonAction } from "./lesson-contract";
 import {
   compileCanonicalNếpPracticeAttempt,
   resolveNếpLesson,
@@ -105,6 +105,107 @@ describe("legacy-unit-contract compiler", () => {
     const contract = compileLegacyUnitContract("unit-1")!;
     expect(contract.sourceDerived.principleIds).toEqual([]);
     expect(contract.sourceDerived.claimIds).toEqual([]);
+  });
+});
+
+describe("legacy contract lint (coverage report)", () => {
+  const compiledUnits = () =>
+    legacyUnitSlugs()
+      .filter((slug) => {
+        const entry = legacyUnitEntry(slug);
+        return entry && !isMissionLesson(entry.data);
+      })
+      .map((slug) => ({ slug, contract: compileLegacyUnitContract(slug)! }));
+
+  // Legacy units have no research trace by construction — the only error
+  // qaLesson may raise is EVIDENCE_TRACE_REQUIRED, which is honest (the
+  // alternative would be fabricating principle/claim ids).
+  const TOLERATED_ERRORS = new Set(["EVIDENCE_TRACE_REQUIRED"]);
+
+  it("passes contract QA on every compiled unit", () => {
+    const violations: string[] = [];
+    for (const { slug, contract } of compiledUnits()) {
+      for (const issue of qaLesson(contract)) {
+        if (issue.severity === "error" && !TOLERATED_ERRORS.has(issue.code)) {
+          violations.push(
+            `${slug}:${issue.code}@${issue.message.slice(0, 60)}`,
+          );
+        }
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
+  it("compiles the answer-keyed sections it can represent", () => {
+    const contract = compileLegacyUnitContract("unit-1")!;
+    const ids = contract.actions.map((action) => action.id);
+    expect(ids.some((id) => id.startsWith("match-"))).toBe(true);
+    expect(ids.some((id) => id.startsWith("corr-"))).toBe(true);
+    expect(ids.some((id) => id.startsWith("arr-"))).toBe(true);
+    expect(ids.some((id) => id.startsWith("ctx-reading-"))).toBe(true);
+    expect(ids.some((id) => id.startsWith("read-"))).toBe(true);
+    expect(ids.some((id) => id.startsWith("ctx-job-"))).toBe(true);
+  });
+
+  it("never surfaces listenAndArrange audio_text as the arrange stimulus", () => {
+    // audio_text may legitimately appear in presentation contexts (dialogues)
+    // — the leak would be showing it on the arrange task itself.
+    for (const { slug, contract } of compiledUnits()) {
+      const unit = legacyUnitEntry(slug)!.data as {
+        listenAndArrangeExercises?: { audio_text: string }[];
+      };
+      for (const item of unit.listenAndArrangeExercises ?? []) {
+        const audio = stripLegacyHtml(item.audio_text);
+        for (const action of contract.actions) {
+          if (!action.id.startsWith("arr-")) continue;
+          expect(action.prompt ?? "").not.toContain(audio);
+          expect(action.model ?? "").not.toContain(audio);
+        }
+      }
+    }
+  });
+
+  it("declares prerequisites from the authored next-chain only", () => {
+    const unit1 = compileLegacyUnitContract("unit-1")!;
+    expect(unit1.prerequisites).toEqual(["legacy.unit-a0-8"]);
+    const unit2 = compileLegacyUnitContract("unit-2")!;
+    expect(unit2.prerequisites).toEqual(["legacy.unit-1"]);
+    // a0-7→a0-8 is explicit in the chain; nothing points at a0-7 itself.
+    expect(compileLegacyUnitContract("unit-a0-8")!.prerequisites).toEqual([
+      "legacy.unit-a0-7",
+    ]);
+    expect(compileLegacyUnitContract("unit-a0-7")!.prerequisites).toEqual([]);
+  });
+
+  it("does not order scrambled banks in answer order", () => {
+    // The alphabetized bank must never show the answer contiguously —
+    // the leak linter would flag it via the model check, but the bank
+    // rides in prompt (stimulus), so assert the invariant directly.
+    for (const { slug, contract } of compiledUnits()) {
+      const unit = legacyUnitEntry(slug)!.data as {
+        scrambleExercises?: { id: string; answer: string }[];
+      };
+      for (const action of contract.actions) {
+        if (!action.id.startsWith("arr-")) continue;
+        const normalized = (action.prompt ?? "")
+          .toLowerCase()
+          .replace(/[^a-z0-9' -]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        for (const signal of action.targetSignals ?? []) {
+          const normalizedSignal = signal
+            .toLowerCase()
+            .replace(/[^a-z0-9' -]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (normalizedSignal.length < 4) continue;
+          expect(
+            ` ${normalized} `.includes(` ${normalizedSignal} `),
+            `${slug}:${action.id} bank must not show the answer contiguously`,
+          ).toBe(false);
+        }
+      }
+    }
   });
 });
 
