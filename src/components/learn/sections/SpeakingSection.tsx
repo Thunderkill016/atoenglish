@@ -418,7 +418,7 @@ export default function SpeakingSection({
 
             {level1Transcript && (
               <div className="bg-muted/30 rounded-xl px-4 py-3 text-sm">
-                <p className="text-muted-foreground text-[10px] mb-1 font-bold">BẠN VỪA NÓI:</p>
+                <p className="text-muted-foreground text-xs mb-1 font-bold">BẠN VỪA NÓI:</p>
                 <p className="text-foreground">&ldquo;{level1Transcript}&rdquo;</p>
                 {level1Score !== null && (
                   <div className="flex items-center gap-2 mt-2">
@@ -437,7 +437,7 @@ export default function SpeakingSection({
                           setLevel1Score(null);
                           setLevel1Transcript("");
                         }}
-                        className="text-[10px] text-muted-foreground hover:text-foreground font-bold"
+                        className="text-xs text-muted-foreground hover:text-foreground font-bold"
                       >
                         Thử lại
                       </button>
@@ -526,7 +526,7 @@ export default function SpeakingSection({
                 <div key={`${turn.speaker}-${index}-${turn.text}`} className="space-y-2">
                   {turn.phase === "transfer" && (
                     <div className="rounded-xl border border-violet-500/25 bg-violet-500/10 px-3 py-2">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-violet-300">
+                      <p className="text-xs font-black uppercase tracking-wider text-violet-300">
                         Chuyển cảnh · Thử độc lập
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
@@ -537,14 +537,14 @@ export default function SpeakingSection({
 
                   <div className="max-w-[88%] rounded-2xl rounded-tl-md bg-muted/60 border border-border/60 px-4 py-3">
                     <div className="mb-1 flex items-center justify-between gap-3">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-teal-400">
+                      <p className="text-xs font-black uppercase tracking-wider text-teal-400">
                         {turn.speaker}
                       </p>
                       <button
                         type="button"
                         onClick={() => playTTS(turn.text)}
                         aria-label={`Nghe ${turn.speaker}: ${turn.text}`}
-                        className="inline-flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-foreground"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-foreground"
                       >
                         <Volume2 size={12} /> Nghe {turn.speaker}
                       </button>
@@ -554,7 +554,7 @@ export default function SpeakingSection({
 
                   {learnerText ? (
                     <div className="ml-auto max-w-[88%] rounded-2xl rounded-tr-md bg-primary/10 border border-primary/20 px-4 py-3">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-primary mb-1">Bạn</p>
+                      <p className="text-xs font-black uppercase tracking-wider text-primary mb-1">Bạn</p>
                       <p className="text-sm text-foreground">{learnerText}</p>
                     </div>
                   ) : isCurrent ? (
@@ -626,7 +626,7 @@ export default function SpeakingSection({
                   </div>
                 )}
 
-                <p className="text-[11px] leading-relaxed text-muted-foreground/70">
+                <p className="text-xs leading-relaxed text-muted-foreground/70">
                   Đây là phản hồi luyện tập theo nhiệm vụ giao tiếp. Lượt chuyển cảnh là transfer practice, không phải chứng nhận CEFR hay mastery.
                 </p>
               </div>
@@ -666,7 +666,7 @@ export default function SpeakingSection({
                     <span className="text-xs text-muted-foreground">{criterion.labelVi}</span>
                   </div>
                 ))}
-                <p className="text-[11px] leading-relaxed text-muted-foreground/70">
+                <p className="text-xs leading-relaxed text-muted-foreground/70">
                   Đây là phản hồi luyện tập theo nhiệm vụ giao tiếp, không phải chứng nhận bạn đã đạt CEFR A1.
                 </p>
               </div>

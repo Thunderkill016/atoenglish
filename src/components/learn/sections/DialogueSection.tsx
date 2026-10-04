@@ -196,7 +196,7 @@ export default function DialogueSection({
               >
                 {DIALOGUES[selectedDialogue].lines.map((line, i) => (
                   <div key={i} className={`flex gap-3 ${i % 2 === 0 ? "" : "flex-row-reverse"}`}>
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-black mt-1 bg-muted text-muted-foreground">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-black mt-1 bg-muted text-muted-foreground">
                       {line.speaker.charAt(0).toUpperCase()}
                     </div>
                     <div
@@ -206,7 +206,7 @@ export default function DialogueSection({
                           : "bg-primary/5 border-primary/30"
                       }`}
                     >
-                      <p className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-wide">
+                      <p className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wide">
                         {line.speaker}
                       </p>
                       <p className="text-foreground text-sm leading-relaxed">{line.text}</p>

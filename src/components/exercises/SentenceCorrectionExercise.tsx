@@ -51,7 +51,7 @@ export function SentenceCorrectionExercise({ exercise, onComplete }: Props) {
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
         <AlertCircle size={15} className="text-orange-400 shrink-0" />
-        <p className="text-[11px] font-bold text-orange-400 uppercase tracking-wider">
+        <p className="text-xs font-bold text-orange-400 uppercase tracking-wider">
           Tìm lỗi sai — Nhấn vào từ SAI trong câu
         </p>
       </div>

@@ -33,7 +33,7 @@ export default function GlobalError({
               AtoEnglish gặp sự cố không mong muốn. Vui lòng tải lại trang.
             </p>
             {error.digest && (
-              <p className="text-[10px] font-mono text-zinc-600">Digest: {error.digest}</p>
+              <p className="text-xs font-mono text-zinc-600">Digest: {error.digest}</p>
             )}
           </div>
           <button

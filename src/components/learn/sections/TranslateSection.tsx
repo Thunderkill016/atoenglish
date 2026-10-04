@@ -170,7 +170,7 @@ export default function TranslateSection({
                                 <span className="text-xs font-black text-red-500">✗ Chưa đúng</span>
                               )}
                               {grade.errorType && ERROR_LABELS[grade.errorType] && (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted border border-border/60 text-muted-foreground">
+                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-muted border border-border/60 text-muted-foreground">
                                   {ERROR_LABELS[grade.errorType]}
                                 </span>
                               )}

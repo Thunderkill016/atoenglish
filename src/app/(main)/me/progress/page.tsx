@@ -152,7 +152,7 @@ export default async function ProgressPage() {
                     <span
                       key={channel.channel}
                       title={channel.bandLabel}
-                      className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                      className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
                     >
                       {channel.label} · {channel.bandLabel}
                     </span>

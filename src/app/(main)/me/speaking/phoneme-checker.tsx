@@ -242,7 +242,7 @@ export default function PhonemeChecker() {
                 />
                 <div>
                   <p className="font-medium">{s.text}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     <span className="text-primary/80">{s.focus}</span> — {s.tip}
                   </p>
                 </div>
@@ -256,7 +256,7 @@ export default function PhonemeChecker() {
       <div className="bg-card border border-border/60 rounded-2xl p-5 space-y-4">
         {/* Target sentence */}
         <div className="bg-muted/50 rounded-xl p-4 space-y-2">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold">
             Câu mục tiêu
           </p>
           <p className="text-foreground text-lg font-semibold leading-relaxed">
@@ -369,7 +369,7 @@ export default function PhonemeChecker() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-1"
             >
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold">
                 AI nghe được
               </p>
               <p className="text-foreground/80 text-sm italic">

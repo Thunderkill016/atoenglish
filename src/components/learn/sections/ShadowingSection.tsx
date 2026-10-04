@@ -280,10 +280,10 @@ export default function ShadowingSection({
 
           <div className="border border-border/60 bg-muted/40 rounded-2xl p-5 mb-6 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-violet-500/3 to-transparent pointer-events-none" />
-            <span className="absolute top-3 left-3 text-[10px] font-bold text-violet-600 bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 rounded-full uppercase tracking-wide">
+            <span className="absolute top-3 left-3 text-xs font-bold text-violet-600 bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 rounded-full uppercase tracking-wide">
               {DIALOGUES[shadowDialogueIdx].lines[shadowLineIdx].speaker}
             </span>
-            <p className="text-muted-foreground text-[10px] mb-3 uppercase tracking-widest font-black">
+            <p className="text-muted-foreground text-xs mb-3 uppercase tracking-widest font-black">
               Hãy nghe rồi nói lại
             </p>
             <p className="text-foreground text-base sm:text-xl font-bold mb-2 leading-snug">
@@ -335,7 +335,7 @@ export default function ShadowingSection({
 
           {shadowTranscripts[shadowLineIdx] && (
             <div className="border border-border/60 bg-muted/40 rounded-2xl p-4 mb-6 text-center shadow-sm">
-              <p className="text-[10px] text-muted-foreground mb-1 font-bold">BẠN VỪA NÓI:</p>
+              <p className="text-xs text-muted-foreground mb-1 font-bold">BẠN VỪA NÓI:</p>
               <p className="text-foreground text-sm font-semibold mb-2">
                 &ldquo;{shadowTranscripts[shadowLineIdx]}&rdquo;
               </p>
@@ -350,17 +350,17 @@ export default function ShadowingSection({
                 </div>
               ) : phonemeData[shadowLineIdx]?.length ? (
                 <div className="space-y-2 mt-3 text-left">
-                  <p className="text-[10px] font-bold text-violet-400 uppercase tracking-wider flex items-center gap-1">
+                  <p className="text-xs font-bold text-violet-400 uppercase tracking-wider flex items-center gap-1">
                     <Sparkles size={10} /> Phân tích phát âm chi tiết
                   </p>
                   {phonemeData[shadowLineIdx].map((err, i) => (
                     <div key={i} className="bg-violet-500/10 border border-violet-500/30 rounded-xl px-3 py-2.5 text-left">
                       <p className="text-xs font-bold text-violet-700 mb-0.5">
                         Từ: <span className="text-white">&ldquo;{err.word}&rdquo;</span>
-                        <span className="ml-2 text-violet-400 font-mono text-[11px]">{err.ipa_target}</span>
+                        <span className="ml-2 text-violet-400 font-mono text-xs">{err.ipa_target}</span>
                       </p>
-                      <p className="text-[11px] text-muted-foreground mb-0.5">{err.common_mistake_vn}</p>
-                      <p className="text-[11px] text-amber-300">💡 {err.tip_vn}</p>
+                      <p className="text-xs text-muted-foreground mb-0.5">{err.common_mistake_vn}</p>
+                      <p className="text-xs text-amber-300">💡 {err.tip_vn}</p>
                     </div>
                   ))}
                 </div>

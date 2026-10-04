@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
+import { MotionProvider } from "@/components/providers/motion-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { cn } from "@/lib/utils";
 import { SITE_URL } from "@/lib/site";
@@ -100,10 +101,18 @@ export default function RootLayout({
   const dataApiOrigin = dataApiUrl ? new URL(dataApiUrl).origin : null;
 
   return (
-    <html lang="vi" suppressHydrationWarning className={cn("font-sans", sansFont.variable)}>
+    <html
+      lang="vi"
+      suppressHydrationWarning
+      className={cn("font-sans", sansFont.variable)}
+    >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         {dataApiOrigin && (
           <>
             <link rel="preconnect" href={dataApiOrigin} />
@@ -125,8 +134,10 @@ export default function RootLayout({
           storageKey="ato-ui-white"
           disableTransitionOnChange
         >
-          {children}
-          <Toaster richColors position="top-center" closeButton />
+          <MotionProvider>
+            {children}
+            <Toaster richColors position="top-center" closeButton />
+          </MotionProvider>
         </ThemeProvider>
       </body>
     </html>

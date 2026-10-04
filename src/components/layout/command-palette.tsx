@@ -118,7 +118,7 @@ export default function CommandPalette() {
                       </p>
                     )}
                   </div>
-                  <span className="text-[10px] font-mono text-zinc-400 shrink-0">
+                  <span className="text-xs font-mono text-zinc-400 shrink-0">
                     {item.href}
                   </span>
                 </Link>
@@ -127,7 +127,7 @@ export default function CommandPalette() {
           )}
         </ul>
 
-        <div className="px-4 py-2 border-t border-zinc-200/50 dark:border-zinc-800/50 text-[10px] text-zinc-400 flex justify-between">
+        <div className="px-4 py-2 border-t border-zinc-200/50 dark:border-zinc-800/50 text-xs text-zinc-400 flex justify-between">
           <span>⌘K / Ctrl+K mở palette</span>
           <button
             type="button"

@@ -140,7 +140,7 @@ function ScoreRing({ score }: { score: number }) {
         <p className="text-2xl font-black text-zinc-900 dark:text-white">
           {score}
         </p>
-        <p className="text-[10px] text-zinc-400 font-bold">/ 100</p>
+        <p className="text-xs text-zinc-400 font-bold">/ 100</p>
       </div>
     </div>
   );
@@ -262,6 +262,7 @@ export default function WriteImprovePage() {
         {/* Input */}
         <div className="space-y-3">
           <textarea
+            aria-label="Nhập câu hoặc đoạn văn tiếng Anh của bạn"
             value={text}
             onChange={(e) => {
               setText(e.target.value);
@@ -387,7 +388,7 @@ export default function WriteImprovePage() {
                       >
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${typeInfo.color}`}
+                            className={`text-xs font-bold px-2 py-0.5 rounded-md border ${typeInfo.color}`}
                           >
                             {typeInfo.label}
                           </span>

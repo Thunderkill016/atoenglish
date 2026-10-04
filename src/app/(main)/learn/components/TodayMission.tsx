@@ -52,7 +52,7 @@ export default function TodayMission({ missions }: TodayMissionProps) {
       <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-3">
         {primary && (
           <div>
-            <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">
+            <p className="text-xs font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">
               Ưu tiên — làm trước
             </p>
             <Link
@@ -91,7 +91,7 @@ export default function TodayMission({ missions }: TodayMissionProps) {
                   {primary.label}
                 </p>
                 {primary.detail && (
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                     {primary.detail}
                   </p>
                 )}
@@ -104,7 +104,7 @@ export default function TodayMission({ missions }: TodayMissionProps) {
         )}
 
         <div>
-          <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">
+          <p className="text-xs font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">
             Các bước còn lại
           </p>
           <div className="space-y-1">
@@ -139,7 +139,7 @@ export default function TodayMission({ missions }: TodayMissionProps) {
                     {mission.label}
                   </p>
                   {mission.detail && !mission.completed && (
-                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                       {mission.detail}
                     </p>
                   )}

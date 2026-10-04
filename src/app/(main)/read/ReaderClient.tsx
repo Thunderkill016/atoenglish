@@ -162,6 +162,7 @@ export function ReaderClient({
             Hoặc dán văn bản của bạn
           </h2>
           <textarea
+            aria-label="Dán văn bản tiếng Anh của bạn"
             value={pasted}
             onChange={(event) => setPasted(event.target.value)}
             rows={5}
@@ -212,7 +213,7 @@ export function ReaderClient({
           <p className="text-xs text-muted-foreground">
             {counts.known} từ đã đánh dấu biết · {knownInText}/{words.length} từ
             trên trang
-            <span className="block text-[10px] text-muted-foreground">
+            <span className="block text-xs text-muted-foreground">
               tự đánh dấu — không phải điểm đánh giá
             </span>
           </p>
@@ -221,7 +222,7 @@ export function ReaderClient({
 
       <h2 className="text-lg font-semibold">{text.title}</h2>
 
-      <p className="text-base leading-8" aria-label="Văn bản đọc">
+      <p className="text-base leading-8" aria-label="Văn bản đọc" lang="en">
         {tokens.map((token, index) => {
           if (token.type !== "word") {
             return <span key={index}>{token.text}</span>;

@@ -29,20 +29,20 @@ const STEPS = IPOR_PHASES.map((phase) => {
 export default function HowToLearnCard() {
   return (
     <div className="mb-6 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4">
-      <p className="text-[11px] font-black text-zinc-500 uppercase tracking-wider mb-1">
+      <p className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-1">
         Cách học 1 bài (~30 phút)
       </p>
-      <p className="text-[10px] text-zinc-600 mb-3">
+      <p className="text-xs text-zinc-600 mb-3">
         Cùng khung với nội dung — tham chiếu {REFERENCE_UNIT_ID} (SDL + IPOR)
       </p>
       <ol className="space-y-2.5">
         {STEPS.map(({ phase, text }, i) => (
           <li key={phase} className="flex items-start gap-3 text-sm">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-[11px] font-black text-zinc-400">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-xs font-black text-zinc-400">
               {i + 1}
             </span>
             <div>
-              <span className="text-[10px] font-bold text-zinc-600">
+              <span className="text-xs font-bold text-zinc-600">
                 {IPOR_META[phase].labelVi}
               </span>
               <p className="text-zinc-300 leading-snug">{text}</p>
@@ -50,7 +50,7 @@ export default function HowToLearnCard() {
           </li>
         ))}
       </ol>
-      <p className="mt-3 text-[11px] text-zinc-600 border-t border-zinc-800/80 pt-3">
+      <p className="mt-3 text-xs text-zinc-600 border-t border-zinc-800/80 pt-3">
         Ôn nhanh chỉ dùng khi đã học bài này ít nhất 1 lần.
       </p>
     </div>

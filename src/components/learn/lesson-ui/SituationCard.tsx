@@ -18,7 +18,7 @@ export default function SituationCard({ unitId, situation, outcomes }: Situation
           <span className="flex size-8 items-center justify-center rounded-xl bg-sky-500/15 text-base">
             📍
           </span>
-          <span className="text-[11px] font-black text-sky-400 uppercase tracking-widest">
+          <span className="text-xs font-black text-sky-400 uppercase tracking-widest">
             Tình huống thực tế
           </span>
         </div>
@@ -29,14 +29,14 @@ export default function SituationCard({ unitId, situation, outcomes }: Situation
         {cefrAction && (
           <div className="mb-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-4">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-300">
+              <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-black uppercase tracking-wider text-emerald-300">
                 CEFR {cefrAction.level}
               </span>
-              <span className="rounded-full bg-sky-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-300">
+              <span className="rounded-full bg-sky-500/10 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-sky-300">
                 {cefrAction.mode}
               </span>
             </div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-emerald-400 mb-1">
+            <p className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-1">
               Nhiệm vụ giao tiếp đích
             </p>
             <p className="text-sm font-semibold leading-relaxed text-zinc-100">
@@ -50,7 +50,7 @@ export default function SituationCard({ unitId, situation, outcomes }: Situation
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-[10px] leading-relaxed text-zinc-500">
+            <p className="mt-3 text-xs leading-relaxed text-zinc-500">
               Tham chiếu: {cefrAction.source.title}. Điểm quiz/XP của bài chưa được coi là bằng chứng CEFR mastery.
             </p>
           </div>

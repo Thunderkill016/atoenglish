@@ -80,11 +80,11 @@ function SentenceCard({
         <div className="flex items-center gap-2 flex-wrap">
           <BookmarkCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           {levelTag && (
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${LEVEL_COLORS[levelTag] ?? ""}`}>
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded border ${LEVEL_COLORS[levelTag] ?? ""}`}>
               {levelTag}
             </span>
           )}
-          <span className="text-[10px] text-zinc-600">{formatDate(sentence.created_at)}</span>
+          <span className="text-xs text-zinc-600">{formatDate(sentence.created_at)}</span>
         </div>
         <button
           onClick={() => void handleDelete()}

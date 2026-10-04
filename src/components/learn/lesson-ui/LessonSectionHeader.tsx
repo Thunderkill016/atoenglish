@@ -44,7 +44,7 @@ export default function LessonSectionHeader({
             <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
               {theme.title}
             </h1>
-            <span className="text-[10px] font-bold text-muted-foreground bg-muted border border-border/60 px-2 py-0.5 rounded-full tabular-nums">
+            <span className="text-xs font-bold text-muted-foreground bg-muted border border-border/60 px-2 py-0.5 rounded-full tabular-nums">
               {sectionOrderIdx + 1}/{totalSections}
             </span>
           </div>

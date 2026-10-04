@@ -63,9 +63,9 @@ export function ActivityHeatmap({ days, totalActiveDays, longestStreak }: Activi
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h3 className="font-bold text-xs text-foreground uppercase tracking-widest">Lịch hoạt động</h3>
-          <p className="text-[11px] text-muted-foreground mt-0.5">52 tuần gần nhất</p>
+          <p className="text-xs text-muted-foreground mt-0.5">52 tuần gần nhất</p>
         </div>
-        <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span><span className="font-bold text-emerald-400">{totalActiveDays}</span> ngày học</span>
           <span><span className="font-bold text-orange-400">{longestStreak}</span> ngày liên tiếp kỷ lục</span>
         </div>
@@ -79,7 +79,7 @@ export function ActivityHeatmap({ days, totalActiveDays, longestStreak }: Activi
             {monthPositions.map(({ label, col }, i) => (
               <div
                 key={i}
-                className="text-[10px] text-muted-foreground font-semibold absolute"
+                className="text-xs text-muted-foreground font-semibold absolute"
                 style={{ marginLeft: `${col * 13}px`, position: 'relative', minWidth: 0 }}
               >
                 {label}
@@ -91,7 +91,7 @@ export function ActivityHeatmap({ days, totalActiveDays, longestStreak }: Activi
             {/* Day-of-week labels */}
             <div className="flex flex-col gap-0.5 mr-1">
               {DAY_LABELS.map((lbl, i) => (
-                <div key={i} className="h-[11px] text-[9px] text-muted-foreground/60 leading-[11px] w-5 text-right pr-0.5">
+                <div key={i} className="h-[11px] text-xs text-muted-foreground/60 leading-[11px] w-5 text-right pr-0.5">
                   {lbl}
                 </div>
               ))}
@@ -117,11 +117,11 @@ export function ActivityHeatmap({ days, totalActiveDays, longestStreak }: Activi
 
           {/* Legend */}
           <div className="flex items-center gap-1.5 mt-2 justify-end">
-            <span className="text-[10px] text-muted-foreground">Ít</span>
+            <span className="text-xs text-muted-foreground">Ít</span>
             {([0,1,2,3,4] as const).map(l => (
               <div key={l} className={`w-[11px] h-[11px] rounded-[2px] ${LEVEL_CLASSES[l]}`} />
             ))}
-            <span className="text-[10px] text-muted-foreground">Nhiều</span>
+            <span className="text-xs text-muted-foreground">Nhiều</span>
           </div>
         </div>
       </div>

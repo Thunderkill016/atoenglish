@@ -1143,18 +1143,18 @@ export function AIRoleplay() {
               <h4 className="text-sm font-bold text-foreground">
                 {activeScenario.title}
               </h4>
-              <p className="text-[10px] text-muted-foreground font-normal">
+              <p className="text-xs text-muted-foreground font-normal">
                 Đóng vai cùng: {activeScenario.aiCharacter}
               </p>
               {activeScenario.l1Note && (
-                <p className="text-[9px] text-emerald-600 dark:text-emerald-400 mt-0.5">
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
                   💡 {activeScenario.l1Note}
                 </p>
               )}
             </div>
           </div>
           <span
-            className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
+            className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
               activeScenario.difficulty === "Easy"
                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                 : activeScenario.difficulty === "Medium"
@@ -1202,7 +1202,7 @@ export function AIRoleplay() {
                   {isAi && (
                     <button
                       onClick={() => speakText(msg.text)}
-                      className="text-[10px] text-muted-foreground font-bold hover:text-primary flex items-center gap-1 mt-1 px-1 transition-colors"
+                      className="text-xs text-muted-foreground font-bold hover:text-primary flex items-center gap-1 mt-1 px-1 transition-colors"
                     >
                       <Volume2 className="size-3" />
                       Nghe phát âm
@@ -1214,7 +1214,7 @@ export function AIRoleplay() {
                     msg.accuracyScore !== undefined && (
                       <div className="flex flex-col gap-1 items-end mt-1">
                         <span
-                          className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                          className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${
                             msg.accuracyScore >= 80
                               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                               : msg.accuracyScore >= 50
@@ -1225,7 +1225,7 @@ export function AIRoleplay() {
                           Khớp gợi ý: {msg.accuracyScore}%
                         </span>
                         {msg.missingCodas && msg.missingCodas.length > 0 && (
-                          <div className="text-right text-[9px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/5 border border-amber-500/15 px-2 py-1 rounded-xl max-w-[200px] leading-relaxed">
+                          <div className="text-right text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/5 border border-amber-500/15 px-2 py-1 rounded-xl max-w-[200px] leading-relaxed">
                             ⚠️ Thiếu âm:{" "}
                             {msg.missingCodas
                               .map((w) => w.replace(/^Từ\s+/, ""))
@@ -1234,8 +1234,8 @@ export function AIRoleplay() {
                         )}
                         {!isAi && msg.grammarFeedback && (
                           <div className="mt-1.5 text-right">
-                            <div className="inline-flex flex-col gap-0.5 text-[10px] font-semibold bg-amber-500/8 border border-amber-500/20 px-2.5 py-1.5 rounded-xl text-left max-w-[220px]">
-                              <span className="text-amber-600 dark:text-amber-400 font-black text-[9px] uppercase tracking-wider">
+                            <div className="inline-flex flex-col gap-0.5 text-xs font-semibold bg-amber-500/8 border border-amber-500/20 px-2.5 py-1.5 rounded-xl text-left max-w-[220px]">
+                              <span className="text-amber-600 dark:text-amber-400 font-black text-xs uppercase tracking-wider">
                                 ✏️ Sửa lỗi
                               </span>
                               <span className="text-zinc-600 dark:text-zinc-400 leading-snug">
@@ -1314,7 +1314,7 @@ export function AIRoleplay() {
               {/* Suggestion Card for User */}
               {displaySuggestion && (
                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 space-y-2">
-                  <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-widest text-primary">
+                  <div className="flex items-center justify-between text-xs font-extrabold uppercase tracking-widest text-primary">
                     <span className="flex items-center gap-1.5">
                       <Sparkles className="size-3.5" />
                       Gợi ý câu thoại nói
@@ -1331,7 +1331,7 @@ export function AIRoleplay() {
                     &quot;{displaySuggestion}&quot;
                   </p>
 
-                  <p className="text-[11px] text-muted-foreground font-normal italic">
+                  <p className="text-xs text-muted-foreground font-normal italic">
                     Dịch nghĩa: {displaySuggestionVi}
                   </p>
                 </div>

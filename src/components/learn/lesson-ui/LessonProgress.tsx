@@ -45,8 +45,8 @@ export default function LessonProgress({ sectionOrderIdx }: LessonProgressProps)
                 <span
                   className={`font-bold tabular-nums leading-none select-none ${
                     isSectionCurrent
-                      ? "text-white text-[11px]"
-                      : "text-zinc-600 text-[9px]"
+                      ? "text-white text-xs"
+                      : "text-zinc-600 text-xs"
                   }`}
                 >
                   {index + 1}

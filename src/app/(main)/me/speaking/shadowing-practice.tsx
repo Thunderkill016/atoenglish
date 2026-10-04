@@ -1010,7 +1010,7 @@ export function ShadowingPractice() {
                         : "Máy nhận diện được ít từ đúng — thử nói to và chậm hơn."}
                   </p>
                   {recognizedText && (
-                    <div className="text-[11px] text-muted-foreground/80 mt-1 font-mono break-all max-w-lg leading-relaxed">
+                    <div className="text-xs text-muted-foreground/80 mt-1 font-mono break-all max-w-lg leading-relaxed">
                       AI nhận diện: &quot;{recognizedText}&quot;
                     </div>
                   )}
@@ -1065,7 +1065,7 @@ export function ShadowingPractice() {
                   >
                     {accuracyScore}%
                   </span>
-                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold font-mono">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold font-mono">
                     Khớp bản mẫu
                   </span>
                 </div>

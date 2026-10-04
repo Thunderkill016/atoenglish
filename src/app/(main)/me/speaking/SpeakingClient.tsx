@@ -96,7 +96,7 @@ export default function SpeakingPage() {
                   >
                     {session.practice_type}
                   </span>
-                  <span className="text-[9px] text-muted-foreground truncate">
+                  <span className="text-xs text-muted-foreground truncate">
                     {new Date(session.created_at).toLocaleDateString("vi-VN", {
                       month: "numeric",
                       day: "numeric",

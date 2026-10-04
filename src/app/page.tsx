@@ -183,7 +183,7 @@ export default function LandingPage() {
               <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
                 AtoEnglish
               </span>
-              <span className="text-[9px] text-zinc-500 dark:text-zinc-400 font-medium">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                 Grow every day
               </span>
             </div>
@@ -241,7 +241,7 @@ export default function LandingPage() {
             <div className="space-y-6 sm:space-y-8">
               {/* Badge */}
               <div className="animate-fade-in-up">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/15 backdrop-blur-sm border border-emerald-500/20 dark:border-emerald-400/25 px-4 py-1.5 rounded-full uppercase tracking-[0.12em] shadow-sm">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/15 backdrop-blur-sm border border-emerald-500/20 dark:border-emerald-400/25 px-4 py-1.5 rounded-full uppercase tracking-[0.12em] shadow-sm">
                   <Sparkles className="size-3 text-emerald-600 dark:text-emerald-400 animate-pulse" />
                   Thử nghiệm hành trình nói 28 ngày
                 </span>
@@ -285,14 +285,14 @@ export default function LandingPage() {
                   <span className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
                     {stat.value}
                   </span>
-                  <span className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-semibold mt-1.5 uppercase tracking-wider text-center">
+                  <span className="text-xs sm:text-xs text-zinc-500 dark:text-zinc-400 font-semibold mt-1.5 uppercase tracking-wider text-center">
                     {stat.label}
                   </span>
                 </div>
               ))}
             </div>
             {/* Footnote */}
-            <p className="text-[11px] text-zinc-450 dark:text-zinc-500 mt-5 text-center font-normal tracking-wide">
+            <p className="text-xs text-zinc-450 dark:text-zinc-500 mt-5 text-center font-normal tracking-wide">
               * AtoEnglish đang thử nghiệm hành trình đầu tiên. Đây là mục tiêu học tập, không phải cam kết kết quả cho mọi người.
             </p>
           </div>
@@ -330,7 +330,7 @@ export default function LandingPage() {
               <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                 AtoEnglish
               </span>
-              <span className="text-[9px] text-zinc-500 dark:text-zinc-400 font-medium">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                 Grow every day
               </span>
             </div>

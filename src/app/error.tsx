@@ -43,7 +43,7 @@ export default function RootError({
         </Link>
       </div>
       {error.digest && (
-        <p className="text-[11px] text-zinc-600">Error ID: {error.digest}</p>
+        <p className="text-xs text-zinc-600">Error ID: {error.digest}</p>
       )}
     </div>
   );

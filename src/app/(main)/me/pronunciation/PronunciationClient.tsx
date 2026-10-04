@@ -213,7 +213,7 @@ export default function PronunciationClient() {
           />
         )}
         <span className={symCls}>{sound.symbol}</span>
-        <span className="text-[9px] text-muted-foreground font-semibold">
+        <span className="text-xs text-muted-foreground font-semibold">
           {sound.exampleWord}
         </span>
         <div className={`w-1.5 h-1.5 rounded-full mt-0.5 ${d.dot}`} />
@@ -231,10 +231,10 @@ export default function PronunciationClient() {
         <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 mb-3.5">
           <div className="flex-1">
             <div className="flex justify-between mb-1.5">
-              <span className="text-[11px] text-muted-foreground font-semibold">
+              <span className="text-xs text-muted-foreground font-semibold">
                 Đã luyện (tự đánh dấu)
               </span>
-              <span className="text-[11px] text-emerald-500 font-bold">
+              <span className="text-xs text-emerald-500 font-bold">
                 {masteredCount}/{totalCount}
               </span>
             </div>
@@ -279,19 +279,19 @@ export default function PronunciationClient() {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 px-1 text-[11px] font-bold transition-colors ${active ? "bg-primary border-primary text-primary-foreground" : "bg-card border-border/60 text-muted-foreground"}`}
+                className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 px-1 text-xs font-bold transition-colors ${active ? "bg-primary border-primary text-primary-foreground" : "bg-card border-border/60 text-muted-foreground"}`}
               >
                 <span
                   className={
                     active
-                      ? "text-[11px] font-bold"
-                      : "text-[11px] font-bold text-muted-foreground"
+                      ? "text-xs font-bold"
+                      : "text-xs font-bold text-muted-foreground"
                   }
                 >
                   {f.label}
                 </span>
                 <span
-                  className={`text-[10px] ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+                  className={`text-xs ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}
                 >
                   {f.count}
                 </span>
@@ -316,7 +316,7 @@ export default function PronunciationClient() {
         {/* Vowels section */}
         {filteredVowels.length > 0 && (
           <div className="mb-5">
-            <div className="text-[11px] text-muted-foreground font-bold mb-2.5 uppercase tracking-[0.08em]">
+            <div className="text-xs text-muted-foreground font-bold mb-2.5 uppercase tracking-[0.08em]">
               Nguyên âm (Vowels) — {filteredVowels.length} âm
             </div>
             <div className="grid grid-cols-5 gap-1.5">
@@ -330,7 +330,7 @@ export default function PronunciationClient() {
         {/* Consonants section */}
         {filteredConsonants.length > 0 && (
           <div className="mb-5">
-            <div className="text-[11px] text-muted-foreground font-bold mb-2.5 uppercase tracking-[0.08em]">
+            <div className="text-xs text-muted-foreground font-bold mb-2.5 uppercase tracking-[0.08em]">
               Phụ âm (Consonants) — {filteredConsonants.length} âm
             </div>
             <div className="grid grid-cols-5 gap-1.5">
@@ -456,7 +456,7 @@ export default function PronunciationClient() {
 
                 {/* How to pronounce */}
                 <div className="rounded-xl bg-muted/40 p-3 mb-3">
-                  <div className="text-[11px] text-muted-foreground font-bold mb-1.5">
+                  <div className="text-xs text-muted-foreground font-bold mb-1.5">
                     🗣️ CÁCH PHÁT ÂM
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed m-0">
@@ -472,7 +472,7 @@ export default function PronunciationClient() {
                       className="text-amber-500 flex-shrink-0 mt-0.5"
                     />
                     <div>
-                      <div className="text-[11px] text-amber-500 font-bold mb-1">
+                      <div className="text-xs text-amber-500 font-bold mb-1">
                         ⚠️ LỖI HAY GẶP (người Việt)
                       </div>
                       <p className="text-xs text-muted-foreground leading-snug m-0">
@@ -484,7 +484,7 @@ export default function PronunciationClient() {
 
                 {/* More examples */}
                 <div className="mb-4">
-                  <div className="text-[11px] text-muted-foreground font-bold mb-2">
+                  <div className="text-xs text-muted-foreground font-bold mb-2">
                     📝 THÊM VÍ DỤ
                   </div>
                   <div className="flex flex-wrap gap-1.5">

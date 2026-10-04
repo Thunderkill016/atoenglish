@@ -235,7 +235,7 @@ export default function ProductPreview() {
       <div className="flex items-center gap-1 px-2 sm:px-4 py-2 border-b border-zinc-200/50 dark:border-zinc-800/40 bg-zinc-50/30 dark:bg-zinc-900/20">
         <button
           onClick={() => setActiveTab("speaking")}
-          className={`flex-1 text-center text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
+          className={`flex-1 text-center text-xs sm:text-xs font-bold px-2 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
             activeTab === "speaking"
               ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/10"
               : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900/50"
@@ -246,7 +246,7 @@ export default function ProductPreview() {
         </button>
         <button
           onClick={() => { setActiveTab("srs"); setIsFlipped(false); }}
-          className={`flex-1 text-center text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
+          className={`flex-1 text-center text-xs sm:text-xs font-bold px-2 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
             activeTab === "srs"
               ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/10"
               : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900/50"
@@ -257,7 +257,7 @@ export default function ProductPreview() {
         </button>
         <button
           onClick={() => setActiveTab("dashboard")}
-          className={`flex-1 text-center text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
+          className={`flex-1 text-center text-xs sm:text-xs font-bold px-2 sm:px-3 py-1.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
             activeTab === "dashboard"
               ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/10"
               : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900/50"
@@ -280,10 +280,10 @@ export default function ProductPreview() {
             
             <div className="p-4 sm:p-6 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/50 bg-white/70 dark:bg-zinc-900/15 backdrop-blur-sm space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Mẫu phát âm chuẩn:</span>
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Mẫu phát âm chuẩn:</span>
                 <button 
                   onClick={handlePlayNative}
-                  className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300"
+                  className="flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300"
                 >
                   <Volume2 className="size-4" />
                   <span>Nghe mẫu</span>
@@ -393,10 +393,10 @@ export default function ProductPreview() {
                 // Front of the card
                 <>
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[10px] font-bold text-amber-800 dark:text-amber-500 uppercase tracking-widest font-mono">
+                    <span className="text-xs font-bold text-amber-800 dark:text-amber-500 uppercase tracking-widest font-mono">
                       Từ cần nhớ (Front)
                     </span>
-                    <span className="text-[10px] font-bold text-zinc-400">Chạm để lật nghĩa</span>
+                    <span className="text-xs font-bold text-zinc-400">Chạm để lật nghĩa</span>
                   </div>
                   
                   <div className="space-y-2">
@@ -417,10 +417,10 @@ export default function ProductPreview() {
                 // Back of the card
                 <div className="flex flex-col justify-between h-full animate-flip">
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest font-mono">
+                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest font-mono">
                       Ý nghĩa (Back)
                     </span>
-                    <span className="text-[10px] font-bold text-zinc-400">Chạm để quay lại</span>
+                    <span className="text-xs font-bold text-zinc-400">Chạm để quay lại</span>
                   </div>
 
                   <div className="space-y-3">
@@ -432,7 +432,7 @@ export default function ProductPreview() {
                     </p>
                   </div>
 
-                  <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">
+                  <div className="text-xs font-bold text-zinc-400 dark:text-zinc-500">
                     Ví dụ thực tế giúp hình dung ngữ cảnh
                   </div>
                 </div>
@@ -463,8 +463,8 @@ export default function ProductPreview() {
             {/* Circle Tracker */}
             <div className="rounded-2xl border border-zinc-200/60 dark:border-zinc-800/50 bg-white/70 dark:bg-zinc-900/15 backdrop-blur-sm p-5 flex flex-col items-center justify-between text-center min-h-[190px]">
               <div className="w-full flex items-center justify-between">
-                <span className="font-extrabold text-[10px] text-zinc-400 uppercase tracking-wider">XP Ngày</span>
-                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">Hàng ngày</span>
+                <span className="font-extrabold text-xs text-zinc-400 uppercase tracking-wider">XP Ngày</span>
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">Hàng ngày</span>
               </div>
               
               <div className="relative size-20 flex items-center justify-center my-1">
@@ -481,7 +481,7 @@ export default function ProductPreview() {
                 <div className="text-sm font-bold text-zinc-800 dark:text-zinc-250">
                   50 / 80 XP
                 </div>
-                <div className="text-[10px] text-zinc-450 dark:text-zinc-500 font-medium">
+                <div className="text-xs text-zinc-450 dark:text-zinc-500 font-medium">
                   Luyện thêm 30 XP để hoàn thành!
                 </div>
               </div>
@@ -492,7 +492,7 @@ export default function ProductPreview() {
               <div className="flex items-center gap-3 rounded-2xl bg-orange-500/10 border border-orange-500/20 px-4 py-3 shadow-sm shadow-orange-500/5">
                 <Flame className="size-5 text-orange-500 fill-orange-500 animate-pulse" />
                 <div className="text-left leading-tight">
-                  <div className="text-[9px] text-orange-800 dark:text-orange-400 font-extrabold uppercase">Thói quen</div>
+                  <div className="text-xs text-orange-800 dark:text-orange-400 font-extrabold uppercase">Thói quen</div>
                   <span className="text-sm font-black text-orange-600 dark:text-orange-400">
                     5 ngày liên tục
                   </span>
@@ -500,7 +500,7 @@ export default function ProductPreview() {
               </div>
 
               <div className="p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/50 bg-white/70 dark:bg-zinc-900/15 backdrop-blur-sm space-y-2">
-                <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wider">Nhiệm vụ hôm nay</span>
+                <span className="text-xs font-extrabold text-zinc-400 uppercase tracking-wider">Nhiệm vụ hôm nay</span>
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center gap-2 text-xs">
                     <CheckCircle className="size-4 text-emerald-500 fill-emerald-500/10" />

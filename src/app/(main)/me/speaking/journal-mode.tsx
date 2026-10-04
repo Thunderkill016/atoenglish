@@ -288,10 +288,10 @@ export function JournalMode() {
               className="rounded-2xl bg-muted/50 border border-border/40 p-4 space-y-3"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                   <Sparkles className="size-3.5 text-primary" /> Transcript
                 </span>
-                <span className="text-[10px] font-mono text-muted-foreground">{wordCount} words</span>
+                <span className="text-xs font-mono text-muted-foreground">{wordCount} words</span>
               </div>
               <p className="text-sm text-foreground leading-relaxed">{transcript}</p>
             </motion.div>

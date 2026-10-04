@@ -502,7 +502,7 @@ export default function QuizSection({
                   {/* S1-3: Mandatory recall */}
                   {quizSubmitted && quizAnswers[q.id] !== q.answer && (
                     <div className="mt-2">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
                         ✏️ Gõ lại đáp án đúng:
                       </p>
                       <div className="flex items-center gap-2">
@@ -764,7 +764,7 @@ export default function QuizSection({
           {/* Proof Moment */}
           {unit.situation && (
             <div className="border border-violet-500/30 bg-violet-500/5 rounded-2xl p-5">
-              <p className="text-[10px] font-black text-violet-400 uppercase tracking-widest mb-1">
+              <p className="text-xs font-black text-violet-400 uppercase tracking-widest mb-1">
                 🎤 Proof of Progress
               </p>
               <p className="text-foreground font-semibold text-sm mb-1">Hãy thử lại tình huống hôm nay!</p>

@@ -143,7 +143,7 @@ export default function PlacementTestClient() {
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       {opt.description}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Bắt đầu: {opt.startLabel}
                     </p>
                   </div>
@@ -177,7 +177,7 @@ export default function PlacementTestClient() {
                   <div className="text-sm font-black text-foreground">
                     {s.count}
                   </div>
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     {s.label}
                   </div>
                 </div>
@@ -244,7 +244,7 @@ export default function PlacementTestClient() {
               <p className="text-[13px] text-muted-foreground leading-relaxed max-w-[340px] mx-auto">
                 {result.levelDescription}
               </p>
-              <p className="mt-2 text-[11px] text-muted-foreground/80">
+              <p className="mt-2 text-xs text-muted-foreground/80">
                 {isSelfSelect
                   ? "Mức bạn tự chọn — điểm bắt đầu, không phải kết quả đo."
                   : "Ước tính từ bài test ngắn — chưa đo được nói và viết."}
@@ -310,7 +310,7 @@ export default function PlacementTestClient() {
                     <div className="text-base font-extrabold text-foreground">
                       {s.score}/{s.total}
                     </div>
-                    <div className="text-[10px] text-muted-foreground font-semibold">
+                    <div className="text-xs text-muted-foreground font-semibold">
                       {SKILL_LABEL[s.key]}
                     </div>
                     <div className="mt-1.5 h-0.5 bg-muted rounded-full overflow-hidden">
@@ -333,7 +333,7 @@ export default function PlacementTestClient() {
               </div>
               {result.nextSteps.map((step, i) => (
                 <div key={i} className="flex gap-2.5 items-start mb-2">
-                  <div className="w-5 h-5 rounded-full bg-primary/10 border border-primary/50 flex items-center justify-center text-[10px] font-extrabold text-primary shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 border border-primary/50 flex items-center justify-center text-xs font-extrabold text-primary shrink-0">
                     {i + 1}
                   </div>
                   <span className="text-xs text-muted-foreground leading-snug">
@@ -369,17 +369,17 @@ export default function PlacementTestClient() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div
-                          className={`text-[11px] font-bold mb-0.5 ${correct ? "text-emerald-500" : "text-red-500"}`}
+                          className={`text-xs font-bold mb-0.5 ${correct ? "text-emerald-500" : "text-red-500"}`}
                         >
                           {`Q${q.id}`} · {SKILL_LABEL[q.skill]} · {q.level}
                         </div>
-                        <div className="text-[11px] text-muted-foreground leading-snug mb-0.5">
+                        <div className="text-xs text-muted-foreground leading-snug mb-0.5">
                           {q.question.length > 60
                             ? q.question.slice(0, 60) + "…"
                             : q.question}
                         </div>
                         {!correct && (
-                          <div className="text-[11px] text-muted-foreground leading-snug">
+                          <div className="text-xs text-muted-foreground leading-snug">
                             ✓{" "}
                             <span className="text-emerald-500">
                               {q.options[q.correctAnswer]}
@@ -441,7 +441,7 @@ export default function PlacementTestClient() {
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-1.5">
               <span className="text-sm">{SKILL_ICON[currentQ.skill]}</span>
-              <span className="text-[11px] text-muted-foreground font-bold">
+              <span className="text-xs text-muted-foreground font-bold">
                 {SKILL_LABEL[currentQ.skill]} · {currentQ.level}
               </span>
             </div>
@@ -469,7 +469,7 @@ export default function PlacementTestClient() {
             {/* Reading passage */}
             {currentQ.context && (
               <div className="rounded-xl border border-border/60 bg-card p-3.5 mb-4">
-                <div className="text-[10px] text-muted-foreground font-bold mb-2 uppercase tracking-wider">
+                <div className="text-xs text-muted-foreground font-bold mb-2 uppercase tracking-wider">
                   📖 Đoạn văn
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed m-0">

@@ -98,6 +98,7 @@ function SettingSelect({
         <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
       </div>
       <select
+        aria-label={label}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-ring dark:text-foreground"

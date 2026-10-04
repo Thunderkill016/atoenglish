@@ -151,7 +151,7 @@ export default function VocabSection({
                         });
                       }}
                       aria-label="Đã biết từ này"
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all ${
+                      className={`text-xs font-bold px-2 py-0.5 rounded-lg transition-all ${
                         seenCards.has(i) && !flippedCards.has(i)
                           ? "bg-primary/10 text-primary border border-primary/30"
                           : "text-muted-foreground hover:text-foreground"
@@ -179,7 +179,7 @@ export default function VocabSection({
                   <div className="space-y-2">
                     <p className="text-primary font-black text-sm">{v.meaning}</p>
                     {v.collocation && (
-                      <span className="inline-flex items-center gap-1 bg-primary/10 border border-primary/30 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 bg-primary/10 border border-primary/30 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
                         💬 {v.collocation}
                       </span>
                     )}
@@ -187,12 +187,12 @@ export default function VocabSection({
                     {v.example2 && <p className="text-muted-foreground text-xs italic">&ldquo;{v.example2}&rdquo;</p>}
                     {v.l1_interference_vn && (
                       <div className="mt-1 bg-amber-500/10 border border-amber-500/30 rounded-xl px-2.5 py-1.5">
-                        <p className="text-amber-400 text-[10px] leading-relaxed">{v.l1_interference_vn}</p>
+                        <p className="text-amber-400 text-xs leading-relaxed">{v.l1_interference_vn}</p>
                       </div>
                     )}
                   </div>
                    <div className="flex items-center justify-between">
-                    <p className="text-[10px] text-teal-600/80">Nhấn để lật lại ↩</p>
+                    <p className="text-xs text-teal-600/80">Nhấn để lật lại ↩</p>
                     <div className="flex gap-2">
                       <button
                         onClick={async (e) => {
@@ -223,7 +223,7 @@ export default function VocabSection({
                           }
                         }}
                         disabled={savedCards.has(i)}
-                        className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-1 ${
+                        className={`text-xs font-bold px-2 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-1 ${
                           savedCards.has(i)
                             ? "bg-primary/10 text-primary border border-primary/30 cursor-default"
                             : "bg-muted text-foreground border border-border/60 hover:bg-muted/60"

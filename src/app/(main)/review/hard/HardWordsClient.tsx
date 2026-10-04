@@ -79,7 +79,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
         aria-expanded={expanded}
       >
         {/* Rank badge */}
-        <div className="shrink-0 w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[11px] font-black text-zinc-400 dark:text-zinc-500">
+        <div className="shrink-0 w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black text-zinc-400 dark:text-zinc-500">
           {index + 1}
         </div>
 
@@ -95,7 +95,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
               </span>
             )}
             <span
-              className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${levelColor}`}
+              className={`text-xs font-bold px-1.5 py-0.5 rounded border ${levelColor}`}
             >
               {word.level}
             </span>
@@ -112,7 +112,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
           </div>
           <div className="flex items-center gap-1 justify-end">
             <Flame className="w-3 h-3 text-red-400" />
-            <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-bold">
+            <span className="text-xs text-zinc-400 dark:text-zinc-500 font-bold">
               {word.again_count}× Again
             </span>
           </div>
@@ -134,10 +134,10 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
           />
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-600">
+          <span className="text-xs text-zinc-400 dark:text-zinc-600">
             {word.total_reviews} lượt ôn
           </span>
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-600">
+          <span className="text-xs text-zinc-400 dark:text-zinc-600">
             Thành thạo {word.mastery_pct}%
           </span>
         </div>
@@ -177,7 +177,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
               {/* Example sentence */}
               {word.example_en && (
                 <div className="p-3 rounded-xl bg-zinc-50 dark:bg-white/4 border border-zinc-100 dark:border-white/6">
-                  <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1">
+                  <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1">
                     Ví dụ
                   </p>
                   <p className="text-sm text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
@@ -187,7 +187,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
               )}
 
               {/* Mastery tip */}
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500 leading-relaxed">
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 leading-relaxed">
                 {word.mastery_pct < 40
                   ? "⚠️ Bạn quên từ này rất thường xuyên. Hãy ôn tập hàng ngày và tạo câu ví dụ riêng để ghi nhớ sâu hơn."
                   : word.mastery_pct < 70

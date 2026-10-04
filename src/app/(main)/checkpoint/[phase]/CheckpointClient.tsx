@@ -947,7 +947,7 @@ export default function CheckpointClient({
                     onClick={() => !confirmed && setSelected(opt)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left text-sm transition-all duration-150 ${style}`}
                   >
-                    <span className="shrink-0 size-6 rounded-lg border border-current/20 bg-current/5 flex items-center justify-center text-[10px] font-black">
+                    <span className="shrink-0 size-6 rounded-lg border border-current/20 bg-current/5 flex items-center justify-center text-xs font-black">
                       {idx + 1}
                     </span>
                     <span>{opt}</span>

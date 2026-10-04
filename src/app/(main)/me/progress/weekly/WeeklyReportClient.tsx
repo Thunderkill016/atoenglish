@@ -29,10 +29,10 @@ function getWeekLabel() {
 
 function Delta({ now, prev, suffix = "" }: { now: number; prev: number; suffix?: string }) {
   const diff = now - prev;
-  if (diff === 0) return <span className="text-[10px] font-bold text-zinc-400 flex items-center gap-0.5"><Minus className="w-2.5 h-2.5" />Bằng tuần trước</span>;
+  if (diff === 0) return <span className="text-xs font-bold text-zinc-400 flex items-center gap-0.5"><Minus className="w-2.5 h-2.5" />Bằng tuần trước</span>;
   const up = diff > 0;
   return (
-    <span className={`text-[10px] font-bold flex items-center gap-0.5 ${up ? "text-emerald-500" : "text-red-400"}`}>
+    <span className={`text-xs font-bold flex items-center gap-0.5 ${up ? "text-emerald-500" : "text-red-400"}`}>
       {up ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
       {up ? "+" : ""}{diff}{suffix} so với tuần trước
     </span>
@@ -70,7 +70,7 @@ function StatCard({
         <span className={`flex w-7 h-7 items-center justify-center rounded-lg ${iconClass}`}>
           <Icon className="w-3.5 h-3.5" />
         </span>
-        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{label}</span>
+        <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{label}</span>
       </div>
       <span className="text-2xl font-black text-zinc-900 dark:text-white leading-none">{value}</span>
       <Delta now={now} prev={prev} suffix={suffix} />
@@ -168,7 +168,7 @@ export default function WeeklyReportClient({ report }: { report: WeeklyReportDat
           {/* Week grade badge */}
           <div className="shrink-0 text-right">
             <p className={`text-lg font-black ${grade.color}`}>{grade.label}</p>
-            <p className="text-[10px] text-zinc-400 font-medium">{activeDaysThisWeek}/7 ngày hoạt động</p>
+            <p className="text-xs text-zinc-400 font-medium">{activeDaysThisWeek}/7 ngày hoạt động</p>
           </div>
         </div>
       </motion.div>
@@ -225,7 +225,7 @@ export default function WeeklyReportClient({ report }: { report: WeeklyReportDat
       >
         <div className="flex items-center justify-between">
           <p className="text-xs font-black text-zinc-700 dark:text-zinc-200">Hoạt động 7 ngày qua</p>
-          <span className="text-[10px] font-bold text-zinc-400">🟩 Bài học  🟦 Thẻ từ</span>
+          <span className="text-xs font-bold text-zinc-400">🟩 Bài học  🟦 Thẻ từ</span>
         </div>
         <div className="flex items-end justify-between gap-1.5 h-20">
           {dailyActivity.map((day) => {
@@ -259,7 +259,7 @@ export default function WeeklyReportClient({ report }: { report: WeeklyReportDat
                     <div className="w-full h-1 rounded bg-zinc-100 dark:bg-zinc-800" />
                   )}
                 </div>
-                <span className={`text-[9px] font-black ${isToday ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"}`}>
+                <span className={`text-xs font-black ${isToday ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"}`}>
                   {day.label}
                 </span>
               </div>
@@ -278,7 +278,7 @@ export default function WeeklyReportClient({ report }: { report: WeeklyReportDat
         >
           <div className="flex items-center justify-between">
             <p className="text-xs font-black text-zinc-700 dark:text-zinc-200">Kết quả ôn thẻ tuần này</p>
-            <span className="text-[10px] font-bold text-zinc-400">{totalCards} lượt ôn</span>
+            <span className="text-xs font-bold text-zinc-400">{totalCards} lượt ôn</span>
           </div>
           <div className="space-y-2.5">
             <RatingBar label="Dễ (Easy)" count={ratingBreakdown.easy} total={totalCards} color="bg-emerald-500" />

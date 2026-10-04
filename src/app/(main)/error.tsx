@@ -40,7 +40,7 @@ export default function Error({
             Đã xảy ra lỗi khi tải trang này. Hãy thử tải lại hoặc quay về trang chủ.
           </p>
           {error.digest && (
-            <p className="text-[10px] font-mono text-muted-foreground/60 bg-muted/50 px-3 py-1 rounded-lg inline-block">
+            <p className="text-xs font-mono text-muted-foreground/60 bg-muted/50 px-3 py-1 rounded-lg inline-block">
               Mã lỗi: {error.digest}
             </p>
           )}

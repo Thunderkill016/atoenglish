@@ -77,7 +77,7 @@ export function BottomNav({ dueCardsCount = 0 }: BottomNavProps) {
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1.5 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-black rounded-full px-0.5 shadow-sm shadow-red-500/30"
+                  className="absolute -top-1 -right-1.5 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-xs font-black rounded-full px-0.5 shadow-sm shadow-red-500/30"
                 >
                   {dueCardsCount > 99 ? "99+" : dueCardsCount}
                 </motion.span>
@@ -86,7 +86,7 @@ export function BottomNav({ dueCardsCount = 0 }: BottomNavProps) {
 
             {/* Label */}
             <span
-              className={`text-[9px] font-bold mt-0.5 tracking-tight transition-all duration-200 ${
+              className={`text-xs font-bold mt-0.5 tracking-tight transition-all duration-200 ${
                 isActive
                   ? "text-primary font-black"
                   : "text-muted-foreground group-hover:text-foreground"

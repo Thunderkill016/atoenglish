@@ -81,7 +81,7 @@ export default function SessionBreakCard({ onContinue }: SessionBreakCardProps) 
           💾 Lưu và nghỉ ngơi
         </a>
       </div>
-      <p className="text-[11px] text-zinc-400">
+      <p className="text-xs text-zinc-400">
         Tiến độ tự động được lưu — quay lại lúc nào cũng được
       </p>
     </motion.div>

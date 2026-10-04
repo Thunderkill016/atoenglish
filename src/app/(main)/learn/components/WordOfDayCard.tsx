@@ -50,7 +50,7 @@ export default function WordOfDayCard({ word, phonetic, meaning_vn, example_en, 
             onClick={() => setSlowMode((s) => !s)}
             aria-label={slowMode ? "Tốc độ bình thường" : "Tốc độ chậm"}
             title={slowMode ? "Đang ở chế độ chậm — nhấn để bình thường" : "Nghe chậm 0.5×"}
-            className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold transition-all ${
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-bold transition-all ${
               slowMode
                 ? "bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400"
                 : "bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -59,10 +59,10 @@ export default function WordOfDayCard({ word, phonetic, meaning_vn, example_en, 
             <Turtle className="size-3" />
             {slowMode ? "0.5×" : "1×"}
           </button>
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${levelColor[level] ?? levelColor.A1}`}>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-lg border ${levelColor[level] ?? levelColor.A1}`}>
             {level}
           </span>
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">{topic}</span>
+          <span className="text-xs text-zinc-400 dark:text-zinc-500 font-medium">{topic}</span>
         </div>
       </div>
 

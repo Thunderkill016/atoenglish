@@ -35,7 +35,7 @@ export default function QuizError({
             Đã xảy ra lỗi. Kiểm tra kết nối mạng và thử lại.
           </p>
           {error.digest && (
-            <p className="text-[10px] font-mono text-muted-foreground/60 bg-muted/50 px-3 py-1 rounded-lg inline-block">
+            <p className="text-xs font-mono text-muted-foreground/60 bg-muted/50 px-3 py-1 rounded-lg inline-block">
               {error.digest}
             </p>
           )}

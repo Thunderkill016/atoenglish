@@ -34,7 +34,8 @@ async function findUnnamedInteractiveElements(page: Page): Promise<string[]> {
     };
 
     const labelledByText = (element: HTMLElement): string => {
-      const ids = element.getAttribute("aria-labelledby")?.trim().split(/\s+/) ?? [];
+      const ids =
+        element.getAttribute("aria-labelledby")?.trim().split(/\s+/) ?? [];
       return ids
         .map((id) => document.getElementById(id)?.textContent?.trim() ?? "")
         .filter(Boolean)
@@ -59,18 +60,20 @@ async function findUnnamedInteractiveElements(page: Page): Promise<string[]> {
       const ariaLabel = element.getAttribute("aria-label")?.trim() ?? "";
       const title = element.getAttribute("title")?.trim() ?? "";
       const text = element.textContent?.trim() ?? "";
-      const imageAlt = [...element.querySelectorAll<HTMLImageElement>("img[alt]")]
+      const imageAlt = [
+        ...element.querySelectorAll<HTMLImageElement>("img[alt]"),
+      ]
         .map((image) => image.alt.trim())
         .filter(Boolean)
         .join(" ");
 
       return Boolean(
         ariaLabel ||
-          labelledByText(element) ||
-          nativeLabelText(element) ||
-          text ||
-          title ||
-          imageAlt,
+        labelledByText(element) ||
+        nativeLabelText(element) ||
+        text ||
+        title ||
+        imageAlt,
       );
     };
 
@@ -155,7 +158,9 @@ test.describe("Public accessibility smoke", () => {
     expect(await findNestedInteractiveElements(page)).toEqual([]);
   });
 
-  test("landing does not overflow the mobile viewport horizontally", async ({ page }) => {
+  test("landing does not overflow the mobile viewport horizontally", async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -165,7 +170,53 @@ test.describe("Public accessibility smoke", () => {
       scrollWidth: document.documentElement.scrollWidth,
     }));
 
-    expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 2);
+    expect(dimensions.scrollWidth).toBeLessThanOrEqual(
+      dimensions.clientWidth + 2,
+    );
     await expect(page.getByRole("button", { name: "Mở menu" })).toBeVisible();
+  });
+});
+
+test.describe("App accessibility smoke", () => {
+  const guestOpenSurfaces = ["/learn", "/review", "/read"] as const;
+
+  for (const path of guestOpenSurfaces) {
+    test(`${path} has no duplicate ids or nested interactive elements`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      await expect(page.locator("main#main-content")).toBeVisible();
+
+      expect(await findDuplicateIds(page)).toEqual([]);
+      expect(await findNestedInteractiveElements(page)).toEqual([]);
+    });
+
+    test(`${path} does not overflow the mobile viewport horizontally`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(path);
+      await expect(page.locator("main#main-content")).toBeVisible();
+
+      const dimensions = await page.evaluate(() => ({
+        clientWidth: document.documentElement.clientWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+      }));
+
+      expect(dimensions.scrollWidth).toBeLessThanOrEqual(
+        dimensions.clientWidth + 2,
+      );
+    });
+  }
+
+  test("session start card has valid interactive structure", async ({
+    page,
+  }) => {
+    await page.goto("/zero-path?lesson=legacy.unit-1");
+    await expect(page.locator("main#main-content")).toBeVisible();
+
+    expect(await findDuplicateIds(page)).toEqual([]);
+    expect(await findUnnamedInteractiveElements(page)).toEqual([]);
+    expect(await findNestedInteractiveElements(page)).toEqual([]);
   });
 });

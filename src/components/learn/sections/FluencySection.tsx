@@ -183,7 +183,7 @@ function PronunciationFocusCard({
                         <span className="text-foreground font-bold text-sm">{ex.word}</span>
                         <span className="text-primary font-mono text-xs">{ex.ipa}</span>
                       </div>
-                      <p className="text-muted-foreground text-[11px] leading-relaxed">{ex.tip}</p>
+                      <p className="text-muted-foreground text-xs leading-relaxed">{ex.tip}</p>
                     </div>
                     {playTTS && (
                       <button
@@ -199,14 +199,14 @@ function PronunciationFocusCard({
               </div>
               {focus.minimalPairs && focus.minimalPairs.length > 0 && (
                 <div>
-                  <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1.5">
+                  <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-1.5">
                     Minimal Pairs
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {focus.minimalPairs.map(([a, b], i) => (
                       <span
                         key={i}
-                        className="text-[11px] bg-muted border border-border/60 rounded-lg px-2 py-0.5 text-foreground/80"
+                        className="text-xs bg-muted border border-border/60 rounded-lg px-2 py-0.5 text-foreground/80"
                       >
                         {a} <span className="text-muted-foreground">↔</span> {b}
                       </span>

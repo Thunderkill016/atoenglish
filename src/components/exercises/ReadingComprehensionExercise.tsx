@@ -53,7 +53,7 @@ export function ReadingComprehensionExercise({
             <p className="text-zinc-500 text-xs">{passage.title_vn}</p>
           )}
         </div>
-        <span className={`ml-auto text-[10px] font-bold px-2 py-1 rounded-lg ${
+        <span className={`ml-auto text-xs font-bold px-2 py-1 rounded-lg ${
           passage.level === 'A1' ? 'bg-emerald-500/15 text-emerald-400'
           : passage.level === 'A2' ? 'bg-blue-500/15 text-blue-400'
           : 'bg-purple-500/15 text-purple-400'

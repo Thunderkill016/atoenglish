@@ -311,7 +311,7 @@ export default function PracticeSection({
                   setMatchLeft(null);
                   setWrongMatch(null);
                 }}
-                className="ml-auto text-[10px] font-bold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg bg-muted/40 border border-border/60 transition-colors"
+                className="ml-auto text-xs font-bold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg bg-muted/40 border border-border/60 transition-colors"
               >
                 ↺ Làm lại
               </button>

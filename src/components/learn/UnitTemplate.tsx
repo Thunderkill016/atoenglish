@@ -153,8 +153,8 @@ function VideoShadowingCard({ videoId }: { videoId: string }) {
             ].map(({ step, icon, label, desc }) => (
               <div key={step} className="flex flex-col items-center gap-1 text-center p-2 rounded-xl bg-zinc-800/40">
                 <span className="text-lg">{icon}</span>
-                <span className="text-[10px] font-black text-zinc-300">{label}</span>
-                <span className="text-[9px] text-zinc-500">{desc}</span>
+                <span className="text-xs font-black text-zinc-300">{label}</span>
+                <span className="text-xs text-zinc-500">{desc}</span>
               </div>
             ))}
           </div>
@@ -568,7 +568,7 @@ useLessonProgress({
             <div className="text-right shrink-0 flex items-center gap-2">
               {/* S3-2: Mini-session toggle / active indicator */}
               {miniSession ? (
-                <div className="flex items-center gap-1 text-[11px] font-black px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300">
+                <div className="flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300">
                   ⚡ <span>5 phút</span>
                 </div>
               ) : section < 8 && (
@@ -583,11 +583,11 @@ useLessonProgress({
                       );
                     } catch { /* ignore */ }
                   }}
-                  className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/50 transition-all whitespace-nowrap active:scale-95"
+                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/50 transition-all whitespace-nowrap active:scale-95"
                   title="Bỏ qua các phần đầu, chỉ làm luyện tập + quiz ~5 phút"
                 >
                   ⚡ <span>Ôn nhanh</span>
-                  <span className="text-amber-500/60 text-[9px] font-bold">~5p</span>
+                  <span className="text-amber-500/60 text-xs font-bold">~5p</span>
                 </button>
               )}
               <div>

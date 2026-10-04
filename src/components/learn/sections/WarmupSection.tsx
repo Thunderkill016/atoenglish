@@ -77,9 +77,9 @@ export default function WarmupSection({
             <span className="text-4xl group-hover:scale-110 transition-transform duration-200">{g.emoji}</span>
             <div>
               <p className="font-bold text-foreground text-sm leading-tight">{g.en}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{g.vn}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{g.vn}</p>
             </div>
-            <span className="text-[9px] text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">▶ Nghe</span>
+            <span className="text-xs text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">▶ Nghe</span>
           </motion.button>
         ))}
       </div>
@@ -112,13 +112,13 @@ export default function WarmupSection({
                   {v.emoji && <span className="text-xl shrink-0">{v.emoji}</span>}
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-foreground truncate">{v.word}</p>
-                    <p className="text-[11px] text-muted-foreground">{v.phonetic}</p>
+                    <p className="text-xs text-muted-foreground">{v.phonetic}</p>
                   </div>
                 </div>
                 <div className="flex gap-1.5 shrink-0">
                   <button
                     onClick={() => setWarmupRated((p) => ({ ...p, [i]: "known" }))}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                       rated === "known"
                         ? "bg-emerald-500 text-white shadow-sm scale-105"
                         : "bg-muted text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-95"
@@ -128,7 +128,7 @@ export default function WarmupSection({
                   </button>
                   <button
                     onClick={() => setWarmupRated((p) => ({ ...p, [i]: "unknown" }))}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                       rated === "unknown"
                         ? "bg-muted text-foreground"
                         : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -153,7 +153,7 @@ export default function WarmupSection({
 
       {unit.grammar?.vnNote && (
         <div className="mb-6 rounded-2xl bg-red-500/10 border border-red-500/40 p-4">
-          <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2">⚠️ Bẫy ngữ pháp của người Việt trong bài này</p>
+          <p className="text-xs font-black text-red-400 uppercase tracking-widest mb-2">⚠️ Bẫy ngữ pháp của người Việt trong bài này</p>
           <p className="text-muted-foreground text-sm leading-relaxed">
             {unit.grammar.vnNote.length > 150
               ? unit.grammar.vnNote.slice(0, 150) + "... (chi tiết ở phần Ngữ pháp)"
@@ -200,7 +200,7 @@ export default function WarmupSection({
                       style={{ backfaceVisibility: "hidden" }}
                     >
                       <p className="text-foreground font-bold text-sm">{card.word}</p>
-                      <p className="text-[10px] text-muted-foreground">{card.phonetic}</p>
+                      <p className="text-xs text-muted-foreground">{card.phonetic}</p>
                     </div>
                     <div
                       className="absolute inset-0 border border-primary/40 bg-card rounded-xl p-3 flex flex-col justify-center text-center"

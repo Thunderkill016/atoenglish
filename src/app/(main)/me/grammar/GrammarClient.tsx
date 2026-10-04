@@ -61,7 +61,7 @@ export default function GrammarClient() {
 
         {/* Level label */}
         <p
-          className={`text-[11px] font-bold uppercase tracking-widest mb-3 ${LEVEL_TEXT}`}
+          className={`text-xs font-bold uppercase tracking-widest mb-3 ${LEVEL_TEXT}`}
         >
           {LEVEL_LABEL[activeLevel]} · {filtered.length} chủ đề
         </p>
@@ -126,7 +126,7 @@ function TopicCard({
           <p className="text-sm font-black text-foreground mb-0.5">
             {topic.title}
           </p>
-          <p className="text-[11px] text-muted-foreground font-semibold">
+          <p className="text-xs text-muted-foreground font-semibold">
             {topic.subtitleEn}
           </p>
         </div>
@@ -152,7 +152,7 @@ function TopicCard({
               {/* Explanation */}
               <div>
                 <p
-                  className={`text-[11px] font-black uppercase tracking-widest mb-1.5 ${levelColor}`}
+                  className={`text-xs font-black uppercase tracking-widest mb-1.5 ${levelColor}`}
                 >
                   📌 Giải thích
                 </p>
@@ -164,7 +164,7 @@ function TopicCard({
               {/* Structure formula */}
               <div className="bg-muted/50 border border-border rounded-xl px-3 py-2.5">
                 <p
-                  className={`text-[10px] font-black uppercase tracking-widest mb-1 ${levelColor}`}
+                  className={`text-xs font-black uppercase tracking-widest mb-1 ${levelColor}`}
                 >
                   📐 Cấu trúc
                 </p>
@@ -176,7 +176,7 @@ function TopicCard({
               {/* Rules */}
               <div>
                 <p
-                  className={`text-[11px] font-black uppercase tracking-widest mb-2 ${levelColor}`}
+                  className={`text-xs font-black uppercase tracking-widest mb-2 ${levelColor}`}
                 >
                   📋 Quy tắc
                 </p>
@@ -184,7 +184,7 @@ function TopicCard({
                   {topic.rules.map((rule, i) => (
                     <div key={i} className="flex gap-2 items-start">
                       <span
-                        className={`w-4.5 h-4.5 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 mt-0.5 bg-muted ${levelColor}`}
+                        className={`w-4.5 h-4.5 rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5 bg-muted ${levelColor}`}
                       >
                         {i + 1}
                       </span>
@@ -199,7 +199,7 @@ function TopicCard({
               {/* Examples */}
               <div>
                 <p
-                  className={`text-[11px] font-black uppercase tracking-widest mb-2 ${levelColor}`}
+                  className={`text-xs font-black uppercase tracking-widest mb-2 ${levelColor}`}
                 >
                   ✏️ Ví dụ
                 </p>
@@ -223,7 +223,7 @@ function TopicCard({
 
               {/* Mistakes */}
               <div>
-                <p className="text-[11px] font-black text-destructive uppercase tracking-widest mb-2">
+                <p className="text-xs font-black text-destructive uppercase tracking-widest mb-2">
                   ❌ Lỗi Hay Gặp
                 </p>
                 <div className="flex flex-col gap-1">
