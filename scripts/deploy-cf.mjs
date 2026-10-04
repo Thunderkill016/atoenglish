@@ -16,10 +16,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 
 const root = new URL("..", import.meta.url).pathname;
-const workerDir = join(
-  root,
-  ".cloudflare/output/v0/workers/default",
-);
+const workerDir = join(root, ".cloudflare/output/v0/workers/default");
 const configPath = join(workerDir, "worker.config.json");
 const bundleDir = join(workerDir, "bundle");
 
@@ -80,9 +77,17 @@ if (added.length) {
   for (const m of added) console.log(`  + ${m}`);
 }
 
-// 3. Deploy prebuilt Build Output.
+// 3. Deploy prebuilt Build Output — production deploy by default, a Workers
+// Preview (branch/PR environment) when --preview is passed.
 const modeIdx = process.argv.indexOf("--mode");
-const deployArgs = ["deploy", "--prebuilt"];
+const previewIdx = process.argv.indexOf("--preview");
+const deployArgs =
+  previewIdx !== -1
+    ? ["previews", "deploy", "--prebuilt"]
+    : ["deploy", "--prebuilt"];
+if (previewIdx !== -1 && process.argv[previewIdx + 1]) {
+  deployArgs.push(process.argv[previewIdx + 1]);
+}
 if (modeIdx !== -1 && process.argv[modeIdx + 1]) {
   deployArgs.push("--mode", process.argv[modeIdx + 1]);
 }
