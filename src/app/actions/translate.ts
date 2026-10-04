@@ -2,13 +2,14 @@
 
 import { headers } from "next/headers";
 import { createRateLimiter } from "@/lib/security/rate-limit";
+import { geminiGenerateUrl } from "@/lib/ai/gemini";
 
 const translateLimiter = createRateLimiter(20, 60 * 1000, "translate-grade");
 
 export interface TranslationGrade {
   correct: boolean;
-  feedbackVn: string;           // Vietnamese explanation
-  naturalAlternative?: string;  // More native-sounding phrasing (if any)
+  feedbackVn: string; // Vietnamese explanation
+  naturalAlternative?: string; // More native-sounding phrasing (if any)
   errorType?: "grammar" | "word-choice" | "missing-word" | "word-order"; // optional classification
 }
 
@@ -20,14 +21,18 @@ export interface TranslationGrade {
 export async function gradeTranslation(
   promptVn: string,
   referenceAnswer: string,
-  userAnswer: string
+  userAnswer: string,
 ): Promise<{ success: boolean; grade?: TranslationGrade; error?: string }> {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
     const rateCheck = await translateLimiter.check(ip);
     if (!rateCheck.success) {
-      return { success: false, error: "Yêu cầu quá thường xuyên. Thử lại sau." };
+      return {
+        success: false,
+        error: "Yêu cầu quá thường xuyên. Thử lại sau.",
+      };
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -59,7 +64,7 @@ Respond ONLY with valid JSON matching this schema:
 }`;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      geminiGenerateUrl("gemini-1.5-flash", apiKey),
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,18 +72,18 @@ Respond ONLY with valid JSON matching this schema:
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
             responseMimeType: "application/json",
-            temperature: 0.2,   // Low temp for consistent grading
+            temperature: 0.2, // Low temp for consistent grading
             maxOutputTokens: 256,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       return { success: false, error: "Gemini API lỗi." };
     }
 
-    const resData = await response.json() as {
+    const resData = (await response.json()) as {
       candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
     };
     const text = resData.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -86,8 +91,10 @@ Respond ONLY with valid JSON matching this schema:
 
     const parsed = JSON.parse(text.trim()) as TranslationGrade;
     return { success: true, grade: parsed };
-
   } catch {
-    return { success: false, error: "Không thể chấm điểm lúc này. Hãy thử lại." };
+    return {
+      success: false,
+      error: "Không thể chấm điểm lúc này. Hãy thử lại.",
+    };
   }
 }

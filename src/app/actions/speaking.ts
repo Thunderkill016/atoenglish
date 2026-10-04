@@ -4,28 +4,91 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createRateLimiter } from "@/lib/security/rate-limit";
+import { geminiGenerateUrl } from "@/lib/ai/gemini";
 import { SpeakingSessionSchema } from "@/lib/security/validation";
-import { analyzeSpeaking, basicWordCountFeedback } from "@/lib/utils/speech-analysis";
+import {
+  analyzeSpeaking,
+  basicWordCountFeedback,
+} from "@/lib/utils/speech-analysis";
 
 const speakingLimiter = createRateLimiter(20, 60 * 1000, "speaking");
 const aiLimiter = createRateLimiter(30, 60 * 1000, "ai-gen");
 
-const SCENARIO_DETAILS: Record<string, { title: string; character: string; difficulty: string }> = {
-  "hotel-checkin": { title: "Hotel Check-in", character: "Receptionist (Lễ tân)", difficulty: "Easy" },
-  "job-interview": { title: "Job Interview", character: "Hiring Manager (Nhà tuyển dụng)", difficulty: "Medium" },
-  "coffee-shop": { title: "Ordering Coffee", character: "Barista (Nhân viên pha chế)", difficulty: "Easy" },
-  "airport-security": { title: "Airport Security", character: "Border Officer (Nhân viên hải quan)", difficulty: "Medium" },
-  "restaurant-dining": { title: "Restaurant Dining", character: "Waiter (Phục vụ nhà hàng)", difficulty: "Easy" },
-  "doctors-appointment": { title: "Doctor's Appointment", character: "Doctor (Bác sĩ)", difficulty: "Hard" },
-  "saas-product-demo": { title: "Product Demo", character: "Potential Customer (Khách hàng tiềm năng)", difficulty: "Hard" },
-  "investor-pitch": { title: "Investor Pitch", character: "Angel Investor (Nhà đầu tư)", difficulty: "Hard" },
-  "customer-support": { title: "Customer Support", character: "Unhappy Customer (Khách hàng không hài lòng)", difficulty: "Medium" },
+const SCENARIO_DETAILS: Record<
+  string,
+  { title: string; character: string; difficulty: string }
+> = {
+  "hotel-checkin": {
+    title: "Hotel Check-in",
+    character: "Receptionist (Lễ tân)",
+    difficulty: "Easy",
+  },
+  "job-interview": {
+    title: "Job Interview",
+    character: "Hiring Manager (Nhà tuyển dụng)",
+    difficulty: "Medium",
+  },
+  "coffee-shop": {
+    title: "Ordering Coffee",
+    character: "Barista (Nhân viên pha chế)",
+    difficulty: "Easy",
+  },
+  "airport-security": {
+    title: "Airport Security",
+    character: "Border Officer (Nhân viên hải quan)",
+    difficulty: "Medium",
+  },
+  "restaurant-dining": {
+    title: "Restaurant Dining",
+    character: "Waiter (Phục vụ nhà hàng)",
+    difficulty: "Easy",
+  },
+  "doctors-appointment": {
+    title: "Doctor's Appointment",
+    character: "Doctor (Bác sĩ)",
+    difficulty: "Hard",
+  },
+  "saas-product-demo": {
+    title: "Product Demo",
+    character: "Potential Customer (Khách hàng tiềm năng)",
+    difficulty: "Hard",
+  },
+  "investor-pitch": {
+    title: "Investor Pitch",
+    character: "Angel Investor (Nhà đầu tư)",
+    difficulty: "Hard",
+  },
+  "customer-support": {
+    title: "Customer Support",
+    character: "Unhappy Customer (Khách hàng không hài lòng)",
+    difficulty: "Medium",
+  },
   // New high-value job-focused (research: practical situational practice = Babbel strength)
-  "team-meeting-update": { title: "Team Meeting - Project Update", character: "Team Lead (Trưởng nhóm)", difficulty: "Medium" },
-  "client-negotiation": { title: "Client Negotiation Call", character: "Client (Khách hàng)", difficulty: "Hard" },
-  "performance-review": { title: "Performance Review Discussion", character: "Manager (Quản lý)", difficulty: "Medium" },
-  "salary-negotiation": { title: "Salary Negotiation", character: "HR Manager (Quản lý nhân sự)", difficulty: "Hard" },
-  "team-presentation": { title: "Team Presentation Q&A", character: "Colleague (Đồng nghiệp)", difficulty: "Medium" },
+  "team-meeting-update": {
+    title: "Team Meeting - Project Update",
+    character: "Team Lead (Trưởng nhóm)",
+    difficulty: "Medium",
+  },
+  "client-negotiation": {
+    title: "Client Negotiation Call",
+    character: "Client (Khách hàng)",
+    difficulty: "Hard",
+  },
+  "performance-review": {
+    title: "Performance Review Discussion",
+    character: "Manager (Quản lý)",
+    difficulty: "Medium",
+  },
+  "salary-negotiation": {
+    title: "Salary Negotiation",
+    character: "HR Manager (Quản lý nhân sự)",
+    difficulty: "Hard",
+  },
+  "team-presentation": {
+    title: "Team Presentation Q&A",
+    character: "Colleague (Đồng nghiệp)",
+    difficulty: "Medium",
+  },
 };
 
 interface ChatMessageParam {
@@ -48,12 +111,13 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
   try {
     // Rate Limiting
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
     const rateLimitCheck = await speakingLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {
         success: false,
-        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau."
+        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau.",
       };
     }
 
@@ -62,34 +126,38 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
     if (!validated.success) {
       return {
         success: false,
-        error: `Dữ liệu không hợp lệ: ${validated.error.issues.map(e => e.message).join(", ")}`
+        error: `Dữ liệu không hợp lệ: ${validated.error.issues.map((e) => e.message).join(", ")}`,
       };
     }
     const cleanParams = validated.data;
 
     const supabase = await createClient();
-    
+
     // 1. Kiểm tra trạng thái đăng nhập — guest: vẫn cho luyện (local analysis), skip persist/XP
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     const isGuest = authError || !user;
 
     if (!isGuest) {
       // 2. Chèn bản ghi mới (chỉ cho user thật)
-      const { error } = await supabase
-        .from("speaking_sessions")
-        .insert({
-          user_id: user!.id,
-          practice_type: cleanParams.practiceType,
-          duration: cleanParams.duration,
-          transcript: cleanParams.transcript || null,
-          accuracy_score: cleanParams.accuracyScore !== undefined ? cleanParams.accuracyScore : null,
-          scenario_id: cleanParams.scenarioId || null
-        });
+      const { error } = await supabase.from("speaking_sessions").insert({
+        user_id: user!.id,
+        practice_type: cleanParams.practiceType,
+        duration: cleanParams.duration,
+        transcript: cleanParams.transcript || null,
+        accuracy_score:
+          cleanParams.accuracyScore !== undefined
+            ? cleanParams.accuracyScore
+            : null,
+        scenario_id: cleanParams.scenarioId || null,
+      });
 
       if (error) {
         return {
           success: false,
-          error: `Lỗi lưu lịch sử: ${error.message}`
+          error: `Lỗi lưu lịch sử: ${error.message}`,
         };
       }
     }
@@ -110,7 +178,9 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
       journal: 5,
     };
     const xpEarned = XP_BY_TYPE[cleanParams.practiceType] ?? 5;
-    const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+    const today = new Date().toLocaleDateString("sv-SE", {
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
 
     const { data: userProgress } = await supabase
       .from("user_progress")
@@ -126,7 +196,9 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
       } else {
         const d = new Date(today);
         d.setDate(d.getDate() - 1);
-        const yesterday = d.toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+        const yesterday = d.toLocaleDateString("sv-SE", {
+          timeZone: "Asia/Ho_Chi_Minh",
+        });
         nextStreak = lastActive === yesterday ? userProgress.streak + 1 : 1;
       }
       await supabase
@@ -138,15 +210,13 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
         })
         .eq("user_id", user.id);
     } else {
-      await supabase
-        .from("user_progress")
-        .insert({
-          user_id: user.id,
-          current_level: "A0",
-          streak: 1,
-          total_xp: xpEarned,
-          last_active_date: today,
-        });
+      await supabase.from("user_progress").insert({
+        user_id: user.id,
+        current_level: "A0",
+        streak: 1,
+        total_xp: xpEarned,
+        last_active_date: today,
+      });
     }
 
     // Revalidate speaking + dashboard so XP and streak update immediately
@@ -158,13 +228,11 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
       xpEarned,
       message: `Đã lưu! +${xpEarned} XP`,
     };
-
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: `Lỗi hệ thống: ${errorMessage}`
+      error: `Lỗi hệ thống: ${errorMessage}`,
     };
   }
 }
@@ -175,9 +243,12 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
 export async function getRecentSpeakingSessions(limit: number = 5) {
   try {
     const supabase = await createClient();
-    
+
     // 1. Kiểm tra trạng thái đăng nhập — guest: return empty (local practice still works)
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return {
         success: true,
@@ -197,20 +268,19 @@ export async function getRecentSpeakingSessions(limit: number = 5) {
     if (error) {
       return {
         success: false,
-        error: `Lỗi truy vấn lịch sử: ${error.message}`
+        error: `Lỗi truy vấn lịch sử: ${error.message}`,
       };
     }
 
     return {
       success: true,
-      sessions: data || []
+      sessions: data || [],
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: `Lỗi hệ thống: ${errorMessage}`
+      error: `Lỗi hệ thống: ${errorMessage}`,
     };
   }
 }
@@ -222,22 +292,32 @@ export async function getRecentSpeakingSessions(limit: number = 5) {
 export async function generateRoleplayTurn(
   scenarioId: string,
   history: ChatMessageParam[],
-  userMessage: string
+  userMessage: string,
 ) {
   try {
     // 1. Rate Limiting
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
     const rateLimitCheck = await aiLimiter.check(ip);
     if (!rateLimitCheck.success) {
-      return { success: false, error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau." };
+      return {
+        success: false,
+        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau.",
+      };
     }
 
     // 2. Check Auth
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return { success: false, error: "Bạn cần đăng nhập để thực hiện tác vụ này." };
+      return {
+        success: false,
+        error: "Bạn cần đăng nhập để thực hiện tác vụ này.",
+      };
     }
 
     const scenario = SCENARIO_DETAILS[scenarioId];
@@ -246,12 +326,20 @@ export async function generateRoleplayTurn(
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       // World-class free fallback (research: low-stakes output + specific VN L1 feedback) — TASK-152 polish
-      const lastUser = history.filter((h) => h.sender === "user").pop()?.text || userMessage;
-      const analysis = analyzeSpeaking("Thank you. Tell me more about your experience.", lastUser, "roleplay");
+      const lastUser =
+        history.filter((h) => h.sender === "user").pop()?.text || userMessage;
+      const analysis = analyzeSpeaking(
+        "Thank you. Tell me more about your experience.",
+        lastUser,
+        "roleplay",
+      );
 
       // Scenario-aware free responses (no Gemini dep, always available)
       const s = scenario || { title: "Conversation", character: "Partner" };
-      const isJob = /job|interview|meeting|salary|performance|client|pitch|demo|presentation/i.test(s.title);
+      const isJob =
+        /job|interview|meeting|salary|performance|client|pitch|demo|presentation/i.test(
+          s.title,
+        );
       const aiPrompt = isJob
         ? `Thank you for sharing. In the context of ${s.title.toLowerCase()}, can you elaborate on how you handled a similar challenge?`
         : "Thank you. How can I assist you today?";
@@ -262,7 +350,11 @@ export async function generateRoleplayTurn(
         ? "Tôi đã dẫn dắt dự án giúp cải thiện quy trình 30% nhờ hợp tác nhóm."
         : "Tôi muốn nhận phòng theo đặt chỗ.";
 
-      let grammarFeedback = analysis.specificTips.slice(0, 2).join(" ") || (isJob ? "Nhấn âm cuối -ed/-s, linking rõ cho chuyên nghiệp." : "Nói rõ âm cuối và dùng cụm từ tự nhiên.");
+      let grammarFeedback =
+        analysis.specificTips.slice(0, 2).join(" ") ||
+        (isJob
+          ? "Nhấn âm cuối -ed/-s, linking rõ cho chuyên nghiệp."
+          : "Nói rõ âm cuối và dùng cụm từ tự nhiên.");
       let grammarCorrection = "";
 
       return {
@@ -280,9 +372,11 @@ export async function generateRoleplayTurn(
     // History alternates user → model. Gemini requires this strict alternation.
     const turnNumber = Math.floor(history.length / 2) + 1;
     const difficultyNote =
-      turnNumber <= 2 ? "Use simple vocabulary (A1-A2 CEFR). Short sentences." :
-      turnNumber <= 5 ? "Use natural conversational English (A2-B1 CEFR)." :
-      "Use richer vocabulary and more complex structures (B1-B2 CEFR). Challenge the learner.";
+      turnNumber <= 2
+        ? "Use simple vocabulary (A1-A2 CEFR). Short sentences."
+        : turnNumber <= 5
+          ? "Use natural conversational English (A2-B1 CEFR)."
+          : "Use richer vocabulary and more complex structures (B1-B2 CEFR). Challenge the learner.";
 
     // System instruction sets persistent AI behavior across all turns
     const systemInstruction = `You are roleplaying as "${scenario.character}" in the scenario: "${scenario.title}" (${scenario.difficulty}).
@@ -297,7 +391,8 @@ RULES:
 
     // Convert history to Gemini multi-turn contents format
     // Gemini requires strict user→model→user→model alternation
-    const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
+    const contents: Array<{ role: string; parts: Array<{ text: string }> }> =
+      [];
     for (const msg of history) {
       contents.push({
         role: msg.sender === "user" ? "user" : "model",
@@ -323,12 +418,14 @@ Set isEnd=true only if the conversation reached a natural conclusion.`;
     if (contents.length > 0) {
       const last = contents[contents.length - 1];
       if (last) {
-        last.parts = [{ text: (last.parts[0]?.text ?? "") + schemaInstruction }];
+        last.parts = [
+          { text: (last.parts[0]?.text ?? "") + schemaInstruction },
+        ];
       }
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      geminiGenerateUrl("gemini-1.5-flash", apiKey),
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -341,7 +438,7 @@ Set isEnd=true only if the conversation reached a natural conclusion.`;
             maxOutputTokens: 512,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -352,7 +449,8 @@ Set isEnd=true only if the conversation reached a natural conclusion.`;
     const resData = await response.json();
     const responseText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!responseText) return { success: false, error: "Gemini returned empty response." };
+    if (!responseText)
+      return { success: false, error: "Gemini returned empty response." };
 
     const cleanJson = JSON.parse(responseText.trim());
     return {
@@ -364,7 +462,6 @@ Set isEnd=true only if the conversation reached a natural conclusion.`;
       grammarCorrection: cleanJson.grammarCorrection || "",
       isEnd: !!cleanJson.isEnd,
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return { success: false, error: `Lỗi hệ thống: ${errorMessage}` };
@@ -376,43 +473,52 @@ Set isEnd=true only if the conversation reached a natural conclusion.`;
  */
 export async function evaluateSpeakingSession(
   practiceType: "roleplay" | "journal",
-  transcript: string
+  transcript: string,
 ) {
   try {
     // 1. Rate Limiting
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
     const rateLimitCheck = await aiLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {
         success: false,
-        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau."
+        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau.",
       };
     }
 
     // 2. Check Auth
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return {
         success: false,
-        error: "Bạn cần đăng nhập để thực hiện tác vụ này."
+        error: "Bạn cần đăng nhập để thực hiện tác vụ này.",
       };
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       // High-quality free analysis (no Gemini) — TASK-152 improved
-      const ref = "I had a productive meeting today and discussed the new project timeline with the team.";
+      const ref =
+        "I had a productive meeting today and discussed the new project timeline with the team.";
       const analysis = analyzeSpeaking(ref, transcript || "", practiceType);
 
       let fb = `**Đánh giá chung**\n${analysis.feedback}\n\n**Độ chính xác:** ${analysis.similarity}% (${analysis.wordsCorrect}/${analysis.totalWords} từ chính).\n\n`;
 
       if (analysis.specificTips.length > 0) {
-        fb += "**Mẹo cụ thể cho người Việt (L1 tips):**\n" + analysis.specificTips.map((t, i) => `${i + 1}. ${t}`).join("\n") + "\n\n";
+        fb +=
+          "**Mẹo cụ thể cho người Việt (L1 tips):**\n" +
+          analysis.specificTips.map((t, i) => `${i + 1}. ${t}`).join("\n") +
+          "\n\n";
       }
 
-      fb += "Tiếp tục luyện shadowing + roleplay job scenarios để tăng phản xạ tự nhiên. Miễn phí hoàn toàn.";
+      fb +=
+        "Tiếp tục luyện shadowing + roleplay job scenarios để tăng phản xạ tự nhiên. Miễn phí hoàn toàn.";
 
       return { success: true, feedback: fb };
     }
@@ -431,7 +537,7 @@ Break your response down into the following sections using Markdown:
 `;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      geminiGenerateUrl("gemini-1.5-flash", apiKey),
       {
         method: "POST",
         headers: {
@@ -445,14 +551,14 @@ Break your response down into the following sections using Markdown:
             },
           ],
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       const errText = await response.text();
       return {
         success: false,
-        error: `Gemini API error: ${errText}`
+        error: `Gemini API error: ${errText}`,
       };
     }
 
@@ -462,20 +568,19 @@ Break your response down into the following sections using Markdown:
     if (!feedback) {
       return {
         success: false,
-        error: "Gemini returned empty response."
+        error: "Gemini returned empty response.",
       };
     }
 
     return {
       success: true,
-      feedback: feedback.trim()
+      feedback: feedback.trim(),
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: `Lỗi hệ thống: ${errorMessage}`
+      error: `Lỗi hệ thống: ${errorMessage}`,
     };
   }
 }
