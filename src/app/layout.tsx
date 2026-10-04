@@ -1,11 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
-
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { cn } from "@/lib/utils";
+import { SITE_URL } from "@/lib/site";
 
 import "./globals.css";
 
@@ -26,7 +24,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://atoenglish.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "AtoEnglish — Học tiếng Anh để nói được",
     template: "%s | AtoEnglish",
@@ -69,14 +67,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "vi_VN",
-    url: "https://atoenglish.vercel.app",
+    url: SITE_URL,
     siteName: "AtoEnglish",
     title: "AtoEnglish — Học tiếng Anh để nói được, không chỉ để biết",
     description:
       "Luyện tiếng Anh thực dụng cho người Việt, tập trung vào khả năng sử dụng tiếng Anh trong tình huống thực tế.",
     images: [
       {
-        url: "https://atoenglish.vercel.app/og-image.png",
+        url: `${SITE_URL}/og-image.png`,
         width: 1200,
         height: 630,
         alt: "AtoEnglish — Học tiếng Anh để nói được",
@@ -89,7 +87,7 @@ export const metadata: Metadata = {
     description:
       "Luyện tiếng Anh thực dụng cho người Việt, tập trung vào khả năng sử dụng trong tình huống thực tế.",
     creator: "@atoenglish",
-    images: ["https://atoenglish.vercel.app/og-image.png"],
+    images: [`${SITE_URL}/og-image.png`],
   },
 };
 
@@ -98,18 +96,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseOrigin = supabaseUrl ? new URL(supabaseUrl).origin : null;
+  const dataApiUrl = process.env.NEXT_PUBLIC_NEON_DATA_API_URL;
+  const dataApiOrigin = dataApiUrl ? new URL(dataApiUrl).origin : null;
 
   return (
     <html lang="vi" suppressHydrationWarning className={cn("font-sans", sansFont.variable)}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {supabaseOrigin && (
+        {dataApiOrigin && (
           <>
-            <link rel="preconnect" href={supabaseOrigin} />
-            <link rel="dns-prefetch" href={supabaseOrigin} />
+            <link rel="preconnect" href={dataApiOrigin} />
+            <link rel="dns-prefetch" href={dataApiOrigin} />
           </>
         )}
       </head>
@@ -129,8 +127,6 @@ export default function RootLayout({
         >
           {children}
           <Toaster richColors position="top-center" closeButton />
-          <SpeedInsights />
-          <Analytics />
         </ThemeProvider>
       </body>
     </html>

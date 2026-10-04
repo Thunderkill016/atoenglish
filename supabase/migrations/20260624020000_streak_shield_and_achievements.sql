@@ -37,7 +37,7 @@ CREATE POLICY "achievements_public_read" ON achievements
 
 -- ── 3. User achievement unlock tracking ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS user_achievements (
-  user_id        uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id        uuid NOT NULL REFERENCES neon_auth.user(id) ON DELETE CASCADE,
   achievement_id text NOT NULL REFERENCES achievements(id) ON DELETE CASCADE,
   unlocked_at    timestamptz NOT NULL DEFAULT now(),
   notified       boolean NOT NULL DEFAULT false,   -- whether the user saw the notification

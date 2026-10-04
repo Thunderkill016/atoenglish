@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Sparkles, Sprout } from "lucide-react";
 
 import { Spotlight } from "@/components/ui/spotlight";
+import { SITE_URL } from "@/lib/site";
 import NavbarAuth from "@/components/landing/NavbarAuth";
 import { MobileMenuButton, MobileMenu } from "@/components/landing/MobileMenu";
 import HeroCTA from "@/components/landing/HeroCTA";
@@ -42,13 +43,13 @@ export const metadata: Metadata = {
     title: "AtoEnglish — Học tiếng Anh để nói được",
     description:
       "Hành trình luyện nói 28 ngày, mỗi ngày 10–15 phút, dành cho người Việt bắt đầu từ mất gốc.",
-    url: "https://atoenglish.vercel.app",
+    url: `${SITE_URL}`,
     siteName: "AtoEnglish",
     locale: "vi_VN",
     type: "website",
     images: [
       {
-        url: "https://atoenglish.vercel.app/og-image.png",
+        url: `${SITE_URL}/og-image.png`,
         width: 1200,
         height: 630,
         alt: "AtoEnglish — Học tiếng Anh để nói được, không chỉ để biết",
@@ -60,10 +61,10 @@ export const metadata: Metadata = {
     title: "AtoEnglish — Học tiếng Anh để nói được",
     description:
       "Phương pháp khoa học giúp bạn tự tin giao tiếp thực tế từ con số 0.",
-    images: ["https://atoenglish.vercel.app/og-image.png"],
+    images: [`${SITE_URL}/og-image.png`],
   },
   alternates: {
-    canonical: "https://atoenglish.vercel.app",
+    canonical: `${SITE_URL}`,
   },
 };
 
@@ -79,29 +80,29 @@ export default function LandingPage() {
     "@graph": [
       {
         "@type": "WebSite",
-        "@id": "https://atoenglish.vercel.app/#website",
-        "url": "https://atoenglish.vercel.app",
+        "@id": `${SITE_URL}/#website`,
+        "url": `${SITE_URL}`,
         "name": "AtoEnglish",
         "description": "Hành trình luyện nói 28 ngày cho người Việt mất gốc, mỗi ngày 10–15 phút",
         "inLanguage": "vi",
         "potentialAction": {
           "@type": "SearchAction",
-          "target": "https://atoenglish.vercel.app/learn?q={search_term_string}",
+          "target": `${SITE_URL}/learn?q={search_term_string}`,
           "query-input": "required name=search_term_string",
         },
       },
       {
         "@type": "EducationalOrganization",
-        "@id": "https://atoenglish.vercel.app/#organization",
+        "@id": `${SITE_URL}/#organization`,
         "name": "AtoEnglish",
-        "url": "https://atoenglish.vercel.app",
-        "logo": "https://atoenglish.vercel.app/icon-512.png",
+        "url": `${SITE_URL}`,
+        "logo": `${SITE_URL}/icon-512.png`,
         "description": "Luyện nhiệm vụ nói công việc đầu tiên trong hành trình 28 ngày",
         "sameAs": [],
       },
       {
         "@type": "FAQPage",
-        "@id": "https://atoenglish.vercel.app/#faq",
+        "@id": `${SITE_URL}/#faq`,
         "mainEntity": [
           {
             "@type": "Question",
@@ -156,7 +157,7 @@ export default function LandingPage() {
             "name": "Dữ liệu và tiến độ học của tôi có được bảo mật không?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Hoàn toàn bảo mật. AtoEnglish sử dụng Supabase với Row Level Security (RLS) — dữ liệu của bạn chỉ có thể được truy cập bởi chính bạn. Đăng nhập qua Google OAuth 2.0 được mã hóa an toàn. Chúng tôi không bán hay chia sẻ dữ liệu cá nhân với bên thứ ba.",
+              "text": "Hoàn toàn bảo mật. AtoEnglish sử dụng Neon Postgres với Row Level Security (RLS) — dữ liệu của bạn chỉ có thể được truy cập bởi chính bạn. Đăng nhập qua Google OAuth 2.0 được mã hóa an toàn. Chúng tôi không bán hay chia sẻ dữ liệu cá nhân với bên thứ ba.",
             },
           },
         ],

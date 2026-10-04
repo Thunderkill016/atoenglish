@@ -13,8 +13,7 @@ export default function FinalCtaSection() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsLoggedIn(checkHasSession());
+    checkHasSession().then(setIsLoggedIn);
   }, []);
 
   return (

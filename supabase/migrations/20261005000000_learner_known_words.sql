@@ -1,6 +1,6 @@
 create table public.learner_known_words (
   id bigint generated always as identity primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references neon_auth.user(id) on delete cascade,
   word text not null check (char_length(word) between 1 and 60),
   status text not null check (status in ('learning', 'known')),
   created_at timestamptz not null default now(),

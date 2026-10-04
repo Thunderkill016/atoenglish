@@ -41,8 +41,8 @@ SECURITY DEFINER
 SET search_path = ''
 AS $function$
 DECLARE
-  v_uid uuid := (SELECT auth.uid());
-  v_role text := (SELECT auth.role());
+  v_uid uuid := (SELECT public.auth_uid());
+  v_role text := (SELECT public.auth_role());
 BEGIN
   IF v_role = 'service_role' THEN
     NULL;
@@ -73,8 +73,8 @@ SECURITY DEFINER
 SET search_path = ''
 AS $function$
 DECLARE
-  v_uid uuid := (SELECT auth.uid());
-  v_role text := (SELECT auth.role());
+  v_uid uuid := (SELECT public.auth_uid());
+  v_role text := (SELECT public.auth_role());
 BEGIN
   IF v_role = 'service_role' THEN
     NULL;

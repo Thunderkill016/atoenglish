@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { rpcService } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { reviewCardFSRS } from "@/lib/srs/fsrs";
 import { Card } from "@/types/database";
@@ -23,23 +24,18 @@ interface SaveCardParams {
 }
 
 type FsrsReviewResult = ReturnType<typeof reviewCardFSRS>;
-type RpcError = { message: string } | null;
-type RpcClient = {
-  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: RpcError }>;
-};
 
 /**
  * Persist card state + review log in one PostgreSQL transaction.
- * Generated Supabase types intentionally lag this migration until `npm run db:types` is run,
- * so the narrow RPC boundary is typed locally instead of weakening the whole client.
+ * apply_fsrs_card_review is a SECURITY INVOKER wrapper over a private.*
+ * helper, so it is only callable from the service path (neondb_owner), not
+ * the user-scoped Data API client.
  */
 async function persistFsrsReview(
-  supabase: unknown,
   cardId: string,
   result: FsrsReviewResult
 ): Promise<{ success: true } | { success: false; error: string }> {
-  const rpcClient = supabase as RpcClient;
-  const { error } = await rpcClient.rpc("apply_fsrs_card_review", {
+  const { error } = await rpcService("apply_fsrs_card_review", {
     p_card_id: cardId,
     p_state: result.state,
     p_difficulty: result.difficulty,
@@ -257,7 +253,7 @@ export async function reviewCard(
     }
 
     const fsrsUpdates = reviewCardFSRS(card as unknown as Card, cleanParams.rating, cleanParams.retentionRate);
-    const persisted = await persistFsrsReview(supabase, cleanParams.cardId, fsrsUpdates);
+    const persisted = await persistFsrsReview(cleanParams.cardId, fsrsUpdates);
     if (!persisted.success) {
       return { success: false, error: `Không thể lưu review FSRS: ${persisted.error}` };
     }
@@ -404,7 +400,7 @@ export async function scheduleWrongWordsForReview(words: string[]) {
     const results = await Promise.all(
       cards.map(async (card) => {
         const fsrsResult = reviewCardFSRS(card as unknown as Card, "Again");
-        return persistFsrsReview(supabase, card.id, fsrsResult);
+        return persistFsrsReview(card.id, fsrsResult);
       })
     );
 

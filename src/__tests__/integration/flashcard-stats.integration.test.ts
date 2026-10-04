@@ -4,15 +4,13 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { adminClient, testUserId } from "../setup-integration";
+import { adminClient, adminSql, testUserId } from "../setup-integration";
 
 const getAction = () => import("@/app/actions/flashcard-stats");
 
 async function cleanStats() {
-  await adminClient
-    .from("user_flashcard_progress")
-    .delete()
-    .eq("user_id", testUserId);
+  // Owner SQL — consistent with RLS-denied deletes on sibling tables
+  await adminSql`delete from user_flashcard_progress where user_id = ${testUserId}`;
 }
 
 describe("recordFlashcardSession()", () => {

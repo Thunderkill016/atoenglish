@@ -1,6 +1,6 @@
 create table public.zero_path_sessions (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade,
+  user_id uuid references neon_auth.user(id) on delete cascade,
   lesson_id text not null check (char_length(lesson_id) between 1 and 120),
   lesson_version integer not null check (lesson_version > 0),
   mode text not null check (mode in ('learn', 'review')),

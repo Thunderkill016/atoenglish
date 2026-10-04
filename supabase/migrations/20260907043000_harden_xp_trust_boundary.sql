@@ -26,7 +26,7 @@ SECURITY INVOKER
 SET search_path = ''
 AS $function$
 DECLARE
-  v_uid uuid := (SELECT auth.uid());
+  v_uid uuid := (SELECT public.auth_uid());
   v_base_xp integer;
   v_expected_xp integer;
   v_progress_id uuid;
@@ -41,7 +41,7 @@ DECLARE
   v_league_id uuid;
   v_week date := pg_catalog.date_trunc('week', pg_catalog.now())::date;
 BEGIN
-  IF current_user NOT IN ('postgres', 'service_role')
+  IF current_user not in ('postgres', 'service_role', 'neondb_owner')
      AND (v_uid IS NULL OR p_user_id IS DISTINCT FROM v_uid) THEN
     RAISE EXCEPTION 'not authorized' USING ERRCODE = '42501';
   END IF;

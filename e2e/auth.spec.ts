@@ -13,7 +13,7 @@ test.describe("Login Page", () => {
   });
 
   test("shows welcome screen by default", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Tạo lộ trình học tiếng Anh");
+    await expect(page.locator("h1")).toContainText("Bắt đầu hành trình nói");
   });
 
   test("?mode=login skips survey to auth form", async ({ page }) => {
@@ -23,22 +23,18 @@ test.describe("Login Page", () => {
   });
 });
 
+// NOTE: /dashboard, /learn, /flashcards, /speaking are guest self-study
+// routes by product design (see e2e/protected-routes.spec.ts). The routes
+// below are genuinely auth-gated per PROTECTED_ROUTES in
+// src/lib/supabase/session.ts.
 test.describe("Auth Redirects", () => {
-  test("unauthenticated user visiting /dashboard is redirected to /login", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForURL(/login/, { timeout: 10000 });
-    await expect(page).toHaveURL(/login/);
-  });
-
-  test("unauthenticated user visiting /flashcards is redirected to /login", async ({ page }) => {
-    await page.goto("/flashcards");
-    await page.waitForURL(/login/, { timeout: 10000 });
-    await expect(page).toHaveURL(/login/);
-  });
-
-  test("unauthenticated user visiting /learn is redirected to /login", async ({ page }) => {
-    await page.goto("/learn");
-    await page.waitForURL(/login/, { timeout: 10000 });
-    await expect(page).toHaveURL(/login/);
-  });
+  for (const route of ["/settings", "/progress", "/checkpoint"]) {
+    test(`unauthenticated user visiting ${route} is redirected to /login`, async ({ page }) => {
+      await page.goto(route);
+      await page.waitForURL(/login/, { timeout: 15000 });
+      const finalUrl = new URL(page.url());
+      expect(finalUrl.pathname).toBe("/login");
+      expect(finalUrl.searchParams.get("next")).toBe(route);
+    });
+  }
 });

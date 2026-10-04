@@ -30,7 +30,7 @@ export default function PrivacyPage() {
           <ul className="list-disc pl-5 space-y-1.5">
             <li><strong>Thông tin tài khoản</strong>: Email, tên hiển thị (từ Google OAuth hoặc bạn cung cấp).</li>
             <li><strong>Dữ liệu học tập</strong>: Tiến độ bài học, điểm XP, streak, lịch sử ôn tập thẻ từ vựng (SRS).</li>
-            <li><strong>Dữ liệu kỹ thuật</strong>: Loại trình duyệt, thiết bị, dữ liệu hiệu suất ẩn danh (qua Vercel Speed Insights).</li>
+            <li><strong>Dữ liệu kỹ thuật</strong>: Loại trình duyệt, thiết bị, dữ liệu hiệu suất ẩn danh.</li>
           </ul>
           <p>
             Chúng tôi <strong>không thu thập</strong> dữ liệu giọng nói — tính năng luyện nói hoạt động hoàn toàn phía trình duyệt của bạn và không gửi lên máy chủ.
@@ -53,7 +53,7 @@ export default function PrivacyPage() {
         <section className="space-y-3">
           <h2 className="text-lg sm:text-xl font-bold">3. Lưu trữ và bảo mật dữ liệu</h2>
           <p>
-            Dữ liệu được lưu trữ trên <strong>Supabase</strong> với mã hóa TLS và chính sách bảo mật hàng đầu. Chúng tôi áp dụng Row Level Security (RLS) — đảm bảo mỗi người dùng chỉ truy cập được dữ liệu của chính họ.
+            Dữ liệu được lưu trữ trên <strong>Neon Postgres</strong> với mã hóa TLS và chính sách bảo mật hàng đầu. Chúng tôi áp dụng Row Level Security (RLS) — đảm bảo mỗi người dùng chỉ truy cập được dữ liệu của chính họ.
           </p>
         </section>
 

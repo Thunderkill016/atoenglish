@@ -35,7 +35,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $function$
 DECLARE
-  v_uid uuid := (SELECT auth.uid());
+  v_uid uuid := (SELECT public.auth_uid());
   v_expected_answers jsonb;
   v_pass_threshold integer;
   v_total integer;

@@ -22,7 +22,7 @@ AS $$
     e.evidence_type,
     COUNT(*)::bigint AS evidence_count
   FROM public.learning_evidence_events AS e
-  WHERE e.user_id = (SELECT auth.uid())
+  WHERE e.user_id = (SELECT public.auth_uid())
     AND e.target_id = ANY(COALESCE(p_target_ids, ARRAY[]::text[]))
   GROUP BY e.target_id, e.evidence_type
   ORDER BY e.target_id, e.evidence_type;

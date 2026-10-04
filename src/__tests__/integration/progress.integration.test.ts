@@ -4,29 +4,26 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { adminClient, testUserId } from "../setup-integration";
+import { adminClient, adminSql, testUserId } from "../setup-integration";
 
 const getAction = () => import("@/app/actions/unit");
 
 async function cleanProgress() {
-  await adminClient
-    .from("user_lesson_progress")
-    .delete()
-    .eq("user_id", testUserId);
+  // Owner SQL — user_lesson_progress has no DELETE policy for authenticated
+  await adminSql`delete from user_lesson_progress where user_id = ${testUserId}`;
 
   const today = new Date().toISOString().split("T")[0];
 
-  await adminClient
-    .from("user_progress")
-    .update({
-      total_xp: 0,
-      streak: 0,
-      current_level: "A0",
-      starting_unit_index: 0,
-      placement_completed_at: null,
-      last_active_date: today,
-    })
-    .eq("user_id", testUserId);
+  await adminSql`
+    update user_progress set
+      total_xp = 0,
+      streak = 0,
+      current_level = 'A0',
+      starting_unit_index = 0,
+      placement_completed_at = null,
+      last_active_date = ${today}
+    where user_id = ${testUserId}
+  `;
 }
 
 describe("completeUnit()", () => {
@@ -114,7 +111,8 @@ describe("completeUnit()", () => {
 });
 
 async function cleanOnboardingProfile() {
-  await adminClient.from("user_onboarding_profile").delete().eq("user_id", testUserId);
+  // Owner SQL — user_onboarding_profile has no DELETE policy for authenticated
+  await adminSql`delete from user_onboarding_profile where user_id = ${testUserId}`;
 }
 
 describe("user_onboarding_profile (RLS + columns)", () => {

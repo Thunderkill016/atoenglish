@@ -7,7 +7,7 @@ set search_path = ''
 as $function$
   select lm.league_id
   from public.league_memberships as lm
-  where lm.user_id = (select auth.uid());
+  where lm.user_id = (select public.auth_uid());
 $function$;
 
 revoke all on function private.current_user_league_ids()

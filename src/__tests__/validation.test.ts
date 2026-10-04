@@ -299,8 +299,9 @@ describe("ProductionEnvSchema", () => {
     const result = ProductionEnvSchema.safeParse({
       UPSTASH_REDIS_REST_URL: "https://valid-redis.upstash.io",
       UPSTASH_REDIS_REST_TOKEN: "a".repeat(20),
-      NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "a".repeat(20),
+      NEON_AUTH_BASE_URL: "https://auth.neon.tech",
+      NEON_DATA_API_URL: "https://data.neon.tech",
+      NEON_AUTH_COOKIE_SECRET: "a".repeat(32),
     });
     expect(result.success).toBe(true);
   });
@@ -308,8 +309,9 @@ describe("ProductionEnvSchema", () => {
   it("rejects missing UPSTASH_REDIS_REST_URL", () => {
     const result = ProductionEnvSchema.safeParse({
       UPSTASH_REDIS_REST_TOKEN: "a".repeat(20),
-      NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "a".repeat(20),
+      NEON_AUTH_BASE_URL: "https://auth.neon.tech",
+      NEON_DATA_API_URL: "https://data.neon.tech",
+      NEON_AUTH_COOKIE_SECRET: "a".repeat(32),
     });
     expect(result.success).toBe(false);
   });
@@ -318,8 +320,9 @@ describe("ProductionEnvSchema", () => {
     const result = ProductionEnvSchema.safeParse({
       UPSTASH_REDIS_REST_URL: "not-a-url",
       UPSTASH_REDIS_REST_TOKEN: "a".repeat(20),
-      NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "a".repeat(20),
+      NEON_AUTH_BASE_URL: "https://auth.neon.tech",
+      NEON_DATA_API_URL: "https://data.neon.tech",
+      NEON_AUTH_COOKIE_SECRET: "a".repeat(32),
     });
     expect(result.success).toBe(false);
   });
@@ -328,8 +331,9 @@ describe("ProductionEnvSchema", () => {
     const result = ProductionEnvSchema.safeParse({
       UPSTASH_REDIS_REST_URL: "https://valid.upstash.io",
       UPSTASH_REDIS_REST_TOKEN: "short",
-      NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "a".repeat(20),
+      NEON_AUTH_BASE_URL: "https://auth.neon.tech",
+      NEON_DATA_API_URL: "https://data.neon.tech",
+      NEON_AUTH_COOKIE_SECRET: "a".repeat(32),
     });
     expect(result.success).toBe(false);
   });
@@ -354,8 +358,9 @@ describe("assertProductionEnv", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://valid.upstash.io");
     vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "a".repeat(20));
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "a".repeat(20));
+    vi.stubEnv("NEON_AUTH_BASE_URL", "https://auth.neon.tech");
+    vi.stubEnv("NEON_DATA_API_URL", "https://data.neon.tech");
+    vi.stubEnv("NEON_AUTH_COOKIE_SECRET", "a".repeat(32));
     expect(() => assertProductionEnv()).not.toThrow();
   });
 
@@ -363,8 +368,9 @@ describe("assertProductionEnv", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
     vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "a".repeat(20));
+    vi.stubEnv("NEON_AUTH_BASE_URL", "https://auth.neon.tech");
+    vi.stubEnv("NEON_DATA_API_URL", "https://data.neon.tech");
+    vi.stubEnv("NEON_AUTH_COOKIE_SECRET", "a".repeat(32));
     expect(() => assertProductionEnv()).toThrow(/Missing required production environment variables/);
   });
 
@@ -372,8 +378,9 @@ describe("assertProductionEnv", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
     vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "");
+    vi.stubEnv("NEON_AUTH_BASE_URL", "");
+    vi.stubEnv("NEON_DATA_API_URL", "");
+    vi.stubEnv("NEON_AUTH_COOKIE_SECRET", "");
     let errorMessage = "";
     try { assertProductionEnv(); } catch (e) {
       errorMessage = (e as Error).message;

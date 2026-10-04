@@ -13,7 +13,7 @@ test.describe("Placement Test Flow", () => {
   test.beforeEach(async ({ page }, testInfo) => {
     test.skip(
       !hasE2EAdminCredentials(),
-      "Requires NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY",
+      "Requires NEON_AUTH_BASE_URL + DATABASE_URL",
     );
 
     const userId = await ensureE2ETestUser();
@@ -124,7 +124,7 @@ test.describe("Learn audio native probe — TASK-037", () => {
   test("B1 user opens /learn/unit-19, clicks vocab speaker (verifies Audio or TTS fallback)", async ({ page }) => {
     test.skip(
       !hasE2EAdminCredentials(),
-      "Requires NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY",
+      "Requires NEON_AUTH_BASE_URL + DATABASE_URL",
     );
 
     const userId = await ensureE2ETestUser();

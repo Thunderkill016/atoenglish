@@ -10,15 +10,17 @@ import {
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
   let destination = next;
 
-  if (code) {
+  // Neon Auth (Better Auth) completes OAuth upstream and redirects here with
+  // the session cookie already set — there is no `code` to exchange. Read the
+  // session directly; skip when unauthenticated (failed/cancelled login).
+  {
     const supabase = await createClient();
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data } = await supabase.auth.getUser();
 
-    if (!error && data?.user) {
+    if (data?.user) {
       const user = data.user;
       const level = searchParams.get("level") ?? "A0-A1";
       const target = searchParams.get("target") ?? "work";

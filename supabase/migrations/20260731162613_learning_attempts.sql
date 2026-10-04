@@ -1,6 +1,6 @@
 create table public.learning_attempts (
   id bigint generated always as identity primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references neon_auth.user(id) on delete cascade,
   session_id uuid not null,
   lesson_id text not null check (char_length(lesson_id) between 1 and 120),
   activity_id text not null check (char_length(activity_id) between 1 and 180),

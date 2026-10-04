@@ -4,16 +4,29 @@ import { createClient } from "@/lib/supabase/server";
 export const runtime = "edge";
 export const revalidate = 0;
 
+// Cloudflare Workers exposes deployment version metadata as JSON; fall back
+// to "local" outside Workers (dev server, tests).
+function workerVersion(): string {
+  const meta = process.env.CF_VERSION_METADATA;
+  if (!meta) return "local";
+  try {
+    const id = (JSON.parse(meta) as { id?: string }).id;
+    return id?.slice(0, 7) ?? "local";
+  } catch {
+    return "local";
+  }
+}
+
 /**
  * GET /api/health
- * Uptime check endpoint for monitoring (Vercel, UptimeRobot, etc.)
+ * Uptime check endpoint for monitoring (Cloudflare, UptimeRobot, etc.)
  * Returns 200 if app + DB connection are healthy, 503 otherwise.
  */
 export async function GET() {
   const start = Date.now();
 
   try {
-    // Ping Supabase with a lightweight query
+    // Ping the Neon Data API with a lightweight query
     const supabase = await createClient();
     const { error } = await supabase
       .from("user_progress")
@@ -39,7 +52,7 @@ export async function GET() {
         db: "connected",
         latency_ms: Date.now() - start,
         timestamp: new Date().toISOString(),
-        version: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local",
+        version: workerVersion(),
       },
       {
         status: 200,

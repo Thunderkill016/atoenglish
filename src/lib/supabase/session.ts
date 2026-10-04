@@ -1,97 +1,108 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  handleAuthProxyRequest,
+  NEON_AUTH_SESSION_COOKIE_NAME,
+  processAuthMiddleware,
+} from "@neondatabase/auth/server";
+
+// Neon Auth session gate for src/proxy.ts.
+// Replaces @supabase/ssr updateSession: delegates OAuth verifier exchange and
+// session validation to Neon's middleware processor (cookie-cache fast path,
+// session refresh Set-Cookie forwarding), while keeping the app's own
+// protected-route list and redirect contract (?next + mode=login).
+const PROTECTED_ROUTES = [
+  // guest self-study on pre-minimal best version
+  // "/dashboard", "/learn", "/flashcards", "/speaking",
+  "/progress", "/roadmap", "/writing", "/leaderboard", "/grammar", "/business",
+  "/challenge", "/pronunciation", "/placement-test", "/invite", "/certificate", "/settings", "/checkpoint", "/quiz",
+];
+
+const NEON_AUTH_VERIFIER_PARAM = "neon_auth_session_verifier";
+
+function appendCookies(response: NextResponse, cookies: string[] | undefined) {
+  cookies?.forEach((cookie) => response.headers.append("set-cookie", cookie));
+  return response;
+}
+
+function middlewareConfig(request: NextRequest, pathname: string, needsAuth: boolean) {
+  return {
+    request: request as unknown as Request,
+    pathname,
+    // Public routes list themselves as skipped so checkSessionRequired allows
+    // them; protected routes get an empty skip list and must have a session.
+    skipRoutes: needsAuth ? ([] as const) : ([pathname] as const),
+    loginUrl: "/login?mode=login",
+    baseUrl: process.env.NEON_AUTH_BASE_URL!,
+    cookieSecret: process.env.NEON_AUTH_COOKIE_SECRET!,
+  };
+}
 
 export async function updateSession(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!process.env.NEON_AUTH_BASE_URL || !process.env.NEON_AUTH_COOKIE_SECRET) {
     return NextResponse.next({ request });
   }
 
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
   const pathname = request.nextUrl.pathname;
-  const protectedRoutes = [
-    // guest self-study on pre-minimal best version
-    // "/dashboard", "/learn", "/flashcards", "/speaking",
-    "/progress", "/roadmap", "/writing", "/leaderboard", "/grammar", "/business",
-    "/challenge", "/pronunciation", "/placement-test", "/invite", "/certificate", "/settings", "/checkpoint", "/quiz"
-  ];
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
+    pathname.startsWith(route),
+  );
   const isLoginRoute = pathname === "/login";
 
-  // Skip auth check for public routes (like the landing page) to minimize TTFB latency
-  if (!isProtectedRoute && !isLoginRoute) {
-    return supabaseResponse;
+  // Skip auth work for public routes (like the landing page) to minimize TTFB —
+  // except OAuth returns, which carry the session verifier and must be exchanged.
+  const hasVerifier = request.nextUrl.searchParams.has(NEON_AUTH_VERIFIER_PARAM);
+  if (!isProtectedRoute && !isLoginRoute && !hasVerifier) {
+    return NextResponse.next({ request });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const result = await processAuthMiddleware(
+    middlewareConfig(request, pathname, isProtectedRoute),
+  );
 
-  // 1. Nếu truy cập trang bảo vệ mà chưa đăng nhập -> chuyển hướng về /login
-  if (isProtectedRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", pathname);
-    url.searchParams.set("mode", "login");
-    
-    const redirectResponse = NextResponse.redirect(url);
-    // Đồng bộ cookies sang redirect response mới
-    supabaseResponse.cookies.getAll().forEach(cookie => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, {
-        path: cookie.path,
-        domain: cookie.domain,
-        maxAge: cookie.maxAge,
-        secure: cookie.secure,
-        sameSite: cookie.sameSite,
-        expires: cookie.expires,
-        httpOnly: cookie.httpOnly,
-      });
+  if (result.action === "redirect_oauth") {
+    return appendCookies(
+      NextResponse.redirect(result.redirectUrl),
+      result.cookies,
+    );
+  }
+
+  if (result.action === "redirect_login") {
+    // Preserve the intended destination like the previous Supabase flow did.
+    result.redirectUrl.searchParams.set("next", pathname);
+    return appendCookies(
+      NextResponse.redirect(result.redirectUrl),
+      result.cookies,
+    );
+  }
+
+  // allow — authenticated user hitting /login goes to the dashboard instead.
+  // Skip the upstream session call when no session cookie is present at all.
+  const hasSessionCookie = (request.headers.get("cookie") ?? "").includes(
+    NEON_AUTH_SESSION_COOKIE_NAME,
+  );
+  if (isLoginRoute && hasSessionCookie) {
+    const sessionResponse = await handleAuthProxyRequest({
+      request: request as unknown as Request,
+      path: "get-session",
+      baseUrl: process.env.NEON_AUTH_BASE_URL,
+      cookieSecret: process.env.NEON_AUTH_COOKIE_SECRET,
     });
-    return redirectResponse;
+    const session = sessionResponse.ok
+      ? ((await sessionResponse.json().catch(() => null)) as {
+          user?: { id: string } | null;
+        } | null)
+      : null;
+    if (session?.user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      url.search = "";
+      return appendCookies(
+        NextResponse.redirect(url),
+        sessionResponse.headers.getSetCookie(),
+      );
+    }
   }
 
-  // 2. Nếu đã đăng nhập mà truy cập trang /login -> chuyển hướng sang /dashboard
-  if (pathname === "/login" && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    
-    const redirectResponse = NextResponse.redirect(url);
-    // Đồng bộ cookies sang redirect response mới
-    supabaseResponse.cookies.getAll().forEach(cookie => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, {
-        path: cookie.path,
-        domain: cookie.domain,
-        maxAge: cookie.maxAge,
-        secure: cookie.secure,
-        sameSite: cookie.sameSite,
-        expires: cookie.expires,
-        httpOnly: cookie.httpOnly,
-      });
-    });
-    return redirectResponse;
-  }
-
-  return supabaseResponse;
+  const response = NextResponse.next({ request });
+  return appendCookies(response, result.cookies);
 }

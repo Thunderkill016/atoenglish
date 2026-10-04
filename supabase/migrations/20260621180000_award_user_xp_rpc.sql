@@ -18,7 +18,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF auth.uid() IS NOT NULL AND p_user_id IS DISTINCT FROM auth.uid() THEN
+  IF public.auth_uid() IS NOT NULL AND p_user_id IS DISTINCT FROM public.auth_uid() THEN
     RAISE EXCEPTION 'not authorized';
   END IF;
 

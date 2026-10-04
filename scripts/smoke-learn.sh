@@ -2,13 +2,17 @@
 # scripts/smoke-learn.sh
 # Production smoke test for /learn B2 unit (post TASK-036 audio rewrite).
 # Verifies curl 200 for learn page (follows redirect) and sample static audio.
-# Usage: bash scripts/smoke-learn.sh
-# Or: npm run smoke:learn
-# Env: SMOKE_URL to override (default prod)
+# Usage: SMOKE_URL=<deployed-origin> bash scripts/smoke-learn.sh
+# Or: SMOKE_URL=<origin> npm run smoke:learn
+# Env: SMOKE_URL — required; e.g. https://atoenglish.<sub>.workers.dev
 
 set -euo pipefail
 
-PROD_URL="${SMOKE_URL:-https://atoenglish.vercel.app}"
+if [ -z "${SMOKE_URL:-}" ]; then
+  echo "SMOKE_URL is required (e.g. SMOKE_URL=https://atoenglish.<sub>.workers.dev)" >&2
+  exit 1
+fi
+PROD_URL="$SMOKE_URL"
 
 echo "🧪 AtoEnglish smoke: learn B2 + native audio (TASK-040)"
 echo "   Target: $PROD_URL"
@@ -40,6 +44,6 @@ if [[ "$ok" == "1" ]]; then
   exit 0
 else
   echo "❌ Smoke FAILED — see above."
-  echo "   (If just-deployed, wait for Vercel + retry; or check https://atoenglish.vercel.app)"
+  echo "   (If just-deployed, wait for the Worker to propagate + retry; or check \$SMOKE_URL)"
   exit 1
 fi

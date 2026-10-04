@@ -58,3 +58,4 @@ test-results/
 .vinext/
 .cloudflare/
 .wrangler/
+.neon

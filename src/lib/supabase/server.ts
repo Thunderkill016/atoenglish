@@ -1,31 +1,116 @@
-import { createServerClient } from "@supabase/ssr";
+import { createClient as createDataClient } from "@neondatabase/neon-js";
+import { NEON_AUTH_SESSION_COOKIE_NAME } from "@neondatabase/auth/server";
 import { cookies } from "next/headers";
+import { getAuth } from "@/lib/auth";
 
 import type { Database } from "@/types/supabase";
 
-// Next.js 15+: cookies() is now async — must be awaited
-export async function createClient() {
-  const cookieStore = await cookies();
+// Server-side data client. The external-auth form of `createClient` injects
+// the caller's JWT (from `auth.getAccessToken()`) into every Data API
+// request, so RLS is enforced per user exactly as with the Supabase SSR
+// client it replaces.
+//
+// An `.auth` compatibility surface is attached so existing call sites that
+// use `supabase.auth.getUser()` / `signOut()` keep working. Better Auth users
+// carry `name`/`email` at top level; `user_metadata.full_name` is mapped for
+// the few Supabase-shaped field reads that remain.
 
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Called from a Server Component — safe to ignore when
-            // middleware handles session refresh.
-          }
-        },
-      },
+type NeonUser = {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  [key: string]: unknown;
+};
+
+function toCompatUser(user: NeonUser) {
+  return {
+    ...user,
+    user_metadata: {
+      avatar_url: (user.image as string | null | undefined) ?? undefined,
+      display_name: user.name,
+      full_name: user.name,
+    },
+  };
+}
+
+async function getCompatSession() {
+  // Anonymous callers (the majority for this guest-first app) have no session
+  // cookie — skip the upstream auth round-trip entirely. When cookies() is
+  // unavailable (static generation) there is likewise no session.
+  try {
+    const jar = await cookies();
+    if (!jar.get(NEON_AUTH_SESSION_COOKIE_NAME)) {
+      return { user: null, error: null };
     }
-  );
+  } catch {
+    return { user: null, error: null };
+  }
+
+  const auth = await getAuth();
+  const { data, error } = await auth.getSession();
+  const session = data as { user?: NeonUser } | null;
+  return { user: session?.user ?? null, error };
+}
+
+export async function createClient() {
+  const db = createDataClient<Database>({
+    dataApi: {
+      url: process.env.NEON_DATA_API_URL!,
+      getToken: async () => {
+        // No session cookie → anonymous request (RLS still enforces).
+        try {
+          const jar = await cookies();
+          if (!jar.get(NEON_AUTH_SESSION_COOKIE_NAME)) return null;
+        } catch {
+          return null;
+        }
+        // Neon Auth `GET /token` returns the Data API JWT for the session.
+        const { data } = await (await getAuth()).token({});
+        const token = data as { token?: string } | null | undefined;
+        return token?.token ?? null;
+      },
+    },
+  });
+
+  return Object.assign(db, {
+    auth: {
+      async getUser() {
+        const { user, error } = await getCompatSession();
+        return {
+          data: { user: user ? toCompatUser(user) : null },
+          error: user
+            ? null
+            : (error ?? {
+                message: "Auth session missing!",
+                status: 401,
+              }),
+        };
+      },
+      async getSession() {
+        const { data, error } = await (await getAuth()).getSession();
+        return {
+          data: { session: data?.session ?? null, user: data?.user ?? null },
+          error: error ?? null,
+        };
+      },
+      // Better Auth completes OAuth through its own callback before the app
+      // callback runs, so the "code" exchange is just a session read.
+      async exchangeCodeForSession(_code: string) {
+        const { user, error } = await getCompatSession();
+        return {
+          data: {
+            session: user ? {} : null,
+            user: user ? toCompatUser(user) : null,
+          },
+          error: user
+            ? null
+            : (error ?? { message: "OAuth callback missing session", status: 401 }),
+        };
+      },
+      async signOut() {
+        const { error } = await (await getAuth()).signOut();
+        return { error: error ?? null };
+      },
+    },
+  });
 }

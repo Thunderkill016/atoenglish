@@ -5,7 +5,7 @@
 
 CREATE TABLE IF NOT EXISTS public.quiz_results (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  user_id     uuid NOT NULL REFERENCES neon_auth.user (id) ON DELETE CASCADE,
   unit_id     text NOT NULL,
   score       integer NOT NULL CHECK (score >= 0),
   total       integer NOT NULL CHECK (total >= 1 AND total <= 50),

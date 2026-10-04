@@ -14,7 +14,7 @@ create table if not exists public.pilot_events (
     )
   ),
   occurred_at timestamptz not null default now(),
-  user_id uuid references auth.users(id) on delete set null,
+  user_id uuid references neon_auth.user(id) on delete set null,
   anonymous_id uuid not null,
   source text check (source is null or char_length(source) <= 64),
   unit_id text check (unit_id is null or char_length(unit_id) <= 64),

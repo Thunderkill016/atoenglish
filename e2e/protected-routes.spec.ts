@@ -56,7 +56,10 @@ test.describe("Protected Routes — Unauthenticated Redirects", () => {
 test.describe("Guest Self-Study Routes — Accessible Without Auth", () => {
   for (const route of GUEST_SELF_STUDY_ROUTES) {
     test(`${route} remains accessible without login`, async ({ page }) => {
-      const response = await page.goto(route);
+      // domcontentloaded: dev server streams RSC + lazily compiles chunks,
+      // so the full "load" event can exceed the test timeout. These tests
+      // only assert URL/status, which settle at navigation time.
+      const response = await page.goto(route, { waitUntil: "domcontentloaded" });
       const finalUrl = new URL(page.url());
 
       expect(finalUrl.pathname).not.toBe("/login");
@@ -82,12 +85,12 @@ test.describe("Public Routes — Accessible Without Auth", () => {
 
 test.describe("Landing Page — Key Elements", () => {
   test("has hero heading in Vietnamese", async ({ page }) => {
-    await page.goto("/");
-    await expect(page.locator("h1")).toContainText("Học tiếng Anh");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("h1").first()).toContainText("Học tiếng Anh");
   });
 
   test("has CTA button linking to login", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     const cta = page.getByRole("link", { name: /Bắt đầu học/i }).first();
     await expect(cta).toBeVisible();
     await expect(cta).toHaveAttribute("href", /login/);
@@ -115,10 +118,10 @@ test.describe("Pilot Promise — Consistent Entry Experience", () => {
     await expect(page.getByText(/Bắt đầu từ A0/).first()).toBeVisible();
   });
 
-  test("dashboard reinforces the daily speaking step", async ({ page }) => {
-    await page.goto("/dashboard");
-    await expect(page.getByTestId("pilot-promise")).toContainText("10–15 phút");
-    await expect(page.getByTestId("pilot-promise")).toContainText("28 ngày");
+  test("dashboard reinforces the daily learning loop", async ({ page }) => {
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await expect(page.getByTestId("pilot-promise")).toContainText("bài học");
+    await expect(page.getByTestId("pilot-promise")).toContainText("ôn lại");
   });
 });
 

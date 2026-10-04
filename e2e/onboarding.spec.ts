@@ -34,7 +34,7 @@ test.describe("Onboarding Signup Persist (E2E DB)", () => {
   test("signup flow saves goal/obstacle/daily_minutes to user_onboarding_profile and daily_xp_goal on user_progress", async ({ page }) => {
     test.skip(
       !hasE2EAdminCredentials(),
-      "Requires NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY for DB verify",
+      "Requires NEON_AUTH_BASE_URL + DATABASE_URL for DB verify",
     );
 
     const ts = Date.now();
