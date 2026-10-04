@@ -84,7 +84,7 @@ jobs:
       - name: Resolve branch connection string
         id: conn
         run: |
-          CS=$(neon connection-string "$BRANCH_NAME" --project-id "$NEON_PROJECT_ID" --pooled=false)
+          CS=$(neon connection-string "$BRANCH_NAME" --project-id "$NEON_PROJECT_ID" --database-name neondb --role-name neondb_owner --pooled=false)
           echo "url=$CS" >> "$GITHUB_OUTPUT"
 
       - name: Reset public + private schemas for a fresh replay
