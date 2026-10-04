@@ -5,7 +5,7 @@ import { getUserProgress, getTodayMissionFlags } from "@/app/actions/stats";
 import { getCurrentUnit } from "@/app/actions/unit";
 import { UNITS } from "@/lib/constants/units";
 import { UNIT_VOCABULARY } from "@/lib/constants/vocabulary";
-import { PILOT_LESSON_SPECS } from "@/lib/lessons/pilot-lessons";
+import { CATALOG_UNITS } from "@/lib/learn/catalog";
 import { buildDailyMissions } from "@/lib/learn/daily-missions";
 import { alignWordOfDayTopic } from "@/lib/learn/word-of-day";
 import { getReviewQueueData } from "@/lib/review/due-queue";
@@ -15,23 +15,12 @@ import TodayMission from "./components/TodayMission";
 import WordOfDayCard from "./components/WordOfDayCard";
 
 export const metadata: Metadata = {
-  title: "Bài A0 | AtoEnglish",
-  description: "Lộ trình A0 theo nhiệm vụ giao tiếp cho người Việt mới bắt đầu.",
+  title: "Bài học | AtoEnglish",
+  description:
+    "Lộ trình A0–B2 theo nhiệm vụ giao tiếp cho người Việt học tiếng Anh.",
 };
 
 export const revalidate = 0;
-
-const PILOT_UNITS = UNITS.slice(0, 6).map((unit) => {
-  const lesson = PILOT_LESSON_SPECS[unit.id];
-  return lesson
-    ? {
-        ...unit,
-        title: lesson.title,
-        description: lesson.description,
-        estimatedTime: lesson.estimatedTime,
-      }
-    : unit;
-});
 
 function vnGreeting(): string {
   const hour = Number(
@@ -63,7 +52,7 @@ export default async function LearnPage() {
             .eq("user_id", user.id)
             .in(
               "unit_id",
-              PILOT_UNITS.map((unit) => unit.id),
+              CATALOG_UNITS.map((unit) => unit.id),
             )
         : Promise.resolve({ data: null }),
       getReviewQueueData(),
@@ -74,17 +63,17 @@ export default async function LearnPage() {
   const completedXp = new Map(
     completedLessons.map((lesson) => [lesson.unit_id, lesson.xp_earned || 0]),
   );
-  const firstIncomplete = PILOT_UNITS.find(
+  const firstIncomplete = CATALOG_UNITS.find(
     (unit) => !completedUnitIds.includes(unit.id),
   );
   const activeUnitId =
-    PILOT_UNITS.some((unit) => unit.id === activeUnitRes.unitId) &&
+    CATALOG_UNITS.some((unit) => unit.id === activeUnitRes.unitId) &&
     !completedUnitIds.includes(activeUnitRes.unitId || "")
       ? activeUnitRes.unitId!
-      : firstIncomplete?.id || PILOT_UNITS[0].id;
+      : firstIncomplete?.id || CATALOG_UNITS[0].id;
 
   const activeUnit =
-    PILOT_UNITS.find((unit) => unit.id === activeUnitId) ?? PILOT_UNITS[0];
+    CATALOG_UNITS.find((unit) => unit.id === activeUnitId) ?? CATALOG_UNITS[0];
   const dueReviewCount =
     reviewQueue.srsDueCount +
     reviewQueue.lessonReviews.length +
@@ -122,10 +111,11 @@ export default async function LearnPage() {
         const [vyear, vmonth, vday] = vnDateStr.split("-").map(Number);
         const dayIndex = vyear * 10000 + vmonth * 100 + (vday ?? 0);
         const selectedWord =
-          vocabPool.length > 0
-            ? vocabPool[dayIndex % vocabPool.length]
-            : null;
-        return [missions, alignWordOfDayTopic(activeUnit.id, selectedWord)] as const;
+          vocabPool.length > 0 ? vocabPool[dayIndex % vocabPool.length] : null;
+        return [
+          missions,
+          alignWordOfDayTopic(activeUnit.id, selectedWord),
+        ] as const;
       })()
     : [null, null];
 
@@ -140,7 +130,9 @@ export default async function LearnPage() {
         href="/read"
         className="mx-4 mt-4 flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 transition-colors hover:border-sky-400 sm:mx-auto sm:max-w-2xl"
       >
-        <span className="font-medium">Đọc tiếng Anh — chạm từng từ để xem nghĩa và đánh dấu từ bạn biết</span>
+        <span className="font-medium">
+          Đọc tiếng Anh — chạm từng từ để xem nghĩa và đánh dấu từ bạn biết
+        </span>
         <span aria-hidden>→</span>
       </Link>
 
@@ -173,7 +165,7 @@ export default async function LearnPage() {
         completedUnitIds={completedUnitIds}
         activeUnitId={activeUnitId}
         isGuest={!user}
-        unitStatuses={PILOT_UNITS.map((unit) => {
+        unitStatuses={CATALOG_UNITS.map((unit) => {
           const xpEarned = completedXp.get(unit.id) ?? 0;
           const completed = completedUnitIds.includes(unit.id);
 

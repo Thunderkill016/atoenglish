@@ -1,17 +1,13 @@
 "use client";
 
-import {
-  BookOpen,
-  CheckCircle,
-  ChevronDown,
-  Lock,
-} from "lucide-react";
+import { BookOpen, CheckCircle, Lock } from "lucide-react";
 import {
   ContinueCard,
   ListSection,
   PrimaryRow,
   SecondaryPageShell,
 } from "@/components/design-system";
+import { groupUnitsByLevel } from "@/lib/learn/catalog";
 
 interface UnitStatus {
   id: string;
@@ -34,14 +30,6 @@ interface LearnClientProps {
   unitStatuses: UnitStatus[];
 }
 
-const FUTURE_STAGES = [
-  "Pre-A1 / A1",
-  "A2",
-  "B1",
-  "B2 / IELTS Bridge",
-  "IELTS 6.5",
-];
-
 export default function LearnClient({
   totalXp,
   completedUnitIds,
@@ -52,10 +40,12 @@ export default function LearnClient({
   const activeUnit =
     unitStatuses.find((unit) => unit.id === activeUnitId) ?? unitStatuses[0];
 
+  const groups = groupUnitsByLevel(unitStatuses);
+
   return (
     <SecondaryPageShell
       title="Bài học"
-      subtitle={`${completedUnitIds.length}/6 bài A0 · ${totalXp.toLocaleString()} XP`}
+      subtitle={`${completedUnitIds.length}/${unitStatuses.length} bài · ${totalXp.toLocaleString()} XP`}
     >
       <div className="space-y-6 pb-16">
         <ContinueCard
@@ -70,65 +60,52 @@ export default function LearnClient({
           xp={activeUnit.xp}
         />
 
-        <ListSection title="A0 nền tảng · mission pilot">
-          {unitStatuses.map((unit, index) => {
-            const isCompleted = completedUnitIds.includes(unit.id);
-            const isGuestLocked = isGuest && index > 0;
+        {groups.map((group) => (
+          <ListSection key={group.level} title={group.title}>
+            {group.units.map((unit) => {
+              // Guest locks every unit except the first in catalog order.
+              const index = unitStatuses.indexOf(unit);
+              const isCompleted = completedUnitIds.includes(unit.id);
+              const isGuestLocked = isGuest && index > 0;
 
-            if (isGuestLocked) {
+              if (isGuestLocked) {
+                return (
+                  <div
+                    key={unit.id}
+                    className="flex min-h-[var(--minimal-touch)] items-center gap-3 rounded-lg border border-border/40 bg-muted/30 px-4 py-3 opacity-70"
+                  >
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                      <Lock className="size-4" aria-hidden />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[var(--minimal-body-size)] font-semibold text-muted-foreground">
+                        {unit.title}
+                      </span>
+                      <span className="mt-0.5 block text-[var(--minimal-caption-size)] text-muted-foreground/80">
+                        Đăng nhập sau bài học thử
+                      </span>
+                    </span>
+                  </div>
+                );
+              }
+
               return (
-                <div
+                <PrimaryRow
                   key={unit.id}
-                  className="flex min-h-[var(--minimal-touch)] items-center gap-3 rounded-lg border border-border/40 bg-muted/30 px-4 py-3 opacity-70"
-                >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                    <Lock className="size-4" aria-hidden />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[var(--minimal-body-size)] font-semibold text-muted-foreground">
-                      {unit.title}
-                    </span>
-                    <span className="mt-0.5 block text-[var(--minimal-caption-size)] text-muted-foreground/80">
-                      Đăng nhập sau bài học thử
-                    </span>
-                  </span>
-                </div>
+                  href={unit.route}
+                  label={unit.title}
+                  description={`${isCompleted ? "Hoàn thành" : `${unit.progress}%`} · ${unit.estimatedTime} phút`}
+                  icon={isCompleted ? CheckCircle : BookOpen}
+                />
               );
-            }
+            })}
+          </ListSection>
+        ))}
 
-            return (
-              <PrimaryRow
-                key={unit.id}
-                href={unit.route}
-                label={unit.title}
-                description={`${isCompleted ? "Hoàn thành" : `${unit.progress}%`} · ${unit.estimatedTime} phút`}
-                icon={isCompleted ? CheckCircle : BookOpen}
-              />
-            );
-          })}
-        </ListSection>
-
-        <details className="group border-t border-border/60 pt-4">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-muted-foreground">
-            Các giai đoạn tiếp theo
-            <ChevronDown
-              className="size-4 transition-transform group-open:rotate-180"
-              aria-hidden
-            />
-          </summary>
-          <div className="mt-2 space-y-2">
-            {FUTURE_STAGES.map((stage) => (
-              <div
-                key={stage}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground"
-              >
-                <Lock className="size-4" aria-hidden />
-                <span>{stage}</span>
-                <span className="ml-auto text-xs">Chưa phát hành</span>
-              </div>
-            ))}
-          </div>
-        </details>
+        <p className="px-1 text-[var(--minimal-caption-size)] text-muted-foreground/80">
+          Phần nói &amp; nghe trong bài hiện là tự luyện — chưa được chấm tự
+          động. Kết quả ghi nhận dựa trên phần đọc, chọn và gõ.
+        </p>
       </div>
     </SecondaryPageShell>
   );
