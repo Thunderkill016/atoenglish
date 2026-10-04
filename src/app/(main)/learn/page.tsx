@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import { getUserProgress } from "@/app/actions/stats";
@@ -112,7 +113,15 @@ export default async function LearnPage() {
   });
 
   return (
-    <LearnClient
+    <div className="space-y-4">
+      <Link
+        href="/read"
+        className="mx-4 mt-4 flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 transition-colors hover:border-sky-400 sm:mx-auto sm:max-w-2xl"
+      >
+        <span className="font-medium">Đọc tiếng Anh — chạm từng từ để xem nghĩa và đánh dấu từ bạn biết</span>
+        <span aria-hidden>→</span>
+      </Link>
+      <LearnClient
       userLevel={
         progressRes.success ? progressRes.progress?.current_level || "A0" : "A0"
       }
@@ -143,5 +152,6 @@ export default async function LearnPage() {
         };
       })}
     />
+    </div>
   );
 }
