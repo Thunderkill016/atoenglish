@@ -29,17 +29,30 @@ export default function TestimonialsSection() {
             Một dự án nhỏ đang phát triển
           </h2>
           <p className="text-zinc-500 dark:text-zinc-400 text-sm sm:text-base max-w-xl mx-auto">
-            Không có hàng nghìn học viên. Không có con số ảo. Chỉ có công cụ để bạn tự luyện nói mỗi ngày.
+            Không có hàng nghìn học viên. Không có con số ảo. Chỉ có công cụ để
+            bạn tự luyện nói mỗi ngày.
           </p>
         </motion.div>
 
         {/* Honest cards - keep the beautiful glass design */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[
-            { title: "Thử mà không cần tài khoản", text: "Bạn có thể vào học thử ngay (guest mode). Tiến độ lưu cục bộ trên trình duyệt." },
-            { title: "Tập trung vào nói", text: "Mỗi bài có Shadowing (nhại theo) và Roleplay tình huống thực tế. Không chỉ đọc chép." },
-            { title: "Ôn tập FSRS miễn phí", text: "Dùng thuật toán FSRS mã nguồn mở để nhắc ôn đúng lúc sắp quên." },
-            { title: "Open Beta", text: "Dự án đang phát triển. Sẽ được cải thiện dựa trên phản hồi người dùng thật." },
+            {
+              title: "Thử mà không cần tài khoản",
+              text: "Học thử trọn vẹn bài đầu tiên (guest mode). Đăng ký miễn phí để mở toàn bộ chương trình và lưu tiến độ.",
+            },
+            {
+              title: "Tập trung vào nói",
+              text: "Mỗi bài có Shadowing (nhại theo) và Roleplay tình huống thực tế. Không chỉ đọc chép.",
+            },
+            {
+              title: "Ôn tập FSRS miễn phí",
+              text: "Tài khoản miễn phí — dùng thuật toán FSRS mã nguồn mở để nhắc ôn đúng lúc sắp quên.",
+            },
+            {
+              title: "Open Beta",
+              text: "Dự án đang phát triển. Sẽ được cải thiện dựa trên phản hồi người dùng thật.",
+            },
           ].map((note, idx) => (
             <div
               key={idx}
@@ -56,7 +69,8 @@ export default function TestimonialsSection() {
         </div>
 
         <p className="mt-10 text-center text-xs text-zinc-500 dark:text-zinc-400">
-          Muốn xem thực tế? Bấm “Học thử ngay” — không cần đăng nhập.
+          Muốn xem thực tế? Bấm “Học thử ngay” — bài đầu tiên không cần đăng
+          nhập.
         </p>
       </div>
     </section>

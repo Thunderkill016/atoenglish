@@ -15,7 +15,7 @@ Three discoveries dominate everything else:
 
 1. **The completable curriculum is 20 units, not 50.** `complete_unit_transaction` whitelists only `unit-a0-1..8` + `unit-1..12` (`supabase/migrations/20260907043000_harden_xp_trust_boundary.sql:53-68`). Authenticated learners hitting unit-13+ get a silent toast error; **guests "complete" further than signed-in users** via localStorage — a guest/auth inversion.
 2. **Every "level" the UI shows is a completion count with an unreachable ceiling.** `user_progress.current_level` is `count(DISTINCT unit_id)` ≥ thresholds; B1/B2 are mathematically unreachable under the whitelist, yet `LevelProgressBar` and dashboard badges display them as capability.
-3. **The evidence pipeline is architecturally right but durably blocked.** The Data API rejects evidence-bearing `record_learning_attempt` (correct trust boundary), the adapter silently downgrades to attempt-only writes, so `learning_evidence_events`/`learner_skill_states` are never written in production. Meanwhile the *legacy* edges fabricate evidence (shadowing writes target transcripts as learner speech; writing returns a demo score of 85; mock transcripts in journal/roleplay).
+3. **The evidence pipeline is architecturally right but durably blocked.** The Data API rejects evidence-bearing `record_learning_attempt` (correct trust boundary), the adapter silently downgrades to attempt-only writes, so `learning_evidence_events`/`learner_skill_states` are never written in production. Meanwhile the _legacy_ edges fabricate evidence (shadowing writes target transcripts as learner speech; writing returns a demo score of 85; mock transcripts in journal/roleplay).
 
 The second-tier discovery: **four visual languages coexist** (marketing zinc+emerald, legacy dashboard, "V2 minimal" iOS-style, always-dark Duolingo lesson player), ~74% of color classes are raw palette values, and the intended `SecondaryPageShell` silently drops its width bound — a latent bug, not a style.
 
@@ -44,14 +44,14 @@ The proposed end-state:
 
 ## 3. Research Sources
 
-| Tier | Sources used |
-|---|---|
-| Official/normative | `research/standards/coe/` CEFR PDFs; `webpages/coe/*` (social agent, classroom assessment, descriptors, uses/objectives); `webpages/W3C_WCAG22.html` |
+| Tier                            | Sources used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Official/normative              | `research/standards/coe/` CEFR PDFs; `webpages/coe/*` (social agent, classroom assessment, descriptors, uses/objectives); `webpages/W3C_WCAG22.html`                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Peer-reviewed (named, verified) | `papers/`: Settles & Meeder ACL 2016 (HLR, 12.9M traces — scheduling evidence, not mastery); Smith et al. 2024 (Duolingo efficacy, small n=48); Vesselinov & Grego 2012 (⚠ commissioned — conflict-flagged); Tu & Du 2024 (VN pronunciation); Interlingual Errors VN (n=40); Liu & Zhang 2018 (ER meta, N=1,268); Montero Perez 2013 (captions, large effect); Vandergrift & Tafaghodtari 2010 (metacognitive listening); Roediger & Karpicke; Dunlosky 2013; Cepeda 2006; Norris & Ortega 2000; Lyster & Ranta 1997 + Lyster/Saito/Sato 2013; Hulstijn & Laufer 2001; Nation 2013; Munro & Derwing |
-| Evidence-graded synthesis | `research/imported/github-repos/vidlish-research/` (28 RQs — strongest synthesis layer; populations mostly non-VN → `established-practice` when transferred) |
-| Product/engineering reference | `imported/simple-english/` (USA Learns precedent — closest production-proven analog; source rubric, Human Content Gate); `nep/lakehouse-gold/` data dictionary |
-| Low authority / context only | `nep/community/` FB scrape (hypothesis generation only — LLM-classified, self-selected); `deep_research_reports/` |
-| **Do not cite by filename** | everything flagged in `research/IMPORTED_ANALYSIS.md` §2 — PDFs in `ielts_toeic_master_collection/` and `downloaded_center_materials/` are mislabeled |
+| Evidence-graded synthesis       | `research/imported/github-repos/vidlish-research/` (28 RQs — strongest synthesis layer; populations mostly non-VN → `established-practice` when transferred)                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Product/engineering reference   | `imported/simple-english/` (USA Learns precedent — closest production-proven analog; source rubric, Human Content Gate); `nep/lakehouse-gold/` data dictionary                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Low authority / context only    | `nep/community/` FB scrape (hypothesis generation only — LLM-classified, self-selected); `deep_research_reports/`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **Do not cite by filename**     | everything flagged in `research/IMPORTED_ANALYSIS.md` §2 — PDFs in `ielts_toeic_master_collection/` and `downloaded_center_materials/` are mislabeled                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 **Citation hazard preserved:** the vidlish evidence protocol applies — source-finding / claim / synthesis / product-implication are kept separate throughout.
 
@@ -61,40 +61,40 @@ The proposed end-state:
 
 Condensed; full derivations in `research/` syntheses. Each item: principle → problem it solves → current violation → application.
 
-| # | Principle (confidence) | Current violation | Application |
-|---|---|---|---|
-| P1 | **Attempt before reveal** — retrieval requires a hidden target + required attempt before any answer-bearing support (`strong-evidence`: Roediger & Karpicke; Dunlosky top-utility) | Mission lessons honor it; legacy `UnitTemplate` sections expose answers freely; SRS self-report has no attempt gate | Canonical session phases + runtime state machine `unseen→viewed→attempted→…` server-validated |
-| P2 | **A skill claim requires a skill-matched task** — typing ≠ speaking; recognition ≠ production (`strong-evidence`) | Shadowing persists target transcript as learner speech when ASR absent; writing demo-score 85; journal/roleplay mock transcripts | Evaluation policies limited to `single_choice \| normalized_text_set \| self_check \| unscored_reflection`; no `llm_grade` in v1; speech evidence requires actual audio path |
-| P3 | **Scheduler state ≠ mastery** — FSRS predicts recall probability, observes nothing about comprehension/production (`strong-evidence` boundary) | `getCurrentUnit` infers progress from % of unit vocab in SRS; dashboard merges SRS streak into capability display | SRS feeds Review due-queue only; progress surface reads evidence events, never card state |
-| P4 | **Engagement ≠ learning** — XP/streaks/completion are behavior metrics (`strong-evidence`) | `current_level` = completion count; XP toasts front-and-center; daily missions are engagement scaffolding | Freeze gamification surfaces (already closed scope); progress = capability-by-mode |
-| P5 | **Immediate success ≠ retention; same-task ≠ transfer** — delayed + changed-context probes drive claims (`strong-evidence` construct) | Transfer system broken (F3); no delayed probes exist anywhere | Restore 1/7/30d transfer variants as the retention channel; review varies task type over time |
-| P6 | **Prompts > recasts for repair; feedback escalates smallest-useful-cue** (`strong-evidence` direction; `established-practice` ladder) | "Show answer" is the dominant failure path; no cue ladder | Mistake → prompt-style re-attempt in-session + item enters due-queue (two timescales) |
-| P7 | **Progressive L1 support ladder with provenance + fading** (`established-practice`; L1 glosses > L2 glosses for beginners) | Vietnamese scaffolding exists but is ad hoc, unlogged, unfaded | Typed scaffolds `instruction_vi→context_hint→keyword→caption→chunk→meaning_vi→slower`, on-demand, logged as provenance, faded on independent success |
-| P8 | **Coverage is a selection signal, not a gate** — ~98% for unassisted reading; supports lower it (`established-practice`) | `/read` exists but coverage/readiness not surfaced to learner | Reader shows per-text fit + support availability; no "N words unlock" rule |
-| P9 | **Intelligibility-first pronunciation** — Tier I: preserve word shape/final consonants; Tier II: high-load contrasts + stress; accent never a mastery dim (`established-practice`; VN-interference documented) | Phoneme scorer correctly disabled but UI still advertises "AI phân tích phát âm"; `PronunciationClient` self-marks "mastered" in localStorage | Keep scorer off until calibrated; perception-first HVPT on VN contrasts; honest labels |
-| P10 | **Four-strand composition check** — input/output/language-focus/fluency present across a unit (`established-practice`) | Legacy 10-section template is presentation-heavy; production tasks are recognition-shaped | Use as authoring lint, not per-screen mandate |
-| P11 | **AI proposes; deterministic systems decide** — mastery/readiness never model-assigned (`established-practice` boundary, reinforced by `PROJECT_STATE`) | Gemini grading path exists; `llm_grade` not banned at contract level | Human Content Gate for learner-facing English; LLM may draft distractors/explanations behind deterministic validation |
-| P12 | **Placement = bootstrap with uncertainty, not exam** — anchor set → coarse region → recalibrate (`established-practice`) | 45-item MCQ (copy says 40), reading/vocab/grammar only, no uncertainty, seeds `starting_unit_index` | Provisional capability profile with confidence flags; `unknown ≠ weak`; items below conventional A1 |
-| P13 | **WCAG 2.2 as architecture, not polish** — incl. new AA: 2.5.8 target 24px, 2.4.11 focus-not-obscured, 3.3.7 redundant entry, 3.3.8 auth (`strong-evidence` normative) | `<label>` appears twice in the codebase; flip cards not keyboard-focusable; zero reduced-motion handling; 9–11px microtext on 100+ lines | See §22 |
-| P14 | **Focus mode for learning** — global chrome hidden in-session; one dominant action per state (`established-practice` + USA Learns precedent) | Lesson hides chrome but checkpoint/transfer (same session) don't | Session shell suppresses nav for the whole attempt boundary |
-| P15 | **Section/item-granularity resume** — atomic restart punishes interruption (`established-practice`) | Resume = localStorage pointer per unit; mission sessions resume but transfer state doesn't | Resume targets first unresolved item server-side |
+| #   | Principle (confidence)                                                                                                                                                                                         | Current violation                                                                                                                             | Application                                                                                                                                                                  |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1  | **Attempt before reveal** — retrieval requires a hidden target + required attempt before any answer-bearing support (`strong-evidence`: Roediger & Karpicke; Dunlosky top-utility)                             | Mission lessons honor it; legacy `UnitTemplate` sections expose answers freely; SRS self-report has no attempt gate                           | Canonical session phases + runtime state machine `unseen→viewed→attempted→…` server-validated                                                                                |
+| P2  | **A skill claim requires a skill-matched task** — typing ≠ speaking; recognition ≠ production (`strong-evidence`)                                                                                              | Shadowing persists target transcript as learner speech when ASR absent; writing demo-score 85; journal/roleplay mock transcripts              | Evaluation policies limited to `single_choice \| normalized_text_set \| self_check \| unscored_reflection`; no `llm_grade` in v1; speech evidence requires actual audio path |
+| P3  | **Scheduler state ≠ mastery** — FSRS predicts recall probability, observes nothing about comprehension/production (`strong-evidence` boundary)                                                                 | `getCurrentUnit` infers progress from % of unit vocab in SRS; dashboard merges SRS streak into capability display                             | SRS feeds Review due-queue only; progress surface reads evidence events, never card state                                                                                    |
+| P4  | **Engagement ≠ learning** — XP/streaks/completion are behavior metrics (`strong-evidence`)                                                                                                                     | `current_level` = completion count; XP toasts front-and-center; daily missions are engagement scaffolding                                     | Freeze gamification surfaces (already closed scope); progress = capability-by-mode                                                                                           |
+| P5  | **Immediate success ≠ retention; same-task ≠ transfer** — delayed + changed-context probes drive claims (`strong-evidence` construct)                                                                          | Transfer system broken (F3); no delayed probes exist anywhere                                                                                 | Restore 1/7/30d transfer variants as the retention channel; review varies task type over time                                                                                |
+| P6  | **Prompts > recasts for repair; feedback escalates smallest-useful-cue** (`strong-evidence` direction; `established-practice` ladder)                                                                          | "Show answer" is the dominant failure path; no cue ladder                                                                                     | Mistake → prompt-style re-attempt in-session + item enters due-queue (two timescales)                                                                                        |
+| P7  | **Progressive L1 support ladder with provenance + fading** (`established-practice`; L1 glosses > L2 glosses for beginners)                                                                                     | Vietnamese scaffolding exists but is ad hoc, unlogged, unfaded                                                                                | Typed scaffolds `instruction_vi→context_hint→keyword→caption→chunk→meaning_vi→slower`, on-demand, logged as provenance, faded on independent success                         |
+| P8  | **Coverage is a selection signal, not a gate** — ~98% for unassisted reading; supports lower it (`established-practice`)                                                                                       | `/read` exists but coverage/readiness not surfaced to learner                                                                                 | Reader shows per-text fit + support availability; no "N words unlock" rule                                                                                                   |
+| P9  | **Intelligibility-first pronunciation** — Tier I: preserve word shape/final consonants; Tier II: high-load contrasts + stress; accent never a mastery dim (`established-practice`; VN-interference documented) | Phoneme scorer correctly disabled but UI still advertises "AI phân tích phát âm"; `PronunciationClient` self-marks "mastered" in localStorage | Keep scorer off until calibrated; perception-first HVPT on VN contrasts; honest labels                                                                                       |
+| P10 | **Four-strand composition check** — input/output/language-focus/fluency present across a unit (`established-practice`)                                                                                         | Legacy 10-section template is presentation-heavy; production tasks are recognition-shaped                                                     | Use as authoring lint, not per-screen mandate                                                                                                                                |
+| P11 | **AI proposes; deterministic systems decide** — mastery/readiness never model-assigned (`established-practice` boundary, reinforced by `PROJECT_STATE`)                                                        | Gemini grading path exists; `llm_grade` not banned at contract level                                                                          | Human Content Gate for learner-facing English; LLM may draft distractors/explanations behind deterministic validation                                                        |
+| P12 | **Placement = bootstrap with uncertainty, not exam** — anchor set → coarse region → recalibrate (`established-practice`)                                                                                       | 45-item MCQ (copy says 40), reading/vocab/grammar only, no uncertainty, seeds `starting_unit_index`                                           | Provisional capability profile with confidence flags; `unknown ≠ weak`; items below conventional A1                                                                          |
+| P13 | **WCAG 2.2 as architecture, not polish** — incl. new AA: 2.5.8 target 24px, 2.4.11 focus-not-obscured, 3.3.7 redundant entry, 3.3.8 auth (`strong-evidence` normative)                                         | `<label>` appears twice in the codebase; flip cards not keyboard-focusable; zero reduced-motion handling; 9–11px microtext on 100+ lines      | See §22                                                                                                                                                                      |
+| P14 | **Focus mode for learning** — global chrome hidden in-session; one dominant action per state (`established-practice` + USA Learns precedent)                                                                   | Lesson hides chrome but checkpoint/transfer (same session) don't                                                                              | Session shell suppresses nav for the whole attempt boundary                                                                                                                  |
+| P15 | **Section/item-granularity resume** — atomic restart punishes interruption (`established-practice`)                                                                                                            | Resume = localStorage pointer per unit; mission sessions resume but transfer state doesn't                                                    | Resume targets first unresolved item server-side                                                                                                                             |
 
 ---
 
 ## 5. Design Principles (the product's design philosophy)
 
-**Philosophy:** *The interface disappears behind the attempt.* Every screen either presents a learning object, collects an attempt, or reports honest evidence. Chrome, decoration, and engagement machinery yield to those three jobs.
+**Philosophy:** _The interface disappears behind the attempt._ Every screen either presents a learning object, collects an attempt, or reports honest evidence. Chrome, decoration, and engagement machinery yield to those three jobs.
 
-| # | Principle | Why | Means | Anti-pattern (current) |
-|---|---|---|---|---|
-| D1 | One dominant action per state | Near-A0 learners overload; visual competition = decision burden | Every screen names exactly one primary action; secondaries are text-level | Dashboard: 7 cards of equal weight; lesson: 4 same-prominence CTAs |
-| D2 | Evidence-shaped progress | Completion counts are lies the UI teaches the learner to believe | Progress shows capability-by-mode with support flags | `current_level` from count; XP/streak as "progress" |
-| D3 | Support is a ladder, not a toggle | Beginners need scaffolding that fades; all-at-once help destroys retrieval | On-demand typed supports, logged, faded | Transcript always-on or always-off; unlogged hints |
-| D4 | Semantic tokens only | 74% raw palette → theme breakage is structural (`ReaderClient` has no dark variants at all) | All surfaces consume `bg/surface/text-*/interactive-*/learning-*` tokens | `bg-emerald-600`, `text-zinc-650` (dead class), `stone-*` in reader |
-| D5 | Learning-state colors are one language | Sky currently means input AND new-word AND A2 AND nothing | One semantic scale: `state.new/learning/known/due` + `phase.input/processing/output/review` | Three conflicting local maps (IPOR/SRS/reader/CEFR) |
-| D6 | Vietnamese-first, English-forward | Scaffold in VI, target stays EN; attention returns to English | VI instructions/glosses adjacent to target; EN is the working surface | Mixed VI/EN chrome labels (`Dashboard`/`Mission checkpoint` next to `Học/Ôn/Tôi`) |
-| D7 | States are designed, not hoped for | Empty/loading/error/degraded are the majority of real sessions | Each archetype defines all states incl. guest-degraded | Guests see "done!" empty state; missing loading on `/me`,`/read` |
-| D8 | Mobile is the primary client | ~30min/day mostly phone; can't speak aloud | Task card + bottom action bar; every voice task has tap/keyboard alternative | 9px text; desktop-shrink grids; voice-only paths |
+| #   | Principle                              | Why                                                                                         | Means                                                                                       | Anti-pattern (current)                                                            |
+| --- | -------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| D1  | One dominant action per state          | Near-A0 learners overload; visual competition = decision burden                             | Every screen names exactly one primary action; secondaries are text-level                   | Dashboard: 7 cards of equal weight; lesson: 4 same-prominence CTAs                |
+| D2  | Evidence-shaped progress               | Completion counts are lies the UI teaches the learner to believe                            | Progress shows capability-by-mode with support flags                                        | `current_level` from count; XP/streak as "progress"                               |
+| D3  | Support is a ladder, not a toggle      | Beginners need scaffolding that fades; all-at-once help destroys retrieval                  | On-demand typed supports, logged, faded                                                     | Transcript always-on or always-off; unlogged hints                                |
+| D4  | Semantic tokens only                   | 74% raw palette → theme breakage is structural (`ReaderClient` has no dark variants at all) | All surfaces consume `bg/surface/text-*/interactive-*/learning-*` tokens                    | `bg-emerald-600`, `text-zinc-650` (dead class), `stone-*` in reader               |
+| D5  | Learning-state colors are one language | Sky currently means input AND new-word AND A2 AND nothing                                   | One semantic scale: `state.new/learning/known/due` + `phase.input/processing/output/review` | Three conflicting local maps (IPOR/SRS/reader/CEFR)                               |
+| D6  | Vietnamese-first, English-forward      | Scaffold in VI, target stays EN; attention returns to English                               | VI instructions/glosses adjacent to target; EN is the working surface                       | Mixed VI/EN chrome labels (`Dashboard`/`Mission checkpoint` next to `Học/Ôn/Tôi`) |
+| D7  | States are designed, not hoped for     | Empty/loading/error/degraded are the majority of real sessions                              | Each archetype defines all states incl. guest-degraded                                      | Guests see "done!" empty state; missing loading on `/me`,`/read`                  |
+| D8  | Mobile is the primary client           | ~30min/day mostly phone; can't speak aloud                                                  | Task card + bottom action bar; every voice task has tap/keyboard alternative                | 9px text; desktop-shrink grids; voice-only paths                                  |
 
 ---
 
@@ -109,16 +109,19 @@ Condensed; full derivations in `research/` syntheses. Each item: principle → p
 **Ghost refs:** `/challenge` (palette entry → 404), `/leaderboard` `/business` `/invite` `/certificate` (middleware/robots only).
 
 ### 6.2 Navigation model
+
 3 tabs — `Học`→`/dashboard`, `Ôn`→`/flashcards`, `Tôi`→`/me` — plus `/me` hub links to ~10 secondary surfaces, ⌘K palette, landing nav. Dead config: `mobilePanelGroups`, `mainNavItems`, `desktopMoreItems` (palette-only), `QuickActions`, `EfSetGoalTracker`, unused `EmptyState`.
 
 ### 6.3 Three lesson runtimes
-| Runtime | Lessons | Completion | Evidence |
-|---|---|---|---|
-| Mission (`MissionRunner`) | `unit-a0-1..6` | server-validated checkpoint | attempts via adapter (evidence nulled) |
-| Legacy (`UnitTemplate`) | `a0-7/8`, `unit-1..42` | `complete_unit_transaction` — whitelist 20 only | attempt-only, local score/stars |
-| Nếp (`zero-path`) | 7 contracts | no progress integration | canonical compile; durable write rejected |
+
+| Runtime                   | Lessons                | Completion                                      | Evidence                                  |
+| ------------------------- | ---------------------- | ----------------------------------------------- | ----------------------------------------- |
+| Mission (`MissionRunner`) | `unit-a0-1..6`         | server-validated checkpoint                     | attempts via adapter (evidence nulled)    |
+| Legacy (`UnitTemplate`)   | `a0-7/8`, `unit-1..42` | `complete_unit_transaction` — whitelist 20 only | attempt-only, local score/stars           |
+| Nếp (`zero-path`)         | 7 contracts            | no progress integration                         | canonical compile; durable write rejected |
 
 ### 6.4 Content model
+
 50 unit data files; `UNIT_VOCABULARY` unit-keyed (blocks cross-unit identity); `LessonSpecV1`/`MissionSpecV1` vs legacy `UnitData` — two content models; 686 MP3; 45-item placement; 26 grammar topics; tables incl. `cards` (real FSRS), `learning_attempts`, `learning_evidence_events`, `learner_skill_states`, `learner_known_words` (self-report, correctly scoped).
 
 ---
@@ -127,32 +130,32 @@ Condensed; full derivations in `research/` syntheses. Each item: principle → p
 
 Severity: BLOCKER / HIGH / MEDIUM / LOW.
 
-| Surface | Purpose | Primary problem | Severity |
-|---|---|---|---|
-| `/` | Landing | "50 units"/"học miễn phí" copy vs 1 guest lesson + 20 completable; dead `animate-fade-in` classes; `zinc-650` dead shades ×25 | HIGH |
-| `/login` | Auth+onboarding | Survey→CEFR mapping coarse but functional; rotating ✨ animation no reduced-motion | MEDIUM |
-| `/dashboard` | Home hub | 7 equal-weight cards — no single "continue" affordance; legacy visual language; `<a>` full reloads; dead `?mini=1` CTA | HIGH |
-| `/learn` | Catalog | Lists 6 pilot units, claims 50; due-transfer permanently empty (F3) | HIGH |
-| `/learn/[unitSlug]` | Lesson | Guest cliff after unit-a0-1; two runners (light Mission / always-dark UnitTemplate w/ broken light-mode `bg-card`+`text-white`) | BLOCKER (F1 under it) |
-| checkpoint/transfer | Validated gates | Chrome not hidden (split-brain); transfer gate redirect-trap via schema drift | BLOCKER |
-| `/flashcards` | Review | Real FSRS ✓; guests see misleading "done!" empty; `?mode=difficult` dead param; cards not keyboard-flippable | MEDIUM |
-| `/flashcards/hard` | Leech review | Links to dead param | LOW |
-| `/me` | Hub | Only nav surface for secondary routes — info-scent bottleneck | MEDIUM |
-| `/settings` | Config | Dead toggles `fontSize`/`showPhonetics` (stored, never consumed); "Theo hệ thống" theme that can't work (`enableSystem=false`); stale "Supabase" copy | MEDIUM |
-| `/progress` | Stats | Reads completion/XP, not evidence; duplicates dashboard | HIGH |
-| `/progress/weekly` | Report | Zero inbound links | LOW |
-| `/roadmap` | CEFR map | Unlock logic feeds from broken completion count; guest progress localStorage mixed with durable state undistinguished | HIGH |
-| `/placement-test` | Routing | 45 items, copy says 40; no listening/speaking; no uncertainty | MEDIUM |
-| `/checkpoint/[phase]` | Phase gates | a0–b2 decorative: persist nothing (early-return), unlock unreachable under F1 | HIGH |
-| `/quiz` | Vocab MCQ | Recognition-only; fine as practice, must not feed capability | LOW |
-| `/grammar` | Reference | OK as reference; `max-w-lg` ad hoc | LOW |
-| `/pronunciation` | IPA | Self-marked "mastered" localStorage; scorer disabled but copy claims AI | MEDIUM |
-| `/speaking/*` | Speaking hub | Shadowing fabricates transcript-as-speech into DB; roleplay/journal mock transcripts; privacy contradiction | BLOCKER (evidence) |
-| `/writing` | AI writing | Demo score 85 presented as AI feedback when no key | HIGH |
-| `/writing/history` | History | Hand-rolled states; fine otherwise | LOW |
-| `/read` | Reader | Best new surface; `stone-*` no dark variants; coverage not surfaced; only reachable via `/learn` banner | MEDIUM |
-| `/zero-path` | Pilot | Complete but orphaned, frozen scope | (flag) |
-| 404s | Errors | Two divergent designs, different destinations | LOW |
+| Surface               | Purpose         | Primary problem                                                                                                                                       | Severity              |
+| --------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| `/`                   | Landing         | "50 units"/"học miễn phí" copy vs 1 guest lesson + 20 completable; dead `animate-fade-in` classes; `zinc-650` dead shades ×25                         | HIGH                  |
+| `/login`              | Auth+onboarding | Survey→CEFR mapping coarse but functional; rotating ✨ animation no reduced-motion                                                                    | MEDIUM                |
+| `/dashboard`          | Home hub        | 7 equal-weight cards — no single "continue" affordance; legacy visual language; `<a>` full reloads; dead `?mini=1` CTA                                | HIGH                  |
+| `/learn`              | Catalog         | Lists 6 pilot units, claims 50; due-transfer permanently empty (F3)                                                                                   | HIGH                  |
+| `/learn/[unitSlug]`   | Lesson          | Guest cliff after unit-a0-1; two runners (light Mission / always-dark UnitTemplate w/ broken light-mode `bg-card`+`text-white`)                       | BLOCKER (F1 under it) |
+| checkpoint/transfer   | Validated gates | Chrome not hidden (split-brain); transfer gate redirect-trap via schema drift                                                                         | BLOCKER               |
+| `/flashcards`         | Review          | Real FSRS ✓; guests see misleading "done!" empty; `?mode=difficult` dead param; cards not keyboard-flippable                                          | MEDIUM                |
+| `/flashcards/hard`    | Leech review    | Links to dead param                                                                                                                                   | LOW                   |
+| `/me`                 | Hub             | Only nav surface for secondary routes — info-scent bottleneck                                                                                         | MEDIUM                |
+| `/settings`           | Config          | Dead toggles `fontSize`/`showPhonetics` (stored, never consumed); "Theo hệ thống" theme that can't work (`enableSystem=false`); stale "Supabase" copy | MEDIUM                |
+| `/progress`           | Stats           | Reads completion/XP, not evidence; duplicates dashboard                                                                                               | HIGH                  |
+| `/progress/weekly`    | Report          | Zero inbound links                                                                                                                                    | LOW                   |
+| `/roadmap`            | CEFR map        | Unlock logic feeds from broken completion count; guest progress localStorage mixed with durable state undistinguished                                 | HIGH                  |
+| `/placement-test`     | Routing         | 45 items, copy says 40; no listening/speaking; no uncertainty                                                                                         | MEDIUM                |
+| `/checkpoint/[phase]` | Phase gates     | a0–b2 decorative: persist nothing (early-return), unlock unreachable under F1                                                                         | HIGH                  |
+| `/quiz`               | Vocab MCQ       | Recognition-only; fine as practice, must not feed capability                                                                                          | LOW                   |
+| `/grammar`            | Reference       | OK as reference; `max-w-lg` ad hoc                                                                                                                    | LOW                   |
+| `/pronunciation`      | IPA             | Self-marked "mastered" localStorage; scorer disabled but copy claims AI                                                                               | MEDIUM                |
+| `/speaking/*`         | Speaking hub    | Shadowing fabricates transcript-as-speech into DB; roleplay/journal mock transcripts; privacy contradiction                                           | BLOCKER (evidence)    |
+| `/writing`            | AI writing      | Demo score 85 presented as AI feedback when no key                                                                                                    | HIGH                  |
+| `/writing/history`    | History         | Hand-rolled states; fine otherwise                                                                                                                    | LOW                   |
+| `/read`               | Reader          | Best new surface; `stone-*` no dark variants; coverage not surfaced; only reachable via `/learn` banner                                               | MEDIUM                |
+| `/zero-path`          | Pilot           | Complete but orphaned, frozen scope                                                                                                                   | (flag)                |
+| 404s                  | Errors          | Two divergent designs, different destinations                                                                                                         | LOW                   |
 
 ---
 
@@ -186,7 +189,7 @@ Severity: BLOCKER / HIGH / MEDIUM / LOW.
 
 **Current:** marketing shell → auth → 3-tab app where `Học` points at a dashboard, the actual catalog lives at `/learn` (one hop away, weak scent), review = flashcards only (read-saved words, speaking, writing don't surface in due-queue), progress scattered across 7 surfaces.
 
-**Failures:** (a) the tab model maps to *features* not *learner jobs* — "Học" is a dashboard of widgets, not "what do I do now"; (b) secondary surfaces are discoverable only via `/me` — an account page carrying content IA; (c) orphan routes prove no one owns the sitemap; (d) nav labels mix VI/EN; (e) guest and member IA differ structurally but the app pretends they don't.
+**Failures:** (a) the tab model maps to _features_ not _learner jobs_ — "Học" is a dashboard of widgets, not "what do I do now"; (b) secondary surfaces are discoverable only via `/me` — an account page carrying content IA; (c) orphan routes prove no one owns the sitemap; (d) nav labels mix VI/EN; (e) guest and member IA differ structurally but the app pretends they don't.
 
 **Conclusion:** keep the 3–4 tab shape (right for phone-first beginners) but re-map tabs to learner jobs and absorb or kill secondary surfaces.
 
@@ -206,16 +209,16 @@ Severity: BLOCKER / HIGH / MEDIUM / LOW.
 
 ## 11. Reference Product Analysis
 
-| Product | Take (mechanic + why it exists) | Don't take |
-|---|---|---|
-| **USA Learns** | Closest precedent: human-authored video → independent self-study pipeline (ORIENT→PREPARE→INPUT→COMPREHENSION→FOCUS→SUPPORTED→PRODUCTION→REFLECT); tri-state activity + next-incomplete pointer; record/replay/self-review unscored speaking | dated renderer; no causal efficacy proof for its architecture |
-| **Duolingo** | One-CTA continue; lesson-atomic sessions; free mistake re-queue | XP/streaks/leagues as capability (commissioned "efficacy" study conflict-flagged) |
-| **Anki/FSRS** | Due-queue semantics; relearn; ts-fsrs adapter already in repo | SRS maturity as proficiency |
-| **LingQ/Readlang** | Learner-owned text + tap-to-gloss + saved→review loop | known-words count as proficiency proxy |
-| **Language Reactor** | Dual-subs, sentence replay over authentic video | high-proficiency gate before authentic input |
-| **ELSA/Speak** | Visual articulatory feedback as hypothesis | unvalidated ASR scores as mastery |
-| **Busuu** | Clearest assessment separation: certs vs formative practice | — |
-| **Linear/Notion/GitHub** | Density discipline, one-command palette, semantic token rigor | aesthetic cloning |
+| Product                  | Take (mechanic + why it exists)                                                                                                                                                                                                              | Don't take                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **USA Learns**           | Closest precedent: human-authored video → independent self-study pipeline (ORIENT→PREPARE→INPUT→COMPREHENSION→FOCUS→SUPPORTED→PRODUCTION→REFLECT); tri-state activity + next-incomplete pointer; record/replay/self-review unscored speaking | dated renderer; no causal efficacy proof for its architecture                     |
+| **Duolingo**             | One-CTA continue; lesson-atomic sessions; free mistake re-queue                                                                                                                                                                              | XP/streaks/leagues as capability (commissioned "efficacy" study conflict-flagged) |
+| **Anki/FSRS**            | Due-queue semantics; relearn; ts-fsrs adapter already in repo                                                                                                                                                                                | SRS maturity as proficiency                                                       |
+| **LingQ/Readlang**       | Learner-owned text + tap-to-gloss + saved→review loop                                                                                                                                                                                        | known-words count as proficiency proxy                                            |
+| **Language Reactor**     | Dual-subs, sentence replay over authentic video                                                                                                                                                                                              | high-proficiency gate before authentic input                                      |
+| **ELSA/Speak**           | Visual articulatory feedback as hypothesis                                                                                                                                                                                                   | unvalidated ASR scores as mastery                                                 |
+| **Busuu**                | Clearest assessment separation: certs vs formative practice                                                                                                                                                                                  | —                                                                                 |
+| **Linear/Notion/GitHub** | Density discipline, one-command palette, semantic token rigor                                                                                                                                                                                | aesthetic cloning                                                                 |
 
 Bottom line already established by `PRODUCT_COMPARISON_AUDIT`: **our per-lesson rigor is the moat; scale and honesty-of-display are the gaps.**
 
@@ -247,21 +250,21 @@ ATOENGLISH
 
 Old→new mapping (KEEP / RESTRUCTURE / MERGE / MOVE / REMOVE):
 
-| Old | New role | Action |
-|---|---|---|
-| `/dashboard` | merge into `/learn` today-card | MERGE |
-| `/learn` | catalog + today | RESTRUCTURE |
-| `/flashcards` (+/hard) | `/review` single due-queue | MERGE |
-| `/progress`, `/progress/weekly` | `/me/progress` evidence view | MERGE+RENAME |
-| `/roadmap` | same, evidence-fed | KEEP shell, rewire data |
-| `/checkpoint/[phase]` | real item banks or delete | DECIDE (default REMOVE pending banks) |
-| `/quiz` | fold into review/practice modes | MERGE |
-| `/grammar`,`/pronunciation` | `/me/*` reference/practice | MOVE |
-| `/speaking/*`, `/writing*` | `/me/*` | MOVE (evidence fixes first) |
-| `/placement-test` | `/placement` provisional | RESTRUCTURE |
-| `/zero-path` | frozen pilot — keep unlinked or retire | OWNER DECISION |
-| `?mini`,`?mode=difficult`,`/challenge`,ghost routes | — | REMOVE |
-| `/read` | under HỌC tab (learners' material) | KEEP+promote |
+| Old                                                 | New role                               | Action                                |
+| --------------------------------------------------- | -------------------------------------- | ------------------------------------- |
+| `/dashboard`                                        | merge into `/learn` today-card         | MERGE                                 |
+| `/learn`                                            | catalog + today                        | RESTRUCTURE                           |
+| `/flashcards` (+/hard)                              | `/review` single due-queue             | MERGE                                 |
+| `/progress`, `/progress/weekly`                     | `/me/progress` evidence view           | MERGE+RENAME                          |
+| `/roadmap`                                          | same, evidence-fed                     | KEEP shell, rewire data               |
+| `/checkpoint/[phase]`                               | real item banks or delete              | DECIDE (default REMOVE pending banks) |
+| `/quiz`                                             | fold into review/practice modes        | MERGE                                 |
+| `/grammar`,`/pronunciation`                         | `/me/*` reference/practice             | MOVE                                  |
+| `/speaking/*`, `/writing*`                          | `/me/*`                                | MOVE (evidence fixes first)           |
+| `/placement-test`                                   | `/placement` provisional               | RESTRUCTURE                           |
+| `/zero-path`                                        | frozen pilot — keep unlinked or retire | OWNER DECISION                        |
+| `?mini`,`?mode=difficult`,`/challenge`,ghost routes | —                                      | REMOVE                                |
+| `/read`                                             | under HỌC tab (learners' material)     | KEEP+promote                          |
 
 ---
 
@@ -273,20 +276,20 @@ Old→new mapping (KEEP / RESTRUCTURE / MERGE / MOVE / REMOVE):
 
 ## 14. Page Archetypes
 
-| Archetype | Width | Structure | Pages |
-|---|---|---|---|
-| **Marketing** | section-based | own nav/footer, no app chrome | `/`, `/privacy`, `/terms` |
-| **Auth** | 420px centered | single card, one action | `/login`, callback states |
-| **Today/Home** | 680px | greeting line → ONE continue card → due-review row → collapsed "explore" | `/learn` top |
-| **Catalog** | 680px | phase-grouped unit list, status chips (locked/current/done), filter | `/learn` body, `/roadmap` |
-| **Session runner** | full-bleed, chrome hidden | phase rail (desktop) / progress hairline (mobile) → task card → bottom action bar; exit = `← Về Học` | all lesson/checkpoint/transfer |
-| **Reader** | 680px reading column | text + tap-gloss popover + side/bottom tools | `/read` |
-| **Queue** | 680px | due count header → card stack → summary | `/review` |
-| **Evidence report** | 680px | capability-by-mode table + support flags + "what this doesn't prove" footnote | `/me/progress` |
-| **Reference** | 680px prose | searchable sections | `/me/grammar` |
-| **Settings/Form** | 680px | labeled rows, working toggles only | `/me/settings` |
-| **Hub** | 680px | grouped link rows | `/me` |
-| **State components** | — | `EmptyState`, `ErrorState`, `LoadingSkeleton` (extract once; kill 19 error.tsx copies, ~20 skeletons) | all |
+| Archetype            | Width                     | Structure                                                                                             | Pages                          |
+| -------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------ |
+| **Marketing**        | section-based             | own nav/footer, no app chrome                                                                         | `/`, `/privacy`, `/terms`      |
+| **Auth**             | 420px centered            | single card, one action                                                                               | `/login`, callback states      |
+| **Today/Home**       | 680px                     | greeting line → ONE continue card → due-review row → collapsed "explore"                              | `/learn` top                   |
+| **Catalog**          | 680px                     | phase-grouped unit list, status chips (locked/current/done), filter                                   | `/learn` body, `/roadmap`      |
+| **Session runner**   | full-bleed, chrome hidden | phase rail (desktop) / progress hairline (mobile) → task card → bottom action bar; exit = `← Về Học`  | all lesson/checkpoint/transfer |
+| **Reader**           | 680px reading column      | text + tap-gloss popover + side/bottom tools                                                          | `/read`                        |
+| **Queue**            | 680px                     | due count header → card stack → summary                                                               | `/review`                      |
+| **Evidence report**  | 680px                     | capability-by-mode table + support flags + "what this doesn't prove" footnote                         | `/me/progress`                 |
+| **Reference**        | 680px prose               | searchable sections                                                                                   | `/me/grammar`                  |
+| **Settings/Form**    | 680px                     | labeled rows, working toggles only                                                                    | `/me/settings`                 |
+| **Hub**              | 680px                     | grouped link rows                                                                                     | `/me`                          |
+| **State components** | —                         | `EmptyState`, `ErrorState`, `LoadingSkeleton` (extract once; kill 19 error.tsx copies, ~20 skeletons) | all                            |
 
 Rules: one `<main id="main-content">` (fix ×9 duplication); every archetype defines empty/loading/error/guest-degraded states; skeletons match real widths.
 
@@ -314,7 +317,7 @@ Rules: one `<main id="main-content">` (fix ×9 duplication); every archetype def
 - **Motion:** framer-motion stays; add `useReducedMotion` wrapper + `prefers-reduced-motion` CSS; `transition-all` audit; decorative loops (flame, ✨) respect reduced-motion or die with gamification freeze.
 - **Icons:** lucide only; emoji out of chrome UI (may remain inside learning content as semantic content, not decoration).
 - **Fonts:** keep Plus Jakarta Sans (latin+vietnamese). Type scale: 34/28/22/17/15/13 — **floor 12px** (kill 9–11px microtext).
-- **Theme:** decide dark-mode policy: either commit (fix `ReaderClient` stone-*, `bg-card`+`text-white` lesson cards, `.dark` canvas override) or ship light-only and remove the toggle/setting. Recommendation: **light-first ship; dark returns after token migration is complete** — current dark is broken anyway.
+- **Theme:** decide dark-mode policy: either commit (fix `ReaderClient` stone-\*, `bg-card`+`text-white` lesson cards, `.dark` canvas override) or ship light-only and remove the toggle/setting. Recommendation: **light-first ship; dark returns after token migration is complete** — current dark is broken anyway.
 
 ---
 
@@ -339,12 +342,12 @@ From §4, the non-negotiable set for the redesign (each maps to UI):
 
 **Model:** `COURSE → PHASE (capability arc) → UNIT (can-do bundle) → LESSON (session contract) → ACTIVITY → ITEM`.
 
-- **Identity:** lessons keyed to *capability targets* (can-do statements), not just unit numbers. `cefr-action-contracts.ts` extended to all authored units — each unit declares its target capabilities + evidence requirements.
+- **Identity:** lessons keyed to _capability targets_ (can-do statements), not just unit numbers. `cefr-action-contracts.ts` extended to all authored units — each unit declares its target capabilities + evidence requirements.
 - **Edges typed:** `prerequisite | recommended | parallel | reinforcement | transfer`. Legacy list-order becomes `recommended` edges until real dependencies are authored; mission/transfer machinery provides `transfer` edges.
 - **Vocabulary:** lemma-level identity (`lemma_key`) replacing unit-keyed, enabling cross-unit SRS and coverage stats.
-- **Sequence rationale (replaces "lesson 1→50"):** A0 arc = the 6 gold missions + 2 legacy A0 reorganized around their can-do targets (greet/introduce, ask-answer personal info, numbers/time, food/order, directions, clarify/repair). Post-A0 units grouped into phases; each phase opens with input-rich lessons and closes with production + transfer probes; review interleaves prior-phase items (recycling, well-supported — *not* exotic interleaving claims).
+- **Sequence rationale (replaces "lesson 1→50"):** A0 arc = the 6 gold missions + 2 legacy A0 reorganized around their can-do targets (greet/introduce, ask-answer personal info, numbers/time, food/order, directions, clarify/repair). Post-A0 units grouped into phases; each phase opens with input-rich lessons and closes with production + transfer probes; review interleaves prior-phase items (recycling, well-supported — _not_ exotic interleaving claims).
 - **Content gates:** Human Content Gate (learner-facing English = authored/adapted/editor-approved); two-gate source rubric (quality score + rights class) from `simple-english` for any imported material.
-- **Honest ceiling:** current authored material ≈ on-ramp through A1-ish; the roadmap must *show* that boundary rather than claim B2 completion. Reader + saved→SRS is the stated scale path.
+- **Honest ceiling:** current authored material ≈ on-ramp through A1-ish; the roadmap must _show_ that boundary rather than claim B2 completion. Reader + saved→SRS is the stated scale path.
 
 ---
 
@@ -357,16 +360,16 @@ orientation → activation → gist → focus → notice
 → practice → retrieve → transfer → reflect → completed
 ```
 
-| Phase | UX state | UI pattern |
-|---|---|---|
-| orientation | can-do + time + challenge profile | one card, one CTA |
-| activation | prediction prompt | single input, never reveals summary |
-| gist | first pass, transcript hidden | player + hidden-transcript control |
-| focus/notice | 2–4 targets form↔meaning | side-by-side mini-cards |
-| practice | guided, supports available | task card + support ladder |
-| retrieve | target hidden, attempt required | attempt field, support locked until attempt |
-| transfer | changed-context item | new speaker/wording/context |
-| reflect | self-report only | 3-tap self-assessment, labeled self-report |
+| Phase        | UX state                          | UI pattern                                  |
+| ------------ | --------------------------------- | ------------------------------------------- |
+| orientation  | can-do + time + challenge profile | one card, one CTA                           |
+| activation   | prediction prompt                 | single input, never reveals summary         |
+| gist         | first pass, transcript hidden     | player + hidden-transcript control          |
+| focus/notice | 2–4 targets form↔meaning          | side-by-side mini-cards                     |
+| practice     | guided, supports available        | task card + support ladder                  |
+| retrieve     | target hidden, attempt required   | attempt field, support locked until attempt |
+| transfer     | changed-context item              | new speaker/wording/context                 |
+| reflect      | self-report only                  | 3-tap self-assessment, labeled self-report  |
 
 Learning state → evidence: `understood(gist+notice) → recalled(retrieve) → transferred(transfer) → retained(delayed probes via /review)`. Mistakes → in-session repair + due-queue. Resume → first unresolved item.
 
@@ -374,7 +377,7 @@ Learning state → evidence: `understood(gist+notice) → recalled(retrieve) →
 
 ## 20. Core User Journeys
 
-1. **First-time visitor:** `/` → value + honest scope → `Bắt đầu` → guest trial `unit-a0-1` (no wall) → first success → "save progress" → OAuth → provisional placement (short, confidence-flagged) → roadmap. *(Decision D-guest required, §26.)*
+1. **First-time visitor:** `/` → value + honest scope → `Bắt đầu` → guest trial `unit-a0-1` (no wall) → first success → "save progress" → OAuth → provisional placement (short, confidence-flagged) → roadmap. _(Decision D-guest required, §26.)_
 2. **Returning learner:** open `/learn` → Today card = continue at first unresolved item → due-review row → session → reflect → done.
 3. **Review:** `ÔN` badge → `/review` one queue (SRS cards + due transfer probes + repair re-attempts) → summary shows what was retained vs relearned.
 4. **Exploration:** `/learn` catalog or `/roadmap` → phase-grouped, status chips, locked reasons honest ("finish checkpoint" not "???").
@@ -414,7 +417,7 @@ Strangler pattern, evidence-first:
 1. **Truth layer first** — fix F1–F6 + regenerate `types/supabase.ts` before any redesign PR merges (a redesign over broken evidence is decorative).
 2. **Token migration** — promote `--minimal-*`, introduce semantic roles, then mechanically replace raw palette per archetype (each archetype = one migration PR, verifiable).
 3. **Route migration** — new IA lands behind redirects; old URLs 301 to new roles for one release cycle.
-4. **Runtime migration** — legacy `UnitTemplate` lessons get *wrapped* in the session contract adapter (sections→phases mapping exists conceptually: Khởi động→activation, Từ vựng/Ngữ pháp→focus/notice, Luyện tập→practice, Shadowing/Nói→retrieve/production) while Mission lessons natively match; new content authors directly in spec.
+4. **Runtime migration** — legacy `UnitTemplate` lessons get _wrapped_ in the session contract adapter (sections→phases mapping exists conceptually: Khởi động→activation, Từ vựng/Ngữ pháp→focus/notice, Luyện tập→practice, Shadowing/Nói→retrieve/production) while Mission lessons natively match; new content authors directly in spec.
 5. **Evidence backfill** — none. Old completion rows stay labeled "attempt/completion-era" and are never upgraded to evidence. Progress UI separates eras.
 6. **Feature freeze on closed scope** — gamification surfaces frozen during migration, then progressively hidden as evidence surfaces land.
 
@@ -422,42 +425,47 @@ Strangler pattern, evidence-first:
 
 ## 24. Refactor Order (dependency-ordered)
 
-| Phase | Objective | Depends on | Surfaces | Risk | Validation |
-|---|---|---|---|---|---|
-| **0 — Truth & types** | Regenerate `types/supabase.ts`; fix F1 (completable set), F3 (transfer queries), F5/F6 (checkpoint persistence + exclusive trusted path); decide F4 (trusted evaluator path vs attempt-only honesty); fix S3 fabrication + S4 privacy copy | none | DB, actions, `learn/*`, `speaking/*`, `writing` | schema migration risk | integration tests + pgTAP; production probe of evidence tables |
-| **1 — Product decisions** | Owner resolves: guest story (S5), `/zero-path` fate, checkpoint a0–b2 fate, dark-mode policy, evidence-era labeling | 0 | — | decision churn | recorded in §25/26 |
-| **2 — Foundations** | Semantic tokens + type/spacing scale + one `Button` primitive + extracted `ErrorState`/`EmptyState`/`Skeleton`; kill dead classes/toggles | 0,1 | globals.css, design-system/ | visual regression | per-archetype visual diff; lint for raw-palette ban |
-| **3 — Shell & IA** | New 4-tab nav + routes (`/review`, `/me/*` moves), single `<main>`, focus-mode runner shell, redirects | 1,2 | layout, nav, all routes | SEO/deep-links (minor: app, not content site) | route e2e + redirect tests |
-| **4 — Core learning experience** | Session contract runtime (phases, support ladder, provenance, item-resume); wrap legacy lessons; unify checkpoint/transfer in runner shell | 0,2,3 | `learn/*`, mission runner, UnitTemplate | largest — touches every lesson | session-contract tests; 50/50 content-standard; resume e2e |
-| **5 — Evidence surfaces** | `/review` unified queue; `/me/progress` evidence view; roadmap rewire to evidence; kill `current_level` display or reframe honestly | 0,4 | review, progress, roadmap, dashboard→learn merge | data migration + user mental-model shift | evidence-integrity tests; honest-label audit |
-| **6 — Curriculum restructure** | Capability contracts for all units; typed edges; lemma-level vocab identity; phase grouping; honest ceiling display | 4,5 | content model, registry | authoring workload | contract lint + coverage report |
-| **7 — Secondary surfaces** | Reader tokens/dark, grammar, pronunciation labels, placement restructure, speaking honesty labels | 2,3,5 | `/read`,`/me/*` | low | a11y + route tests |
-| **8 — Responsive & a11y hardening** | §21+§22 full pass; a11y e2e expansion | 4–7 | all | low | axe/e2e + manual keyboard run |
-| **9 — Polish & cleanup** | Remove dead routes/config/deps; copy corrections (50→truth, A0, privacy); visual polish | all | repo-wide | low | lint + full gates |
+| Phase                               | Objective                                                                                                                                                                                                                                  | Depends on | Surfaces                                         | Risk                                          | Validation                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------------------------------ | --------------------------------------------- | -------------------------------------------------------------- |
+| **0 — Truth & types**               | Regenerate `types/supabase.ts`; fix F1 (completable set), F3 (transfer queries), F5/F6 (checkpoint persistence + exclusive trusted path); decide F4 (trusted evaluator path vs attempt-only honesty); fix S3 fabrication + S4 privacy copy | none       | DB, actions, `learn/*`, `speaking/*`, `writing`  | schema migration risk                         | integration tests + pgTAP; production probe of evidence tables |
+| **1 — Product decisions**           | Owner resolves: guest story (S5), `/zero-path` fate, checkpoint a0–b2 fate, dark-mode policy, evidence-era labeling                                                                                                                        | 0          | —                                                | decision churn                                | recorded in §25/26                                             |
+| **2 — Foundations**                 | Semantic tokens + type/spacing scale + one `Button` primitive + extracted `ErrorState`/`EmptyState`/`Skeleton`; kill dead classes/toggles                                                                                                  | 0,1        | globals.css, design-system/                      | visual regression                             | per-archetype visual diff; lint for raw-palette ban            |
+| **3 — Shell & IA**                  | New 4-tab nav + routes (`/review`, `/me/*` moves), single `<main>`, focus-mode runner shell, redirects                                                                                                                                     | 1,2        | layout, nav, all routes                          | SEO/deep-links (minor: app, not content site) | route e2e + redirect tests                                     |
+| **4 — Core learning experience**    | Session contract runtime (phases, support ladder, provenance, item-resume); wrap legacy lessons; unify checkpoint/transfer in runner shell                                                                                                 | 0,2,3      | `learn/*`, mission runner, UnitTemplate          | largest — touches every lesson                | session-contract tests; 50/50 content-standard; resume e2e     |
+| **5 — Evidence surfaces**           | `/review` unified queue; `/me/progress` evidence view; roadmap rewire to evidence; kill `current_level` display or reframe honestly                                                                                                        | 0,4        | review, progress, roadmap, dashboard→learn merge | data migration + user mental-model shift      | evidence-integrity tests; honest-label audit                   |
+| **6 — Curriculum restructure**      | Capability contracts for all units; typed edges; lemma-level vocab identity; phase grouping; honest ceiling display                                                                                                                        | 4,5        | content model, registry                          | authoring workload                            | contract lint + coverage report                                |
+| **7 — Secondary surfaces**          | Reader tokens/dark, grammar, pronunciation labels, placement restructure, speaking honesty labels                                                                                                                                          | 2,3,5      | `/read`,`/me/*`                                  | low                                           | a11y + route tests                                             |
+| **8 — Responsive & a11y hardening** | §21+§22 full pass; a11y e2e expansion                                                                                                                                                                                                      | 4–7        | all                                              | low                                           | axe/e2e + manual keyboard run                                  |
+| **9 — Polish & cleanup**            | Remove dead routes/config/deps; copy corrections (50→truth, A0, privacy); visual polish                                                                                                                                                    | all        | repo-wide                                        | low                                           | lint + full gates                                              |
 
 ---
 
 ## 25. Risks
 
-| Risk | Mitigation |
-|---|---|
-| Phase 0 surfaces that "20 completable units" was the real product all along — user-facing scope shrinks visibly | Honest display: show 20 real + mark rest "đang xây dựng" — trust > apparent volume |
+| Risk                                                                                                               | Mitigation                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Phase 0 surfaces that "20 completable units" was the real product all along — user-facing scope shrinks visibly    | Honest display: show 20 real + mark rest "đang xây dựng" — trust > apparent volume                        |
 | Wrapping 44 legacy lessons in session contract reveals they're presentation-shaped with no retrieve/transfer items | Contract adapter supports "phase absent" honestly; don't fabricate retrieval items — flag gaps in catalog |
-| F4 resolution might choose "attempt-only" → planner/adaptive features permanently dead | Decision 1 records it; progress UI must not imply adaptation |
-| Token migration across ~185 files is mechanical but long | Per-archetype PRs + lint rule banning raw palette in migrated dirs |
-| Session contract may not fit reader/flashcard surfaces | Contract applies to *lessons*; reader/review keep own (already-honest) models — don't force one mold |
-| Dark-mode half-commitment persists | Phase 1 decides; blueprint recommends light-first |
+| F4 resolution might choose "attempt-only" → planner/adaptive features permanently dead                             | Decision 1 records it; progress UI must not imply adaptation                                              |
+| Token migration across ~185 files is mechanical but long                                                           | Per-archetype PRs + lint rule banning raw palette in migrated dirs                                        |
+| Session contract may not fit reader/flashcard surfaces                                                             | Contract applies to _lessons_; reader/review keep own (already-honest) models — don't force one mold      |
+| Dark-mode half-commitment persists                                                                                 | Phase 1 decides; blueprint recommends light-first                                                         |
 
 ---
 
-## 26. Open Questions & Blockers (owner decisions needed)
+## 26. Open Questions & Blockers
 
-1. **F4 evidence path:** trusted server-side evaluator writing `learning_evidence_events` directly (recommended — enables the whole evidence vision) vs accept attempt-only + downgrade claims? *Blocks Phases 4–6.*
-2. **Guest self-study scope:** one free lesson vs genuine guest progression (localStorage FSRS + merge-on-signup)? *Blocks Phase 3 IA + landing copy honesty.*
-3. **`/zero-path`:** retire, keep frozen-unlinked, or promote as the session-contract reference implementation? (It's the most honest surface and is orphaned.)
+**Resolved (owner, 2026-10-04):**
+
+1. ~~**F4 evidence path**~~ → **trusted server-side evaluator, implemented.** `private.record_learning_attempt_for` (user id as explicit param) + `public.record_learning_attempt_trusted` (service-role only); `recordNếpPracticeAttempt` routes evidence writes through `rpcService`, attempt-only writes stay on the Data API. Verified end-to-end on production.
+2. ~~**Guest self-study scope**~~ → **one trial lesson.** Guest = `unit-a0-1` only, then signup wall at checkpoint. Landing copy aligned ("bài đầu tiên không cần đăng nhập"); dead guest `nextRoute` branch wired through `MissionLessonTemplate`.
+3. ~~**`/zero-path`**~~ → **promote as canonical.** Its session contract becomes the reference runtime; MissionRunner/UnitTemplate merge into it in Phases 4–6 (Decision 4 applies with zero-path as the target contract).
+
+**Still open:**
+
 4. **Checkpoint a0–b2:** build real item banks (cost) or remove routes? Recommend remove until banks exist.
-5. **Unit-13..42 fate:** extend trusted completion, gate behind contracts, or mark preview? Recommend: completable set = units with real contracts; rest visibly "in build."
-6. **Oral evidence vs `responseText:null`** conflict — store hashed/transient transcript or scope invariant per-evaluator?
+5. **Unit-13..42 fate:** whitelist extended to all 50 on prod (Phase 0) — but do units without real contracts stay completable, or get marked "in build"? Revisit in Phase 6.
+6. ~~**Oral evidence vs `responseText:null`**~~ → resolved by F4: `has_observed_oral_response` accepts `responseSource:speech` + `responseLength>0` metadata; no transcript persisted.
 7. **Dark mode:** commit post-token-migration or light-only?
 8. **VAPID key rotation + Supabase/Vercel retirement** (infra, from prior audit — still open).
 
@@ -465,15 +473,15 @@ Strangler pattern, evidence-first:
 
 ## 27. Definition of Done (for the future refactor)
 
-- [ ] `types/supabase.ts` regenerated; zero schema-drift class bugs reachable.
-- [ ] Completable set = exactly the units with real contracts; guest/auth inversion gone.
-- [ ] `learning_evidence_events`/`learner_skill_states` written in production OR explicit attempt-only decision + claims downgraded everywhere.
-- [ ] One session contract drives all lessons; legacy wrapped or migrated; item-level resume.
+- [x] `types/supabase.ts` regenerated; zero schema-drift class bugs reachable. _(Phase 0 — `scripts/db-types.mjs` direct Neon introspection; 3 transfer drift errors found+fixed)_
+- [x] Completable set = exactly the units with real contracts; guest/auth inversion gone. _(Phase 0 — whitelist → 50 units + `complete_unit_transaction` service-role-only; contract-gating revisited in Phase 6)_
+- [x] `learning_evidence_events`/`learner_skill_states` written in production. _(F4 — `record_learning_attempt_trusted` + service path; verified live)_
+- [ ] One session contract drives all lessons; legacy wrapped or migrated; item-level resume. _(zero-path contract chosen as canonical target)_
 - [ ] 4-tab IA live; zero orphan routes; zero ghost nav entries.
 - [ ] One design system: semantic tokens only in `(main)`; one Button; extracted states; ≤2 content widths.
 - [ ] Progress shows capability-by-mode evidence with honest labels; no completion-as-level display.
-- [ ] Zero fabricated evidence paths (shadowing/writing/journal/roleplay honest or absent).
-- [ ] Privacy copy == actual data behavior.
+- [x] Zero fabricated evidence paths (shadowing/writing/journal/roleplay honest or absent). _(Phase 0 — dead transcript paths removed; demo score removed)_
+- [x] Privacy copy == actual data behavior. _(Phase 0)_
 - [ ] a11y: labels on all inputs, keyboard-complete interactions, reduced-motion, ≥12px, one `<main>`.
 - [ ] All existing gates green + new evidence-integrity tests.
 
@@ -481,50 +489,53 @@ Strangler pattern, evidence-first:
 
 ## Evidence Matrix
 
-| Finding | Evidence | Current problem | Proposed principle | Affected areas | Confidence |
-|---|---|---|---|---|---|
-| 20/50 units completable | RPC whitelist `20260907043000:53-68`; toast `UnitTemplate.tsx:540` | auth<guest inversion; invisible wall | completable = contract-bearing units | learn, roadmap, checkpoint | strong (code-verified) |
-| Level = count | `20260907043000:105-116` | B1/B2 unreachable; badge lies | level label from evidence or removed | progress, dashboard | strong |
-| Transfer dead via drift | queries vs canonical table; stale `types/supabase.ts` | redirect trap; no retention channel | regenerate types; fix or disable | transfer, learn, review | strong |
-| Evidence never persisted | `20260907033000:41-47` + adapter downgrade | planner blind; claims dishonest | trusted evaluator path (or honest attempt-only) | all evidence | strong |
-| Retrieval before reveal | Roediger & Karpicke; Dunlosky high-utility | legacy sections reveal-first | runtime attempt gate | session contract | strong |
-| Skill-task match | vidlish rules; corpus | shadowing/journal fabricate | policy whitelist; no llm_grade | speaking, writing | strong |
-| Spacing works; FSRS=scheduler | Cepeda meta; Kim & Webb; HLR paper | SRS state used as progress proxy | due-queue separate from mastery | review | strong |
-| Prompts>recasts; escalate cues | Lyster & Ranta; Lyster et al. 2013 | show-answer dominant | cue ladder + repair | feedback | strong direction |
-| L1 scaffolding principled | L1-gloss meta positive | ad hoc, unlogged | typed ladder + provenance | all learning | established |
-| ER+captions benefit | Nakanishi; Jeon & Day; Montero Perez | reader underused, no coverage signal | reader = scale channel + fit signal | read | strong |
-| Intelligibility>accent | Munro & Derwing; VN interference docs | phoneme copy overclaims | tiered targets; no scores till calibrated | pronunciation | established |
-| 4 visual languages; 74% raw | design audit counts | theme breakage structural | semantic tokens, one system | all UI | strong (measured) |
-| Focus mode works | USA Learns precedent; industry | chrome split-brain | session hides chrome | runner | established |
-| One dominant action | D1 rationale; beginner overload | 7-card dashboard | today=1 continue+1 review | learn home | established |
-| Placement w/ uncertainty | RQ-021 | exam-style, no uncertainty | provisional profile | placement | established |
-| Coverage=signal not gate | Nation/Webb & Rodgers | none (not surfaced) | per-text fit indicator | read | established |
-| Review interleaved/recycled | recycling well-supported; interleaving L2 weak | no due interleave | one queue mixing old+new | review | established |
-| VN interference targets | n=40 study; syllable study | no diagnostic layer | focused error set + perception-first | curriculum | strong tendencies |
-| WCAG 2.2 gaps | audit: labels×2, motion 0, microtext | structural a11y failures | §22 commitments | all | normative |
+| Finding                        | Evidence                                                           | Current problem                      | Proposed principle                              | Affected areas             | Confidence             |
+| ------------------------------ | ------------------------------------------------------------------ | ------------------------------------ | ----------------------------------------------- | -------------------------- | ---------------------- |
+| 20/50 units completable        | RPC whitelist `20260907043000:53-68`; toast `UnitTemplate.tsx:540` | auth<guest inversion; invisible wall | completable = contract-bearing units            | learn, roadmap, checkpoint | strong (code-verified) |
+| Level = count                  | `20260907043000:105-116`                                           | B1/B2 unreachable; badge lies        | level label from evidence or removed            | progress, dashboard        | strong                 |
+| Transfer dead via drift        | queries vs canonical table; stale `types/supabase.ts`              | redirect trap; no retention channel  | regenerate types; fix or disable                | transfer, learn, review    | strong                 |
+| Evidence never persisted       | `20260907033000:41-47` + adapter downgrade                         | planner blind; claims dishonest      | trusted evaluator path (or honest attempt-only) | all evidence               | strong                 |
+| Retrieval before reveal        | Roediger & Karpicke; Dunlosky high-utility                         | legacy sections reveal-first         | runtime attempt gate                            | session contract           | strong                 |
+| Skill-task match               | vidlish rules; corpus                                              | shadowing/journal fabricate          | policy whitelist; no llm_grade                  | speaking, writing          | strong                 |
+| Spacing works; FSRS=scheduler  | Cepeda meta; Kim & Webb; HLR paper                                 | SRS state used as progress proxy     | due-queue separate from mastery                 | review                     | strong                 |
+| Prompts>recasts; escalate cues | Lyster & Ranta; Lyster et al. 2013                                 | show-answer dominant                 | cue ladder + repair                             | feedback                   | strong direction       |
+| L1 scaffolding principled      | L1-gloss meta positive                                             | ad hoc, unlogged                     | typed ladder + provenance                       | all learning               | established            |
+| ER+captions benefit            | Nakanishi; Jeon & Day; Montero Perez                               | reader underused, no coverage signal | reader = scale channel + fit signal             | read                       | strong                 |
+| Intelligibility>accent         | Munro & Derwing; VN interference docs                              | phoneme copy overclaims              | tiered targets; no scores till calibrated       | pronunciation              | established            |
+| 4 visual languages; 74% raw    | design audit counts                                                | theme breakage structural            | semantic tokens, one system                     | all UI                     | strong (measured)      |
+| Focus mode works               | USA Learns precedent; industry                                     | chrome split-brain                   | session hides chrome                            | runner                     | established            |
+| One dominant action            | D1 rationale; beginner overload                                    | 7-card dashboard                     | today=1 continue+1 review                       | learn home                 | established            |
+| Placement w/ uncertainty       | RQ-021                                                             | exam-style, no uncertainty           | provisional profile                             | placement                  | established            |
+| Coverage=signal not gate       | Nation/Webb & Rodgers                                              | none (not surfaced)                  | per-text fit indicator                          | read                       | established            |
+| Review interleaved/recycled    | recycling well-supported; interleaving L2 weak                     | no due interleave                    | one queue mixing old+new                        | review                     | established            |
+| VN interference targets        | n=40 study; syllable study                                         | no diagnostic layer                  | focused error set + perception-first            | curriculum                 | strong tendencies      |
+| WCAG 2.2 gaps                  | audit: labels×2, motion 0, microtext                               | structural a11y failures             | §22 commitments                                 | all                        | normative              |
 
 ## Decision Log
 
-| # | Decision | Reason | Alternatives rejected | Evidence | Reversible? |
-|---|---|---|---|---|---|
-| 1 | Truth layer (F1–F6) before any visual phase | Redesign over broken evidence is decoration | Visual-first (faster perceived progress) | F-series audit | n/a — sequencing |
-| 2 | 4-tab IA (Học/Ôn/Lộ trình/Tôi) | Maps to learner jobs; phone-first; minimal change from 3-tab | Sidebar (desktop-bias); feature-tabs (status quo fails scent) | IA audit §9 | yes |
-| 3 | Extend design-system/ minimal kit | Most coherent existing layer; tokens already semantic | New system / Tailwind-raw cleanup (74% raw) | design audit | mostly |
-| 4 | One session contract, legacy wrapped not rewritten | Mission pattern already evidence-shaped; wrapper preserves 44 units' investment | Rewrite all to spec (huge cost); keep two runtimes (permanent split) | learning audit | partially |
-| 5 | Evidence separated from scheduler state | FSRS predicts recall, observes nothing else | SRS-as-mastery (status quo lie) | corpus §2.2 | n/a — boundary |
-| 6 | No `llm_grade` in v1 evaluation policies | Determinism + trust boundary | LLM grading (unverifiable at VN-A0 scale) | RQ-020, P11 | yes — can add gated |
-| 7 | Merge progress surfaces to one evidence view | S10: 7 partial views, none honest | Keep separate dashboards | IA audit | yes |
-| 8 | Gamification frozen → progressively hidden | Closed scope; contradicts differentiator | Remove now (migration noise); keep (positioning conflict) | PROJECT_STATE + comparison audit | yes |
-| 9 | Light-first theming | Dark is already broken (reader, lesson cards); token migration must precede either way | Fix dark now (doubles migration work) | design audit | yes |
-| 10 | Reader as the scale path under HỌC | Family-B gap is existential; authored = on-ramp | Pretend 50 units suffice; build /create import now (no infra) | comparison audit | yes |
+| #   | Decision                                            | Reason                                                                                 | Alternatives rejected                                                                  | Evidence                         | Reversible?                            |
+| --- | --------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------- | -------------------------------------- |
+| 1   | Truth layer (F1–F6) before any visual phase         | Redesign over broken evidence is decoration                                            | Visual-first (faster perceived progress)                                               | F-series audit                   | n/a — sequencing                       |
+| 2   | 4-tab IA (Học/Ôn/Lộ trình/Tôi)                      | Maps to learner jobs; phone-first; minimal change from 3-tab                           | Sidebar (desktop-bias); feature-tabs (status quo fails scent)                          | IA audit §9                      | yes                                    |
+| 3   | Extend design-system/ minimal kit                   | Most coherent existing layer; tokens already semantic                                  | New system / Tailwind-raw cleanup (74% raw)                                            | design audit                     | mostly                                 |
+| 4   | One session contract, legacy wrapped not rewritten  | Mission pattern already evidence-shaped; wrapper preserves 44 units' investment        | Rewrite all to spec (huge cost); keep two runtimes (permanent split)                   | learning audit                   | partially                              |
+| 5   | Evidence separated from scheduler state             | FSRS predicts recall, observes nothing else                                            | SRS-as-mastery (status quo lie)                                                        | corpus §2.2                      | n/a — boundary                         |
+| 6   | No `llm_grade` in v1 evaluation policies            | Determinism + trust boundary                                                           | LLM grading (unverifiable at VN-A0 scale)                                              | RQ-020, P11                      | yes — can add gated                    |
+| 7   | Merge progress surfaces to one evidence view        | S10: 7 partial views, none honest                                                      | Keep separate dashboards                                                               | IA audit                         | yes                                    |
+| 8   | Gamification frozen → progressively hidden          | Closed scope; contradicts differentiator                                               | Remove now (migration noise); keep (positioning conflict)                              | PROJECT_STATE + comparison audit | yes                                    |
+| 9   | Light-first theming                                 | Dark is already broken (reader, lesson cards); token migration must precede either way | Fix dark now (doubles migration work)                                                  | design audit                     | yes                                    |
+| 10  | Reader as the scale path under HỌC                  | Family-B gap is existential; authored = on-ramp                                        | Pretend 50 units suffice; build /create import now (no infra)                          | comparison audit                 | yes                                    |
+| 11  | Trusted evaluator over attempt-only (F4)            | Enables evidence vision; DB machinery already correct, only write path missing         | Attempt-only (permanent blind planner); GUC claims injection (STABLE fn pre-evaluates) | prod verification                | mostly — path exists, extend consumers |
+| 12  | Guest = one trial lesson                            | Honest scope; signup wall at checkpoint is intentional conversion                      | Guest progression (large surface, no evidence merge infra)                             | owner decision                   | yes                                    |
+| 13  | `/zero-path` promoted as canonical session contract | Most honest surface; already consumes trusted evidence path; avoids third runtime      | Keep frozen (orphan forever); retire (lose reference impl)                             | owner decision                   | hard to reverse — phased merge         |
 
 ## Assumption corrections (per mission rule 24)
 
-- *Assumed:* "50-unit curriculum." **Corrected:** 20 completable; catalog count is three different numbers depending which registry you ask.
-- *Assumed:* level badges reflect ability. **Corrected:** completion counts; B1/B2 unreachable.
-- *Assumed:* transfer/retention machinery works. **Corrected:** dead via schema drift since migration.
-- *Assumed:* `SecondaryPageShell` bounds secondary pages. **Corrected:** silently unbounded — each page self-constrains.
-- *Assumed:* "no speaking evidence" is a gap. **Corrected:** it's partially *dishonest* — fabrications exist at edges, which is worse than absent.
+- _Assumed:_ "50-unit curriculum." **Corrected:** 20 completable; catalog count is three different numbers depending which registry you ask.
+- _Assumed:_ level badges reflect ability. **Corrected:** completion counts; B1/B2 unreachable.
+- _Assumed:_ transfer/retention machinery works. **Corrected:** dead via schema drift since migration.
+- _Assumed:_ `SecondaryPageShell` bounds secondary pages. **Corrected:** silently unbounded — each page self-constrains.
+- _Assumed:_ "no speaking evidence" is a gap. **Corrected:** it's partially _dishonest_ — fabrications exist at edges, which is worse than absent.
 
 ## Exact first implementation step for the next mission
 
@@ -532,4 +543,4 @@ Strangler pattern, evidence-first:
 
 ---
 
-*Blueprint end. Next: owner decisions on §26, then Phase 0.*
+_Blueprint end. Next: owner decisions on §26, then Phase 0._
