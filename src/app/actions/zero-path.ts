@@ -22,6 +22,11 @@ import {
   startZeroPathSession,
   type ZeroPathSessionLookup,
 } from "@/lib/nep/zero-path-session-store.v1";
+import { completeUnit } from "@/app/actions/unit";
+import {
+  legacyContractLessonId,
+  resolveLegacyContract,
+} from "@/lib/nep/legacy-unit-contract.v1";
 import { createZeroPathSessionPersistence } from "@/lib/nep/zero-path-session-persistence";
 import { zeroPathLessonIndex } from "@/lib/nep/zero-path-pilot.v1";
 import { createRateLimiter } from "@/lib/security/rate-limit";
@@ -102,10 +107,13 @@ export async function startZeroPathPilotSession(
   const rateLimitCheck = await zeroPathStartLimiter.check(ip);
   if (!rateLimitCheck.success) return { sessionId: null };
 
-  const lesson = zeroPathLessonIndex().find(
-    (entry) => entry.lessonId === lessonId,
-  );
+  const lesson =
+    zeroPathLessonIndex().find((entry) => entry.lessonId === lessonId) ??
+    resolveLegacyContract(lessonId);
   if (!lesson) return { sessionId: null };
+  const resolvedLessonId = "lessonId" in lesson ? lesson.lessonId : lesson.id;
+  const resolvedLessonVersion =
+    "lessonVersion" in lesson ? lesson.lessonVersion : lesson.version;
 
   const supabase = await createClient();
   const {
@@ -115,8 +123,8 @@ export async function startZeroPathPilotSession(
   const { sessionId } = await startZeroPathSession({
     mode: mode === "review" ? "review" : "learn",
     userId: user?.id ?? null,
-    lessonId: lesson.lessonId,
-    lessonVersion: lesson.lessonVersion,
+    lessonId: resolvedLessonId,
+    lessonVersion: resolvedLessonVersion,
     persistence,
   });
   return { sessionId };
@@ -380,4 +388,59 @@ export async function getZeroPathReviewIndex(): Promise<ZeroPathReviewIndex> {
     .filter((row) => row.exerciseType.length > 0 && row.createdAt.length > 0);
 
   return { signedIn: true, states: deriveZeroPathReviewStates(attempts) };
+}
+
+/**
+ * Unit-completion bridge for legacy lessons running in the canonical session
+ * runtime. Stars are derived server-side from persisted submission outcomes —
+ * the client cannot claim a performance level.
+ *
+ * - Session must exist, belong to the caller, and match `legacy.<unitSlug>`.
+ * - Review-mode sessions never re-award unit XP.
+ * - Star ratio counts only evaluated outcomes (self-reports and rejected
+ *   submissions are ignored); units with no assessed actions award the
+ *   minimum honestly.
+ */
+export async function completeZeroPathUnitSession(
+  sessionId: string,
+  unitSlug: string,
+): Promise<{ success: boolean; error?: string }> {
+  const reqHeaders = await headers();
+  const ip =
+    reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+  const rateLimitCheck = await zeroPathLimiter.check(ip);
+  if (!rateLimitCheck.success) {
+    return { success: false, error: "Yêu cầu quá thường xuyên." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Bạn cần đăng nhập." };
+
+  const persistence = createZeroPathSessionPersistence(supabase);
+  const sessionRow = await persistence.getSession(sessionId);
+  if (!sessionRow || sessionRow.user_id !== user.id) {
+    return { success: false, error: "Phiên không hợp lệ." };
+  }
+  if (sessionRow.lesson_id !== legacyContractLessonId(unitSlug)) {
+    return { success: false, error: "Phiên không khớp bài học." };
+  }
+  if (sessionRow.mode !== "learn") return { success: true };
+
+  const submissions = await persistence.listSubmissions(sessionId);
+  const evaluated = submissions.filter((row) =>
+    ["attempt-only", "evidence", "invalid-evidence"].includes(row.outcome_kind),
+  );
+  const correct = evaluated.filter(
+    (row) =>
+      (row.outcome as { evaluation?: { success?: boolean } } | null)?.evaluation
+        ?.success === true,
+  ).length;
+  const ratio = evaluated.length > 0 ? correct / evaluated.length : 0;
+  const stars =
+    evaluated.length === 0 ? 1 : ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : 1;
+
+  return completeUnit(unitSlug, stars);
 }

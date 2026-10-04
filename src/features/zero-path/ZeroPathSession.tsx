@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import {
+  completeZeroPathUnitSession,
   getZeroPathReadModel,
   startZeroPathPilotSession,
   submitZeroPathResponse,
@@ -67,6 +69,7 @@ export function ZeroPathSession({
   lesson,
   mode = "learn",
   resume = null,
+  completion = null,
 }: {
   lesson: ZeroPathLessonEnvelope;
   /** Server-bound session mode: "review" marks attempts as delayed re-observation. */
@@ -76,6 +79,12 @@ export function ZeroPathSession({
    * action without a stored outcome, using the already-minted session id.
    */
   resume?: { sessionId: string; completedActionIds: readonly string[] } | null;
+  /**
+   * Legacy-unit completion bridge: when set, finishing the session awards the
+   * unit's XP via a server action that derives stars from persisted outcomes
+   * (never a client claim), and the summary shows a continue link.
+   */
+  completion?: { unitSlug: string; nextHref: string } | null;
 }) {
   const resumeIndex = resume
     ? lesson.actions.findIndex(
@@ -98,11 +107,27 @@ export function ZeroPathSession({
   const [model, setModel] = useState<ZeroPathSessionReadModel | null>(null);
   const actionStartedAt = useRef(0);
   const idempotencyKey = useRef(crypto.randomUUID());
+  const completionFired = useRef(false);
 
   useEffect(() => {
     actionStartedAt.current = Date.now();
     idempotencyKey.current = crypto.randomUUID();
   }, [index]);
+
+  // Award unit XP once when the summary read model loads. The server derives
+  // stars from persisted outcomes — the client only reports "session ended".
+  useEffect(() => {
+    if (
+      model &&
+      completion &&
+      sessionId &&
+      mode === "learn" &&
+      !completionFired.current
+    ) {
+      completionFired.current = true;
+      void completeZeroPathUnitSession(sessionId, completion.unitSlug);
+    }
+  }, [model, completion, sessionId, mode]);
 
   // Resumed sessions that already completed every action skip straight to
   // the read-model summary rather than replaying the final action.
@@ -182,7 +207,8 @@ export function ZeroPathSession({
     }
   }
 
-  if (model) return <SessionSummary model={model} />;
+  if (model)
+    return <SessionSummary model={model} nextHref={completion?.nextHref} />;
 
   if (!started) {
     return (
@@ -388,7 +414,13 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   );
 }
 
-function SessionSummary({ model }: { model: ZeroPathSessionReadModel }) {
+function SessionSummary({
+  model,
+  nextHref,
+}: {
+  model: ZeroPathSessionReadModel;
+  nextHref?: string;
+}) {
   return (
     <section className="space-y-5" aria-label="Bằng chứng buổi học">
       <h2 className="text-xl font-bold text-foreground">Bằng chứng buổi học</h2>
@@ -443,6 +475,14 @@ function SessionSummary({ model }: { model: ZeroPathSessionReadModel }) {
       <p className="text-xs text-muted-foreground">
         Đây là bằng chứng quan sát được, không phải điểm số hay mức thành thạo.
       </p>
+      {nextHref ? (
+        <Link
+          href={nextHref}
+          className="block w-full rounded-2xl bg-sky-500 px-5 py-3.5 text-center text-base font-bold text-white shadow-[0_3px_0_0_rgba(2,132,199,0.4)] transition hover:bg-sky-600 active:translate-y-0.5 active:shadow-none"
+        >
+          Tiếp tục
+        </Link>
+      ) : null}
     </section>
   );
 }

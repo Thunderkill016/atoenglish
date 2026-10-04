@@ -1,5 +1,6 @@
+import { resolveLegacyContract } from "./legacy-unit-contract.v1";
 import { nepLessonRegistryV1 } from "./lesson-registry.v1";
-import type { LessonAction } from "./lesson-contract";
+import type { LessonAction, LessonContract } from "./lesson-contract";
 
 /**
  * Zero-path pilot surface: learner-safe lesson envelopes.
@@ -62,9 +63,14 @@ export function zeroPathLessonIndex(): readonly ZeroPathLessonIndexEntry[] {
 export function zeroPathLessonEnvelope(
   lessonId: string = ZERO_PATH_PILOT_LESSON_ID,
 ): ZeroPathLessonEnvelope | null {
-  const lesson = nepLessonRegistryV1.find((item) => item.id === lessonId);
+  const lesson =
+    nepLessonRegistryV1.find((item) => item.id === lessonId) ??
+    resolveLegacyContract(lessonId);
   if (!lesson) return null;
+  return envelopeForContract(lesson);
+}
 
+function envelopeForContract(lesson: LessonContract): ZeroPathLessonEnvelope {
   return {
     lessonId: lesson.id,
     lessonVersion: lesson.version,

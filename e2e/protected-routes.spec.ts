@@ -17,16 +17,18 @@ const PROTECTED_ROUTES = [
   "/placement",
   "/checkpoint",
   "/quiz",
+  // Guests get exactly one trial lesson (unit-a0-1). Every other unit slug
+  // redirects via the page-level auth check, not the middleware prefix.
+  "/learn/unit-1",
 ];
 
 /**
  * Representative routes intentionally available to unauthenticated learners.
- * `/learn` is prefix-based in session.ts, so test both A0 and A1 lesson slugs.
+ * `/learn` is prefix-based in session.ts: only the trial lesson stays open.
  */
 const GUEST_SELF_STUDY_ROUTES = [
   "/learn",
   "/learn/unit-a0-1",
-  "/learn/unit-1",
   "/review",
   "/read",
 ];
