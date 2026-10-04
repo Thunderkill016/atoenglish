@@ -165,25 +165,25 @@ export default function PronunciationClient() {
   // V2 design-system colors (no inline styles)
   const DIFF = {
     easy: {
-      border: "border-emerald-500",
-      bg: "bg-emerald-500/10",
-      text: "text-emerald-500",
-      dot: "bg-emerald-500",
-      ring: "ring-emerald-500/50",
+      border: "border-primary",
+      bg: "bg-primary/10",
+      text: "text-primary",
+      dot: "bg-primary",
+      ring: "ring-primary/50",
     },
     medium: {
-      border: "border-amber-500",
-      bg: "bg-amber-500/10",
-      text: "text-amber-500",
-      dot: "bg-amber-500",
-      ring: "ring-amber-500/50",
+      border: "border-warning",
+      bg: "bg-warning/10",
+      text: "text-warning",
+      dot: "bg-warning",
+      ring: "ring-warning/50",
     },
     hard: {
-      border: "border-red-500",
-      bg: "bg-red-500/10",
-      text: "text-red-500",
-      dot: "bg-red-500",
-      ring: "ring-red-500/50",
+      border: "border-destructive",
+      bg: "bg-destructive/10",
+      text: "text-destructive",
+      dot: "bg-destructive",
+      ring: "ring-destructive/50",
     },
   } as const;
 
@@ -193,8 +193,8 @@ export default function PronunciationClient() {
     const d = DIFF[sound.difficulty];
     const baseCard =
       "rounded-xl p-2.5 flex flex-col items-center gap-0.5 border-2 relative transition-all active:scale-[0.985]";
-    const cardCls = `${baseCard} ${isSelected ? `${d.border} ${d.bg}` : isMastered ? "border-emerald-500/50 bg-emerald-500/5" : "border-border/60 bg-card"}`;
-    const symCls = `text-[22px] font-mono font-bold leading-none ${isSelected ? d.text : isMastered ? "text-emerald-400" : "text-foreground"}`;
+    const cardCls = `${baseCard} ${isSelected ? `${d.border} ${d.bg}` : isMastered ? "border-primary/50 bg-primary/5" : "border-border/60 bg-card"}`;
+    const symCls = `text-[22px] font-mono font-bold leading-none ${isSelected ? d.text : isMastered ? "text-primary" : "text-foreground"}`;
     return (
       <motion.button
         whileHover={{ scale: 1.04 }}
@@ -209,7 +209,7 @@ export default function PronunciationClient() {
         {isMastered && (
           <CheckCircle2
             size={10}
-            className="absolute top-1 right-1 text-emerald-500"
+            className="absolute top-1 right-1 text-primary"
           />
         )}
         <span className={symCls}>{sound.symbol}</span>
@@ -234,7 +234,7 @@ export default function PronunciationClient() {
               <span className="text-xs text-muted-foreground font-semibold">
                 Đã luyện (tự đánh dấu)
               </span>
-              <span className="text-xs text-emerald-500 font-bold">
+              <span className="text-xs text-primary font-bold">
                 {masteredCount}/{totalCount}
               </span>
             </div>
@@ -243,7 +243,7 @@ export default function PronunciationClient() {
                 initial={{ width: 0 }}
                 animate={{ width: `${(masteredCount / totalCount) * 100}%` }}
                 transition={{ duration: 0.6 }}
-                className="h-full bg-emerald-500 rounded-full"
+                className="h-full bg-primary rounded-full"
               />
             </div>
           </div>
@@ -407,7 +407,7 @@ export default function PronunciationClient() {
                   <button
                     onClick={() => speak(selected)}
                     disabled={isPlaying}
-                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-bold transition ${isPlaying ? "bg-muted border-border text-muted-foreground cursor-not-allowed" : "bg-emerald-500/10 border-emerald-500/40 text-emerald-500"}`}
+                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-bold transition ${isPlaying ? "bg-muted border-border text-muted-foreground cursor-not-allowed" : "bg-primary/10 border-primary/40 text-primary"}`}
                   >
                     <Volume2 size={15} />
                     {isPlaying ? "Đang phát..." : "Nghe"}
@@ -416,7 +416,7 @@ export default function PronunciationClient() {
                   {/* Record */}
                   <button
                     onClick={isRecording ? stopRecording : startRecording}
-                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-bold ${isRecording ? "bg-red-500/10 border-red-500/40 text-red-500" : "bg-blue-500/10 border-blue-500/40 text-blue-500"}`}
+                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-bold ${isRecording ? "bg-destructive/10 border-destructive/40 text-destructive" : "bg-primary/10 border-primary/40 text-primary"}`}
                   >
                     {isRecording ? <Square size={15} /> : <Mic size={15} />}
                     {isRecording ? "Dừng" : "Ghi âm"}
@@ -427,7 +427,7 @@ export default function PronunciationClient() {
                     <button
                       onClick={playRecording}
                       disabled={isPlayingBack}
-                      className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-bold ${isPlayingBack ? "bg-muted border-border text-muted-foreground cursor-not-allowed" : "bg-violet-500/10 border-violet-500/40 text-violet-500"}`}
+                      className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-bold ${isPlayingBack ? "bg-muted border-border text-muted-foreground cursor-not-allowed" : "bg-primary/10 border-primary/40 text-primary"}`}
                     >
                       <Play size={15} />
                       {isPlayingBack ? "..." : "Nghe lại"}
@@ -440,14 +440,14 @@ export default function PronunciationClient() {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-3 mb-3"
+                    className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 mb-3"
                   >
                     <motion.div
                       animate={{ scale: [1, 1.3, 1] }}
                       transition={{ repeat: Infinity, duration: 0.8 }}
-                      className="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0"
+                      className="w-2.5 h-2.5 rounded-full bg-destructive flex-shrink-0"
                     />
-                    <span className="text-xs text-red-500">
+                    <span className="text-xs text-destructive">
                       Đang ghi âm... Phát âm &quot;{selected.exampleWord}&quot;
                       rồi nhấn Dừng
                     </span>
@@ -466,13 +466,13 @@ export default function PronunciationClient() {
 
                 {/* Vietnamese tip */}
                 {selected.vietnameseTip && (
-                  <div className="flex gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 mb-3">
+                  <div className="flex gap-2.5 rounded-xl border border-warning/30 bg-warning/5 p-3 mb-3">
                     <AlertTriangle
                       size={15}
-                      className="text-amber-500 flex-shrink-0 mt-0.5"
+                      className="text-warning flex-shrink-0 mt-0.5"
                     />
                     <div>
-                      <div className="text-xs text-amber-500 font-bold mb-1">
+                      <div className="text-xs text-warning font-bold mb-1">
                         ⚠️ LỖI HAY GẶP (người Việt)
                       </div>
                       <p className="text-xs text-muted-foreground leading-snug m-0">
@@ -553,7 +553,7 @@ export default function PronunciationClient() {
                 {/* Self-reported practice marker — no auto scoring exists */}
                 <button
                   onClick={() => toggleMastered(selected.id)}
-                  className={`w-full flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-bold transition ${mastered.has(selected.id) ? "bg-emerald-500/10 border-emerald-500 text-emerald-500" : "bg-muted border-border/70 text-muted-foreground"}`}
+                  className={`w-full flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-bold transition ${mastered.has(selected.id) ? "bg-primary/10 border-primary text-primary" : "bg-muted border-border/70 text-muted-foreground"}`}
                 >
                   <CheckCircle2 size={16} />
                   {mastered.has(selected.id)

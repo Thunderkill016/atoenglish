@@ -128,7 +128,7 @@ export default async function LearnPage() {
     <div className="space-y-4">
       <Link
         href="/read"
-        className="mx-4 mt-4 flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 transition-colors hover:border-sky-400 sm:mx-auto sm:max-w-2xl"
+        className="mx-4 mt-4 flex items-center justify-between rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm text-primary transition-colors hover:border-primary sm:mx-auto sm:max-w-2xl"
       >
         <span className="font-medium">
           Đọc tiếng Anh — chạm từng từ để xem nghĩa và đánh dấu từ bạn biết
@@ -139,7 +139,7 @@ export default async function LearnPage() {
       {user ? (
         <div className="mx-4 space-y-4 sm:mx-auto sm:max-w-2xl">
           <header>
-            <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary">
               {vnGreeting()}
             </p>
             <h1 className="text-xl font-black tracking-tight text-foreground">

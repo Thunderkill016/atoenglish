@@ -4,7 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, RotateCcw, BookOpen, Sparkles, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { saveSpeakingSession, evaluateSpeakingSession } from "@/app/actions/speaking";
+import {
+  saveSpeakingSession,
+  evaluateSpeakingSession,
+} from "@/app/actions/speaking";
 import { toast } from "sonner";
 import { SpeechRecognitionFallback } from "@/lib/utils/speech-fallback";
 
@@ -57,7 +60,10 @@ interface SpeechRecognitionInstance {
   onstart?: () => void;
   onresult?: (event: {
     results: {
-      [key: number]: { [key: number]: { transcript: string }; isFinal: boolean };
+      [key: number]: {
+        [key: number]: { transcript: string };
+        isFinal: boolean;
+      };
       length: number;
     };
   }) => void;
@@ -87,7 +93,7 @@ export function JournalMode() {
   }, [transcript]);
 
   const randomizeTopic = () => {
-    const remaining = JOURNAL_TOPICS.filter(t => t !== topic);
+    const remaining = JOURNAL_TOPICS.filter((t) => t !== topic);
     setTopic(remaining[Math.floor(Math.random() * remaining.length)]);
     setTranscript("");
     setAiEvaluation(null);
@@ -109,12 +115,21 @@ export function JournalMode() {
     recognition.onstart = () => {
       if (isMountedRef.current) setState("listening");
     };
-    recognition.onresult = (event: { results: { [key: number]: { [key: number]: { transcript: string }; isFinal: boolean }; length: number } }) => {
+    recognition.onresult = (event: {
+      results: {
+        [key: number]: {
+          [key: number]: { transcript: string };
+          isFinal: boolean;
+        };
+        length: number;
+      };
+    }) => {
       if (!isMountedRef.current) return;
       let final = "";
       let interim = "";
       for (let i = 0; i < event.results.length; i++) {
-        if (event.results[i].isFinal) final += event.results[i][0].transcript + " ";
+        if (event.results[i].isFinal)
+          final += event.results[i][0].transcript + " ";
         else interim += event.results[i][0].transcript;
       }
       setTranscript(final + interim);
@@ -148,7 +163,10 @@ export function JournalMode() {
     setIsEvaluating(true);
     let savedTranscript = transcript.trim();
     try {
-      const evalRes = await evaluateSpeakingSession("journal", transcript.trim());
+      const evalRes = await evaluateSpeakingSession(
+        "journal",
+        transcript.trim(),
+      );
       if (evalRes.success && evalRes.feedback) {
         setAiEvaluation(evalRes.feedback);
         savedTranscript = `${transcript.trim()}\n\n=== ĐÁNH GIÁ CHI TIẾT TỪ AI ===\n${evalRes.feedback}`;
@@ -171,15 +189,29 @@ export function JournalMode() {
       });
       if (!isMountedRef.current) return;
       if (res.success) {
-        toast.success(res.xpEarned ? `Đã lưu nhật ký! +${res.xpEarned} XP` : "Đã lưu nhật ký nói!");
-        setSavedCount(p => p + 1);
+        toast.success(
+          res.xpEarned
+            ? `Đã lưu nhật ký! +${res.xpEarned} XP`
+            : "Đã lưu nhật ký nói!",
+        );
+        setSavedCount((p) => p + 1);
         if (!res.xpEarned) {
           // Guest local history viz (TASK-152)
           try {
             const key = "guest_speaking_sessions";
             const prev = JSON.parse(localStorage.getItem(key) || "[]");
-            const entry = { id: `guest-${Date.now()}`, practice_type: "journal" as const, duration: Math.round(wordCount * 0.5), accuracy_score: null, scenario_id: null, created_at: new Date().toISOString() };
-            localStorage.setItem(key, JSON.stringify([entry, ...prev].slice(0, 20)));
+            const entry = {
+              id: `guest-${Date.now()}`,
+              practice_type: "journal" as const,
+              duration: Math.round(wordCount * 0.5),
+              accuracy_score: null,
+              scenario_id: null,
+              created_at: new Date().toISOString(),
+            };
+            localStorage.setItem(
+              key,
+              JSON.stringify([entry, ...prev].slice(0, 20)),
+            );
           } catch {}
         }
       } else {
@@ -218,10 +250,12 @@ export function JournalMode() {
       <div className="rounded-3xl border border-border/60 bg-card p-4 sm:p-6 space-y-3 sm:space-y-4 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1 flex-1">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary uppercase tracking-widest">
               <BookOpen className="size-3.5" /> Chủ đề hôm nay
             </span>
-            <p className="text-base sm:text-lg font-black text-foreground leading-snug">{topic}</p>
+            <p className="text-base sm:text-lg font-black text-foreground leading-snug">
+              {topic}
+            </p>
           </div>
           <button
             onClick={randomizeTopic}
@@ -232,7 +266,7 @@ export function JournalMode() {
         </div>
 
         {savedCount > 0 && (
-          <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
+          <div className="text-xs text-primary font-bold bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20">
             ✓ Đã lưu {savedCount} nhật ký trong phiên này
           </div>
         )}
@@ -245,7 +279,7 @@ export function JournalMode() {
           <div className="relative">
             {state === "listening" && (
               <motion.div
-                className="absolute inset-0 rounded-full bg-red-500/20"
+                className="absolute inset-0 rounded-full bg-destructive/20"
                 animate={{ scale: [1, 1.6, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               />
@@ -255,10 +289,10 @@ export function JournalMode() {
               disabled={state === "processing"}
               className={`relative flex size-20 items-center justify-center rounded-full transition-all duration-300 shadow-xl ${
                 state === "listening"
-                  ? "bg-gradient-to-r from-red-500 to-rose-600 text-white border-none"
+                  ? "bg-gradient-to-r from-destructive to-destructive text-white border-none"
                   : state === "done"
-                  ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-none"
-                  : "bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-none hover:scale-105 active:scale-95"
+                    ? "bg-gradient-to-r from-primary to-primary text-white border-none"
+                    : "bg-gradient-to-r from-primary to-primary text-white border-none hover:scale-105 active:scale-95"
               }`}
             >
               {state === "listening" ? (
@@ -271,7 +305,9 @@ export function JournalMode() {
           <p className="text-xs font-bold text-muted-foreground text-center">
             {state === "idle" && "Nhấn mic để bắt đầu nói tự do"}
             {state === "listening" && (
-              <span className="text-red-500 animate-pulse">● Đang ghi âm... nhấn để dừng</span>
+              <span className="text-destructive animate-pulse">
+                ● Đang ghi âm... nhấn để dừng
+              </span>
             )}
             {state === "processing" && "Đang xử lý..."}
             {state === "done" && `${wordCount} từ đã nói`}
@@ -291,9 +327,13 @@ export function JournalMode() {
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                   <Sparkles className="size-3.5 text-primary" /> Transcript
                 </span>
-                <span className="text-xs font-mono text-muted-foreground">{wordCount} words</span>
+                <span className="text-xs font-mono text-muted-foreground">
+                  {wordCount} words
+                </span>
               </div>
-              <p className="text-sm text-foreground leading-relaxed">{transcript}</p>
+              <p className="text-sm text-foreground leading-relaxed">
+                {transcript}
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -307,7 +347,7 @@ export function JournalMode() {
           >
             <Button
               onClick={handleSave}
-              className="w-full sm:flex-1 h-11 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl font-bold text-sm shadow-md shadow-emerald-500/10 active:scale-[0.98]"
+              className="w-full sm:flex-1 h-11 bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white rounded-xl font-bold text-sm shadow-md shadow-primary/10 active:scale-[0.98]"
             >
               <Send className="size-4 mr-2" /> Lưu nhật ký
             </Button>
@@ -325,13 +365,15 @@ export function JournalMode() {
       {isEvaluating && (
         <div className="rounded-3xl border border-border/60 bg-card p-5 text-center space-y-3 shadow-sm animate-pulse">
           <div className="inline-block size-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs text-muted-foreground">AI Tutor đang phân tích bài viết của bạn...</p>
+          <p className="text-xs text-muted-foreground">
+            AI Tutor đang phân tích bài viết của bạn...
+          </p>
         </div>
       )}
 
       {aiEvaluation && (
         <div className="rounded-3xl border border-border/60 bg-card p-5 space-y-3 shadow-sm">
-          <h4 className="font-extrabold text-xs uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+          <h4 className="font-extrabold text-xs uppercase tracking-widest text-primary flex items-center gap-1.5">
             <Sparkles className="size-3.5" />
             Nhận xét từ AI Tutor
           </h4>

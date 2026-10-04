@@ -761,7 +761,7 @@ export function ShadowingPractice() {
               return (
                 <span
                   key={index}
-                  className="inline-block px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20 underline decoration-amber-500/30 cursor-help relative group"
+                  className="inline-block px-1.5 py-0.5 rounded bg-warning/10 text-warning font-bold border border-warning/20 underline decoration-warning/30 cursor-help relative group"
                 >
                   {part}
                   <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 text-xs text-white bg-foreground/95 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 font-normal shadow-md">
@@ -804,8 +804,8 @@ export function ShadowingPractice() {
               key={index}
               className={`inline-block px-1 py-0.5 rounded transition-all duration-300 font-bold ${
                 isCorrect
-                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20"
-                  : "text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20"
+                  ? "text-primary bg-primary/10 border border-primary/20"
+                  : "text-destructive bg-destructive/10 border border-destructive/20"
               }`}
             >
               {part}
@@ -939,7 +939,7 @@ export function ShadowingPractice() {
             variant={isPlayingNative ? "secondary" : "outline"}
             className={`w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 rounded-2xl sm:rounded-xl font-bold text-xs uppercase tracking-wider gap-2 border-border/60 active:scale-[0.98] transition-all flex items-center justify-center ${
               isPlayingNative
-                ? "bg-violet-600 text-white hover:bg-violet-700 hover:text-white"
+                ? "bg-primary text-white hover:bg-primary hover:text-white"
                 : "bg-card hover:bg-muted/50 text-foreground"
             }`}
           >
@@ -985,18 +985,18 @@ export function ShadowingPractice() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:justify-between gap-4 shadow-sm ${
                   accuracyScore >= 80
-                    ? "bg-emerald-500/5 border-emerald-500/20"
+                    ? "bg-primary/5 border-primary/20"
                     : accuracyScore >= 50
-                      ? "bg-amber-500/5 border-amber-500/20"
-                      : "bg-red-500/5 border-red-500/20"
+                      ? "bg-warning/5 border-warning/20"
+                      : "bg-destructive/5 border-destructive/20"
                 }`}
               >
                 <div className="space-y-1 text-center sm:text-left">
                   <div className="flex items-center gap-2 justify-center sm:justify-start">
                     {accuracyScore >= 80 ? (
-                      <CheckCircle className="size-5 text-emerald-500" />
+                      <CheckCircle className="size-5 text-primary" />
                     ) : (
-                      <AlertTriangle className="size-5 text-amber-500" />
+                      <AlertTriangle className="size-5 text-warning" />
                     )}
                     <span className="text-sm font-bold text-foreground">
                       Kết quả shadowing
@@ -1015,17 +1015,14 @@ export function ShadowingPractice() {
                     </div>
                   )}
                   {missingCodas.length > 0 && (
-                    <div className="mt-3 p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-400 text-xs space-y-1.5 shadow-sm">
+                    <div className="mt-3 p-4 rounded-2xl border border-warning/20 bg-warning/5 text-warning text-xs space-y-1.5 shadow-sm">
                       <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
-                        <AlertTriangle className="size-4 animate-bounce text-amber-500" />
+                        <AlertTriangle className="size-4 animate-bounce text-warning" />
                         Nghi ngờ thiếu âm cuối (theo transcript)
                       </div>
                       <ul className="list-disc list-inside space-y-1 font-semibold pl-1">
                         {missingCodas.map((warning, i) => (
-                          <li
-                            key={i}
-                            className="text-foreground/90 dark:text-zinc-200"
-                          >
+                          <li key={i} className="text-foreground/90">
                             {warning}
                           </li>
                         ))}
@@ -1035,16 +1032,13 @@ export function ShadowingPractice() {
 
                   {/* Best-practice L1 feedback from advanced analyzer (autopilot applied) */}
                   {analysisTips.length > 0 && (
-                    <div className="mt-3 p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 text-xs space-y-1.5 shadow-sm">
+                    <div className="mt-3 p-4 rounded-2xl border border-primary/20 bg-primary/5 text-primary text-xs space-y-1.5 shadow-sm">
                       <div className="font-bold uppercase tracking-wider">
                         Mẹo dành riêng cho người Việt (phân tích cục bộ)
                       </div>
                       <ul className="list-disc list-inside space-y-0.5 pl-1">
                         {analysisTips.map((tip: string, i: number) => (
-                          <li
-                            key={i}
-                            className="text-foreground/90 dark:text-zinc-200"
-                          >
+                          <li key={i} className="text-foreground/90">
                             {tip}
                           </li>
                         ))}
@@ -1057,10 +1051,10 @@ export function ShadowingPractice() {
                   <span
                     className={`text-2xl sm:text-3xl font-black ${
                       accuracyScore >= 80
-                        ? "text-emerald-600 dark:text-emerald-400"
+                        ? "text-primary"
                         : accuracyScore >= 50
-                          ? "text-amber-500"
-                          : "text-red-500"
+                          ? "text-warning"
+                          : "text-destructive"
                     }`}
                   >
                     {accuracyScore}%
@@ -1081,8 +1075,8 @@ export function ShadowingPractice() {
                 onClick={isRecording ? stopRecording : startRecording}
                 className={`w-full sm:w-auto h-12 px-8 rounded-2xl font-bold transition-all duration-300 gap-2 flex items-center justify-center ${
                   isRecording
-                    ? "bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-lg shadow-red-500/20"
-                    : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
+                    ? "bg-destructive hover:bg-destructive text-white animate-pulse shadow-lg shadow-destructive/20"
+                    : "bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white shadow-lg shadow-primary/20 active:scale-[0.98]"
                 }`}
               >
                 {isRecording ? (
@@ -1105,7 +1099,7 @@ export function ShadowingPractice() {
                   variant={isPlayingRecorded ? "secondary" : "outline"}
                   className={`w-full sm:w-auto h-12 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider gap-2 border-border/60 active:scale-[0.98] transition-all flex items-center justify-center ${
                     isPlayingRecorded
-                      ? "bg-violet-600 text-white hover:bg-violet-700 hover:text-white"
+                      ? "bg-primary text-white hover:bg-primary hover:text-white"
                       : "bg-card hover:bg-muted/50 text-foreground"
                   }`}
                 >
@@ -1141,12 +1135,12 @@ export function ShadowingPractice() {
 
             {/* Waveform Animation for Recording */}
             {isRecording && (
-              <div className="flex items-center gap-1.5 h-6 px-3 bg-red-500/5 rounded-full border border-red-500/10">
+              <div className="flex items-center gap-1.5 h-6 px-3 bg-destructive/5 rounded-full border border-destructive/10">
                 {([18, 10, 24, 8, 20, 14, 26, 12, 22, 16] as const).map(
                   (maxH, i) => (
                     <motion.div
                       key={i}
-                      className="w-1 bg-red-500 rounded-full"
+                      className="w-1 bg-destructive rounded-full"
                       animate={{ height: [6, maxH, 6] }}
                       transition={{
                         duration: 0.4 + (i % 5) * 0.06,

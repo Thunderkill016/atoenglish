@@ -177,9 +177,7 @@ export default function PlacementTestClient() {
                   <div className="text-sm font-black text-foreground">
                     {s.count}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {s.label}
-                  </div>
+                  <div className="text-xs text-muted-foreground">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -359,17 +357,14 @@ export default function PlacementTestClient() {
                     >
                       <div className="shrink-0 mt-0.5">
                         {correct ? (
-                          <CheckCircle2
-                            size={14}
-                            className="text-emerald-500"
-                          />
+                          <CheckCircle2 size={14} className="text-primary" />
                         ) : (
-                          <XCircle size={14} className="text-red-500" />
+                          <XCircle size={14} className="text-destructive" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div
-                          className={`text-xs font-bold mb-0.5 ${correct ? "text-emerald-500" : "text-red-500"}`}
+                          className={`text-xs font-bold mb-0.5 ${correct ? "text-primary" : "text-destructive"}`}
                         >
                           {`Q${q.id}`} · {SKILL_LABEL[q.skill]} · {q.level}
                         </div>
@@ -381,7 +376,7 @@ export default function PlacementTestClient() {
                         {!correct && (
                           <div className="text-xs text-muted-foreground leading-snug">
                             ✓{" "}
-                            <span className="text-emerald-500">
+                            <span className="text-primary">
                               {q.options[q.correctAnswer]}
                             </span>
                             {" · "}
@@ -396,7 +391,7 @@ export default function PlacementTestClient() {
             )}
 
             {saveError && (
-              <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2.5 mb-3.5 text-xs text-red-500">
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2.5 mb-3.5 text-xs text-destructive">
                 ⚠️ {saveError} — Level đã tính xong nhưng chưa lưu được DB.
               </div>
             )}

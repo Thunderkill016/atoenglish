@@ -19,7 +19,7 @@ export default function WritingError({
 
   return (
     <div className="relative flex min-h-[60vh] flex-col items-center justify-center px-4 text-center space-y-6">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-64 w-64 rounded-full bg-red-500/5 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-64 w-64 rounded-full bg-destructive/5 blur-3xl pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -27,7 +27,7 @@ export default function WritingError({
         transition={{ duration: 0.3 }}
         className="space-y-6 max-w-sm"
       >
-        <div className="flex size-16 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 mx-auto border border-red-500/20">
+        <div className="flex size-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive mx-auto border border-destructive/20">
           <AlertTriangle className="size-8" />
         </div>
 

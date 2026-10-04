@@ -90,8 +90,8 @@ export default function SpeakingPage() {
                   <span
                     className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase shrink-0 ${
                       session.practice_type === "shadowing"
-                        ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                        : "bg-violet-500/10 text-violet-600 border border-violet-500/20"
+                        ? "bg-warning/10 text-warning border border-warning/20"
+                        : "bg-primary/10 text-primary border border-primary/20"
                     }`}
                   >
                     {session.practice_type}
@@ -107,7 +107,7 @@ export default function SpeakingPage() {
                 </div>
                 {session.accuracy_score !== null && (
                   <span
-                    className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono shrink-0"
+                    className="font-extrabold text-primary font-mono shrink-0"
                     title="Độ khớp transcript với bản mẫu — không phải điểm phát âm"
                   >
                     {session.accuracy_score}%

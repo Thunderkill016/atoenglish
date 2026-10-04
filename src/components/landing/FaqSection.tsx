@@ -51,25 +51,29 @@ export default function FaqSection() {
   };
 
   return (
-    <section id="faq" className="py-24 sm:py-32 px-5 sm:px-8 border-t border-zinc-200/40 dark:border-zinc-800/40 relative">
+    <section
+      id="faq"
+      className="py-24 sm:py-32 px-5 sm:px-8 border-t border-border/40 relative"
+    >
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-[40%] right-[-10%] w-[350px] h-[350px] rounded-full bg-emerald-500/3 dark:bg-emerald-500/1 blur-[100px]" />
+        <div className="absolute top-[40%] right-[-10%] w-[350px] h-[350px] rounded-full bg-primary/3 blur-[100px]" />
       </div>
 
       <div className="max-w-4xl mx-auto space-y-16">
         {/* Section Header */}
         <ScrollReveal className="text-center space-y-4">
           <div className="flex justify-center">
-            {/* Fix: border-emerald-250/20 → border-emerald-200/30 (emerald-250 doesn't exist) */}
-            <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/30 shadow-sm">
+            {/* Fix: border-primary/40/20 → border-primary/40/30 (emerald-250 doesn't exist) */}
+            <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/40/30 shadow-sm">
               <HelpCircle className="size-5.5" />
             </span>
           </div>
-          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-900 dark:text-zinc-50 leading-normal">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-foreground leading-normal">
             Giải đáp thắc mắc
           </h2>
-          <p className="text-base sm:text-lg text-zinc-650 dark:text-zinc-350 max-w-xl mx-auto leading-relaxed font-normal">
-            Những câu hỏi thường gặp giúp bạn yên tâm bắt đầu hành trình học nói tiếng Anh.
+          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed font-normal">
+            Những câu hỏi thường gặp giúp bạn yên tâm bắt đầu hành trình học nói
+            tiếng Anh.
           </p>
         </ScrollReveal>
 
@@ -79,7 +83,7 @@ export default function FaqSection() {
             const isOpen = openIndex === idx;
             return (
               <ScrollReveal key={idx} delayMs={idx * 75}>
-                <div className="rounded-2xl border border-zinc-200/60 dark:border-zinc-800/50 bg-white/70 dark:bg-zinc-900/15 backdrop-blur-sm shadow-sm overflow-hidden hover:border-emerald-500/20 dark:hover:border-emerald-500/10 transition-colors duration-200">
+                <div className="rounded-2xl border border-border/60 bg-white/70 backdrop-blur-sm shadow-sm overflow-hidden hover:border-primary/20 transition-colors duration-200">
                   {/* Fix: added aria-expanded + aria-controls for accessibility */}
                   <button
                     onClick={() => toggleFaq(idx)}
@@ -87,28 +91,28 @@ export default function FaqSection() {
                     aria-controls={`faq-answer-${idx}`}
                     className="w-full flex items-center justify-between p-5 sm:p-6 text-left select-none group"
                   >
-                    <span className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-50 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors duration-200">
+                    <span className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors duration-200">
                       {faq.q}
                     </span>
                     <ChevronDown
-                      className={`size-5 text-zinc-400 shrink-0 transition-transform duration-300 ${
-                        isOpen ? "rotate-180 text-emerald-600 dark:text-emerald-400" : ""
+                      className={`size-5 text-muted-foreground shrink-0 transition-transform duration-300 ${
+                        isOpen ? "rotate-180 text-primary" : ""
                       }`}
                     />
                   </button>
 
                   {/* Fix: grid-rows technique instead of max-h hack for smooth animation */}
-                  {/* Fix: border-zinc-150 / zinc-850 → zinc-200 / zinc-800 (non-existent classes) */}
+                  {/* Fix: border-border / zinc-850 → zinc-200 / zinc-800 (non-existent classes) */}
                   <div
                     id={`faq-answer-${idx}`}
                     className={`grid transition-all duration-300 ease-in-out ${
                       isOpen
-                        ? "grid-rows-[1fr] border-t border-zinc-200 dark:border-zinc-800"
+                        ? "grid-rows-[1fr] border-t border-border"
                         : "grid-rows-[0fr]"
                     }`}
                   >
                     <div className="overflow-hidden">
-                      <p className="p-5 sm:p-6 text-xs sm:text-sm text-zinc-650 dark:text-zinc-400 leading-relaxed font-normal bg-zinc-50/30 dark:bg-zinc-900/10">
+                      <p className="p-5 sm:p-6 text-xs sm:text-sm text-muted-foreground leading-relaxed font-normal bg-card/30">
                         {faq.a}
                       </p>
                     </div>

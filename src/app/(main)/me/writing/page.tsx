@@ -85,22 +85,19 @@ const PROMPTS: Record<string, string[]> = {
 const ERROR_TYPE_LABEL: Record<string, { label: string; color: string }> = {
   grammar: {
     label: "Ngữ pháp",
-    color: "text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/30",
+    color: "text-destructive bg-destructive/10 border-destructive/30",
   },
   vocabulary: {
     label: "Từ vựng",
-    color:
-      "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/30",
+    color: "text-warning bg-warning/10 border-warning/30",
   },
   spelling: {
     label: "Chính tả",
-    color:
-      "text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/30",
+    color: "text-warning bg-warning/10 border-warning/30",
   },
   word_order: {
     label: "Trật tự từ",
-    color:
-      "text-purple-600 dark:text-purple-400 bg-purple-500/10 border-purple-500/30",
+    color: "text-primary bg-primary/10 border-primary/30",
   },
 };
 
@@ -119,7 +116,7 @@ function ScoreRing({ score }: { score: number }) {
           cy="42"
           r={r}
           strokeWidth="6"
-          className="stroke-zinc-200 dark:stroke-zinc-800"
+          className="stroke-muted-foreground"
           fill="none"
         />
         <motion.circle
@@ -137,10 +134,8 @@ function ScoreRing({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute text-center">
-        <p className="text-2xl font-black text-zinc-900 dark:text-white">
-          {score}
-        </p>
-        <p className="text-xs text-zinc-400 font-bold">/ 100</p>
+        <p className="text-2xl font-black text-foreground">{score}</p>
+        <p className="text-xs text-muted-foreground font-bold">/ 100</p>
       </div>
     </div>
   );
@@ -222,16 +217,14 @@ export default function WriteImprovePage() {
               }}
               className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
                 level === l.value
-                  ? "bg-emerald-500/15 border-emerald-500/50 text-emerald-600 dark:text-emerald-300"
-                  : "bg-white/60 dark:bg-white/5 border-zinc-200/60 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-white/25"
+                  ? "bg-primary/15 border-primary/50 text-primary"
+                  : "bg-white/60 border-border/60 text-muted-foreground hover:border-border"
               }`}
             >
               <span className="block">{l.label}</span>
               <span
                 className={`block font-normal ${
-                  level === l.value
-                    ? "text-emerald-500 dark:text-emerald-400/70"
-                    : "text-zinc-400 dark:text-zinc-600"
+                  level === l.value ? "text-primary" : "text-muted-foreground"
                 }`}
               >
                 {l.desc}
@@ -242,7 +235,7 @@ export default function WriteImprovePage() {
 
         {/* Prompt suggestions */}
         <div className="space-y-2">
-          <p className="text-xs text-zinc-500 dark:text-zinc-500 font-medium uppercase tracking-wider flex items-center gap-1.5">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5" /> Câu mẫu để luyện tập
           </p>
           <div className="space-y-1.5">
@@ -250,9 +243,9 @@ export default function WriteImprovePage() {
               <button
                 key={i}
                 onClick={() => handlePrompt(p)}
-                className="w-full text-left px-3 py-2 rounded-xl bg-white/60 dark:bg-white/4 border border-zinc-200/60 dark:border-white/8 text-zinc-700 dark:text-zinc-300 text-sm hover:bg-zinc-50 dark:hover:bg-white/8 hover:border-zinc-300 dark:hover:border-white/15 transition-colors flex items-center gap-2 group"
+                className="w-full text-left px-3 py-2 rounded-xl bg-white/60 border border-border/60 text-foreground text-sm hover:bg-card hover:border-border transition-colors flex items-center gap-2 group"
               >
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-600 group-hover:text-emerald-500 transition-colors shrink-0" />
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                 <span className="italic">&ldquo;{p}&rdquo;</span>
               </button>
             ))}
@@ -271,26 +264,26 @@ export default function WriteImprovePage() {
             placeholder="Nhập câu hoặc đoạn văn tiếng Anh của bạn tại đây..."
             rows={4}
             maxLength={500}
-            className="w-full bg-white/70 dark:bg-white/5 border border-zinc-200/60 dark:border-white/10 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 transition-colors text-sm resize-none"
+            className="w-full bg-white/70 border border-border/60 rounded-2xl px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors text-sm resize-none"
           />
           <div className="flex items-center justify-between gap-3">
             {/* Character count bar */}
             <div className="flex-1 flex items-center gap-2">
-              <div className="flex-1 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+              <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-300 ${
                     text.length > 400
-                      ? "bg-red-500"
+                      ? "bg-destructive"
                       : text.length > 250
-                        ? "bg-amber-500"
-                        : "bg-emerald-500"
+                        ? "bg-warning"
+                        : "bg-primary"
                   }`}
                   style={{
                     width: `${Math.min((text.length / 500) * 100, 100)}%`,
                   }}
                 />
               </div>
-              <span className="text-xs text-zinc-400 dark:text-zinc-500 font-mono shrink-0">
+              <span className="text-xs text-muted-foreground font-mono shrink-0">
                 {text.length}/500
               </span>
             </div>
@@ -298,7 +291,7 @@ export default function WriteImprovePage() {
               {(feedback || text) && (
                 <button
                   onClick={handleReset}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 dark:bg-white/5 border border-zinc-200/60 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white text-xs transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 border border-border/60 text-muted-foreground hover:text-foreground text-xs transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" /> Làm lại
                 </button>
@@ -306,7 +299,7 @@ export default function WriteImprovePage() {
               <button
                 onClick={handleAnalyze}
                 disabled={!text.trim() || isPending}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-zinc-300 disabled:to-zinc-300 dark:disabled:from-zinc-700 dark:disabled:to-zinc-700 disabled:text-zinc-400 text-white font-bold text-sm transition-all active:scale-95 shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary disabled:from-muted disabled:to-muted disabled:text-muted-foreground text-white font-bold text-sm transition-all active:scale-95 shadow-sm"
               >
                 {isPending ? (
                   <>
@@ -329,10 +322,10 @@ export default function WriteImprovePage() {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/30"
+              className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30"
             >
-              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
-              <p className="text-red-300 text-sm">{error}</p>
+              <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+              <p className="text-destructive text-sm">{error}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -346,23 +339,23 @@ export default function WriteImprovePage() {
               className="space-y-4"
             >
               {/* Score + encouragement */}
-              <div className="bg-white/60 dark:bg-white/5 border border-zinc-200/60 dark:border-white/10 rounded-2xl p-5 flex items-center gap-5">
+              <div className="bg-white/60 border border-border/60 rounded-2xl p-5 flex items-center gap-5">
                 <ScoreRing score={feedback.score} />
                 <div className="flex-1">
-                  <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold mb-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">
                     Độ chính xác (đánh giá AI)
                   </p>
-                  <p className="text-zinc-900 dark:text-white font-semibold text-sm leading-relaxed">
+                  <p className="text-foreground font-semibold text-sm leading-relaxed">
                     {feedback.encouragement_vn}
                   </p>
                 </div>
               </div>
 
               {/* Corrected */}
-              <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-2xl p-4 space-y-1">
+              <div className="bg-primary/30 border border-primary/20 rounded-2xl p-4 space-y-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                  <CheckCircle className="w-4 h-4 text-primary" />
+                  <p className="text-xs font-bold text-primary uppercase tracking-wider">
                     Câu đã sửa
                   </p>
                 </div>
@@ -374,7 +367,7 @@ export default function WriteImprovePage() {
               {/* Errors */}
               {feedback.errors.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" /> Lỗi cần sửa (
                     {feedback.errors.length})
                   </p>
@@ -384,7 +377,7 @@ export default function WriteImprovePage() {
                     return (
                       <div
                         key={i}
-                        className="bg-white/60 dark:bg-white/4 border border-zinc-200/60 dark:border-white/8 rounded-xl p-3.5 space-y-1.5"
+                        className="bg-white/60 border border-border/60 rounded-xl p-3.5 space-y-1.5"
                       >
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
@@ -392,15 +385,15 @@ export default function WriteImprovePage() {
                           >
                             {typeInfo.label}
                           </span>
-                          <span className="text-red-500 dark:text-red-400 text-sm line-through opacity-70">
+                          <span className="text-destructive text-sm line-through opacity-70">
                             {err.original}
                           </span>
-                          <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-                          <span className="text-emerald-600 dark:text-emerald-400 text-sm font-semibold">
+                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="text-primary text-sm font-semibold">
                             {err.correction}
                           </span>
                         </div>
-                        <p className="text-zinc-500 dark:text-zinc-400 text-xs">
+                        <p className="text-muted-foreground text-xs">
                           {err.explanation_vn}
                         </p>
                       </div>
@@ -411,20 +404,20 @@ export default function WriteImprovePage() {
 
               {/* No errors */}
               {feedback.errors.length === 0 && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/8 border border-emerald-500/20">
-                  <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <p className="text-emerald-300 text-sm font-medium">
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/8 border border-primary/20">
+                  <CheckCircle className="w-4 h-4 text-primary" />
+                  <p className="text-primary text-sm font-medium">
                     Không có lỗi ngữ pháp! 🎉
                   </p>
                 </div>
               )}
 
               {/* Improved version + Save */}
-              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-500/20 rounded-2xl p-4 space-y-1">
+              <div className="bg-primary/10 border border-primary/40/60 rounded-2xl p-4 space-y-1">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-                    <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <p className="text-xs font-bold text-primary uppercase tracking-wider">
                       Cách viết hay hơn
                     </p>
                   </div>
@@ -434,8 +427,8 @@ export default function WriteImprovePage() {
                     disabled={isSaving || !!savedId}
                     className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all ${
                       savedId
-                        ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 cursor-default"
-                        : "bg-white/60 dark:bg-white/5 border-zinc-200/60 dark:border-white/15 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-300 dark:hover:border-white/30"
+                        ? "bg-primary/15 border-primary/40 text-primary cursor-default"
+                        : "bg-white/60 border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
                     }`}
                   >
                     {savedId ? (
@@ -455,7 +448,7 @@ export default function WriteImprovePage() {
                     )}
                   </button>
                 </div>
-                <p className="text-zinc-800 dark:text-white text-sm leading-relaxed italic">
+                <p className="text-foreground text-sm leading-relaxed italic">
                   &ldquo;{feedback.improved}&rdquo;
                 </p>
               </div>

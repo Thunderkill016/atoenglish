@@ -30,23 +30,22 @@ type HardWord = {
 };
 
 const LEVEL_COLORS: Record<string, string> = {
-  A0: "text-zinc-500 bg-zinc-500/10 border-zinc-500/25",
-  A1: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/25",
-  A2: "text-teal-600 dark:text-teal-400 bg-teal-500/10 border-teal-500/25",
-  B1: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/25",
-  B2: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/25",
-  C1: "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/25",
+  A0: "text-muted-foreground bg-muted/10 border-border/25",
+  A1: "text-primary bg-primary/10 border-primary/25",
+  A2: "text-primary bg-primary/10 border-primary/25",
+  B1: "text-primary bg-primary/10 border-primary/25",
+  B2: "text-primary bg-primary/10 border-primary/25",
+  C1: "text-destructive bg-destructive/10 border-destructive/25",
 };
 
 function getMasteryColor(pct: number) {
   if (pct >= 75)
     return {
-      bar: "bg-emerald-500",
-      text: "text-emerald-600 dark:text-emerald-400",
+      bar: "bg-primary",
+      text: "text-primary",
     };
-  if (pct >= 50)
-    return { bar: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" };
-  return { bar: "bg-red-500", text: "text-red-600 dark:text-red-400" };
+  if (pct >= 50) return { bar: "bg-warning", text: "text-warning" };
+  return { bar: "bg-destructive", text: "text-destructive" };
 }
 
 function speak(text: string) {
@@ -70,7 +69,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: index * 0.04 }}
-      className="bg-white/70 dark:bg-white/4 border border-zinc-200/60 dark:border-white/8 rounded-2xl overflow-hidden hover:border-zinc-300 dark:hover:border-white/15 transition-colors"
+      className="bg-white/70 border border-border/60 rounded-2xl overflow-hidden hover:border-border transition-colors"
     >
       {/* Main row */}
       <button
@@ -79,18 +78,18 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
         aria-expanded={expanded}
       >
         {/* Rank badge */}
-        <div className="shrink-0 w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black text-zinc-400 dark:text-zinc-500">
+        <div className="shrink-0 w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-black text-muted-foreground">
           {index + 1}
         </div>
 
         {/* Word + phonetic */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-black text-base text-zinc-900 dark:text-white tracking-tight">
+            <span className="font-black text-base text-foreground tracking-tight">
               {word.word}
             </span>
             {word.phonetic && (
-              <span className="text-xs font-mono text-zinc-400 dark:text-zinc-500">
+              <span className="text-xs font-mono text-muted-foreground">
                 {word.phonetic}
               </span>
             )}
@@ -100,7 +99,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
               {word.level}
             </span>
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
+          <p className="text-xs text-muted-foreground mt-0.5 font-medium">
             {word.meaning_vn}
           </p>
         </div>
@@ -111,8 +110,8 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
             {word.mastery_pct}%
           </div>
           <div className="flex items-center gap-1 justify-end">
-            <Flame className="w-3 h-3 text-red-400" />
-            <span className="text-xs text-zinc-400 dark:text-zinc-500 font-bold">
+            <Flame className="w-3 h-3 text-destructive" />
+            <span className="text-xs text-muted-foreground font-bold">
               {word.again_count}× Again
             </span>
           </div>
@@ -121,7 +120,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
 
       {/* Mastery bar */}
       <div className="px-4 pb-3">
-        <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800/70 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <motion.div
             className={`h-full rounded-full ${mastery.bar}`}
             initial={{ width: 0 }}
@@ -134,10 +133,10 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
           />
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-xs text-zinc-400 dark:text-zinc-600">
+          <span className="text-xs text-muted-foreground">
             {word.total_reviews} lượt ôn
           </span>
-          <span className="text-xs text-zinc-400 dark:text-zinc-600">
+          <span className="text-xs text-muted-foreground">
             {word.mastery_pct}% lượt không quên
           </span>
         </div>
@@ -153,12 +152,12 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-1 border-t border-zinc-100 dark:border-white/6 space-y-3">
+            <div className="px-4 pb-4 pt-1 border-t border-border space-y-3">
               {/* TTS buttons */}
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => speak(word.word)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold hover:bg-primary/20 transition-colors"
                 >
                   <Volume2 className="w-3.5 h-3.5" />
                   Nghe từ
@@ -166,7 +165,7 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
                 {word.example_en && (
                   <button
                     onClick={() => speak(word.example_en!)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-500/20 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold hover:bg-primary/20 transition-colors"
                   >
                     <Volume2 className="w-3.5 h-3.5" />
                     Nghe câu ví dụ
@@ -176,18 +175,18 @@ function WordCard({ word, index }: { word: HardWord; index: number }) {
 
               {/* Example sentence */}
               {word.example_en && (
-                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-white/4 border border-zinc-100 dark:border-white/6">
-                  <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1">
+                <div className="p-3 rounded-xl bg-card border border-border">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
                     Ví dụ
                   </p>
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
+                  <p className="text-sm text-foreground italic leading-relaxed">
                     &ldquo;{word.example_en}&rdquo;
                   </p>
                 </div>
               )}
 
               {/* Mastery tip */}
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 {word.mastery_pct < 40
                   ? "⚠️ Bạn quên từ này rất thường xuyên. Hãy ôn tập hàng ngày và tạo câu ví dụ riêng để ghi nhớ sâu hơn."
                   : word.mastery_pct < 70
@@ -278,21 +277,21 @@ export default function HardWordsClient() {
         {!loading && words && words.length > 0 && (
           <Link
             href="/review"
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 hover:border-red-500/40 hover:from-red-500/15 hover:to-orange-500/15 transition-all group"
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-destructive/10 to-warning/10 border border-destructive/20 hover:border-destructive/40 hover:from-destructive/15 hover:to-warning/15 transition-all group"
           >
-            <span className="flex w-9 h-9 items-center justify-center rounded-xl bg-red-500/15 shrink-0">
-              <Layers className="w-4.5 h-4.5 text-red-500" />
+            <span className="flex w-9 h-9 items-center justify-center rounded-xl bg-destructive/15 shrink-0">
+              <Layers className="w-4.5 h-4.5 text-destructive" />
             </span>
             <div className="flex-1">
-              <p className="text-sm font-black text-zinc-900 dark:text-white">
+              <p className="text-sm font-black text-foreground">
                 Ôn Từ Khó Ngay
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-muted-foreground">
                 Bật &ldquo;Từ Khó Mode&rdquo; trong Flashcards để ưu tiên những
                 từ này
               </p>
             </div>
-            <span className="text-red-500 group-hover:translate-x-0.5 transition-transform text-sm">
+            <span className="text-destructive group-hover:translate-x-0.5 transition-transform text-sm">
               →
             </span>
           </Link>
@@ -304,24 +303,26 @@ export default function HardWordsClient() {
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="h-20 rounded-2xl bg-zinc-100 dark:bg-white/4 border border-zinc-200/60 dark:border-white/8 animate-pulse"
+                className="h-20 rounded-2xl bg-muted border border-border/60 animate-pulse"
               />
             ))}
           </div>
         ) : error ? (
-          <div className="text-center py-12 text-red-500 text-sm">{error}</div>
+          <div className="text-center py-12 text-destructive text-sm">
+            {error}
+          </div>
         ) : words && words.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="text-center py-16 space-y-4"
           >
-            <Trophy className="w-12 h-12 text-emerald-500 mx-auto" />
+            <Trophy className="w-12 h-12 text-primary mx-auto" />
             <div className="space-y-1">
-              <h2 className="text-lg font-black text-zinc-900 dark:text-white">
+              <h2 className="text-lg font-black text-foreground">
                 Chưa có dữ liệu luyện tập!
               </h2>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto leading-relaxed">
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
                 Hãy ôn tập flashcard vài buổi để hệ thống thống kê từ nào bạn
                 hay quên nhất.
               </p>
@@ -329,14 +330,14 @@ export default function HardWordsClient() {
             <div className="flex justify-center gap-3 flex-wrap pt-2">
               <Link
                 href="/review"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold hover:from-emerald-400 hover:to-teal-400 transition-all active:scale-95 shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white text-sm font-bold hover:from-primary hover:to-primary transition-all active:scale-95 shadow-sm"
               >
                 <Layers className="w-4 h-4" />
                 Bắt đầu ôn tập
               </Link>
               <Link
                 href="/learn"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-200/60 dark:border-white/10 bg-white/60 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 text-sm font-bold hover:border-zinc-300 dark:hover:border-white/25 transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/60 bg-white/60 text-muted-foreground text-sm font-bold hover:border-border transition-all"
               >
                 <BookOpen className="w-4 h-4" />
                 Học bài mới
@@ -345,7 +346,7 @@ export default function HardWordsClient() {
           </motion.div>
         ) : (
           <div className="space-y-2">
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 font-medium flex items-center gap-1.5">
+            <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
               <TrendingUp className="w-3.5 h-3.5" />
               Nhấn vào từ để xem chi tiết và nghe phát âm
             </p>

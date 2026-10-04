@@ -18,7 +18,7 @@ export default function HardWordsPage() {
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="h-20 rounded-2xl bg-zinc-100 dark:bg-white/4 border border-zinc-200/60 dark:border-white/8 animate-pulse"
+                className="h-20 rounded-2xl bg-muted border border-border/60 animate-pulse"
               />
             ))}
           </div>

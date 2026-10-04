@@ -66,29 +66,29 @@ export default function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4 bg-zinc-950/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4 bg-foreground/50 backdrop-blur-sm"
       onClick={close}
       role="presentation"
     >
       <div
-        className="w-full max-w-lg rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden"
+        className="w-full max-w-lg rounded-2xl border border-border/60 bg-white shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label="Điều hướng nhanh"
       >
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-200/50 dark:border-zinc-800/50">
-          <Search className="size-4 text-zinc-400 shrink-0" />
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50">
+          <Search className="size-4 text-muted-foreground shrink-0" />
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Tìm trang… (Trang chủ, Học, Ôn tập…)"
-            className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
           />
           <button
             type="button"
             onClick={close}
-            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+            className="p-1 rounded-lg text-muted-foreground hover:text-muted-foreground"
             aria-label="Đóng"
           >
             <X className="size-4" />
@@ -97,7 +97,7 @@ export default function CommandPalette() {
 
         <ul className="max-h-[50vh] overflow-y-auto py-2">
           {filtered.length === 0 ? (
-            <li className="px-4 py-6 text-center text-sm text-zinc-500">
+            <li className="px-4 py-6 text-center text-sm text-muted-foreground">
               Không tìm thấy trang phù hợp
             </li>
           ) : (
@@ -106,19 +106,19 @@ export default function CommandPalette() {
                 <Link
                   href={item.href}
                   onClick={close}
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors"
+                  className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-card transition-colors"
                 >
                   <div>
-                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                    <p className="text-sm font-bold text-foreground">
                       {item.title}
                     </p>
                     {item.description && (
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="text-xs text-muted-foreground">
                         {item.description}
                       </p>
                     )}
                   </div>
-                  <span className="text-xs font-mono text-zinc-400 shrink-0">
+                  <span className="text-xs font-mono text-muted-foreground shrink-0">
                     {item.href}
                   </span>
                 </Link>
@@ -127,13 +127,11 @@ export default function CommandPalette() {
           )}
         </ul>
 
-        <div className="px-4 py-2 border-t border-zinc-200/50 dark:border-zinc-800/50 text-xs text-zinc-400 flex justify-between">
+        <div className="px-4 py-2 border-t border-border/50 text-xs text-muted-foreground flex justify-between">
           <span>⌘K / Ctrl+K mở palette</span>
           <button
             type="button"
-            className={cn(
-              "text-emerald-600 dark:text-emerald-400 font-semibold hover:underline",
-            )}
+            className={cn("text-primary font-semibold hover:underline")}
             onClick={() => {
               close();
               router.push("/learn");

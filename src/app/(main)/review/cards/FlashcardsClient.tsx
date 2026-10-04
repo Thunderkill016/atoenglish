@@ -318,7 +318,7 @@ export default function FlashcardsPage() {
     return (
       <SecondaryPageShell title="Ôn tập" subtitle="Hôm nay bạn đã ôn xong!">
         <div className="flex flex-col items-center text-center space-y-4 mb-6">
-          <div className="inline-flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
+          <div className="inline-flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <CheckCircle className="size-7" />
           </div>
           <p className="text-sm text-muted-foreground max-w-md">
@@ -375,8 +375,8 @@ export default function FlashcardsPage() {
                 onClick={handleToggleCram}
                 className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border transition-all duration-200 ${
                   cramMode
-                    ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
-                    : "bg-muted border-border/40 text-muted-foreground hover:border-amber-500/30"
+                    ? "bg-warning/10 border-warning/30 text-warning"
+                    : "bg-muted border-border/40 text-muted-foreground hover:border-warning/30"
                 }`}
               >
                 <Zap className="size-3.5" />
@@ -387,8 +387,8 @@ export default function FlashcardsPage() {
                 onClick={handleToggleDifficult}
                 className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border transition-all duration-200 ${
                   difficultMode
-                    ? "bg-red-500/10 border-red-500/30 text-red-500"
-                    : "bg-muted border-border/40 text-muted-foreground hover:border-red-500/30"
+                    ? "bg-destructive/10 border-destructive/30 text-destructive"
+                    : "bg-muted border-border/40 text-muted-foreground hover:border-destructive/30"
                 }`}
               >
                 <Filter className="size-3.5" />
@@ -402,8 +402,8 @@ export default function FlashcardsPage() {
                 }}
                 className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border transition-all duration-200 ${
                   reverseMode
-                    ? "bg-purple-500/10 border-purple-500/30 text-purple-600 dark:text-purple-400"
-                    : "bg-muted border-border/40 text-muted-foreground hover:border-purple-500/30"
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-muted border-border/40 text-muted-foreground hover:border-primary/30"
                 }`}
               >
                 <ArrowLeftRight className="size-3.5" />
@@ -421,7 +421,7 @@ export default function FlashcardsPage() {
             {/* Hard Words link */}
             <Link
               href="/review/hard"
-              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border transition-all duration-200 bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400 hover:border-red-500/40"
+              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border transition-all duration-200 bg-destructive/5 border-destructive/20 text-destructive hover:border-destructive/40"
             >
               <AlertTriangle className="size-3.5" />
               Từ Khó
@@ -464,7 +464,7 @@ export default function FlashcardsPage() {
             {/* Progress bar */}
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden relative">
               <motion.div
-                className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400"
+                className="h-full rounded-full bg-gradient-to-r from-primary to-primary"
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPercentage}%` }}
                 transition={{ duration: 0.3 }}
@@ -474,11 +474,10 @@ export default function FlashcardsPage() {
             {/* Swipe Hint overlay */}
             <div className="text-center text-xs text-muted-foreground/80 font-medium">
               💡 <span className="font-bold">Mẹo:</span> Kéo thẻ sang{" "}
-              <span className="text-emerald-500 font-bold">
-                Phải (Đã thuộc)
-              </span>{" "}
+              <span className="text-primary font-bold">Phải (Đã thuộc)</span>{" "}
               hoặc sang{" "}
-              <span className="text-red-500 font-bold">Trái (Quên)</span>. Nhấn{" "}
+              <span className="text-destructive font-bold">Trái (Quên)</span>.
+              Nhấn{" "}
               <span className="bg-muted px-1.5 py-0.5 rounded font-mono border border-foreground/10 text-xs">
                 Space
               </span>{" "}
@@ -500,17 +499,17 @@ export default function FlashcardsPage() {
                   {/* Visual Feedback Overlays */}
                   <motion.div
                     style={{ opacity: opacityRight }}
-                    className="absolute inset-0 bg-emerald-500/10 border-2 border-emerald-500 rounded-3xl z-20 pointer-events-none flex items-center justify-center"
+                    className="absolute inset-0 bg-primary/10 border-2 border-primary rounded-3xl z-20 pointer-events-none flex items-center justify-center"
                   >
-                    <span className="bg-emerald-500 text-white font-black px-6 py-3 rounded-2xl shadow-lg uppercase text-sm tracking-wider">
+                    <span className="bg-primary text-white font-black px-6 py-3 rounded-2xl shadow-lg uppercase text-sm tracking-wider">
                       Đã Thuộc
                     </span>
                   </motion.div>
                   <motion.div
                     style={{ opacity: opacityLeft }}
-                    className="absolute inset-0 bg-red-500/10 border-2 border-red-500 rounded-3xl z-20 pointer-events-none flex items-center justify-center"
+                    className="absolute inset-0 bg-destructive/10 border-2 border-destructive rounded-3xl z-20 pointer-events-none flex items-center justify-center"
                   >
-                    <span className="bg-red-500 text-white font-black px-6 py-3 rounded-2xl shadow-lg uppercase text-sm tracking-wider">
+                    <span className="bg-destructive text-white font-black px-6 py-3 rounded-2xl shadow-lg uppercase text-sm tracking-wider">
                       Quên Từ
                     </span>
                   </motion.div>
@@ -550,7 +549,7 @@ export default function FlashcardsPage() {
                       <div className="text-center space-y-4">
                         {reverseMode ? (
                           <>
-                            <p className="text-xs font-bold uppercase tracking-widest text-purple-500 mb-2">
+                            <p className="text-xs font-bold uppercase tracking-widest text-primary mb-2">
                               Tiếng Việt → Tiếng Anh
                             </p>
                             <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground leading-tight select-all">
@@ -597,7 +596,7 @@ export default function FlashcardsPage() {
                     {/* CARD BACK */}
                     <div className="absolute w-full h-full backface-hidden rotate-y-180 rounded-3xl border border-border/60 bg-card p-8 flex flex-col justify-between shadow-[0_15px_40px_rgba(0,0,0,0.025)]">
                       <div className="flex justify-between items-start">
-                        <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-xl bg-primary/10 text-primary border border-primary/20">
                           {reverseMode ? "Từ Tiếng Anh" : "Nghĩa Tiếng Việt"}
                         </span>
                         <span className="text-xs font-bold text-muted-foreground font-mono uppercase tracking-widest">
@@ -682,7 +681,7 @@ export default function FlashcardsPage() {
                   >
                     <Button
                       onClick={() => setIsFlipped(true)}
-                      className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all duration-300 active:scale-[0.98] text-xs sm:text-sm"
+                      className="w-full h-12 bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300 active:scale-[0.98] text-xs sm:text-sm"
                     >
                       Lật mặt sau (Xem đáp án)
                     </Button>
@@ -720,7 +719,7 @@ export default function FlashcardsPage() {
                           key: "1",
                           desc: "Quên từ",
                           color:
-                            "hover:bg-red-500 hover:text-white hover:shadow-red-500/25 text-red-600 bg-red-500/5 dark:bg-red-500/10 border-red-500/20 hover:border-red-500",
+                            "hover:bg-destructive hover:text-white hover:shadow-destructive/25 text-destructive bg-destructive/5 border-destructive/20 hover:border-destructive",
                         },
                         {
                           label: "Hard",
@@ -728,7 +727,7 @@ export default function FlashcardsPage() {
                           key: "2",
                           desc: "Mơ hồ",
                           color:
-                            "hover:bg-orange-500 hover:text-white hover:shadow-orange-500/25 text-orange-600 bg-orange-500/5 dark:bg-orange-500/10 border-orange-500/20 hover:border-orange-500",
+                            "hover:bg-warning hover:text-white hover:shadow-warning/25 text-warning bg-warning/5 border-warning/20 hover:border-warning",
                         },
                         {
                           label: "Good",
@@ -736,7 +735,7 @@ export default function FlashcardsPage() {
                           key: "3",
                           desc: "Nhớ tốt",
                           color:
-                            "hover:bg-blue-500 hover:text-white hover:shadow-blue-500/25 text-blue-600 bg-blue-500/5 dark:bg-blue-500/10 border-blue-500/20 hover:border-blue-500",
+                            "hover:bg-primary hover:text-white hover:shadow-primary/25 text-primary bg-primary/5 border-primary/20 hover:border-primary",
                         },
                         {
                           label: "Easy",
@@ -744,7 +743,7 @@ export default function FlashcardsPage() {
                           key: "4",
                           desc: "Rất dễ",
                           color:
-                            "hover:bg-emerald-500 hover:text-white hover:shadow-emerald-500/25 text-emerald-600 bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/20 hover:border-emerald-500",
+                            "hover:bg-primary hover:text-white hover:shadow-primary/25 text-primary bg-primary/5 border-primary/20 hover:border-primary",
                         },
                       ].map((btn) => (
                         <button
@@ -799,24 +798,24 @@ export default function FlashcardsPage() {
             {/* Session Stats */}
             {sessionStats && (
               <div className="grid grid-cols-3 gap-3 w-full">
-                <div className="flex flex-col items-center p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/15">
-                  <span className="text-xl sm:text-2xl font-black text-emerald-500">
+                <div className="flex flex-col items-center p-3 rounded-2xl bg-primary/5 border border-primary/15">
+                  <span className="text-xl sm:text-2xl font-black text-primary">
                     {sessionStats.cards_reviewed_today}
                   </span>
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-0.5">
                     Hôm nay
                   </span>
                 </div>
-                <div className="flex flex-col items-center p-3 rounded-2xl bg-orange-500/5 border border-orange-500/15">
-                  <span className="text-xl sm:text-2xl font-black text-orange-500">
+                <div className="flex flex-col items-center p-3 rounded-2xl bg-warning/5 border border-warning/15">
+                  <span className="text-xl sm:text-2xl font-black text-warning">
                     🔥 {sessionStats.streak_days}
                   </span>
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-0.5">
                     Streak
                   </span>
                 </div>
-                <div className="flex flex-col items-center p-3 rounded-2xl bg-blue-500/5 border border-blue-500/15">
-                  <span className="text-xl sm:text-2xl font-black text-blue-500">
+                <div className="flex flex-col items-center p-3 rounded-2xl bg-primary/5 border border-primary/15">
+                  <span className="text-xl sm:text-2xl font-black text-primary">
                     {sessionStats.total_cards_reviewed}
                   </span>
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-0.5">
@@ -840,7 +839,7 @@ export default function FlashcardsPage() {
                     <span className="text-foreground flex items-center gap-1.5">
                       {log.word}
                       {(againCounts[log.word] ?? 0) >= 3 && (
-                        <span className="text-xs font-black bg-red-500/15 text-red-500 border border-red-500/20 px-1.5 py-0.5 rounded-md">
+                        <span className="text-xs font-black bg-destructive/15 text-destructive border border-destructive/20 px-1.5 py-0.5 rounded-md">
                           ⚠️ Từ khó
                         </span>
                       )}
@@ -848,12 +847,12 @@ export default function FlashcardsPage() {
                     <span
                       className={`font-black ${
                         log.score === "Easy"
-                          ? "text-emerald-500"
+                          ? "text-primary"
                           : log.score === "Good"
-                            ? "text-blue-500"
+                            ? "text-primary"
                             : log.score === "Hard"
-                              ? "text-orange-500"
-                              : "text-red-500"
+                              ? "text-warning"
+                              : "text-destructive"
                       }`}
                     >
                       {log.score}
@@ -866,8 +865,8 @@ export default function FlashcardsPage() {
             {/* Leech summary — words rated Again ≥ 3 times */}
             {Object.entries(againCounts).filter(([, count]) => count >= 3)
               .length > 0 && (
-              <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 space-y-2 text-left">
-                <p className="text-xs font-black text-red-500 uppercase tracking-widest">
+              <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 space-y-2 text-left">
+                <p className="text-xs font-black text-destructive uppercase tracking-widest">
                   ⚠️ Từ cần chú ý đặc biệt
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -880,7 +879,7 @@ export default function FlashcardsPage() {
                     .map(([word, count]) => (
                       <span
                         key={word}
-                        className="text-xs font-bold px-2.5 py-1 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400"
+                        className="text-xs font-bold px-2.5 py-1 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive"
                       >
                         {word} <span className="opacity-60">({count}×)</span>
                       </span>
@@ -900,7 +899,7 @@ export default function FlashcardsPage() {
               </Button>
               <Button
                 onClick={() => router.push("/learn")}
-                className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl text-xs sm:text-sm font-semibold h-12 sm:h-11 px-5 shadow-lg shadow-emerald-600/15 active:scale-[0.98]"
+                className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white rounded-xl text-xs sm:text-sm font-semibold h-12 sm:h-11 px-5 shadow-lg shadow-primary/15 active:scale-[0.98]"
               >
                 Quay về Dashboard
               </Button>

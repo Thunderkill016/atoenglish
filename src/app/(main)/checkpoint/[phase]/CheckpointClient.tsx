@@ -687,7 +687,7 @@ export default function CheckpointClient({
               initial={{ width: 0 }}
               animate={{ width: `${pct}%` }}
               transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
-              className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400"
+              className="h-full rounded-full bg-gradient-to-r from-primary to-primary"
             />
           </div>
           <MinimalButton fullWidth onClick={() => router.push("/learn")}>
@@ -721,13 +721,13 @@ export default function CheckpointClient({
                 {questions.length} câu hỏi
               </span>{" "}
               xác nhận kiến thức cốt lõi. Cần đúng{" "}
-              <span className="font-bold text-emerald-500">
+              <span className="font-bold text-primary">
                 {passThreshold}/{questions.length} câu
               </span>{" "}
               để tiếp tục.
             </p>
             {phase !== "trial" && (
-              <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+              <p className="text-xs text-warning leading-relaxed">
                 Đây là bài tự kiểm tra — kết quả hiển thị cho bạn, không được
                 ghi vào tiến độ.
               </p>
@@ -740,20 +740,20 @@ export default function CheckpointClient({
             </p>
             <ul className="text-sm text-muted-foreground space-y-2">
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="size-4 text-emerald-500 shrink-0 mt-0.5" />{" "}
+                <CheckCircle2 className="size-4 text-primary shrink-0 mt-0.5" />{" "}
                 Nhấn chọn đáp án rồi nhấn <strong>&quot;Xác nhận&quot;</strong>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="size-4 text-emerald-500 shrink-0 mt-0.5" />{" "}
+                <CheckCircle2 className="size-4 text-primary shrink-0 mt-0.5" />{" "}
                 Phím tắt: <strong>1-4</strong> chọn đáp án ·{" "}
                 <strong>Space/Enter</strong> xác nhận
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="size-4 text-emerald-500 shrink-0 mt-0.5" />{" "}
+                <CheckCircle2 className="size-4 text-primary shrink-0 mt-0.5" />{" "}
                 Sau mỗi câu sẽ có giải thích tiếng Việt
               </li>
               <li className="flex items-start gap-2">
-                <Zap className="size-4 text-amber-500 shrink-0 mt-0.5" /> Đúng{" "}
+                <Zap className="size-4 text-warning shrink-0 mt-0.5" /> Đúng{" "}
                 {passThreshold}/{questions.length} câu để tiếp tục học.
               </li>
             </ul>
@@ -791,12 +791,12 @@ export default function CheckpointClient({
           className="text-center space-y-6 py-4"
         >
           <div
-            className={`inline-flex size-20 items-center justify-center rounded-3xl ${passed ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-red-500/10 border border-red-500/20"}`}
+            className={`inline-flex size-20 items-center justify-center rounded-3xl ${passed ? "bg-primary/10 border border-primary/20" : "bg-destructive/10 border border-destructive/20"}`}
           >
             {passed ? (
-              <Trophy className="size-10 text-emerald-500" />
+              <Trophy className="size-10 text-primary" />
             ) : (
-              <XCircle className="size-10 text-red-500" />
+              <XCircle className="size-10 text-destructive" />
             )}
           </div>
 
@@ -818,7 +818,7 @@ export default function CheckpointClient({
             {questions.map((_, i) => (
               <div
                 key={i}
-                className={`size-3 rounded-full ${wrongAnswers.includes(questions[i].id) ? "bg-red-500" : "bg-emerald-500"}`}
+                className={`size-3 rounded-full ${wrongAnswers.includes(questions[i].id) ? "bg-destructive" : "bg-primary"}`}
               />
             ))}
           </div>
@@ -828,7 +828,7 @@ export default function CheckpointClient({
             {[1, 2, 3].map((s) => (
               <Star
                 key={s}
-                className={`size-8 ${score >= s * Math.ceil(questions.length / 3) ? "text-yellow-400 fill-yellow-400" : "text-zinc-700"}`}
+                className={`size-8 ${score >= s * Math.ceil(questions.length / 3) ? "text-warning fill-warning" : "text-foreground"}`}
               />
             ))}
           </div>
@@ -840,7 +840,7 @@ export default function CheckpointClient({
               </p>
             )}
             {phase === "trial" && trialClaimState === "error" && (
-              <p className="text-sm text-red-400">
+              <p className="text-sm text-destructive">
                 Chưa thể ghi nhận kết quả. Hãy làm lại checkpoint.
               </p>
             )}
@@ -903,7 +903,7 @@ export default function CheckpointClient({
         {/* Progress bar */}
         <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-primary"
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}
           />
@@ -930,9 +930,10 @@ export default function CheckpointClient({
                 if (confirmed) {
                   if (opt === q.answer)
                     style =
-                      "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold";
+                      "border-primary bg-primary/10 text-primary font-bold";
                   else if (opt === selected && !isCorrect)
-                    style = "border-red-500 bg-red-500/10 text-red-500";
+                    style =
+                      "border-destructive bg-destructive/10 text-destructive";
                   else
                     style =
                       "border-border bg-muted/10 text-muted-foreground opacity-50";
@@ -952,10 +953,10 @@ export default function CheckpointClient({
                     </span>
                     <span>{opt}</span>
                     {confirmed && opt === q.answer && (
-                      <CheckCircle2 className="size-4 ml-auto text-emerald-500 shrink-0" />
+                      <CheckCircle2 className="size-4 ml-auto text-primary shrink-0" />
                     )}
                     {confirmed && opt === selected && !isCorrect && (
-                      <XCircle className="size-4 ml-auto text-red-500 shrink-0" />
+                      <XCircle className="size-4 ml-auto text-destructive shrink-0" />
                     )}
                   </button>
                 );
@@ -969,7 +970,7 @@ export default function CheckpointClient({
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className={`rounded-xl p-4 text-sm leading-relaxed ${isCorrect ? "bg-emerald-500/5 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300" : "bg-amber-500/5 border border-amber-500/20 text-amber-700 dark:text-amber-300"}`}
+                  className={`rounded-xl p-4 text-sm leading-relaxed ${isCorrect ? "bg-primary/5 border border-primary/20 text-primary" : "bg-warning/5 border border-warning/20 text-warning"}`}
                 >
                   <span className="font-black">💡 Giải thích: </span>
                   {q.explanation}

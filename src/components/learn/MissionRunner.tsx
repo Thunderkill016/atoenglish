@@ -128,8 +128,8 @@ function SpeechInputPanel({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-      <div className="flex gap-2 text-sm text-amber-700 dark:text-amber-200">
+    <div className="space-y-3 rounded-xl border border-warning/30 bg-warning/10 p-4">
+      <div className="flex gap-2 text-sm text-warning">
         <AlertTriangle className="mt-0.5 size-4 shrink-0" />
         <p>
           Trình duyệt chưa hỗ trợ nhận diện giọng nói. Hãy tự nói thành tiếng
@@ -534,9 +534,9 @@ export default function MissionRunner({
             <div className="rounded-2xl border border-border/60 bg-card p-5">
               <div className="flex items-start gap-3">
                 {session.evaluation.taskCompleted ? (
-                  <CheckCircle2 className="size-6 shrink-0 text-emerald-500" />
+                  <CheckCircle2 className="size-6 shrink-0 text-primary" />
                 ) : (
-                  <RotateCcw className="size-6 shrink-0 text-amber-500" />
+                  <RotateCcw className="size-6 shrink-0 text-warning" />
                 )}
                 <div>
                   <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
@@ -562,9 +562,9 @@ export default function MissionRunner({
                 {session.evaluation.corrections.map((correction, index) => (
                   <div
                     key={correction.code}
-                    className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4"
+                    className="rounded-xl border border-warning/30 bg-warning/10 p-4"
                   >
-                    <p className="text-xs font-black text-amber-500">
+                    <p className="text-xs font-black text-warning">
                       Sửa {index + 1}
                     </p>
                     {correction.original && (
@@ -582,7 +582,7 @@ export default function MissionRunner({
                 ))}
               </div>
             ) : (
-              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm">
+              <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 text-sm">
                 Bạn đã thể hiện đủ mục tiêu giao tiếp trong transcript.
               </div>
             )}
@@ -632,8 +632,8 @@ export default function MissionRunner({
 
         {session.stage === "transfer" && (
           <section className="space-y-5">
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
-              <CheckCircle2 className="size-8 text-emerald-500" />
+            <div className="rounded-2xl border border-primary/30 bg-primary/10 p-5">
+              <CheckCircle2 className="size-8 text-primary" />
               <h1 className="mt-3 text-2xl font-black">
                 Hoàn thành vòng luyện tập
               </h1>

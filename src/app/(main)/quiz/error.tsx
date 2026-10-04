@@ -19,18 +19,20 @@ export default function QuizError({
 
   return (
     <div className="relative flex min-h-[60vh] flex-col items-center justify-center px-4 text-center space-y-6">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-64 w-64 rounded-full bg-red-500/5 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-64 w-64 rounded-full bg-destructive/5 blur-3xl pointer-events-none" />
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
         className="space-y-6 max-w-sm"
       >
-        <div className="flex size-16 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 mx-auto border border-red-500/20">
+        <div className="flex size-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive mx-auto border border-destructive/20">
           <AlertTriangle className="size-8" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-xl font-black text-foreground">Không thể tải Quiz</h2>
+          <h2 className="text-xl font-black text-foreground">
+            Không thể tải Quiz
+          </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Đã xảy ra lỗi. Kiểm tra kết nối mạng và thử lại.
           </p>

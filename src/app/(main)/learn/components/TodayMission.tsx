@@ -26,24 +26,24 @@ export default function TodayMission({ missions }: TodayMissionProps) {
   const allDone = missions.length > 0 && completedCount === missions.length;
 
   return (
-    <div className="rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-sm overflow-hidden">
+    <div className="rounded-2xl border border-border/60 bg-white/60 backdrop-blur-sm overflow-hidden">
       <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10">
-              <BookOpen className="size-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
+              <BookOpen className="size-4 text-primary" />
             </span>
-            <p className="text-xs font-black text-zinc-900 dark:text-zinc-50 uppercase tracking-wider">
+            <p className="text-xs font-black text-foreground uppercase tracking-wider">
               Kế hoạch học hôm nay
             </p>
           </div>
-          <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs font-bold text-muted-foreground">
             {completedCount}/{missions.length} hoàn thành
           </span>
         </div>
-        <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
           <div
-            className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+            className="h-full bg-primary rounded-full transition-all duration-500"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -52,7 +52,7 @@ export default function TodayMission({ missions }: TodayMissionProps) {
       <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-3">
         {primary && (
           <div>
-            <p className="text-xs font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1.5">
               Ưu tiên — làm trước
             </p>
             <Link
@@ -61,22 +61,22 @@ export default function TodayMission({ missions }: TodayMissionProps) {
               className={cn(
                 "flex items-center gap-3 p-3 rounded-xl border transition-colors duration-150 group",
                 primary.completed
-                  ? "border-emerald-500/30 bg-emerald-500/5"
-                  : "border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/30",
+                  ? "border-primary/30 bg-primary/5"
+                  : "border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/30",
               )}
             >
               <div
                 className={cn(
                   "size-8 rounded-full border-2 flex items-center justify-center shrink-0",
                   primary.completed
-                    ? "border-emerald-500 bg-emerald-500"
-                    : "border-emerald-400 dark:border-emerald-600",
+                    ? "border-primary bg-primary"
+                    : "border-primary",
                 )}
               >
                 {primary.completed ? (
                   <CheckCircle2 className="size-4 text-white" />
                 ) : (
-                  <BookOpen className="size-3.5 text-emerald-500" />
+                  <BookOpen className="size-3.5 text-primary" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -84,27 +84,27 @@ export default function TodayMission({ missions }: TodayMissionProps) {
                   className={cn(
                     "text-xs font-bold truncate",
                     primary.completed
-                      ? "line-through text-zinc-400"
-                      : "text-zinc-900 dark:text-zinc-50",
+                      ? "line-through text-muted-foreground"
+                      : "text-foreground",
                   )}
                 >
                   {primary.label}
                 </p>
                 {primary.detail && (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {primary.detail}
                   </p>
                 )}
               </div>
               {!primary.completed && (
-                <ArrowRight className="size-3.5 shrink-0 text-zinc-400 group-hover:text-emerald-500 transition-colors" />
+                <ArrowRight className="size-3.5 shrink-0 text-muted-foreground group-hover:text-primary transition-colors" />
               )}
             </Link>
           </div>
         )}
 
         <div>
-          <p className="text-xs font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">
+          <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1.5">
             Các bước còn lại
           </p>
           <div className="space-y-1">
@@ -116,15 +116,15 @@ export default function TodayMission({ missions }: TodayMissionProps) {
                 className={cn(
                   "flex items-center gap-3 py-2.5 px-3 rounded-xl border transition-colors duration-150",
                   mission.completed
-                    ? "border-zinc-200/40 dark:border-zinc-800/40 bg-zinc-50/50 dark:bg-zinc-900/20 opacity-80"
-                    : "border-zinc-200/50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/40",
+                    ? "border-border/40 bg-card/50 opacity-80"
+                    : "border-border/50 hover:bg-card",
                 )}
               >
-                <span className="shrink-0 text-emerald-600 dark:text-emerald-400">
+                <span className="shrink-0 text-primary">
                   {mission.completed ? (
-                    <CheckCircle2 className="size-4.5 fill-emerald-600 dark:fill-emerald-500 text-white dark:text-zinc-950" />
+                    <CheckCircle2 className="size-4.5 fill-primary text-white" />
                   ) : (
-                    <Circle className="size-4.5 text-zinc-300 dark:text-zinc-600" />
+                    <Circle className="size-4.5 text-primary-foreground" />
                   )}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -132,14 +132,14 @@ export default function TodayMission({ missions }: TodayMissionProps) {
                     className={cn(
                       "text-xs font-semibold leading-snug",
                       mission.completed
-                        ? "text-zinc-400 dark:text-zinc-500 line-through"
-                        : "text-zinc-800 dark:text-zinc-200",
+                        ? "text-muted-foreground line-through"
+                        : "text-foreground",
                     )}
                   >
                     {mission.label}
                   </p>
                   {mission.detail && !mission.completed && (
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {mission.detail}
                     </p>
                   )}
@@ -150,7 +150,7 @@ export default function TodayMission({ missions }: TodayMissionProps) {
         </div>
 
         {allDone && (
-          <p className="text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 pt-1">
+          <p className="text-center text-xs font-bold text-primary pt-1">
             Đã hoàn thành kế hoạch học hôm nay.
           </p>
         )}

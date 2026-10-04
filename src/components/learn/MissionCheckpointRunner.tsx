@@ -77,14 +77,14 @@ export default function MissionCheckpointRunner({
           <div
             className={`rounded-2xl border p-6 ${
               result.passed
-                ? "border-emerald-500/30 bg-emerald-500/10"
-                : "border-amber-500/30 bg-amber-500/10"
+                ? "border-primary/30 bg-primary/10"
+                : "border-warning/30 bg-warning/10"
             }`}
           >
             {result.passed ? (
-              <CheckCircle2 className="size-9 text-emerald-500" />
+              <CheckCircle2 className="size-9 text-primary" />
             ) : (
-              <RotateCcw className="size-9 text-amber-500" />
+              <RotateCcw className="size-9 text-warning" />
             )}
             <p className="mt-4 text-xs font-black uppercase tracking-widest text-muted-foreground">
               Checkpoint · {mission.titleVi}
@@ -113,7 +113,7 @@ export default function MissionCheckpointRunner({
                 >
                   <p className="text-sm font-bold">{question.questionVi}</p>
                   <p
-                    className={`mt-2 text-sm ${correct ? "text-emerald-500" : "text-amber-500"}`}
+                    className={`mt-2 text-sm ${correct ? "text-primary" : "text-warning"}`}
                   >
                     {correct
                       ? `Đúng: ${question.answer}`

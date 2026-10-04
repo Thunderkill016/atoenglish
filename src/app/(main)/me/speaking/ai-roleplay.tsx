@@ -1122,7 +1122,7 @@ export function AIRoleplay() {
             onClick={() => setSelectedScenarioId(s.id)}
             className={`shrink-0 snap-start px-4 h-10 rounded-2xl text-xs font-bold transition-all border flex items-center justify-center max-w-[130px] sm:max-w-none ${
               selectedScenarioId === s.id
-                ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-none shadow-lg shadow-violet-500/10"
+                ? "bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white border-none shadow-lg shadow-primary/10"
                 : "border-border/60 bg-card text-muted-foreground hover:text-foreground hover:bg-white/5"
             }`}
           >
@@ -1136,7 +1136,7 @@ export function AIRoleplay() {
         {/* Chat Header info */}
         <div className="flex items-center justify-between border-b border-foreground/[0.04] pb-4">
           <div className="flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <MessageSquare className="size-4.5" />
             </span>
             <div>
@@ -1147,7 +1147,7 @@ export function AIRoleplay() {
                 Đóng vai cùng: {activeScenario.aiCharacter}
               </p>
               {activeScenario.l1Note && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+                <p className="text-xs text-primary mt-0.5">
                   💡 {activeScenario.l1Note}
                 </p>
               )}
@@ -1156,10 +1156,10 @@ export function AIRoleplay() {
           <span
             className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
               activeScenario.difficulty === "Easy"
-                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                ? "bg-primary/10 text-primary border-primary/20"
                 : activeScenario.difficulty === "Medium"
-                  ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                  : "bg-red-500/10 text-red-600 border-red-500/20"
+                  ? "bg-warning/10 text-warning border-warning/20"
+                  : "bg-destructive/10 text-destructive border-destructive/20"
             }`}
           >
             {activeScenario.difficulty}
@@ -1181,7 +1181,7 @@ export function AIRoleplay() {
                 <span
                   className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                     isAi
-                      ? "bg-violet-500/10 text-violet-500"
+                      ? "bg-primary/10 text-primary"
                       : "bg-primary/10 text-primary"
                   }`}
                 >
@@ -1216,16 +1216,16 @@ export function AIRoleplay() {
                         <span
                           className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${
                             msg.accuracyScore >= 80
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                              ? "bg-primary/10 text-primary border-primary/20"
                               : msg.accuracyScore >= 50
-                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-500 border-amber-500/20"
-                                : "bg-red-500/10 text-red-500 border-red-500/20"
+                                ? "bg-warning/10 text-warning border-warning/20"
+                                : "bg-destructive/10 text-destructive border-destructive/20"
                           }`}
                         >
                           Khớp gợi ý: {msg.accuracyScore}%
                         </span>
                         {msg.missingCodas && msg.missingCodas.length > 0 && (
-                          <div className="text-right text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/5 border border-amber-500/15 px-2 py-1 rounded-xl max-w-[200px] leading-relaxed">
+                          <div className="text-right text-xs text-warning font-semibold bg-warning/5 border border-warning/15 px-2 py-1 rounded-xl max-w-[200px] leading-relaxed">
                             ⚠️ Thiếu âm:{" "}
                             {msg.missingCodas
                               .map((w) => w.replace(/^Từ\s+/, ""))
@@ -1234,15 +1234,15 @@ export function AIRoleplay() {
                         )}
                         {!isAi && msg.grammarFeedback && (
                           <div className="mt-1.5 text-right">
-                            <div className="inline-flex flex-col gap-0.5 text-xs font-semibold bg-amber-500/8 border border-amber-500/20 px-2.5 py-1.5 rounded-xl text-left max-w-[220px]">
-                              <span className="text-amber-600 dark:text-amber-400 font-black text-xs uppercase tracking-wider">
+                            <div className="inline-flex flex-col gap-0.5 text-xs font-semibold bg-warning/8 border border-warning/20 px-2.5 py-1.5 rounded-xl text-left max-w-[220px]">
+                              <span className="text-warning font-black text-xs uppercase tracking-wider">
                                 ✏️ Sửa lỗi
                               </span>
-                              <span className="text-zinc-600 dark:text-zinc-400 leading-snug">
+                              <span className="text-muted-foreground leading-snug">
                                 {msg.grammarFeedback}
                               </span>
                               {msg.grammarCorrection && (
-                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                <span className="text-primary font-bold">
                                   &quot;{msg.grammarCorrection}&quot;
                                 </span>
                               )}
@@ -1265,9 +1265,9 @@ export function AIRoleplay() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-4 sm:p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-center space-y-3"
+              className="p-4 sm:p-6 rounded-2xl bg-primary/10 border border-primary/25 text-center space-y-3"
             >
-              <div className="inline-flex size-12 items-center justify-center bg-emerald-500 text-white rounded-full">
+              <div className="inline-flex size-12 items-center justify-center bg-primary text-white rounded-full">
                 <CheckCircle className="size-6" />
               </div>
               <h5 className="font-bold text-foreground">
@@ -1279,8 +1279,8 @@ export function AIRoleplay() {
               </p>
 
               {isEvaluating && (
-                <div className="p-4 bg-violet-500/5 rounded-2xl border border-dashed border-violet-500/20 text-center space-y-2 my-4">
-                  <div className="inline-block size-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                <div className="p-4 bg-primary/5 rounded-2xl border border-dashed border-primary/20 text-center space-y-2 my-4">
+                  <div className="inline-block size-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   <p className="text-xs text-muted-foreground">
                     AI đang phân tích và chuẩn bị phản hồi cho bạn...
                   </p>
@@ -1288,8 +1288,8 @@ export function AIRoleplay() {
               )}
 
               {aiEvaluation && (
-                <div className="my-4 p-5 rounded-2xl bg-violet-500/[0.03] border border-violet-500/10 text-left space-y-3 max-h-[300px] overflow-y-auto scrollbar-thin">
-                  <h6 className="font-bold text-xs uppercase tracking-widest text-violet-500 flex items-center gap-1.5">
+                <div className="my-4 p-5 rounded-2xl bg-primary/[0.03] border border-primary/10 text-left space-y-3 max-h-[300px] overflow-y-auto scrollbar-thin">
+                  <h6 className="font-bold text-xs uppercase tracking-widest text-primary flex items-center gap-1.5">
                     <Sparkles className="size-3.5" />
                     Nhận xét chi tiết từ AI Tutor
                   </h6>
@@ -1302,7 +1302,7 @@ export function AIRoleplay() {
               <Button
                 onClick={startRoleplay}
                 variant="outline"
-                className="h-10 rounded-xl gap-2 font-bold text-xs uppercase border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700 bg-transparent mt-2"
+                className="h-10 rounded-xl gap-2 font-bold text-xs uppercase border-primary/30 text-primary hover:bg-primary/10 hover:text-primary bg-transparent mt-2"
               >
                 <RefreshCw className="size-3.5" />
                 Luyện lại hội thoại
@@ -1344,8 +1344,8 @@ export function AIRoleplay() {
                   disabled={isAiSpeaking}
                   className={`flex-1 h-14 sm:h-12 rounded-2xl font-bold transition-all duration-300 gap-2 flex items-center justify-center ${
                     isListening
-                      ? "bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white animate-pulse shadow-lg shadow-red-500/20"
-                      : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-lg shadow-violet-500/20 active:scale-[0.98]"
+                      ? "bg-gradient-to-r from-destructive to-destructive hover:from-destructive hover:to-destructive text-white animate-pulse shadow-lg shadow-destructive/20"
+                      : "bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white shadow-lg shadow-primary/20 active:scale-[0.98]"
                   }`}
                 >
                   {isListening ? (
@@ -1375,12 +1375,12 @@ export function AIRoleplay() {
               {/* Interim recognized text feedback & waveform */}
               <div className="flex flex-col items-center justify-center gap-3">
                 {isListening && (
-                  <div className="flex items-center gap-1.5 h-6 px-3 bg-violet-500/5 rounded-full border border-violet-500/10">
+                  <div className="flex items-center gap-1.5 h-6 px-3 bg-primary/5 rounded-full border border-primary/10">
                     {([14, 22, 10, 26, 8, 18, 12, 20, 16, 24] as const).map(
                       (maxH, i) => (
                         <motion.div
                           key={i}
-                          className="w-1 bg-violet-500 rounded-full"
+                          className="w-1 bg-primary rounded-full"
                           animate={{ height: [6, maxH, 6] }}
                           transition={{
                             duration: 0.4 + (i % 5) * 0.05,
