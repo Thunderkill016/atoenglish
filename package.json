@@ -48,7 +48,6 @@
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@neon/config": "^1.8.3",
-    "@neon/env": "^1.5.0",
     "@neondatabase/auth": "0.5.0-beta",
     "@neondatabase/neon-js": "^0.7.0-beta",
     "@neondatabase/serverless": "^1.2.0",
@@ -98,7 +97,6 @@
     "vite": "^8.3.2",
     "vite-css-modules": "^1.16.0",
     "vitest": "^4.1.9",
-    "wait-on": "^9.0.10",
     "wrangler": "^4.147.0"
   },
   "browserslist": {

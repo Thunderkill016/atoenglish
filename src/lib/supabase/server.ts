@@ -115,20 +115,6 @@ export async function createClient() {
           error: error ?? null,
         };
       },
-      // Better Auth completes OAuth through its own callback before the app
-      // callback runs, so the "code" exchange is just a session read.
-      async exchangeCodeForSession(_code: string) {
-        const { user, error } = await getCompatSession();
-        return {
-          data: {
-            session: user ? {} : null,
-            user: user ? toCompatUser(user) : null,
-          },
-          error: user
-            ? null
-            : (error ?? { message: "OAuth callback missing session", status: 401 }),
-        };
-      },
       async signOut() {
         const { error } = await (await getAuth()).signOut();
         return { error: error ?? null };

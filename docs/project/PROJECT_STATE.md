@@ -71,7 +71,7 @@ The single active direction can be replaced only by an explicit current owner de
 
 ## Runtime reality
 
-`main` contains the current Next.js/React/TypeScript/Supabase application, existing A0–B2 curriculum data, learning surfaces, progress/review systems, tests and migrations.
+`main` contains the current Next.js/React/TypeScript application on Cloudflare Workers + Neon, existing A0–B2 curriculum data, learning surfaces, progress/review systems, tests and migrations.
 
 These describe the current implementation only. Their existence does not grant them product authority and does not create separate workstreams.
 
