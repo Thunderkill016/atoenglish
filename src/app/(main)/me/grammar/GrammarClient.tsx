@@ -126,7 +126,7 @@ function TopicCard({
           <p className="text-sm font-black text-foreground mb-0.5">
             {topic.title}
           </p>
-          <p className="text-[11px] text-foreground0 font-semibold">
+          <p className="text-[11px] text-muted-foreground font-semibold">
             {topic.subtitleEn}
           </p>
         </div>
@@ -215,7 +215,7 @@ function TopicCard({
                       <p className="text-sm text-foreground font-semibold mb-0.5">
                         {ex.en}
                       </p>
-                      <p className="text-xs text-foreground0">{ex.vn}</p>
+                      <p className="text-xs text-muted-foreground">{ex.vn}</p>
                     </div>
                   ))}
                 </div>
