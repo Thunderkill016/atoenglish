@@ -140,3 +140,53 @@ pattern IDs (N1, L1, F2…). Severity: **S1** blocks/damages core tasks,
 5. Review empty state (E1 model).
 6. Token layer + dark mode (SYS-5/6).
 7. Honest-content copy style (placement scope note, speaking disclaimer).
+
+## D. Final audit answers
+
+**What systemic problems exist?**
+Three competing list archetypes for the same unit content (SYS-1);
+English chrome leaks into VI product copy (SYS-2); toast-only blocking
+errors + missing form labels (SYS-3/4); fresh-user surfaces render zeros
+without guidance (SYS-7); the next action competes with full inventory on
+the most-visited page (SYS-8).
+
+**Which references/patterns are most useful and why?**
+GOV.UK patterns (S3) — validation recovery, one-thing-per-page, and
+visible-label forms map directly onto login/placement/checkpoint fixes.
+WCAG 2.2 + APG (S1/S2) — normative floor for targets, focus, aria. The
+product's own `/roadmap` accordion was the strongest reference of all:
+an internal implementation already correct — reused rather than invented.
+
+**Largest mismatch vs good practice?**
+List IA: 42–45 unchunked rows on `/learn` and `/quiz` violate Miller/
+Hick directly in front of near-A0 users — the audience least able to
+absorb choice overload. Fixed via `CollapsibleGroup` (verified in
+`after/` screenshots).
+
+**Target design language?**
+"Practice workbook" — quiet bordered cards, narrow reading measure, one
+green accent reserved for actionable affordances, Vietnamese chrome with
+framed English content, honest scope notes. Codified in
+TARGET_DESIGN_SYSTEM.md §1–6.
+
+**Site-wide standards?**
+Row-card atomic action; stage-accordion for any grouped inventory;
+EmptyState with CTA on every data surface; three-tier error system
+(inline field → form summary → toast only for confirmations); visible
+form labels; ≥48px touch targets; Vietnamese-all-chrome copy rule.
+
+**Strongest-redesign pages?**
+`/learn` inventory + `/quiz` picker (done — accordion). `/login` error
+handling (done). `/review/cards`, `/review/hard` remain candidates for
+consolidation into `/review` (deferred — current empty states are
+acceptable). `/zero-path` dedup done.
+
+**Preserve?**
+App shell nav + command palette; checkpoint/unit-start lesson chrome;
+roadmap accordion; review empty state; token layer + dark mode; the
+honest-copy voice (placement scope note, auto-scoring disclaimer).
+
+**First implementation phase and why?**
+Foundations (labels, aria, touch targets, error tiers) — they are the
+lowest-risk, highest-leverage changes and every later page fix depends
+on them. Done in commit a17d10a8 alongside Phases 1–3 quick wins.
