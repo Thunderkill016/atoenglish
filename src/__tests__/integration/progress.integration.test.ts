@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { adminClient, adminSql, testUserId } from "../setup-integration";
 
-const getAction = () => import("@/app/actions/unit");
+const getAction = () => import("@/lib/progress/complete-unit");
 
 async function cleanProgress() {
   // Owner SQL — user_lesson_progress has no DELETE policy for authenticated
@@ -131,8 +131,13 @@ describe("user_onboarding_profile (RLS + columns)", () => {
       daily_minutes: 15,
     };
 
-    const { error: insErr } = await client.from("user_onboarding_profile").insert(payload);
-    expect(insErr, insErr?.message || "insert should succeed under RLS own").toBeNull();
+    const { error: insErr } = await client
+      .from("user_onboarding_profile")
+      .insert(payload);
+    expect(
+      insErr,
+      insErr?.message || "insert should succeed under RLS own",
+    ).toBeNull();
 
     const { data, error: selErr } = await adminClient
       .from("user_onboarding_profile")
@@ -148,16 +153,20 @@ describe("user_onboarding_profile (RLS + columns)", () => {
     const client = (globalThis as any).__testSupabaseClient;
     const fakeOtherId = "00000000-0000-0000-0000-000000000000";
 
-    const { error: insErr } = await client.from("user_onboarding_profile").insert({
-      user_id: fakeOtherId,
-      goal: "work",
-      obstacle: "fear",
-      daily_minutes: 15,
-    });
+    const { error: insErr } = await client
+      .from("user_onboarding_profile")
+      .insert({
+        user_id: fakeOtherId,
+        goal: "work",
+        obstacle: "fear",
+        daily_minutes: 15,
+      });
 
     // Expect policy error (or no success); 42501 is insufficient_privilege in PG
     if (insErr) {
-      expect(String(insErr.code || insErr.message)).toMatch(/42501|permission|policy|RLS|violates/i);
+      expect(String(insErr.code || insErr.message)).toMatch(
+        /42501|permission|policy|RLS|violates/i,
+      );
     }
 
     const { count } = await adminClient

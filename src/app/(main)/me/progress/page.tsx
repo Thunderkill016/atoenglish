@@ -122,9 +122,9 @@ export default async function ProgressPage() {
           <div className="rounded-xl border border-border/60 bg-card px-4">
             {placementDone ? (
               <StatLine
-                label="Trình độ đầu vào"
+                label="Mốc trình độ"
                 value={stats.currentLevel}
-                caption="Từ bài kiểm tra đầu vào — không phải thước đo tiến độ"
+                caption="Ước tính từ bài đầu vào và số bài đã hoàn thành — không phải đánh giá CEFR chính thức"
               />
             ) : null}
             <StatLine

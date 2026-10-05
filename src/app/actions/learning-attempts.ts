@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { seedUnitVocabToSRS } from "@/app/actions/cards";
-import { completeUnit } from "@/app/actions/unit";
+import { completeUnit } from "@/lib/progress/complete-unit";
 import {
   compileLegacyAttemptRpcArgs,
   type LegacyAttemptRpcArgs,
