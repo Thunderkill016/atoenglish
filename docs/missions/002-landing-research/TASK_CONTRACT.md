@@ -2,7 +2,7 @@
 
 | Field | Value |
 | ----- | ----- |
-| Status | `ACTIVE` |
+| Status | `ACCEPTED` |
 | Owner | Lead Devin |
 | Date | 2026-10-05 |
 
