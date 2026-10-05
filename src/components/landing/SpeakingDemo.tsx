@@ -24,7 +24,9 @@ export default function SpeakingDemo() {
             <motion.span
               key={`listen-${i}`}
               animate={
-                reduceMotion ? {} : { scaleY: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }
+                reduceMotion
+                  ? {}
+                  : { scaleY: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }
               }
               transition={{
                 repeat: Infinity,
@@ -83,7 +85,7 @@ export default function SpeakingDemo() {
         <p className="text-xs leading-relaxed text-foreground">
           <span className="font-semibold italic">“I work as a designer.”</span>
           <span className="mt-1 block text-muted-foreground">
-            Độ chính xác 82% · mẹo: nối âm cuối /z/ ở “designer”.
+            Người nghe hiểu được bạn · mẹo: nối âm cuối /z/ ở “designer”.
           </span>
         </p>
       </div>

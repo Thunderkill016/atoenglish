@@ -29,7 +29,7 @@ export default function HeroLessonCard() {
             <Mic className="size-3.5" />
           </span>
           <span className="text-xs font-bold text-foreground">
-            Bài A0-1 · Ngày 1
+            Foundation · Bài A0-1
           </span>
         </div>
         <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">

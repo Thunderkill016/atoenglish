@@ -11,7 +11,7 @@ import { trackPilotEventOnce } from "@/lib/pilot/pilot-analytics-client";
 /**
  * Dual CTA: primary = free first lesson (guests allowed on unit-a0-1,
  * lesson-before-signup funnel); secondary = scroll to the honest
- * 28-day scope section. Emits pilot analytics once per tab session.
+ * 4-stage roadmap section. Emits pilot analytics once per tab session.
  */
 export default function LandingCtas({
   source,
@@ -46,7 +46,7 @@ export default function LandingCtas({
       </Link>
       {source === "landing_hero" ? (
         <Link
-          href="#receipt"
+          href="#roadmap"
           prefetch={false}
           className={buttonVariants({
             variant: "outline",
@@ -54,7 +54,7 @@ export default function LandingCtas({
               "w-full sm:w-auto border-border bg-card text-foreground font-bold h-14 px-8 rounded-2xl gap-1.5 active:scale-[0.97] transition-all duration-300",
           })}
         >
-          28 ngày mua được gì?
+          Lộ trình 0→9.0 ra sao?
           <ClipboardCheck className="size-4.5" />
         </Link>
       ) : null}

@@ -5,17 +5,15 @@ test.describe("Landing Page", () => {
     await page.goto("/");
   });
 
-  test("renders honest 28-day headline", async ({ page }) => {
+  test("renders IELTS-from-foundation headline", async ({ page }) => {
     await expect(page).toHaveTitle(/AtoEnglish/);
     await expect(
-      page.getByRole("heading", { level: 1, name: /28 ngày/ }),
+      page.getByRole("heading", { level: 1, name: /IELTS/ }),
     ).toBeVisible();
   });
 
   test("primary CTA opens the free first lesson", async ({ page }) => {
-    const cta = page
-      .getByRole("link", { name: /Học bài đầu tiên/i })
-      .first();
+    const cta = page.getByRole("link", { name: /Học bài đầu tiên/i }).first();
     await expect(cta).toBeVisible();
     await expect(cta).toHaveAttribute("href", "/learn/unit-a0-1");
   });
@@ -25,11 +23,11 @@ test.describe("Landing Page", () => {
     await expect(page.locator("nav").getByText("AtoEnglish")).toBeVisible();
   });
 
-  test("shows the honest 28-day scope section", async ({ page }) => {
+  test("shows the honest 4-stage roadmap section", async ({ page }) => {
     await expect(
-      page.getByRole("heading", { name: /28 ngày nói được gì/i }),
+      page.getByRole("heading", { name: /Từ 0 đến band mục tiêu/i }),
     ).toBeVisible();
-    await expect(page.getByText(/28 ngày không làm được/)).toBeVisible();
+    await expect(page.getByText(/app này không làm/)).toBeVisible();
   });
 
   test("footer has links to privacy and terms", async ({ page }) => {

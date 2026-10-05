@@ -89,23 +89,21 @@ test.describe("Public Routes — Accessible Without Auth", () => {
 });
 
 test.describe("Landing Page — Key Elements", () => {
-  test("has honest 28-day heading", async ({ page }) => {
+  test("has IELTS foundation heading", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("h1").first()).toContainText("28 ngày");
+    await expect(page.locator("h1").first()).toContainText("IELTS");
   });
 
   test("has CTA linking to the free first lesson", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    const cta = page
-      .getByRole("link", { name: /Học bài đầu tiên/i })
-      .first();
+    const cta = page.getByRole("link", { name: /Học bài đầu tiên/i }).first();
     await expect(cta).toBeVisible();
     await expect(cta).toHaveAttribute("href", "/learn/unit-a0-1");
   });
 
   test("shows the authorized pilot promise", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText(/28 ngày/).first()).toBeVisible();
+    await expect(page.getByText(/IELTS/).first()).toBeVisible();
     await expect(page.getByText(/10–15 phút/).first()).toBeVisible();
   });
 
@@ -126,7 +124,7 @@ test.describe("Pilot Promise — Consistent Entry Experience", () => {
   }) => {
     await page.goto("/login");
     await expect(
-      page.getByText("28 ngày", { exact: true }).first(),
+      page.getByText("IELTS", { exact: true }).first(),
     ).toBeVisible();
     await expect(page.getByText(/10–15 phút\/ngày/).first()).toBeVisible();
     await expect(page.getByText(/Bắt đầu từ A0/).first()).toBeVisible();

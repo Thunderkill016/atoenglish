@@ -42,14 +42,12 @@ test.describe("Mobile Viewport — No Horizontal Overflow", () => {
   test("landing page headline is visible on mobile", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("h1")).toBeVisible();
-    await expect(page.locator("h1")).toContainText("28 ngày");
+    await expect(page.locator("h1")).toContainText("IELTS");
   });
 
   test("landing page CTA button is tappable on mobile", async ({ page }) => {
     await page.goto("/");
-    const cta = page
-      .getByRole("link", { name: /Học bài đầu tiên/i })
-      .first();
+    const cta = page.getByRole("link", { name: /Học bài đầu tiên/i }).first();
     await expect(cta).toBeVisible();
     // Check button is at least 44px tall (min tap target)
     const box = await cta.boundingBox();
