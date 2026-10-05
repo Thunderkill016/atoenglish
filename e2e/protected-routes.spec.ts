@@ -86,9 +86,9 @@ test.describe("Public Routes — Accessible Without Auth", () => {
 });
 
 test.describe("Landing Page — Key Elements", () => {
-  test("has hero heading in Vietnamese", async ({ page }) => {
+  test("has placeholder heading", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("h1").first()).toContainText("Học tiếng Anh");
+    await expect(page.locator("h1").first()).toContainText("AtoEnglish");
   });
 
   test("has CTA button linking to login", async ({ page }) => {
@@ -98,15 +98,12 @@ test.describe("Landing Page — Key Elements", () => {
     await expect(cta).toHaveAttribute("href", /login/);
   });
 
-  test("states the focused 28-day pilot promise", async ({ page }) => {
+  test("does not show marketing promise while placeholder is active", async ({
+    page,
+  }) => {
     await page.goto("/");
-    await expect(
-      page.getByText("28 ngày", { exact: true }).first(),
-    ).toBeVisible({ timeout: 10000 });
-    await expect(
-      page.getByText("10–15 phút", { exact: true }).first(),
-    ).toBeVisible();
-    await expect(page.getByText("A0", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("28 ngày", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("10–15 phút", { exact: true })).toHaveCount(0);
   });
 
   test("footer has privacy and terms links", async ({ page }) => {

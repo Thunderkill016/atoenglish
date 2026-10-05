@@ -39,10 +39,12 @@ test.describe("Mobile Viewport — No Horizontal Overflow", () => {
     expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
   });
 
-  test("landing page hero headline is visible on mobile", async ({ page }) => {
+  test("landing page placeholder headline is visible on mobile", async ({
+    page,
+  }) => {
     await page.goto("/");
     await expect(page.locator("h1")).toBeVisible();
-    await expect(page.locator("h1")).toContainText("Học tiếng Anh");
+    await expect(page.locator("h1")).toContainText("AtoEnglish");
   });
 
   test("landing page CTA button is tappable on mobile", async ({ page }) => {

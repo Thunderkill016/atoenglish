@@ -5,10 +5,12 @@ test.describe("Landing Page", () => {
     await page.goto("/");
   });
 
-  test("renders hero section with headline", async ({ page }) => {
+  test("renders placeholder headline", async ({ page }) => {
     await expect(page).toHaveTitle(/AtoEnglish/);
-    // Check Vietnamese headline
-    await expect(page.locator("h1")).toContainText("Học tiếng Anh");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "AtoEnglish" }),
+    ).toBeVisible();
+    await expect(page.getByText("đang được cập nhật")).toBeVisible();
   });
 
   test("has Start Learning CTA button", async ({ page }) => {
@@ -22,19 +24,19 @@ test.describe("Landing Page", () => {
     await expect(page.locator("nav").getByText("AtoEnglish")).toBeVisible();
   });
 
-  test("shows stats bar with Open Beta badge", async ({ page }) => {
-    // Target the stats bar specifically (first exact match)
-    await expect(
-      page.locator("text=Open Beta").first()
-    ).toBeVisible();
+  test("has no marketing sections while placeholder is active", async ({
+    page,
+  }) => {
+    await expect(page.locator("text=Open Beta")).toHaveCount(0);
+    await expect(page.locator("text=28 ngày")).toHaveCount(0);
   });
 
   test("footer has links to privacy and terms", async ({ page }) => {
     await expect(
-      page.getByRole("link", { name: /Bảo mật|Privacy/i })
+      page.getByRole("link", { name: /Bảo mật|Privacy/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Điều khoản|Terms/i })
+      page.getByRole("link", { name: /Điều khoản|Terms/i }),
     ).toBeVisible();
   });
 });
