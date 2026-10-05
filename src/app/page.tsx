@@ -18,14 +18,14 @@ import LandingCtas from "@/components/landing/LandingCtas";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "AtoEnglish — Học tiếng Anh để nói được, không chỉ để biết",
+    absolute: "AtoEnglish — Luyện IELTS từ nền tảng, cho người Việt",
   },
   description:
-    "Hành trình luyện nói 28 ngày cho người Việt mất gốc: mỗi ngày 10–15 phút để nói được một điều cụ thể, đo được bằng CEFR — không hứa điều không đo được.",
+    "Lộ trình IELTS 0→9.0 cho người bắt đầu từ mất gốc: nền tảng trước, format đề sau — mỗi giai đoạn đo được theo band descriptors, không hứa điều không đo được.",
   openGraph: {
-    title: "AtoEnglish — Học tiếng Anh để nói được",
+    title: "AtoEnglish — Luyện IELTS từ nền tảng",
     description:
-      "28 ngày, mỗi ngày 10–15 phút, cho người Việt bắt đầu từ mất gốc. Biết trước chính xác bạn sẽ nói được gì.",
+      "IELTS cho người Việt mất gốc: 4 giai đoạn từ A0 lên band mục tiêu, tiến bộ đo bằng bằng chứng — không bằng lời hứa.",
     url: `${SITE_URL}`,
     siteName: "AtoEnglish",
     locale: "vi_VN",
@@ -35,15 +35,15 @@ export const metadata: Metadata = {
         url: `${SITE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "AtoEnglish — Học tiếng Anh để nói được, không chỉ để biết",
+        alt: "AtoEnglish — Luyện IELTS từ nền tảng, cho người Việt",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AtoEnglish — Học tiếng Anh để nói được",
+    title: "AtoEnglish — Luyện IELTS từ nền tảng",
     description:
-      "28 ngày, 10–15 phút mỗi ngày — và một kết quả nói đo được theo CEFR.",
+      "4 giai đoạn từ A0 đến band mục tiêu — mỗi bước đo được, không hứa ảo.",
     images: [`${SITE_URL}/og-image.png`],
   },
   alternates: {
@@ -51,22 +51,26 @@ export const metadata: Metadata = {
   },
 };
 
-const RECEIPT_ITEMS = [
+const STAGES = [
   {
-    title: "Giới thiệu bản thân 30–45 giây",
-    body: "Tên, nghề nghiệp, công việc hàng ngày — nói trơn tru, không đọc.",
+    stage: "Giai đoạn 1 · A0–A2",
+    title: "Foundation — xây nền",
+    body: "Từ vựng lõi, ngữ pháp nền, nghe chậm → tự nhiên, phát âm phụ âm cuối. Chưa đụng đề IELTS — người mới cần năng lực trước format.",
   },
   {
-    title: "Đánh vần & thông tin cá nhân",
-    body: "Tên và các thông tin cá nhân cơ bản — nghe hỏi là đáp.",
+    stage: "Giai đoạn 2 · B1",
+    title: "Bridge — học format đề",
+    body: "Từng dạng câu hỏi IELTS qua ví dụ mẫu: Listening Part 1–2, Reading Section 1, thư Task 1, Speaking Part 1–2.",
   },
   {
-    title: "Trả lời 5 câu hỏi quen thuộc",
-    body: "Những câu người ta thật sự hỏi bạn trong lần đầu gặp.",
+    stage: "Giai đoạn 3 · B2",
+    title: "Core — luyện đề bấm giờ",
+    body: "Full section đúng giờ thi, nhật ký lỗi theo dạng câu hỏi, đánh vỡ plateau 5.5–6.0 bằng câu không lỗi.",
   },
   {
-    title: "Tự sửa khi nói sai",
-    body: "Nhóm cụm repair (“ý tôi là…”, “xin lỗi, nói lại…”) để không bị đơ.",
+    stage: "Giai đoạn 4 · C1",
+    title: "Mastery — mock & mài",
+    body: "Mock đủ 4 kỹ năng, feedback theo band descriptors chính thức. Điểm AI luôn hiển thị dạng khoảng — không con số ảo.",
   },
 ] as const;
 
@@ -103,16 +107,16 @@ const IPOR_STEPS = [
 
 const FAQ_ITEMS = [
   {
-    q: "Mất gốc hoàn toàn có học được không?",
-    a: "Được — đó là đúng người AtoEnglish thiết kế cho. Bạn bắt đầu từ A0: giải thích bằng tiếng Việt, từng câu nhỏ, và bài đầu tiên không cần đăng nhập.",
+    q: "Mất gốc hoàn toàn có thi được IELTS không?",
+    a: "Được — nhưng không nhảy thẳng vào đề. Giai đoạn Foundation (A0–A2) xây nền trước; format đề IELTS chỉ vào từ B1. Bài đầu tiên mở cho khách, không cần đăng nhập.",
   },
   {
-    q: "10–15 phút mỗi ngày có đủ không?",
-    a: "Đủ cho mục tiêu của chương trình — vì mục tiêu được định nghĩa trước và đo được. 28 ngày không biến bạn thành người bản xứ; nó cho bạn một kết quả cụ thể: giới thiệu bản thân trôi chảy và xử lý được những câu hỏi đầu tiên.",
+    q: "Bao lâu để lên 1 band?",
+    a: "Dữ liệu IELTS chính thức: trung bình ~0.5 band cho mỗi 3 tháng học nghiêm túc, và càng lên cao càng chậm. Với 10–15 phút/ngày, thực tế khoảng 0.5 band mỗi 4–6 tháng. Ai hứa nhanh hơn nhiều — hỏi họ đo bằng gì.",
   },
   {
-    q: "Khác gì Duolingo hay ELSA?",
-    a: "Hai điều: mọi thứ được giải thích bằng tiếng Việt từ ngày đầu, và tiến độ của bạn được đo bằng kỹ năng CEFR — không phải điểm hay chuỗi ngày.",
+    q: "Khác gì trung tâm luyện IELTS?",
+    a: "Ba điều: giải thích bằng tiếng Việt từ ngày đầu; không bán mẹo hay template (văn mẫu học thuộc bị giám khảo trừ điểm); tiến độ đo bằng band descriptors chính thức — không phải điểm hay chuỗi ngày.",
   },
   {
     q: "Có miễn phí không?",
@@ -166,23 +170,25 @@ export default function LandingPage() {
             <div className="text-center lg:text-left">
               <p className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-xs font-bold tracking-wide text-primary">
                 <Sprout className="size-3.5" />
-                Học tiếng Anh để nói được — cho người Việt
+                Luyện IELTS từ con số 0 — cho người Việt
               </p>
               <h1 className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-[3.4rem]">
-                28 ngày, 10–15 phút mỗi ngày —{" "}
-                <span className="text-primary">và một mục tiêu nói thật.</span>
+                Mất gốc mà cần IELTS?{" "}
+                <span className="text-primary">
+                  Nền tảng trước, đề thi sau.
+                </span>
               </h1>
               <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">
-                Không hứa nói như bản xứ. Chỉ hứa điều đo được: sau 28 ngày,
-                bạn tự giới thiệu bản thân và công việc bằng tiếng Anh trong
-                30–45 giây — và mỗi bước đều có bằng chứng CEFR.
+                Không “3 tháng 7.0”. Lộ trình 4 giai đoạn: nền tảng tiếng Anh →
+                học format đề → luyện đề bấm giờ → mock đầy đủ. Mỗi bước đo được
+                theo band descriptors chính thức — không phải lời hứa.
               </p>
               <div className="mt-8">
                 <LandingCtas source="landing_hero" />
               </div>
               <div className="mt-6 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
                 {[
-                  "🗓 28 ngày · một mục tiêu",
+                  "🎯 Đích IELTS · 4 giai đoạn",
                   "⏱ 10–15 phút/ngày",
                   "🌱 Bắt đầu từ A0",
                   "🇻🇳 Giải thích bằng tiếng Việt",
@@ -202,28 +208,35 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── Receipt: what 28 days actually buys ── */}
-        <section id="receipt" className="scroll-mt-20 border-t border-border/40 bg-[#f5f5f7]">
+        {/* ── Roadmap: what the 0→9.0 journey actually is ── */}
+        <section
+          id="roadmap"
+          className="scroll-mt-20 border-t border-border/40 bg-[#f5f5f7]"
+        >
           <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
             <ScrollReveal>
               <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-primary">
-                Bạn nhận được gì — nói thẳng
+                Lộ trình — nói thẳng
               </p>
               <h2 className="mt-3 text-center text-3xl font-extrabold tracking-tight sm:text-4xl">
-                28 ngày nói được gì?
+                Từ 0 đến band mục tiêu, qua 4 giai đoạn
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Đây là toàn bộ cam kết — không ẩn điều kiện, không dấu sao nhỏ.
+                Mỗi giai đoạn có mục tiêu đo được — không ẩn điều kiện, không
+                dấu sao nhỏ.
               </p>
             </ScrollReveal>
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {RECEIPT_ITEMS.map((item, i) => (
+              {STAGES.map((item, i) => (
                 <ScrollReveal key={item.title} delayMs={i * 90}>
                   <div className="flex h-full flex-col rounded-2xl border border-border/60 bg-card p-5">
                     <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                       <BookOpenCheck className="size-4.5" />
                     </span>
-                    <h3 className="mt-4 text-sm font-bold leading-snug">
+                    <p className="mt-4 text-[11px] font-bold uppercase tracking-wider text-primary">
+                      {item.stage}
+                    </p>
+                    <h3 className="mt-1 text-sm font-bold leading-snug">
                       {item.title}
                     </h3>
                     <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
@@ -240,11 +253,12 @@ export default function LandingPage() {
                 </span>
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   <span className="font-bold text-foreground">
-                    Và điều 28 ngày không làm được:
+                    Và điều app này không làm:
                   </span>{" "}
-                  biến bạn thành người bản xứ, giúp bạn tranh luận, hay “thông
-                  tiếng Anh trong 1 tháng”. Ai hứa điều đó thì nên hỏi họ đo
-                  bằng gì.
+                  hứa “7.0 trong 3 tháng”, bán template “auto band cao”, hay
+                  chấm một con điểm ảo. IELTS nói thẳng: trung bình ~0.5 band
+                  cho mỗi 3 tháng học nghiêm túc — chúng tôi xây lộ trình quanh
+                  con số đó, không chống lại nó.
                 </p>
               </div>
             </ScrollReveal>
@@ -303,9 +317,11 @@ export default function LandingPage() {
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
                 Bạn nghe mẫu, nhắc lại, và nhận phản hồi cụ thể: độ chính xác
-                từng từ và mẹo phát âm dành riêng cho người Việt. Chấm tự động
-                chưa hoàn hảo — chúng tôi ghi rõ điều đó ngay trong sản phẩm
-                thay vì cho bạn một con điểm ảo.
+                từng từ và mẹo phát âm dành riêng cho người Việt. Khi vào giai
+                đoạn luyện đề, Speaking chấm theo đúng 4 tiêu chí band
+                descriptors — giọng Việt không bị trừ điểm, chỉ chấm người nghe
+                có hiểu bạn không. Và điểm AI luôn hiển thị dạng khoảng, không
+                bao giờ một con số ảo.
               </p>
             </ScrollReveal>
             <ScrollReveal delayMs={120}>
@@ -321,13 +337,14 @@ export default function LandingPage() {
               <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
                 Chuỗi ngày chứng nhận bạn quay lại.{" "}
                 <span className="text-primary">
-                  CEFR chứng nhận bạn tiến bộ.
+                  Band descriptors chứng nhận bạn tiến bộ.
                 </span>
               </h2>
               <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                 AtoEnglish đo tiến độ bằng kỹ năng: nghe hiểu, nói, đọc, viết —
-                theo khung CEFR. Điểm số và streak có thể làm bạn vui; chỉ có
-                bằng chứng kỹ năng mới chứng minh bạn học được.
+                theo đúng tiêu chí chấm IELTS chính thức. Điểm số và streak có
+                thể làm bạn vui; chỉ có bằng chứng kỹ năng mới chứng minh bạn
+                học được.
               </p>
             </ScrollReveal>
           </div>
@@ -369,11 +386,11 @@ export default function LandingPage() {
           <div className="mx-auto max-w-4xl px-5 py-16 text-center sm:px-8 sm:py-24">
             <ScrollReveal>
               <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-                Sẵn sàng cho bài đầu tiên?
+                Sẵn sàng biết mình đang ở đâu?
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                 Không cần đăng nhập. Không cần thẻ. 10–15 phút — và bạn sẽ biết
-                mình đang ở đâu.
+                giai đoạn nào của lộ trình IELTS đang chờ bạn.
               </p>
               <div className="mt-8">
                 <LandingCtas source="landing_final_cta" />

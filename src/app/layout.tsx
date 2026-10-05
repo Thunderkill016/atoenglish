@@ -27,19 +27,20 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "AtoEnglish — Học tiếng Anh để nói được",
+    default: "AtoEnglish — Luyện IELTS từ nền tảng",
     template: "%s | AtoEnglish",
   },
   description:
-    "Luyện tiếng Anh thực dụng cho người Việt với các bài học tập trung vào khả năng sử dụng tiếng Anh trong tình huống thực tế.",
+    "Lộ trình IELTS 0→9.0 cho người Việt: nền tảng tiếng Anh trước, format đề sau — mỗi giai đoạn đo được theo band descriptors chính thức.",
   keywords: [
+    "luyện IELTS",
+    "IELTS cho người mất gốc",
+    "học IELTS từ đầu",
     "học tiếng Anh",
-    "luyện nói tiếng Anh",
     "FSRS",
     "spaced repetition",
     "CEFR",
-    "tiếng Anh cho người mất gốc",
-    "tiếng Anh giao tiếp",
+    "band descriptors",
     "AtoEnglish",
   ],
   authors: [{ name: "AtoEnglish Team" }],
@@ -70,23 +71,23 @@ export const metadata: Metadata = {
     locale: "vi_VN",
     url: SITE_URL,
     siteName: "AtoEnglish",
-    title: "AtoEnglish — Học tiếng Anh để nói được, không chỉ để biết",
+    title: "AtoEnglish — Luyện IELTS từ nền tảng, cho người Việt",
     description:
-      "Luyện tiếng Anh thực dụng cho người Việt, tập trung vào khả năng sử dụng tiếng Anh trong tình huống thực tế.",
+      "Lộ trình IELTS 0→9.0: nền tảng trước, format đề sau — tiến bộ đo bằng bằng chứng, không bằng lời hứa.",
     images: [
       {
         url: `${SITE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "AtoEnglish — Học tiếng Anh để nói được",
+        alt: "AtoEnglish — Luyện IELTS từ nền tảng",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AtoEnglish — Học tiếng Anh để nói được",
+    title: "AtoEnglish — Luyện IELTS từ nền tảng",
     description:
-      "Luyện tiếng Anh thực dụng cho người Việt, tập trung vào khả năng sử dụng trong tình huống thực tế.",
+      "4 giai đoạn từ A0 đến band mục tiêu — mỗi bước đo được, không hứa ảo.",
     creator: "@atoenglish",
     images: [`${SITE_URL}/og-image.png`],
   },

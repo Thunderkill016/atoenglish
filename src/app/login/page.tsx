@@ -51,7 +51,11 @@ function localizeAuthError(message: string): string {
   if (/invalid (email|login|credential)|invalid email or password/.test(m)) {
     return "Email hoặc mật khẩu không đúng.";
   }
-  if (/already (registered|exists|in use)|email.*(in use|registered|taken)/.test(m)) {
+  if (
+    /already (registered|exists|in use)|email.*(in use|registered|taken)/.test(
+      m,
+    )
+  ) {
     return "Email này đã được đăng ký. Hãy đăng nhập.";
   }
   if (/too many|rate limit/.test(m)) {
@@ -230,9 +234,7 @@ function LoginContent() {
     const schema = isSignUp ? SignUpSchema : LoginSchema;
     const validated = schema.safeParse({ email, password });
     if (!validated.success) {
-      setFormError(
-        validated.error.issues.map((err) => err.message).join(" "),
-      );
+      setFormError(validated.error.issues.map((err) => err.message).join(" "));
       return;
     }
 
@@ -473,21 +475,21 @@ function LoginContent() {
                   {/* Headline */}
                   <div className="space-y-3">
                     <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground leading-tight">
-                      Bắt đầu hành trình nói{" "}
+                      Bắt đầu hành trình{" "}
                       <span className="bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent">
-                        28 ngày
+                        IELTS
                       </span>
                     </h1>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
                       Chọn trình độ gần nhất để AtoEnglish gợi ý điểm bắt đầu
-                      cho nhiệm vụ nói đầu tiên.
+                      trên lộ trình 0→9.0.
                     </p>
                   </div>
 
                   {/* Feature pills */}
                   <div className="flex flex-wrap justify-center gap-2">
                     {[
-                      "🗓 28 ngày · 1 mục tiêu nói",
+                      "🎯 IELTS · lộ trình 4 giai đoạn",
                       "⏱ 10–15 phút/ngày",
                       "🌱 Bắt đầu từ A0",
                     ].map((tag) => (
