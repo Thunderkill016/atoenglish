@@ -1,0 +1,14 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "exec",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash scripts/devin/guard-exec.sh",
+          "timeout": 5
+        }
+      ]
+    }
+  ]
+}
