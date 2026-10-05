@@ -1,5 +1,7 @@
 # Devin Spec — AtoEnglish M0 + M1: Vocabulary spine & Content pipeline
 
+> **Superseded for active execution — owner decision 2026-10-06.** Follow [PROJECT_STATE](../../project/PROJECT_STATE.md) and [Mission 004](../004-free-english-recovery/TASK_CONTRACT.md). This spec is retained as historical input. Reuse its content/tooling where useful, but its IELTS-first assumptions, content-only deliverable, mandatory per-blueprint owner approval and audio/player deferral do not block Mission 004. Sequence-based coverage estimates introduced language, not demonstrated learner knowledge.
+
 Ngày 2026-10-05. Spec này đủ chi tiết để Devin làm ngay không cần hỏi lại. Ngôn ngữ spec: tiếng Việt; code/YAML/schema: tiếng Anh.
 
 ## 0. Bối cảnh & quyết định đã chốt (không thay đổi giữa chừng)
