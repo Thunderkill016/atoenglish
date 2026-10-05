@@ -19,10 +19,11 @@ const authRateLimiter = createRateLimiter(
 type RouteContext = { params: Promise<{ path: string[] }> };
 
 async function handle(request: NextRequest, context: RouteContext) {
+  const clientKey = getClientIp(request);
   const { success, limit, remaining, resetTime, backend } =
-    await authRateLimiter.check(getClientIp(request));
+    await authRateLimiter.check(clientKey);
   const backendHeader: Record<string, string> = backend
-    ? { "X-RateLimit-Backend": backend }
+    ? { "X-RateLimit-Backend": backend, "X-RateLimit-Key": clientKey }
     : {};
   if (!success) {
     return new NextResponse(
