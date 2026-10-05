@@ -61,9 +61,14 @@ export default async function UnitPage({
     );
   }
 
+  // Mission lessons end at their checkpoint (it routes onward to the next
+  // lesson on pass); guests finish the trial at the signup-gated checkpoint.
+  // Legacy lessons jump straight to the next unit — they have no checkpoint.
   const nextRoute = !user
     ? "/login?mode=login&next=%2Fcheckpoint%2Ftrial"
-    : entry.next;
+    : isMissionLesson(entry.data)
+      ? `/learn/${unitSlug}/checkpoint`
+      : entry.next;
 
   if (isMissionLesson(entry.data)) {
     return <MissionLessonTemplate lesson={entry.data} nextRoute={nextRoute} />;

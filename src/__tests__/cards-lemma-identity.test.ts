@@ -75,14 +75,13 @@ vi.mock("@/lib/supabase/server", () => ({
         },
       };
     },
+    // apply_fsrs_card_review resolves auth_uid() from the request JWT, so it
+    // must be invoked on this user-scoped client — not the service path.
+    rpc: async (fn: string, args: Record<string, unknown>) => {
+      rpcCalls.push({ fn, args });
+      return { data: "ok", error: null };
+    },
   }),
-}));
-
-vi.mock("@/lib/supabase/service", () => ({
-  rpcService: async (fn: string, args: Record<string, unknown>) => {
-    rpcCalls.push({ fn, args });
-    return { data: "ok", error: null };
-  },
 }));
 
 beforeEach(() => {

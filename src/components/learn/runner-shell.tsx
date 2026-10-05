@@ -168,27 +168,16 @@ export function RunnerSpeechInput({
   onSubmit,
   placeholder = "Nhập lại câu bạn vừa tự nói...",
 }: RunnerSpeechInputProps) {
-  if (speechSupported) {
-    return (
-      <MinimalButton
-        fullWidth
-        disabled={isListening}
-        onClick={() => startRecognition(onSubmit)}
-      >
-        <Mic className="size-4" />
-        {isListening ? "Đang nghe..." : "Bắt đầu nói"}
-      </MinimalButton>
-    );
-  }
+  const [typingMode, setTypingMode] = useState(false);
 
-  return (
+  const typingBlock = (
     <div className="space-y-3 rounded-xl border border-warning/30 bg-warning/10 p-4">
       <div className="flex gap-2 text-sm text-warning">
         <AlertTriangle className="mt-0.5 size-4 shrink-0" />
         <p>
-          Trình duyệt chưa hỗ trợ nhận diện giọng nói. Hãy tự nói thành tiếng
-          rồi nhập lại điều vừa nói. Nội dung nhập chỉ kiểm tra mục tiêu giao
-          tiếp, không phải phát âm.
+          {speechSupported
+            ? "Không dùng được micro? Hãy tự nói thành tiếng rồi nhập lại điều vừa nói. Nội dung nhập chỉ kiểm tra mục tiêu giao tiếp, không phải phát âm."
+            : "Trình duyệt chưa hỗ trợ nhận diện giọng nói. Hãy tự nói thành tiếng rồi nhập lại điều vừa nói. Nội dung nhập chỉ kiểm tra mục tiêu giao tiếp, không phải phát âm."}
         </p>
       </div>
       <textarea
@@ -203,4 +192,34 @@ export function RunnerSpeechInput({
       </MinimalButton>
     </div>
   );
+
+  if (speechSupported) {
+    return (
+      <div className="space-y-3">
+        {typingMode ? (
+          typingBlock
+        ) : (
+          <MinimalButton
+            fullWidth
+            disabled={isListening}
+            onClick={() => startRecognition(onSubmit)}
+          >
+            <Mic className="size-4" />
+            {isListening ? "Đang nghe..." : "Bắt đầu nói"}
+          </MinimalButton>
+        )}
+        <button
+          type="button"
+          onClick={() => setTypingMode((current) => !current)}
+          className="min-h-11 w-full rounded-lg text-sm font-semibold text-muted-foreground hover:bg-muted"
+        >
+          {typingMode
+            ? "Quay lại nói bằng micro"
+            : "Không nói được? Nhập câu trả lời"}
+        </button>
+      </div>
+    );
+  }
+
+  return typingBlock;
 }

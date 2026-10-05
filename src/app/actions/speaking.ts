@@ -8,7 +8,7 @@ import {
   createRateLimiter,
   getClientIpFromHeaders,
 } from "@/lib/security/rate-limit";
-import { geminiGenerateUrl } from "@/lib/ai/gemini";
+import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
 import { SpeakingSessionSchema } from "@/lib/security/validation";
 import {
   analyzeSpeaking,
@@ -403,22 +403,19 @@ Set isEnd=true only if the conversation reached a natural conclusion.`;
       }
     }
 
-    const response = await fetch(
-      geminiGenerateUrl("gemini-1.5-flash", apiKey),
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          contents,
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.85,
-            maxOutputTokens: 512,
-          },
-        }),
-      },
-    );
+    const response = await fetch(geminiGenerateUrl(GEMINI_MODEL, apiKey), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents,
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.85,
+          maxOutputTokens: 512,
+        },
+      }),
+    });
 
     if (!response.ok) {
       const errText = await response.text();
@@ -514,23 +511,20 @@ Break your response down into the following sections using Markdown:
 4. **Mẹo phát âm cho người Việt**: Based on typical pronunciation issues Vietnamese speakers face with these words (like final consonants /s/, /t/, /k/, /d/ or word stress), give 2 specific pronunciation tips.
 `;
 
-    const response = await fetch(
-      geminiGenerateUrl("gemini-1.5-flash", apiKey),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }],
-            },
-          ],
-        }),
+    const response = await fetch(geminiGenerateUrl(GEMINI_MODEL, apiKey), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
+          },
+        ],
+      }),
+    });
 
     if (!response.ok) {
       const errText = await response.text();

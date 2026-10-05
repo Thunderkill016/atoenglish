@@ -6,7 +6,7 @@ import {
   createRateLimiter,
   getClientIpFromHeaders,
 } from "@/lib/security/rate-limit";
-import { geminiGenerateUrl } from "@/lib/ai/gemini";
+import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
 import { z } from "zod";
 
 const writingLimiter = createRateLimiter(15, 60_000, "writing");
@@ -107,17 +107,14 @@ Rules:
 - Score 90-100 = no/minor errors, 70-89 = small errors, 50-69 = several errors, below 50 = major errors
 - Keep the improved version comprehensible for ${level} learners`;
 
-    const response = await fetch(
-      geminiGenerateUrl("gemini-1.5-flash", apiKey),
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json" },
-        }),
-      },
-    );
+    const response = await fetch(geminiGenerateUrl(GEMINI_MODEL, apiKey), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" },
+      }),
+    });
 
     if (!response.ok) {
       return { success: false as const, error: "Lỗi kết nối Gemini API." };
