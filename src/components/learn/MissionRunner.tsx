@@ -27,10 +27,12 @@ import {
   createMissionSession,
   transitionMissionSession,
 } from "@/lib/missions/mission-engine";
-import type { MissionSpecV1 } from "@/lib/missions/mission-spec";
+import type { MissionLearnerSpecV1 } from "@/lib/missions/mission-spec";
 import { speakEnglish } from "@/lib/speech";
 
-type MissionLesson = LessonSpecV1 & { mission: MissionSpecV1 };
+type MissionLesson = Omit<LessonSpecV1, "mission"> & {
+  mission: MissionLearnerSpecV1;
+};
 
 interface MissionRunnerProps {
   lesson: MissionLesson;

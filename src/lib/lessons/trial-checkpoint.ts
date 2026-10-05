@@ -1,3 +1,5 @@
+import { UNIT_A0_1_CHECKPOINT } from "@/lib/missions/checkpoint-banks";
+
 export interface TrialCheckpointQuestion {
   id: string;
   question: string;
@@ -6,41 +8,24 @@ export interface TrialCheckpointQuestion {
   explanation: string;
 }
 
-export const TRIAL_CHECKPOINT_PASS_THRESHOLD = 2;
+/**
+ * The trial checkpoint IS the unit-a0-1 checkpoint — one authored
+ * definition (`UNIT_A0_1_CHECKPOINT`), adapted here to the legacy field
+ * names the claim path uses. Keeping a second handwritten set is what
+ * allowed the trial (3 questions, threshold 2) to drift away from the
+ * mission checkpoint (4 questions, threshold 4) for the same unit.
+ */
+export const TRIAL_CHECKPOINT_PASS_THRESHOLD =
+  UNIT_A0_1_CHECKPOINT.passThreshold;
 
-export const TRIAL_CHECKPOINT_QUESTIONS: TrialCheckpointQuestion[] = [
-  {
-    id: "trial-1",
-    question: "Chọn câu trả lời phù hợp cho 'What is your name?'",
-    options: ["I am fine.", "My name is Lan.", "I am ten.", "Good morning."],
-    answer: "My name is Lan.",
-    explanation: "Dùng 'My name is...' hoặc 'I'm...' để nói tên của mình.",
-  },
-  {
-    id: "trial-2",
-    question: "Câu nào nói đúng nghề nghiệp của bạn?",
-    options: [
-      "I work designer.",
-      "I work as a designer.",
-      "I am work designer.",
-      "My work is at designer.",
-    ],
-    answer: "I work as a designer.",
-    explanation: "Dùng 'work as a/an + nghề nghiệp'.",
-  },
-  {
-    id: "trial-3",
-    question: "Bạn nên nói gì khi không nghe rõ người đối diện?",
-    options: [
-      "Could you say that again?",
-      "I work at Ato.",
-      "What do you work?",
-      "Nice yesterday.",
-    ],
-    answer: "Could you say that again?",
-    explanation: "Yêu cầu nhắc lại giúp bạn duy trì hội thoại thay vì đoán.",
-  },
-];
+export const TRIAL_CHECKPOINT_QUESTIONS: TrialCheckpointQuestion[] =
+  UNIT_A0_1_CHECKPOINT.questions.map((question) => ({
+    id: question.id,
+    question: question.questionVi,
+    options: question.options,
+    answer: question.answer,
+    explanation: question.explanationVi,
+  }));
 
 export function scoreTrialCheckpoint(answers: Record<string, string>) {
   const correctCount = TRIAL_CHECKPOINT_QUESTIONS.filter(

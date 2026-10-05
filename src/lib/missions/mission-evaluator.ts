@@ -1,6 +1,6 @@
 import type {
   MissionIntent,
-  MissionSpecV1,
+  MissionLearnerSpecV1,
   MissionTransferVariant,
 } from "@/lib/missions/mission-spec";
 
@@ -61,7 +61,7 @@ function matchesIntent(transcript: string, intent: MissionIntent) {
 }
 
 function applyFeedbackRules(
-  mission: MissionSpecV1,
+  mission: MissionLearnerSpecV1,
   transcript: string,
 ): MissionCorrection[] {
   return mission.feedbackRules.flatMap((rule) => {
@@ -91,7 +91,7 @@ function missingIntentCorrection(intent: MissionIntent): MissionCorrection {
 }
 
 function completedIntentsFromTurns(
-  mission: MissionSpecV1,
+  mission: MissionLearnerSpecV1,
   transcripts: string[],
 ): MissionIntent[] {
   const completedIds = new Set<string>();
@@ -101,13 +101,18 @@ function completedIntentsFromTurns(
     if (!transcript) return;
 
     for (const intentId of turn.expectedIntentIds) {
-      const intent = mission.intents.find((candidate) => candidate.id === intentId);
-      if (intent && matchesIntent(transcript, intent)) completedIds.add(intent.id);
+      const intent = mission.intents.find(
+        (candidate) => candidate.id === intentId,
+      );
+      if (intent && matchesIntent(transcript, intent))
+        completedIds.add(intent.id);
     }
   });
 
   const combined = normalizeTranscript(transcripts.join(" "));
-  for (const intent of mission.intents.filter((candidate) => !candidate.required)) {
+  for (const intent of mission.intents.filter(
+    (candidate) => !candidate.required,
+  )) {
     if (matchesIntent(combined, intent)) completedIds.add(intent.id);
   }
 
@@ -115,21 +120,23 @@ function completedIntentsFromTurns(
 }
 
 function completedIntentsFromFullTask(
-  mission: MissionSpecV1,
+  mission: MissionLearnerSpecV1,
   transcript: string,
 ): MissionIntent[] {
   return mission.intents.filter((intent) => matchesIntent(transcript, intent));
 }
 
 export function evaluateMissionTranscript(
-  mission: MissionSpecV1,
+  mission: MissionLearnerSpecV1,
   transcripts: string[],
 ): MissionEvaluationResult {
   const isRetry = transcripts.length > mission.roleplayTurns.length;
   const evidenceTranscripts = isRetry
     ? [transcripts[transcripts.length - 1]]
     : transcripts.slice(0, mission.roleplayTurns.length);
-  const combined = normalizeTranscript(evidenceTranscripts.filter(Boolean).join(" "));
+  const combined = normalizeTranscript(
+    evidenceTranscripts.filter(Boolean).join(" "),
+  );
 
   if (!combined) {
     return {
@@ -224,7 +231,7 @@ export function evaluateMissionTranscript(
 }
 
 export function listDueTransferVariants(
-  mission: MissionSpecV1,
+  mission: MissionLearnerSpecV1,
   completedAt: Date,
   now: Date,
 ): MissionTransferVariant[] {
@@ -238,7 +245,7 @@ export function listDueTransferVariants(
 }
 
 export function selectDueTransferVariant(
-  mission: MissionSpecV1,
+  mission: MissionLearnerSpecV1,
   completedAt: Date,
   now: Date,
 ): MissionTransferVariant | null {

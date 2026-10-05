@@ -13,6 +13,7 @@ import {
   legacyUnitSlugs,
 } from "@/lib/lessons/legacy-unit-registry";
 import { legacyContractLessonId } from "@/lib/nep/legacy-unit-contract.v1";
+import { toLearnerMission } from "@/lib/missions/mission-spec";
 import { zeroPathLessonEnvelope } from "@/lib/nep/zero-path-pilot.v1";
 import { UNITS } from "@/lib/constants/units";
 import { createClient } from "@/lib/supabase/server";
@@ -71,7 +72,13 @@ export default async function UnitPage({
       : entry.next;
 
   if (isMissionLesson(entry.data)) {
-    return <MissionLessonTemplate lesson={entry.data} nextRoute={nextRoute} />;
+    // Learner-safe mission: the checkpoint answer key stays server-side and
+    // reaches the client only post-submit via `claimMissionCheckpoint`.
+    const lesson = {
+      ...entry.data,
+      mission: toLearnerMission(entry.data.mission),
+    };
+    return <MissionLessonTemplate lesson={lesson} nextRoute={nextRoute} />;
   }
 
   // Legacy UnitData lessons run inside the canonical session runtime through

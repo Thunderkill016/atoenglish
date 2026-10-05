@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { UNITS } from "@/lib/constants/units";
+import {
+  TRIAL_CHECKPOINT_PASS_THRESHOLD,
+  TRIAL_CHECKPOINT_QUESTIONS,
+} from "@/lib/lessons/trial-checkpoint";
 import CheckpointClient from "./CheckpointClient";
 
 interface Props {
@@ -17,16 +21,14 @@ const PHASE_CONFIG: Record<
   {
     label: string;
     levels: string[];
-    nextPhase: string | null;
     description: string;
   }
 > = {
   trial: {
     label: "Sau Bài Học Thử",
     levels: ["A0"],
-    nextPhase: null,
     description:
-      "Ba câu kiểm tra nhanh trước khi ghi nhận kết quả bài A0 đầu tiên",
+      "Bốn câu kiểm tra nhanh trước khi ghi nhận kết quả bài A0 đầu tiên",
   },
 };
 
@@ -71,17 +73,27 @@ export default async function CheckpointPage({ params }: Props) {
   const totalCount = phaseUnitIds.length;
   const isUnlocked = phase === "trial" || completedCount === totalCount;
 
+  // Learner-safe questions: answer keys and explanations stay server-side.
+  // Each answer is revealed after the learner commits a selection; the final
+  // claim is re-scored against the canonical bank in `claimTrialCheckpoint`.
+  const questions =
+    phase === "trial"
+      ? TRIAL_CHECKPOINT_QUESTIONS.map((question) => ({
+          id: question.id,
+          question: question.question,
+          options: question.options,
+        }))
+      : [];
+
   return (
     <CheckpointClient
-      phase={phase}
       phaseLabel={cfg.label}
       description={cfg.description}
-      levels={cfg.levels}
       completedCount={completedCount}
       totalCount={totalCount}
       isUnlocked={isUnlocked}
-      nextPhase={cfg.nextPhase}
-      unitIds={phaseUnitIds}
+      questions={questions}
+      passThreshold={TRIAL_CHECKPOINT_PASS_THRESHOLD}
     />
   );
 }

@@ -1,3 +1,4 @@
+import { UNIT_A0_1_CHECKPOINT } from "@/lib/missions/checkpoint-banks";
 import type { MissionSpecV1 } from "@/lib/missions/mission-spec";
 
 export const GOLD_MISSION_01: MissionSpecV1 = {
@@ -58,10 +59,7 @@ export const GOLD_MISSION_01: MissionSpecV1 = {
       required: true,
       interactional: false,
       examples: ["Hi, I'm Minh.", "My name is Lan."],
-      matchers: [
-        "\\b(?:i am|i'm)\\s+[a-z]+",
-        "\\bmy name is\\s+[a-z]+",
-      ],
+      matchers: ["\\b(?:i am|i'm)\\s+[a-z]+", "\\bmy name is\\s+[a-z]+"],
     },
     {
       id: "state_role",
@@ -87,10 +85,7 @@ export const GOLD_MISSION_01: MissionSpecV1 = {
       descriptionVi: "Yêu cầu nhắc lại hoặc báo chưa nghe rõ.",
       required: true,
       interactional: true,
-      examples: [
-        "Could you say that again?",
-        "Sorry, I didn't catch that.",
-      ],
+      examples: ["Could you say that again?", "Sorry, I didn't catch that."],
       matchers: [
         "\\b(?:could|can) you say (?:that|it) again\\b",
         "\\bi did not catch that\\b",
@@ -143,63 +138,7 @@ export const GOLD_MISSION_01: MissionSpecV1 = {
       hintVi: "Đừng đoán. Hãy báo chưa nghe rõ hoặc yêu cầu nói lại.",
     },
   ],
-  checkpoint: {
-    passThreshold: 4,
-    questions: [
-      {
-        id: "name",
-        questionVi: "Câu nào trả lời đúng khi người khác hỏi tên bạn?",
-        options: [
-          "I am fine.",
-          "My name is Lan.",
-          "I am ten.",
-          "Good morning.",
-        ],
-        answer: "My name is Lan.",
-        explanationVi: "Dùng 'My name is...' hoặc 'I'm...' để nói tên.",
-        evidenceIntentIds: ["introduce_name"],
-      },
-      {
-        id: "role",
-        questionVi: "Câu nào nói đúng nghề nghiệp?",
-        options: [
-          "I work designer.",
-          "I work as a designer.",
-          "I am work designer.",
-          "My work at designer.",
-        ],
-        answer: "I work as a designer.",
-        explanationVi: "Dùng 'work as a/an + nghề nghiệp'.",
-        evidenceIntentIds: ["state_role"],
-      },
-      {
-        id: "ask-name",
-        questionVi: "Bạn chưa biết tên đồng nghiệp. Bạn hỏi thế nào?",
-        options: [
-          "What is your name?",
-          "How much is it?",
-          "Where is it?",
-          "Are you name?",
-        ],
-        answer: "What is your name?",
-        explanationVi: "'What is your name?' dùng để hỏi tên.",
-        evidenceIntentIds: ["ask_name"],
-      },
-      {
-        id: "repair",
-        questionVi: "Bạn nên nói gì khi không nghe rõ?",
-        options: [
-          "Could you say that again?",
-          "I work at Ato.",
-          "What do you work?",
-          "Nice yesterday.",
-        ],
-        answer: "Could you say that again?",
-        explanationVi: "Yêu cầu nhắc lại giúp duy trì hội thoại thay vì đoán.",
-        evidenceIntentIds: ["repair_request"],
-      },
-    ],
-  },
+  checkpoint: UNIT_A0_1_CHECKPOINT,
   evaluation: {
     requiredIntentPassRatio: 1,
     maxCorrections: 2,
@@ -228,8 +167,12 @@ export const GOLD_MISSION_01: MissionSpecV1 = {
     {
       id: "transfer-day-7-call",
       dueAfterDays: 7,
-      scenarioVi: "Bạn tham gia cuộc gọi âm thanh với một đồng nghiệp nói nhanh hơn.",
-      changedConditions: ["Không nhìn thấy khuôn mặt", "Tốc độ nói tự nhiên hơn"],
+      scenarioVi:
+        "Bạn tham gia cuộc gọi âm thanh với một đồng nghiệp nói nhanh hơn.",
+      changedConditions: [
+        "Không nhìn thấy khuôn mặt",
+        "Tốc độ nói tự nhiên hơn",
+      ],
       partnerLines: [
         "Hello, this is operations. Who am I speaking with?",
         "And what is your role?",
@@ -240,7 +183,8 @@ export const GOLD_MISSION_01: MissionSpecV1 = {
     {
       id: "transfer-day-30-client",
       dueAfterDays: 30,
-      scenarioVi: "Bạn gặp một khách hàng lần đầu và phải tự duy trì cuộc nói chuyện.",
+      scenarioVi:
+        "Bạn gặp một khách hàng lần đầu và phải tự duy trì cuộc nói chuyện.",
       changedConditions: ["Vai trò người đối diện khác", "Không có câu gợi ý"],
       partnerLines: [
         "Good morning. I don't think we've met before. Could you introduce yourself?",

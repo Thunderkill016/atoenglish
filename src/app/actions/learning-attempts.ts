@@ -108,6 +108,50 @@ const trialCheckpointClaimSchema = z
   })
   .strict();
 
+const trialCheckpointRevealSchema = z
+  .object({
+    questionId: z.string().min(1),
+    answer: z.string().min(1),
+  })
+  .strict();
+
+/**
+ * Post-attempt answer reveal for the trial checkpoint. Answer keys no longer
+ * ship in the client bundle — after the learner commits an answer the server
+ * returns correctness plus the canonical answer and explanation. The claim
+ * path (`claimTrialCheckpoint`) still re-scores the full set server-side.
+ */
+export async function revealTrialCheckpointAnswer(input: unknown) {
+  const parsed = trialCheckpointRevealSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false as const, error: "Dữ liệu không hợp lệ." };
+  }
+
+  const reqHeaders = await headers();
+  const ip = getClientIpFromHeaders(reqHeaders);
+  const rateCheck = await attemptLimiter.check(ip);
+  if (!rateCheck.success) {
+    return {
+      success: false as const,
+      error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau.",
+    };
+  }
+
+  const question = TRIAL_CHECKPOINT_QUESTIONS.find(
+    (entry) => entry.id === parsed.data.questionId,
+  );
+  if (!question) {
+    return { success: false as const, error: "Câu hỏi không tồn tại." };
+  }
+
+  return {
+    success: true as const,
+    correct: parsed.data.answer === question.answer,
+    correctAnswer: question.answer,
+    explanation: question.explanation,
+  };
+}
+
 export async function claimTrialCheckpoint(input: unknown) {
   const parsed = trialCheckpointClaimSchema.safeParse(input);
   if (!parsed.success) {
@@ -123,7 +167,7 @@ export async function claimTrialCheckpoint(input: unknown) {
   if (!allAnswered) {
     return {
       success: false as const,
-      error: "Bạn cần trả lời đủ ba câu checkpoint.",
+      error: `Bạn cần trả lời đủ ${TRIAL_CHECKPOINT_QUESTIONS.length} câu checkpoint.`,
     };
   }
 
@@ -159,7 +203,7 @@ export async function claimTrialCheckpoint(input: unknown) {
 
   const completion = await completeUnit(
     "unit-a0-1",
-    correctCount === 3 ? 3 : 2,
+    correctCount === TRIAL_CHECKPOINT_QUESTIONS.length ? 3 : 2,
   );
   if (!completion.success) {
     return {

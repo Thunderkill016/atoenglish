@@ -1,5 +1,8 @@
 import type { MissionEvaluationResult } from "@/lib/missions/mission-evaluator";
-import type { MissionSpecV1, MissionStage } from "@/lib/missions/mission-spec";
+import type {
+  MissionLearnerSpecV1,
+  MissionStage,
+} from "@/lib/missions/mission-spec";
 
 export interface MissionSessionState {
   missionId: string;
@@ -25,7 +28,7 @@ export type MissionSessionEvent =
   | { type: "RESET" };
 
 export function createMissionSession(
-  mission: MissionSpecV1,
+  mission: MissionLearnerSpecV1,
 ): MissionSessionState {
   return {
     missionId: mission.id,
@@ -39,7 +42,7 @@ export function createMissionSession(
 }
 
 export function transitionMissionSession(
-  mission: MissionSpecV1,
+  mission: MissionLearnerSpecV1,
   state: MissionSessionState,
   event: MissionSessionEvent,
 ): MissionSessionState {

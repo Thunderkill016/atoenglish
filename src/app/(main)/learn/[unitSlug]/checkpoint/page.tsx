@@ -46,9 +46,23 @@ export default async function MissionCheckpointPage({
   const nextLessonId = getNextPilotLessonId(unitSlug);
   const nextRoute = nextLessonId ? `/learn/${nextLessonId}` : "/learn";
 
+  // Learner-safe view: the checkpoint answer key and explanations stay
+  // server-side. They reach the client only inside the claim response,
+  // after the full answer set has been submitted.
+  const { mission } = lesson;
   return (
     <MissionCheckpointRunner
-      mission={lesson.mission}
+      checkpoint={{
+        lessonId: mission.lessonId,
+        titleVi: mission.titleVi,
+        canDoVi: mission.canDoVi,
+        passThreshold: mission.checkpoint.passThreshold,
+        questions: mission.checkpoint.questions.map((question) => ({
+          id: question.id,
+          questionVi: question.questionVi,
+          options: question.options,
+        })),
+      }}
       nextRoute={nextRoute}
     />
   );

@@ -11,6 +11,7 @@ export default defineProject({
       "benchmarks/native-evidence-v1/**/*.test.ts",
       "src/lib/dashboard/word-of-day.test.ts",
       "src/__tests__/architecture-boundaries.test.ts",
+      "src/__tests__/checkpoint-trust.test.ts",
       "src/__tests__/curriculum-quality.test.ts",
       "src/__tests__/gold-day-one.test.ts",
       "src/__tests__/learning-attempt-migration.test.ts",
