@@ -48,7 +48,7 @@ export default function ScrollReveal({
   return (
     <div
       ref={ref}
-      className={`${className} transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${
+      className={`${className} transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] motion-reduce:transition-none motion-reduce:transform-none ${
         isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-[0.995]"
       }`}
       style={{ transitionDelay: isVisible ? `${delayMs}ms` : "0ms" }}

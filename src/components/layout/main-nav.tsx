@@ -24,6 +24,7 @@ export function MainNavRow() {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--minimal-motion-ms)]",
               isActive

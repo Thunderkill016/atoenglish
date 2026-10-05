@@ -41,6 +41,28 @@ const slideVariants = {
   }),
 };
 
+/**
+ * Maps auth-server error strings (English, from better-auth/Neon) to
+ * Vietnamese copy shown in the inline form error. Credential errors stay
+ * deliberately generic — we never reveal which field failed.
+ */
+function localizeAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (/invalid (email|login|credential)|invalid email or password/.test(m)) {
+    return "Email hoặc mật khẩu không đúng.";
+  }
+  if (/already (registered|exists|in use)|email.*(in use|registered|taken)/.test(m)) {
+    return "Email này đã được đăng ký. Hãy đăng nhập.";
+  }
+  if (/too many|rate limit/.test(m)) {
+    return "Bạn đã thử quá nhiều lần. Vui lòng đợi một lát rồi thử lại.";
+  }
+  if (/not found|no user/.test(m)) {
+    return "Không tìm thấy tài khoản với email này.";
+  }
+  return "";
+}
+
 // ── Module-level constants (never recreated on re-render) ──
 const QUESTIONS = [
   {
@@ -114,6 +136,8 @@ function LoginContent() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // Blocking auth errors render inline (GOV.UK-style), not toast-only.
+  const [formError, setFormError] = useState("");
 
   // Onboarding — 0=welcome, 1=level, 2=auth (V2: 3-step max)
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -187,22 +211,28 @@ function LoginContent() {
       if (error) throw error;
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || "Đăng nhập bằng Google thất bại.");
+      setFormError(
+        localizeAuthError(error.message) ||
+          "Đăng nhập bằng Google thất bại. Vui lòng thử lại.",
+      );
       setIsGoogleLoading(false);
     }
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError("");
     if (!email || !password) {
-      toast.error("Vui lòng nhập đầy đủ Email và Mật khẩu.");
+      setFormError("Vui lòng nhập đầy đủ Email và Mật khẩu.");
       return;
     }
 
     const schema = isSignUp ? SignUpSchema : LoginSchema;
     const validated = schema.safeParse({ email, password });
     if (!validated.success) {
-      toast.error(validated.error.issues.map((err) => err.message).join(", "));
+      setFormError(
+        validated.error.issues.map((err) => err.message).join(" "),
+      );
       return;
     }
 
@@ -295,7 +325,10 @@ function LoginContent() {
       }
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || "Xác thực bằng Email thất bại.");
+      setFormError(
+        localizeAuthError(error.message) ||
+          "Xác thực bằng Email thất bại. Vui lòng thử lại.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -654,39 +687,70 @@ function LoginContent() {
 
                     {/* Email form */}
                     <form onSubmit={handleEmailAuth} className="space-y-4">
-                      <div className="space-y-3">
-                        <div className="relative">
-                          <Mail className="absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
-                          <input
-                            id="login-email"
-                            type="email"
-                            placeholder="Email của bạn"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            aria-label="Email của bạn"
-                            autoComplete="email"
-                            inputMode="email"
-                            enterKeyHint="next"
-                            className="flex h-12 w-full rounded-xl border border-border bg-white px-3.5 py-2 pl-11 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent transition-all duration-300 shadow-sm"
-                            required
-                          />
+                      {formError && (
+                        <div
+                          role="alert"
+                          id="login-form-error"
+                          className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive"
+                        >
+                          {formError}
                         </div>
-                        <div className="relative">
-                          <Lock className="absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
-                          <input
-                            id="login-password"
-                            type="password"
-                            placeholder="Mật khẩu"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            aria-label="Mật khẩu"
-                            autoComplete={
-                              isSignUp ? "new-password" : "current-password"
-                            }
-                            enterKeyHint="done"
-                            className="flex h-12 w-full rounded-xl border border-border bg-white px-3.5 py-2 pl-11 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent transition-all duration-300 shadow-sm"
-                            required
-                          />
+                      )}
+                      <div className="space-y-3">
+                        <div>
+                          <label
+                            htmlFor="login-email"
+                            className="mb-1.5 block text-sm font-semibold text-foreground"
+                          >
+                            Email
+                          </label>
+                          <div className="relative">
+                            <Mail className="absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
+                            <input
+                              id="login-email"
+                              type="email"
+                              placeholder="ban@example.com"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              aria-invalid={!!formError}
+                              aria-describedby={
+                                formError ? "login-form-error" : undefined
+                              }
+                              autoComplete="email"
+                              inputMode="email"
+                              enterKeyHint="next"
+                              className="flex h-12 w-full rounded-xl border border-border bg-white px-3.5 py-2 pl-11 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent transition-all duration-300 shadow-sm"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="login-password"
+                            className="mb-1.5 block text-sm font-semibold text-foreground"
+                          >
+                            Mật khẩu
+                          </label>
+                          <div className="relative">
+                            <Lock className="absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
+                            <input
+                              id="login-password"
+                              type="password"
+                              placeholder="Ít nhất 6 ký tự"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              aria-invalid={!!formError}
+                              aria-describedby={
+                                formError ? "login-form-error" : undefined
+                              }
+                              autoComplete={
+                                isSignUp ? "new-password" : "current-password"
+                              }
+                              enterKeyHint="done"
+                              className="flex h-12 w-full rounded-xl border border-border bg-white px-3.5 py-2 pl-11 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent transition-all duration-300 shadow-sm"
+                              required
+                            />
+                          </div>
                         </div>
                       </div>
 

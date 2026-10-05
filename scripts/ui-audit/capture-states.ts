@@ -26,8 +26,8 @@ async function main() {
     const ctx = await b.newContext({ viewport: vp });
     const p = await ctx.newPage();
     await p.goto(`${BASE}/login?mode=login`, { waitUntil: "networkidle" });
-    await p.getByPlaceholder("Email của bạn").fill(E2E_TEST_EMAIL);
-    await p.getByPlaceholder("Mật khẩu").fill("WrongPassword!999");
+    await p.getByLabel("Email").fill(E2E_TEST_EMAIL);
+    await p.getByLabel("Mật khẩu").fill("WrongPassword!999");
     await p.getByRole("button", { name: /Đăng nhập bằng Email/i }).click();
     await p.waitForTimeout(3500);
     await p.screenshot({ path: join(OUT, `${label}-login-error.png`) });
@@ -40,8 +40,8 @@ async function main() {
     const ctx = await b.newContext({ viewport: vp });
     const p = await ctx.newPage();
     await p.goto(`${BASE}/login?mode=login`, { waitUntil: "networkidle" });
-    await p.getByPlaceholder("Email của bạn").fill(E2E_TEST_EMAIL);
-    await p.getByPlaceholder("Mật khẩu").fill(E2E_TEST_PASSWORD);
+    await p.getByLabel("Email").fill(E2E_TEST_EMAIL);
+    await p.getByLabel("Mật khẩu").fill(E2E_TEST_PASSWORD);
     await p.getByRole("button", { name: /Đăng nhập bằng Email/i }).click();
     await p.waitForURL(/\/(learn|me|placement)/, { timeout: 25_000 });
 
@@ -66,8 +66,8 @@ async function main() {
   const ctx = await b.newContext({ viewport: DESKTOP });
   const p = await ctx.newPage();
   await p.goto(`${BASE}/login?mode=login`, { waitUntil: "networkidle" });
-  await p.getByPlaceholder("Email của bạn").fill(E2E_TEST_EMAIL);
-  await p.getByPlaceholder("Mật khẩu").fill(E2E_TEST_PASSWORD);
+  await p.getByLabel("Email").fill(E2E_TEST_EMAIL);
+  await p.getByLabel("Mật khẩu").fill(E2E_TEST_PASSWORD);
   await p.getByRole("button", { name: /Đăng nhập bằng Email/i }).click();
   await p.waitForURL(/\/(learn|me|placement)/, { timeout: 25_000 });
   const session = await ctx.newCDPSession(p);

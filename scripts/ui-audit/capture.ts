@@ -71,8 +71,8 @@ const TARGETS: Target[] = [
 
 async function login(page: Page): Promise<void> {
   await page.goto(`${BASE}/login?mode=login`);
-  await page.getByPlaceholder("Email của bạn").fill(E2E_TEST_EMAIL);
-  await page.getByPlaceholder("Mật khẩu").fill(E2E_TEST_PASSWORD);
+  await page.getByLabel("Email").fill(E2E_TEST_EMAIL);
+  await page.getByLabel("Mật khẩu").fill(E2E_TEST_PASSWORD);
   await page
     .getByRole("button", { name: /Đăng nhập bằng Email/i })
     .click();

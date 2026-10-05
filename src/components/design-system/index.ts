@@ -7,6 +7,7 @@ export { SecondaryPageShell } from "./SecondaryPageShell";
 export { MinimalButton, MinimalButton as Button } from "./MinimalButton";
 export type { MinimalButtonProps } from "./MinimalButton";
 export { ListSection } from "./ListSection";
+export { CollapsibleGroup } from "./CollapsibleGroup";
 export { StatLine } from "./StatLine";
 export { EmptyState } from "./EmptyState";
 export { ErrorState } from "./ErrorState";

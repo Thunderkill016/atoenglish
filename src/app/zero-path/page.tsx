@@ -7,7 +7,7 @@ import {
   getZeroPathReviewIndex,
   listZeroPathOpenSessions,
 } from "@/app/actions/zero-path";
-import { LargeTitle, Screen } from "@/components/design-system";
+import { Screen } from "@/components/design-system";
 import { ZeroPathSession } from "@/features/zero-path/ZeroPathSession";
 import {
   ZERO_PATH_PILOT_LESSON_ID,
@@ -151,14 +151,6 @@ export default async function ZeroPathPage({
             </ol>
           </nav>
         ) : null}
-
-        <LargeTitle subtitle={lesson.mission}>
-          {mode === "review" ? "Buổi ôn tập" : "Buổi học"}
-        </LargeTitle>
-
-        <p className="mb-6 text-sm text-muted-foreground">
-          Mục tiêu: {lesson.learnerCanDo}
-        </p>
 
         <ZeroPathSession lesson={lesson} mode={mode} resume={resume} />
       </main>

@@ -1,0 +1,72 @@
+[
+  {
+    "name": "login",
+    "viewport": "desktop",
+    "status": 200
+  },
+  {
+    "name": "login",
+    "viewport": "mobile",
+    "status": 200
+  },
+  {
+    "name": "zero-path",
+    "viewport": "desktop",
+    "status": 200
+  },
+  {
+    "name": "zero-path",
+    "viewport": "mobile",
+    "status": 200
+  },
+  {
+    "name": "learn",
+    "viewport": "desktop",
+    "status": 200
+  },
+  {
+    "name": "learn",
+    "viewport": "mobile",
+    "status": 200
+  },
+  {
+    "name": "quiz",
+    "viewport": "desktop",
+    "status": 200
+  },
+  {
+    "name": "quiz",
+    "viewport": "mobile",
+    "status": 200
+  },
+  {
+    "name": "read",
+    "viewport": "desktop",
+    "status": 200
+  },
+  {
+    "name": "read",
+    "viewport": "mobile",
+    "status": 200
+  },
+  {
+    "name": "me-progress",
+    "viewport": "desktop",
+    "status": 200
+  },
+  {
+    "name": "me-progress",
+    "viewport": "mobile",
+    "status": 200
+  },
+  {
+    "name": "me-writing",
+    "viewport": "desktop",
+    "status": 200
+  },
+  {
+    "name": "me-writing",
+    "viewport": "mobile",
+    "status": 200
+  }
+]

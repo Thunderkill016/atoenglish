@@ -13,7 +13,11 @@ import {
   Flame,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SecondaryPageShell } from "@/components/design-system";
+import {
+  CollapsibleGroup,
+  SecondaryPageShell,
+} from "@/components/design-system";
+import { groupUnitsByLevel } from "@/lib/learn/catalog";
 import {
   UNIT_VOCABULARY,
   type VocabularyItem,
@@ -181,43 +185,47 @@ export default function VocabQuizClient() {
         subtitle="Chọn unit để bắt đầu quiz trắc nghiệm từ vựng"
       >
         <div className="space-y-3 pb-16">
-          {UNITS.map((unit) => {
-            const vocab = UNIT_VOCABULARY[unit.id] ?? [];
-            const hasEnough = vocab.length >= 4;
+          {groupUnitsByLevel(UNITS).map((group, gi) => {
+            const playable = group.units.filter(
+              (u) => (UNIT_VOCABULARY[u.id] ?? []).length >= 4,
+            ).length;
             return (
-              <button
-                key={unit.id}
-                type="button"
-                disabled={!hasEnough}
-                onClick={() => startQuiz(unit.id)}
-                className={`w-full text-left rounded-2xl border p-4 sm:p-5 transition-all duration-200 ${
-                  hasEnough
-                    ? "border-border/60 bg-white/60 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
-                    : "border-border/30 opacity-40 cursor-not-allowed"
-                }`}
+              <CollapsibleGroup
+                key={group.level}
+                title={group.title}
+                meta={`${playable}/${group.units.length} quiz khả dụng`}
+                defaultOpen={gi === 0}
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-bold text-sm text-foreground">
-                      {unit.title}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {vocab.length} từ vựng · {unit.level}
-                    </div>
-                  </div>
-                  <span
-                    className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${
-                      unit.level === "A1"
-                        ? "text-primary bg-primary/10 border-primary/20"
-                        : unit.level === "A2"
-                          ? "text-primary bg-primary/10 border-primary/20"
-                          : "text-primary bg-primary/10 border-primary/20"
-                    }`}
-                  >
-                    {unit.level}
-                  </span>
-                </div>
-              </button>
+                {group.units.map((unit) => {
+                  const vocab = UNIT_VOCABULARY[unit.id] ?? [];
+                  const hasEnough = vocab.length >= 4;
+                  return (
+                    <button
+                      key={unit.id}
+                      type="button"
+                      disabled={!hasEnough}
+                      onClick={() => startQuiz(unit.id)}
+                      className={`w-full text-left rounded-2xl border p-4 sm:p-5 transition-all duration-200 ${
+                        hasEnough
+                          ? "border-border/60 bg-white/60 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+                          : "border-border/30 opacity-40 cursor-not-allowed"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-bold text-sm text-foreground">
+                            {unit.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {vocab.length} từ vựng
+                            {!hasEnough ? " · Chưa đủ từ để quiz" : ""}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </CollapsibleGroup>
             );
           })}
         </div>

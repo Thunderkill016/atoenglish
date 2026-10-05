@@ -2,8 +2,8 @@
 
 import { BookOpen, CheckCircle, Lock } from "lucide-react";
 import {
+  CollapsibleGroup,
   ContinueCard,
-  ListSection,
   PrimaryRow,
   SecondaryPageShell,
 } from "@/components/design-system";
@@ -60,8 +60,19 @@ export default function LearnClient({
           xp={activeUnit.xp}
         />
 
-        {groups.map((group) => (
-          <ListSection key={group.level} title={group.title}>
+        {groups.map((group) => {
+          const doneCount = group.units.filter((unit) =>
+            completedUnitIds.includes(unit.id),
+          ).length;
+          return (
+          <CollapsibleGroup
+            key={group.level}
+            title={group.title}
+            meta={`${doneCount}/${group.units.length} bài`}
+            defaultOpen={group.units.some(
+              (unit) => unit.id === activeUnit.id,
+            )}
+          >
             {group.units.map((unit) => {
               // Guest locks every unit except the first in catalog order.
               const index = unitStatuses.indexOf(unit);
@@ -99,8 +110,9 @@ export default function LearnClient({
                 />
               );
             })}
-          </ListSection>
-        ))}
+          </CollapsibleGroup>
+          );
+        })}
 
         <p className="px-1 text-[var(--minimal-caption-size)] text-muted-foreground/80">
           Phần nói &amp; nghe trong bài hiện là tự luyện — chưa được chấm tự
