@@ -52,6 +52,7 @@ async function handle(request: NextRequest, context: RouteContext) {
   if (!backend) return response;
   const headers = new Headers(response.headers);
   headers.set("X-RateLimit-Backend", backend);
+  headers.set("X-RateLimit-Key", clientKey);
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
