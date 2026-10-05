@@ -8,12 +8,10 @@ import { createRateLimiter, getClientIp } from "@/lib/security/rate-limit";
 // group — sign-in/sign-up/reset POSTs land here and must be throttled too.
 // AUTH_RATE_LIMITER is the Workers rate-limit binding (cloudflare.config.ts);
 // without it, in-memory counting is per-isolate and never trips in prod.
-const authRateLimiter = createRateLimiter(
-  30,
-  60 * 1000,
-  "auth",
-  "AUTH_RATE_LIMITER",
-);
+const authRateLimiter = createRateLimiter(30, 60 * 1000, "auth", {
+  durableObject: "AUTH_RATE_LIMIT_DO",
+  rateLimit: "AUTH_RATE_LIMITER",
+});
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;

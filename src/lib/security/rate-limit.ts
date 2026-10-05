@@ -9,7 +9,12 @@ export interface RateLimitResult {
   resetTime: number;
   /** Which backend produced the verdict — diagnostic, surfaced as
    * X-RateLimit-Backend on the auth route. */
-  backend?: "workers-binding" | "upstash" | "memory" | "open";
+  backend?:
+    | "durable-object"
+    | "workers-binding"
+    | "upstash"
+    | "memory"
+    | "open";
 }
 
 export interface RateLimiter {
@@ -132,11 +137,64 @@ export class WorkersRateLimiterImpl implements RateLimiter {
   }
 }
 
+// ─── Durable Object rate limiter (strict, single-threaded per key) ───────────
+//
+// The native rate-limit binding above is eventually consistent: counters are
+// cached per machine in each Cloudflare location and reconcile asynchronously.
+// Live testing showed ~95% of a 120-request burst leaking past a 30/60s limit.
+// A Durable Object keyed via getByName(ip) serializes calls on one thread —
+// counting is exact. This impl delegates to AuthRateLimiterDO (worker/index.ts).
+
+interface AuthRateLimitVerdict {
+  success: boolean;
+  remaining: number;
+  resetTime: number;
+}
+
+interface DurableObjectStubLike {
+  check(limit: number, windowMs: number): Promise<AuthRateLimitVerdict>;
+}
+
+interface DurableObjectNamespaceLike {
+  getByName(name: string): DurableObjectStubLike;
+}
+
+export class DurableObjectRateLimiterImpl implements RateLimiter {
+  constructor(
+    private ns: DurableObjectNamespaceLike,
+    private requestsPerWindow: number,
+    private windowMs: number,
+    private fallback: RateLimiter,
+  ) {}
+
+  async check(ip: string): Promise<RateLimitResult> {
+    try {
+      const verdict = await this.ns
+        .getByName(ip)
+        .check(this.requestsPerWindow, this.windowMs);
+      return {
+        success: verdict.success,
+        limit: this.requestsPerWindow,
+        remaining: verdict.remaining,
+        resetTime: verdict.resetTime,
+        backend: "durable-object",
+      };
+    } catch (e) {
+      // DO unavailable — degrade to the configured fallback chain.
+      console.warn(
+        `[rate-limit] DO check threw: ${e instanceof Error ? e.message : String(e)} — using fallback`,
+      );
+      return this.fallback.check(ip);
+    }
+  }
+}
+
 class BindingResolvingRateLimiter implements RateLimiter {
   private resolved: Promise<RateLimiter> | null = null;
 
   constructor(
-    private bindingName: string,
+    private bindingName: string | undefined,
+    private doBindingName: string | undefined,
     private requestsPerWindow: number,
     private windowMs: number,
     private fallback: RateLimiter,
@@ -154,27 +212,56 @@ class BindingResolvingRateLimiter implements RateLimiter {
       } catch (e) {
         importError = e instanceof Error ? e.message : String(e);
       }
-      const binding = mod?.env?.[this.bindingName];
+      const cfEnv = mod?.env;
+
+      // Strict path first: the DO counter is exact and survives isolates.
+      const doNs = this.doBindingName ? cfEnv?.[this.doBindingName] : undefined;
       if (
-        binding &&
-        typeof (binding as WorkersRateLimitBinding).limit === "function"
+        doNs &&
+        typeof (doNs as DurableObjectNamespaceLike).getByName === "function"
       ) {
         console.warn(
-          `[rate-limit] ${this.bindingName}: resolved to Workers binding`,
+          `[rate-limit] ${this.doBindingName}: resolved to Durable Object`,
         );
-        return new WorkersRateLimiterImpl(
-          binding as WorkersRateLimitBinding,
+        return new DurableObjectRateLimiterImpl(
+          doNs as DurableObjectNamespaceLike,
           this.requestsPerWindow,
           this.windowMs,
-          this.fallback,
+          // Chain: DO failure degrades to the native binding, which itself
+          // degrades to `this.fallback` (Upstash/in-memory).
+          this.resolveNative(cfEnv, null, mod),
         );
       }
-      console.warn(
-        `[rate-limit] ${this.bindingName}: no binding on env (importError=${importError ?? "none"}, mod=${mod === null ? "null" : typeof mod}, envKeys=${mod?.env ? Object.keys(mod.env).join(",") : "n/a"}) — using fallback`,
-      );
-      return this.fallback;
+
+      return this.resolveNative(cfEnv, importError, mod);
     })();
     return this.resolved;
+  }
+
+  private resolveNative(
+    cfEnv: Record<string, unknown> | undefined,
+    importError: string | null,
+    mod: { env?: Record<string, unknown> } | null,
+  ): RateLimiter {
+    const binding = this.bindingName ? cfEnv?.[this.bindingName] : undefined;
+    if (
+      binding &&
+      typeof (binding as WorkersRateLimitBinding).limit === "function"
+    ) {
+      console.warn(
+        `[rate-limit] ${this.bindingName}: resolved to Workers binding`,
+      );
+      return new WorkersRateLimiterImpl(
+        binding as WorkersRateLimitBinding,
+        this.requestsPerWindow,
+        this.windowMs,
+        this.fallback,
+      );
+    }
+    console.warn(
+      `[rate-limit] no usable binding (importError=${importError ?? "none"}, mod=${mod === null ? "null" : typeof mod}, envKeys=${cfEnv ? Object.keys(cfEnv).join(",") : "n/a"}) — using fallback`,
+    );
+    return this.fallback;
   }
 
   async check(ip: string): Promise<RateLimitResult> {
@@ -247,16 +334,19 @@ class UpstashRateLimiterImpl implements RateLimiter {
  * @param requestsPerMinute  Maximum requests allowed per window
  * @param windowMs           Window duration in milliseconds (used for in-memory fallback)
  * @param prefix             Upstash key prefix (use unique value per limiter)
- * @param cfBinding          Optional Workers `rate-limit` binding name (e.g.
- *                           "AUTH_RATE_LIMITER"). When the binding exists on
- *                           env it wins over Upstash/in-memory — it's the only
- *                           counter that actually persists across isolates.
+ * @param cf                 Optional Cloudflare binding names:
+ *                           `durableObject` — strict per-key counter
+ *                           (AuthRateLimiterDO); wins over everything.
+ *                           `rateLimit` — native `rate-limit` binding
+ *                           (eventually consistent, coarse backstop).
+ *                           Both resolve lazily from `cloudflare:workers` env;
+ *                           absent bindings fall through to Upstash/in-memory.
  */
 export function createRateLimiter(
   requestsPerMinute: number,
   windowMs: number,
   prefix = "rl",
-  cfBinding?: string,
+  cf?: { rateLimit?: string; durableObject?: string },
 ): RateLimiter {
   // NOTE: assertProductionEnv() intentionally NOT called here.
   // Calling it at module level would crash Next.js static page generation
@@ -278,9 +368,10 @@ export function createRateLimiter(
       // Cloudflare isolate fan-out. That's why the cf binding wins when set.
       new InMemoryRateLimiterImpl(requestsPerMinute, windowMs);
 
-  if (cfBinding) {
+  if (cf?.rateLimit || cf?.durableObject) {
     return new BindingResolvingRateLimiter(
-      cfBinding,
+      cf.rateLimit,
+      cf.durableObject,
       requestsPerMinute,
       windowMs,
       fallback,
