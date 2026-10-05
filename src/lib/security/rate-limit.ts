@@ -114,9 +114,12 @@ export class WorkersRateLimiterImpl implements RateLimiter {
         remaining: success ? 1 : 0,
         resetTime: Date.now() + this.windowMs,
       };
-    } catch {
+    } catch (e) {
       // Binding unreachable — degrade to the configured fallback limiter
       // rather than failing open entirely.
+      console.warn(
+        `[rate-limit] binding.limit threw: ${e instanceof Error ? e.message : String(e)} — using fallback`,
+      );
       return this.fallback.check(ip);
     }
   }
@@ -134,15 +137,24 @@ class BindingResolvingRateLimiter implements RateLimiter {
 
   private resolve(): Promise<RateLimiter> {
     this.resolved ??= (async () => {
-      const cfModuleSpecifier = "cloudflare:workers";
-      const mod = (await import(
-        /* webpackIgnore: true */ cfModuleSpecifier
-      ).catch(() => null)) as { env?: Record<string, unknown> } | null;
+      let mod: { env?: Record<string, unknown> } | null = null;
+      let importError: string | null = null;
+      try {
+        const cfModuleSpecifier = "cloudflare:workers";
+        mod = (await import(/* webpackIgnore: true */ cfModuleSpecifier)) as {
+          env?: Record<string, unknown>;
+        } | null;
+      } catch (e) {
+        importError = e instanceof Error ? e.message : String(e);
+      }
       const binding = mod?.env?.[this.bindingName];
       if (
         binding &&
         typeof (binding as WorkersRateLimitBinding).limit === "function"
       ) {
+        console.warn(
+          `[rate-limit] ${this.bindingName}: resolved to Workers binding`,
+        );
         return new WorkersRateLimiterImpl(
           binding as WorkersRateLimitBinding,
           this.requestsPerWindow,
@@ -150,6 +162,9 @@ class BindingResolvingRateLimiter implements RateLimiter {
           this.fallback,
         );
       }
+      console.warn(
+        `[rate-limit] ${this.bindingName}: no binding on env (importError=${importError ?? "none"}, mod=${mod === null ? "null" : typeof mod}, envKeys=${mod?.env ? Object.keys(mod.env).join(",") : "n/a"}) — using fallback`,
+      );
       return this.fallback;
     })();
     return this.resolved;
