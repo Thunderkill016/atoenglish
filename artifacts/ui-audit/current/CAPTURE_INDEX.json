@@ -1,0 +1,542 @@
+[
+  {
+    "name": "landing",
+    "path": "/",
+    "viewport": "desktop",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/",
+    "file": "desktop/001-landing.png"
+  },
+  {
+    "name": "landing",
+    "path": "/",
+    "viewport": "mobile",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/",
+    "file": "mobile/001-landing.png"
+  },
+  {
+    "name": "login",
+    "path": "/login?mode=login",
+    "viewport": "desktop",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/login?mode=login",
+    "file": "desktop/002-login.png"
+  },
+  {
+    "name": "login",
+    "path": "/login?mode=login",
+    "viewport": "mobile",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/login?mode=login",
+    "file": "mobile/002-login.png"
+  },
+  {
+    "name": "signup",
+    "path": "/login?mode=signup",
+    "viewport": "desktop",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/login?mode=signup",
+    "file": "desktop/003-signup.png"
+  },
+  {
+    "name": "signup",
+    "path": "/login?mode=signup",
+    "viewport": "mobile",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/login?mode=signup",
+    "file": "mobile/003-signup.png"
+  },
+  {
+    "name": "zero-path",
+    "path": "/zero-path",
+    "viewport": "desktop",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/zero-path",
+    "file": "desktop/004-zero-path.png"
+  },
+  {
+    "name": "zero-path",
+    "path": "/zero-path",
+    "viewport": "mobile",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/zero-path",
+    "file": "mobile/004-zero-path.png"
+  },
+  {
+    "name": "privacy",
+    "path": "/privacy",
+    "viewport": "desktop",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/privacy",
+    "file": "desktop/005-privacy.png"
+  },
+  {
+    "name": "privacy",
+    "path": "/privacy",
+    "viewport": "mobile",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/privacy",
+    "file": "mobile/005-privacy.png"
+  },
+  {
+    "name": "terms",
+    "path": "/terms",
+    "viewport": "desktop",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/terms",
+    "file": "desktop/006-terms.png"
+  },
+  {
+    "name": "terms",
+    "path": "/terms",
+    "viewport": "mobile",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/terms",
+    "file": "mobile/006-terms.png"
+  },
+  {
+    "name": "learn-unit-trial-anon",
+    "path": "/learn/unit-a0-1",
+    "viewport": "desktop",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/learn/unit-a0-1",
+    "file": "desktop/007-learn-unit-trial-anon.png"
+  },
+  {
+    "name": "learn-unit-trial-anon",
+    "path": "/learn/unit-a0-1",
+    "viewport": "mobile",
+    "auth": false,
+    "status": 200,
+    "finalUrl": "/learn/unit-a0-1",
+    "file": "mobile/007-learn-unit-trial-anon.png"
+  },
+  {
+    "name": "learn",
+    "path": "/learn",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/learn",
+    "file": "desktop/008-learn.png"
+  },
+  {
+    "name": "learn",
+    "path": "/learn",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/learn",
+    "file": "mobile/008-learn.png"
+  },
+  {
+    "name": "learn-unit",
+    "path": "/learn/unit-a0-1",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/learn/unit-a0-1",
+    "file": "desktop/009-learn-unit.png"
+  },
+  {
+    "name": "learn-unit",
+    "path": "/learn/unit-a0-1",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/learn/unit-a0-1",
+    "file": "mobile/009-learn-unit.png"
+  },
+  {
+    "name": "learn-unit-checkpoint",
+    "path": "/learn/unit-a0-1/checkpoint",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/learn/unit-a0-1/checkpoint",
+    "file": "desktop/010-learn-unit-checkpoint.png"
+  },
+  {
+    "name": "learn-unit-checkpoint",
+    "path": "/learn/unit-a0-1/checkpoint",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/learn/unit-a0-1/checkpoint",
+    "file": "mobile/010-learn-unit-checkpoint.png"
+  },
+  {
+    "name": "checkpoint-trial",
+    "path": "/checkpoint/trial",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/checkpoint/trial",
+    "file": "desktop/011-checkpoint-trial.png"
+  },
+  {
+    "name": "checkpoint-trial",
+    "path": "/checkpoint/trial",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/checkpoint/trial",
+    "file": "mobile/011-checkpoint-trial.png"
+  },
+  {
+    "name": "placement",
+    "path": "/placement",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/placement",
+    "file": "desktop/012-placement.png"
+  },
+  {
+    "name": "placement",
+    "path": "/placement",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/placement",
+    "file": "mobile/012-placement.png"
+  },
+  {
+    "name": "quiz",
+    "path": "/quiz",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/quiz",
+    "file": "desktop/013-quiz.png"
+  },
+  {
+    "name": "quiz",
+    "path": "/quiz",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/quiz",
+    "file": "mobile/013-quiz.png"
+  },
+  {
+    "name": "read",
+    "path": "/read",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/read",
+    "file": "desktop/014-read.png"
+  },
+  {
+    "name": "read",
+    "path": "/read",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/read",
+    "file": "mobile/014-read.png"
+  },
+  {
+    "name": "review",
+    "path": "/review",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/review",
+    "file": "desktop/015-review.png"
+  },
+  {
+    "name": "review",
+    "path": "/review",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/review",
+    "file": "mobile/015-review.png"
+  },
+  {
+    "name": "review-cards",
+    "path": "/review/cards",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/review/cards",
+    "file": "desktop/016-review-cards.png"
+  },
+  {
+    "name": "review-cards",
+    "path": "/review/cards",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/review/cards",
+    "file": "mobile/016-review-cards.png"
+  },
+  {
+    "name": "review-hard",
+    "path": "/review/hard",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/review/hard",
+    "file": "desktop/017-review-hard.png"
+  },
+  {
+    "name": "review-hard",
+    "path": "/review/hard",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/review/hard",
+    "file": "mobile/017-review-hard.png"
+  },
+  {
+    "name": "roadmap",
+    "path": "/roadmap",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/roadmap",
+    "file": "desktop/018-roadmap.png"
+  },
+  {
+    "name": "roadmap",
+    "path": "/roadmap",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/roadmap",
+    "file": "mobile/018-roadmap.png"
+  },
+  {
+    "name": "me",
+    "path": "/me",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me",
+    "file": "desktop/019-me.png"
+  },
+  {
+    "name": "me",
+    "path": "/me",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me",
+    "file": "mobile/019-me.png"
+  },
+  {
+    "name": "me-grammar",
+    "path": "/me/grammar",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/grammar",
+    "file": "desktop/020-me-grammar.png"
+  },
+  {
+    "name": "me-grammar",
+    "path": "/me/grammar",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/grammar",
+    "file": "mobile/020-me-grammar.png"
+  },
+  {
+    "name": "me-progress",
+    "path": "/me/progress",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/progress",
+    "file": "desktop/021-me-progress.png"
+  },
+  {
+    "name": "me-progress",
+    "path": "/me/progress",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/progress",
+    "file": "mobile/021-me-progress.png"
+  },
+  {
+    "name": "me-pronunciation",
+    "path": "/me/pronunciation",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/pronunciation",
+    "file": "desktop/022-me-pronunciation.png"
+  },
+  {
+    "name": "me-pronunciation",
+    "path": "/me/pronunciation",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/pronunciation",
+    "file": "mobile/022-me-pronunciation.png"
+  },
+  {
+    "name": "me-settings",
+    "path": "/me/settings",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/settings",
+    "file": "desktop/023-me-settings.png"
+  },
+  {
+    "name": "me-settings",
+    "path": "/me/settings",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/settings",
+    "file": "mobile/023-me-settings.png"
+  },
+  {
+    "name": "me-speaking",
+    "path": "/me/speaking",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/speaking",
+    "file": "desktop/024-me-speaking.png"
+  },
+  {
+    "name": "me-speaking",
+    "path": "/me/speaking",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/speaking",
+    "file": "mobile/024-me-speaking.png"
+  },
+  {
+    "name": "me-speaking-journal",
+    "path": "/me/speaking/journal",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/speaking/journal",
+    "file": "desktop/025-me-speaking-journal.png"
+  },
+  {
+    "name": "me-speaking-journal",
+    "path": "/me/speaking/journal",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/speaking/journal",
+    "file": "mobile/025-me-speaking-journal.png"
+  },
+  {
+    "name": "me-speaking-phoneme",
+    "path": "/me/speaking/phoneme",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/speaking/phoneme",
+    "file": "desktop/026-me-speaking-phoneme.png"
+  },
+  {
+    "name": "me-speaking-phoneme",
+    "path": "/me/speaking/phoneme",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/speaking/phoneme",
+    "file": "mobile/026-me-speaking-phoneme.png"
+  },
+  {
+    "name": "me-speaking-roleplay",
+    "path": "/me/speaking/roleplay",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/speaking/roleplay",
+    "file": "desktop/027-me-speaking-roleplay.png"
+  },
+  {
+    "name": "me-speaking-roleplay",
+    "path": "/me/speaking/roleplay",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/speaking/roleplay",
+    "file": "mobile/027-me-speaking-roleplay.png"
+  },
+  {
+    "name": "me-speaking-shadowing",
+    "path": "/me/speaking/shadowing",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/speaking/shadowing",
+    "file": "desktop/028-me-speaking-shadowing.png"
+  },
+  {
+    "name": "me-speaking-shadowing",
+    "path": "/me/speaking/shadowing",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/speaking/shadowing",
+    "file": "mobile/028-me-speaking-shadowing.png"
+  },
+  {
+    "name": "me-writing",
+    "path": "/me/writing",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/writing",
+    "file": "desktop/029-me-writing.png"
+  },
+  {
+    "name": "me-writing",
+    "path": "/me/writing",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/writing",
+    "file": "mobile/029-me-writing.png"
+  },
+  {
+    "name": "me-writing-history",
+    "path": "/me/writing/history",
+    "viewport": "desktop",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/writing/history",
+    "file": "desktop/030-me-writing-history.png"
+  },
+  {
+    "name": "me-writing-history",
+    "path": "/me/writing/history",
+    "viewport": "mobile",
+    "auth": true,
+    "status": 200,
+    "finalUrl": "/me/writing/history",
+    "file": "mobile/030-me-writing-history.png"
+  }
+]
