@@ -1,9 +1,11 @@
-import { bindings, defineConfig, defineWorker } from "cf/config";
+import { bindings, defineConfig, defineWorker, exports } from "cf/config";
 
 export default defineConfig({
   worker: defineWorker({
     name: "atoenglish",
-    entrypoint: "vinext/server/fetch-handler",
+    // worker/index.ts re-exports vinext's generated fetch handler and adds
+    // the AuthRateLimiterDO Durable Object class (strict auth rate counter).
+    entrypoint: "./worker/index.ts",
     compatibilityDate: "2026-10-04",
     compatibilityFlags: ["nodejs_compat"],
     assets: { notFoundHandling: "none" },
@@ -27,6 +29,13 @@ export default defineConfig({
         namespace: "1001",
         simple: { limit: 30, period: 60 },
       }),
+      // Strict auth brute-force limiter — the native rate-limit binding is
+      // eventually consistent and leaked ~95% of a 120-req burst in live
+      // testing. The DO counter serializes per-key on one thread = exact.
+      AUTH_RATE_LIMIT_DO: bindings.durableObject({
+        worker: "atoenglish",
+        exportName: "AuthRateLimiterDO",
+      }),
       // Worker version metadata ({id, tag, timestamp}) for /api/health.
       CF_VERSION_METADATA: bindings.versionMetadata(),
       // Route Gemini calls through the `atoenglish` AI Gateway: request logs,
@@ -34,6 +43,9 @@ export default defineConfig({
       CF_AI_GATEWAY_BASE: bindings.text(
         "https://gateway.ai.cloudflare.com/v1/6b09234492f82347abfe983b158626b2/atoenglish/google-ai-studio",
       ),
+    },
+    exports: {
+      AuthRateLimiterDO: exports.durableObject({ storage: "sqlite" }),
     },
   }),
 });

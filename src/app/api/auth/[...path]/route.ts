@@ -9,12 +9,10 @@ import { createRateLimiter, getClientIp } from "@/lib/security/rate-limit";
 // the proxy middleware is not guaranteed to run for route handlers (it
 // demonstrably doesn't on production — 45 rapid sign-in requests returned
 // 401×45 with zero 429s). The route handler is the trusted boundary.
-const authRateLimiter = createRateLimiter(
-  30,
-  60 * 1000,
-  "auth",
-  "AUTH_RATE_LIMITER",
-);
+const authRateLimiter = createRateLimiter(30, 60 * 1000, "auth", {
+  durableObject: "AUTH_RATE_LIMIT_DO",
+  rateLimit: "AUTH_RATE_LIMITER",
+});
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 

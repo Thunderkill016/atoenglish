@@ -3,6 +3,7 @@ import {
   createRateLimiter,
   getClientIp,
   InMemoryRateLimiter,
+  DurableObjectRateLimiterImpl,
   WorkersRateLimiterImpl,
 } from "@/lib/security/rate-limit";
 
@@ -254,6 +255,56 @@ describe("WorkersRateLimiterImpl (Cloudflare rate-limit binding)", () => {
   it("falls back when the binding throws", async () => {
     const binding = { limit: vi.fn().mockRejectedValue(new Error("down")) };
     const limiter = new WorkersRateLimiterImpl(binding, 30, 60_000, fallback);
+    const result = await limiter.check("9.9.9.7");
+    expect(result.success).toBe(true); // fallback (in-memory) allows
+  });
+});
+
+describe("DurableObjectRateLimiterImpl (strict DO counter)", () => {
+  const fallback = createRateLimiter(2, 60_000, "test-do-fallback");
+
+  function makeNs(verdict: {
+    success: boolean;
+    remaining: number;
+    resetTime: number;
+  }) {
+    const check = vi.fn().mockResolvedValue(verdict);
+    return {
+      ns: { getByName: vi.fn().mockReturnValue({ check }) },
+      check,
+    };
+  }
+
+  it("delegates to the DO stub keyed by client IP and honors deny", async () => {
+    const { ns, check } = makeNs({
+      success: false,
+      remaining: 0,
+      resetTime: 12345,
+    });
+    const limiter = new DurableObjectRateLimiterImpl(ns, 30, 60_000, fallback);
+    const result = await limiter.check("9.9.9.9");
+    expect(ns.getByName).toHaveBeenCalledWith("9.9.9.9");
+    expect(check).toHaveBeenCalledWith(30, 60_000);
+    expect(result.success).toBe(false);
+    expect(result.backend).toBe("durable-object");
+    expect(result.resetTime).toBe(12345);
+  });
+
+  it("reports success when the DO allows", async () => {
+    const { ns } = makeNs({ success: true, remaining: 29, resetTime: 999 });
+    const limiter = new DurableObjectRateLimiterImpl(ns, 30, 60_000, fallback);
+    const result = await limiter.check("9.9.9.8");
+    expect(result.success).toBe(true);
+    expect(result.remaining).toBe(29);
+  });
+
+  it("falls back when the DO stub throws", async () => {
+    const ns = {
+      getByName: vi.fn().mockReturnValue({
+        check: vi.fn().mockRejectedValue(new Error("DO down")),
+      }),
+    };
+    const limiter = new DurableObjectRateLimiterImpl(ns, 30, 60_000, fallback);
     const result = await limiter.check("9.9.9.7");
     expect(result.success).toBe(true); // fallback (in-memory) allows
   });
