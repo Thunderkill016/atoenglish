@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Mali, Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { MotionProvider } from "@/components/providers/motion-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -11,16 +11,6 @@ import "./globals.css";
 const sansFont = Plus_Jakarta_Sans({
   subsets: ["latin", "vietnamese"],
   variable: "--font-sans",
-  display: "swap",
-});
-
-/* Notebook annotation handwriting — DESIGN.md: hand font only for
-   annotations/kickers/margin-notes, never UI text. Mali is the Vietnamese-
-   capable substitute for Caveat (Caveat lacks a vietnamese subset). */
-const handFont = Mali({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-hand-var",
   display: "swap",
 });
 
@@ -114,7 +104,7 @@ export default function RootLayout({
     <html
       lang="vi"
       suppressHydrationWarning
-      className={cn("font-sans", sansFont.variable, handFont.variable)}
+      className={cn("font-sans", sansFont.variable)}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />

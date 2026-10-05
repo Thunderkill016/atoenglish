@@ -62,4 +62,3 @@ test-results/
 .wrangler/
 .neon
 artifacts/ui-audit/current/.auth-state.json
-.tmp/

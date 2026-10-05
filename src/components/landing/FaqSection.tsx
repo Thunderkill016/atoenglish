@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, HelpCircle } from "lucide-react";
 import ScrollReveal from "@/components/ui/scroll-reveal";
-
-import { SectionHead } from "./notebook";
 
 export default function FaqSection() {
   const faqs = [
@@ -53,48 +51,68 @@ export default function FaqSection() {
   };
 
   return (
-    <section id="faq" className="px-5 pt-20 sm:px-8 sm:pt-24">
-      <div className="mx-auto max-w-[760px]">
-        <ScrollReveal>
-          <SectionHead
-            hand="? trả lời trước khi bạn hỏi"
-            title="Giải đáp thắc mắc."
-            lead="Những câu hỏi người học hay lo nhất — trả lời thẳng, không vòng vo."
-          />
+    <section
+      id="faq"
+      className="py-24 sm:py-32 px-5 sm:px-8 border-t border-border/40 relative"
+    >
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-[40%] right-[-10%] w-[350px] h-[350px] rounded-full bg-primary/3 blur-[100px]" />
+      </div>
+
+      <div className="max-w-4xl mx-auto space-y-16">
+        {/* Section Header */}
+        <ScrollReveal className="text-center space-y-4">
+          <div className="flex justify-center">
+            {/* Fix: border-primary/40/20 → border-primary/40/30 (emerald-250 doesn't exist) */}
+            <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/40/30 shadow-sm">
+              <HelpCircle className="size-5.5" />
+            </span>
+          </div>
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-foreground leading-normal">
+            Giải đáp thắc mắc
+          </h2>
+          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed font-normal">
+            Những câu hỏi thường gặp giúp bạn yên tâm bắt đầu hành trình học nói
+            tiếng Anh.
+          </p>
         </ScrollReveal>
 
-        <div className="mt-10 space-y-3">
+        {/* Accordions */}
+        <div className="space-y-4 max-w-3xl mx-auto">
           {faqs.map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (
-              <ScrollReveal key={idx} delayMs={idx * 40}>
-                <div className="overflow-hidden rounded-[10px] border border-nb-hairline bg-nb-surface transition-colors duration-200 hover:border-nb-note-border">
+              <ScrollReveal key={idx} delayMs={idx * 75}>
+                <div className="rounded-2xl border border-border/60 bg-white/70 backdrop-blur-sm shadow-sm overflow-hidden hover:border-primary/20 transition-colors duration-200">
+                  {/* Fix: added aria-expanded + aria-controls for accessibility */}
                   <button
                     onClick={() => toggleFaq(idx)}
                     aria-expanded={isOpen}
                     aria-controls={`faq-answer-${idx}`}
-                    className="group flex w-full select-none items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
+                    className="w-full flex items-center justify-between p-5 sm:p-6 text-left select-none group"
                   >
-                    <span className="text-sm font-bold text-nb-ink transition-colors duration-200 group-hover:text-nb-primary sm:text-[15px]">
+                    <span className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors duration-200">
                       {faq.q}
                     </span>
                     <ChevronDown
-                      className={`size-5 shrink-0 text-nb-muted transition-transform duration-300 ${
-                        isOpen ? "rotate-180 text-nb-primary" : ""
+                      className={`size-5 text-muted-foreground shrink-0 transition-transform duration-300 ${
+                        isOpen ? "rotate-180 text-primary" : ""
                       }`}
                     />
                   </button>
 
+                  {/* Fix: grid-rows technique instead of max-h hack for smooth animation */}
+                  {/* Fix: border-border / zinc-850 → zinc-200 / zinc-800 (non-existent classes) */}
                   <div
                     id={`faq-answer-${idx}`}
                     className={`grid transition-all duration-300 ease-in-out ${
                       isOpen
-                        ? "grid-rows-[1fr] border-t border-dashed border-nb-hairline"
+                        ? "grid-rows-[1fr] border-t border-border"
                         : "grid-rows-[0fr]"
                     }`}
                   >
                     <div className="overflow-hidden">
-                      <p className="px-5 py-4 text-sm leading-relaxed text-nb-muted sm:px-6 sm:py-5">
+                      <p className="p-5 sm:p-6 text-xs sm:text-sm text-muted-foreground leading-relaxed font-normal bg-card/30">
                         {faq.a}
                       </p>
                     </div>

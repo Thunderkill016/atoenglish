@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
+import { buttonVariants } from "@/components/ui/button";
 import { checkHasSession } from "@/lib/auth-check";
 
 export default function NavbarAuth() {
@@ -18,7 +19,10 @@ export default function NavbarAuth() {
         <Link
           href="/learn"
           prefetch={false}
-          className="nb-btn-primary h-10 px-5 text-sm"
+          className={buttonVariants({
+            className:
+              "bg-primary hover:bg-primary/90 text-white text-sm font-bold h-9 px-5 rounded-xl active:scale-[0.96] transition-all duration-200 shadow-sm shadow-primary/10",
+          })}
         >
           Vào Dashboard
         </Link>
@@ -27,17 +31,24 @@ export default function NavbarAuth() {
           <Link
             href="/login?mode=login"
             prefetch={false}
-            className="hidden h-10 items-center px-3 text-sm font-semibold text-nb-muted transition-colors hover:text-nb-ink sm:inline-flex"
+            className={buttonVariants({
+              variant: "ghost",
+              className:
+                "hidden sm:inline-flex text-sm font-semibold text-foreground hover:text-foreground h-9 px-4 rounded-xl transition-colors duration-200",
+            })}
           >
             Đăng nhập
           </Link>
           <Link
             href="/login"
             prefetch={false}
-            className="nb-btn-primary h-10 px-4 text-[13px] sm:px-5 sm:text-sm"
+            className={buttonVariants({
+              className:
+                "bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm font-bold h-8 sm:h-9 px-3 sm:px-5 rounded-xl active:scale-[0.96] transition-all duration-200 shadow-sm shadow-primary/10",
+            })}
           >
             <span className="hidden sm:inline">Bắt đầu học ngay</span>
-            <span className="sm:hidden">Bắt đầu học</span>
+            <span className="sm:hidden">Học ngay</span>
           </Link>
         </>
       )}

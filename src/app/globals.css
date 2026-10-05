@@ -4,8 +4,6 @@
 @theme {
   /* Font */
   --font-sans: var(--font-sans-var, ui-sans-serif), system-ui, sans-serif;
-  --font-hand: var(--font-hand-var, Mali), cursive;
-  --font-serif: Georgia, "Times New Roman", serif;
 
   /* Brand Colors (mapped from CSS variables set in :root / .dark) */
   --color-border: var(--border);
@@ -88,33 +86,6 @@
     }
     75% {
       transform: translateX(-2px);
-    }
-  }
-
-  /* Notebook landing ("Trang sổ hội thoại") — see DESIGN.md */
-  --color-nb-paper: #faf6ee;
-  --color-nb-paper-deep: #f3eee1;
-  --color-nb-surface: #fffdf6;
-  --color-nb-ink: #2b2a26;
-  --color-nb-body: #4a4840;
-  --color-nb-muted: #6d6a60;
-  --color-nb-muted-soft: #a09a88;
-  --color-nb-hairline: #e2dccb;
-  --color-nb-note-border: #cfc7b0;
-  --color-nb-tape: rgba(210, 200, 170, 0.5);
-  --color-nb-primary: #25803a;
-  --color-nb-primary-bright: #2f9e44;
-  --color-nb-primary-deep: #1b5c28;
-  --color-nb-primary-tint: #dcf2d9;
-  --color-nb-annotation: #e05545;
-  --color-nb-night: #1c2a45;
-  --color-nb-on-night-soft: #a8b4c9;
-
-  --animate-nb-marquee: nb-marquee 32s linear infinite;
-
-  @keyframes nb-marquee {
-    to {
-      transform: translateX(-50%);
     }
   }
 
@@ -481,140 +452,6 @@ html {
 @utility step-dot-done {
   background-color: theme(colors.emerald.500);
   opacity: 0.6;
-}
-
-/* ─── Notebook landing utilities (see DESIGN.md) ───────────────────────────── */
-@utility nb-ruled {
-  background-image: repeating-linear-gradient(
-    transparent,
-    transparent 35px,
-    rgb(120 110 90 / 0.13) 35px,
-    rgb(120 110 90 / 0.13) 36px
-  );
-}
-
-/* Red notebook margin line running down the page */
-@utility nb-margin {
-  position: relative;
-}
-.nb-margin::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 10px;
-  width: 2px;
-  background: var(--color-nb-annotation);
-  opacity: 0.4;
-  pointer-events: none;
-  z-index: 1;
-}
-@media (min-width: 1120px) {
-  .nb-margin::before {
-    left: calc(50% - 540px);
-  }
-}
-
-/* Tape strip on top of a paper note (paper-craft, not shadow) */
-@utility nb-taped {
-  position: relative;
-}
-.nb-taped::before {
-  content: "";
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-2deg);
-  width: 86px;
-  height: 22px;
-  background: var(--color-nb-tape);
-  border-radius: 2px;
-  pointer-events: none;
-}
-
-/* Marker highlight behind the outcome keyword */
-@utility nb-mark {
-  background: linear-gradient(
-    transparent 55%,
-    var(--color-nb-primary-tint) 55%,
-    var(--color-nb-primary-tint) 96%,
-    transparent 96%
-  );
-  padding: 0 6px;
-  border-radius: 3px;
-}
-
-/* Audio waveform bar row — bars only appear inside voice context */
-@utility nb-wave {
-  display: inline-flex;
-  align-items: center;
-  gap: 2.5px;
-  color: var(--color-nb-primary-bright);
-}
-.nb-wave > i {
-  display: block;
-  width: 3px;
-  border-radius: 2px;
-  background: currentColor;
-}
-.nb-wave > i:nth-child(1) { height: 7px; }
-.nb-wave > i:nth-child(2) { height: 14px; }
-.nb-wave > i:nth-child(3) { height: 21px; }
-.nb-wave > i:nth-child(4) { height: 11px; }
-.nb-wave > i:nth-child(5) { height: 25px; }
-.nb-wave > i:nth-child(6) { height: 15px; }
-.nb-wave > i:nth-child(7) { height: 28px; }
-.nb-wave > i:nth-child(8) { height: 10px; }
-.nb-wave > i:nth-child(9) { height: 19px; }
-.nb-wave > i:nth-child(10) { height: 8px; }
-.nb-wave > i:nth-child(11) { height: 23px; }
-.nb-wave > i:nth-child(12) { height: 13px; }
-.nb-wave > i:nth-child(13) { height: 26px; }
-.nb-wave > i:nth-child(14) { height: 8px; }
-.nb-wave > i:nth-child(15) { height: 17px; }
-
-/* Chunky workbook button — hard offset shadow, no blur */
-@utility nb-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: var(--color-nb-primary);
-  color: #ffffff;
-  font-weight: 700;
-  border-radius: 10px;
-  box-shadow: 0 3px 0 var(--color-nb-primary-deep);
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-}
-.nb-btn-primary:hover {
-  transform: translateY(1px);
-  box-shadow: 0 2px 0 var(--color-nb-primary-deep);
-}
-.nb-btn-primary:active {
-  transform: translateY(3px);
-  box-shadow: 0 0 0 var(--color-nb-primary-deep);
-}
-
-@utility nb-btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: var(--color-nb-surface);
-  color: var(--color-nb-ink);
-  font-weight: 700;
-  border-radius: 10px;
-  border: 1.5px solid var(--color-nb-hairline);
-  box-shadow: 0 3px 0 var(--color-nb-hairline);
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-}
-.nb-btn-secondary:hover {
-  transform: translateY(1px);
-  box-shadow: 0 2px 0 var(--color-nb-hairline);
 }
 
 @media (prefers-reduced-motion: reduce) {

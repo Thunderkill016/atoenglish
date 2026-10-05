@@ -1,19 +1,28 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { Sparkles, Sprout } from "lucide-react";
 
+import { Spotlight } from "@/components/ui/spotlight";
 import { SITE_URL } from "@/lib/site";
 import NavbarAuth from "@/components/landing/NavbarAuth";
 import { MobileMenuButton, MobileMenu } from "@/components/landing/MobileMenu";
 import HeroCTA from "@/components/landing/HeroCTA";
-import VoiceDemo from "@/components/landing/VoiceDemo";
-import { Hand } from "@/components/landing/notebook";
 import ProblemSection from "@/components/landing/ProblemSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import BenefitsSection from "@/components/landing/BenefitsSection";
 import ScienceSection from "@/components/landing/ScienceSection";
 
 // Lazy load heavy client components below the fold
+const ProductPreview = dynamic(
+  () => import("@/components/landing/ProductPreview"),
+  {
+    loading: () => (
+      <div className="w-full max-w-4xl mx-auto mt-12 sm:mt-16 h-[400px] rounded-[2rem] border border-border/60 bg-card/50 animate-pulse" />
+    ),
+  },
+);
+
 const FaqSection = dynamic(() => import("@/components/landing/FaqSection"));
 
 const TestimonialsSection = dynamic(
@@ -57,21 +66,13 @@ export const metadata: Metadata = {
   },
 };
 
-/** Real curriculum units shown as the scrolling strip (DESIGN.md: unit-chip). */
-const UNITS = [
-  ["A0", "Bảng chữ cái & âm cơ bản"],
-  ["A0", "Số đếm & hỏi giá"],
-  ["A0", "Chào hỏi & xã giao"],
-  ["A0", "Thông tin cá nhân"],
-  ["A0", "Cụm từ sinh tồn"],
-  ["A1", "Greetings & self-intro"],
-  ["A1", "Family & friends"],
-  ["A1", "Daily routines"],
-  ["A1", "Food & ordering"],
-  ["A1", "Places & directions"],
-] as const;
-
 export default function LandingPage() {
+  const stats = [
+    { value: "28 ngày", label: "Một mục tiêu nói thực tế" },
+    { value: "10–15 phút", label: "Mỗi ngày" },
+    { value: "A0", label: "Bắt đầu từ mất gốc" },
+  ];
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -165,39 +166,46 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="nb-margin min-h-screen bg-nb-paper font-sans text-nb-ink antialiased overflow-x-clip selection:bg-nb-primary-tint selection:text-nb-ink">
+    <div className="min-h-screen bg-white text-foreground font-sans selection:bg-primary/10 selection:text-primary overflow-x-hidden antialiased">
       {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-
-      {/* ===== Navigation — ruled paper, dashed binding edge ===== */}
-      <nav className="sticky top-0 z-50 w-full border-b-[1.5px] border-dashed border-nb-hairline bg-nb-paper/90 backdrop-blur-md">
-        <div className="mx-auto flex h-[60px] max-w-[1020px] items-center justify-between px-5 sm:px-7">
-          <Link href="/" className="group flex items-baseline gap-1">
-            <span className="font-hand text-[30px] font-bold leading-none text-nb-ink transition-colors group-hover:text-nb-primary">
-              Ato<span className="text-nb-annotation">E</span>nglish
+      {/* ===== Navigation Bar ===== */}
+      <nav className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-md border-b border-border/40 transition-colors duration-300">
+        <div className="max-w-6xl mx-auto h-16 flex items-center justify-between px-5 sm:px-8">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-white shadow-md shadow-primary/10 group-hover:scale-105 transition-transform duration-200">
+              <Sprout className="size-4.5" />
             </span>
+            <div className="flex flex-col leading-none text-left">
+              <span className="text-sm font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-200">
+                AtoEnglish
+              </span>
+              <span className="text-xs text-muted-foreground font-medium">
+                Grow every day
+              </span>
+            </div>
           </Link>
 
           {/* Middle links - desktop only */}
-          <div className="hidden items-center gap-7 md:flex">
+          <div className="hidden md:flex items-center gap-8">
             <a
               href="#how-it-works"
-              className="text-sm font-semibold text-nb-muted transition-colors hover:text-nb-ink"
+              className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors duration-200"
             >
               Cách học
             </a>
             <a
               href="#science"
-              className="text-sm font-semibold text-nb-muted transition-colors hover:text-nb-ink"
+              className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors duration-200"
             >
               Phương pháp
             </a>
             <a
               href="#faq"
-              className="text-sm font-semibold text-nb-muted transition-colors hover:text-nb-ink"
+              className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors duration-200"
             >
               Hỏi đáp
             </a>
@@ -205,90 +213,157 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-2">
             <NavbarAuth />
+            {/* Hamburger button - mobile only */}
             <MobileMenuButton />
           </div>
         </div>
 
+        {/* Mobile drawer menu */}
         <MobileMenu />
       </nav>
 
       <main id="main-content">
-        {/* ===== Hero — ruled page, copy left + real lesson demo right ===== */}
-        <section className="nb-ruled px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-20">
-          <div className="mx-auto grid max-w-[1020px] items-center gap-12 lg:grid-cols-2 lg:gap-14">
-            <div>
-              <Hand>✎ hành trình nói 28 ngày — đang thử nghiệm</Hand>
-              <h1 className="mt-3 text-[38px] font-extrabold leading-[1.07] tracking-[-0.025em] text-nb-ink sm:text-[48px] lg:text-[54px]">
-                Học tiếng Anh để <span className="nb-mark">nói được</span>,
-                <br />
-                không chỉ để biết.
+        {/* ===== Hero Section ===== */}
+        <section className="relative px-5 sm:px-8 pt-20 pb-16 sm:pt-32 sm:pb-24 lg:pt-36 lg:pb-28 overflow-hidden">
+          {/* Spotlight light beam — hidden on mobile to save GPU paint cost */}
+          <div className="hidden sm:block">
+            <Spotlight
+              className="-top-40 left-0 md:left-60 md:-top-20"
+              fill="rgb(16 185 129 / 0.15)"
+            />
+          </div>
+
+          {/* Mesh gradient backdrops — hidden on mobile to save GPU */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+            <div className="hidden sm:block absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/8 blur-[120px]" />
+            <div className="hidden sm:block absolute bottom-[20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-primary/8 blur-[150px]" />
+            <div className="hidden md:block absolute top-[40%] left-[30%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[100px]" />
+          </div>
+
+          <div className="relative max-w-4xl mx-auto flex flex-col items-center text-center">
+            <div className="space-y-6 sm:space-y-8">
+              {/* Badge */}
+              <div className="animate-fade-in-up">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 backdrop-blur-sm border border-primary/20 px-4 py-1.5 rounded-full uppercase tracking-[0.12em] shadow-sm">
+                  <Sparkles className="size-3 text-primary animate-pulse" />
+                  Thử nghiệm hành trình nói 28 ngày
+                </span>
+              </div>
+
+              {/* Headline */}
+              <h1 className="animate-fade-in-up animation-delay-75 flex flex-col items-center gap-y-2 sm:gap-y-3 text-xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground max-w-4xl mx-auto px-4">
+                <span className="block lg:whitespace-nowrap">
+                  Học tiếng Anh để{" "}
+                  <span className="bg-gradient-to-r from-primary via-primary to-primary bg-clip-text text-transparent">
+                    nói được
+                  </span>
+                </span>
+                <span className="block lg:whitespace-nowrap">
+                  không chỉ để biết.
+                </span>
               </h1>
-              <p className="mt-5 max-w-[440px] text-[17px] leading-relaxed text-nb-muted sm:text-lg">
-                Sổ luyện nói cho người Việt mất gốc: mỗi ngày 10–15 phút, một
-                cuộc hội thoại thật — không cần tài khoản để thử.
+
+              {/* Subheadline */}
+              <p className="animate-fade-in-up animation-delay-150 text-base sm:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-normal">
+                Giới thiệu bản thân và công việc bằng tiếng Anh.
+                <br className="hidden sm:block" />
+                Mỗi ngày 10–15 phút: nghe mẫu, luyện cụm từ và nói có hướng dẫn.
               </p>
+
               <HeroCTA />
             </div>
-            <div>
-              <VoiceDemo />
+          </div>
+
+          {/* Product Preview Mockup */}
+          <ProductPreview />
+
+          {/* Stats bar */}
+          <div className="animate-fade-in-up animation-delay-300 relative max-w-3xl mx-auto mt-16 sm:mt-24">
+            <div className="p-6 sm:p-8 rounded-2xl bg-card/50 backdrop-blur-md border border-border/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border/60">
+              {stats.map((stat, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col items-center flex-1 w-full pt-4 sm:pt-0 sm:px-6 first:pt-0"
+                >
+                  <span className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                    {stat.value}
+                  </span>
+                  <span className="text-xs sm:text-xs text-muted-foreground font-semibold mt-1.5 uppercase tracking-wider text-center">
+                    {stat.label}
+                  </span>
+                </div>
+              ))}
             </div>
+            {/* Footnote */}
+            <p className="text-xs text-muted-foreground mt-5 text-center font-normal tracking-wide">
+              * AtoEnglish đang thử nghiệm hành trình đầu tiên. Đây là mục tiêu
+              học tập, không phải cam kết kết quả cho mọi người.
+            </p>
           </div>
         </section>
 
-        {/* ===== Curriculum strip — real can-do units, marquee ===== */}
-        <div className="overflow-hidden border-y-[1.5px] border-dashed border-nb-hairline bg-nb-paper-deep py-4">
-          <div className="flex w-max gap-2.5 animate-nb-marquee motion-reduce:animate-none">
-            {[...UNITS, ...UNITS].map(([level, title], i) => (
-              <span
-                key={i}
-                className="whitespace-nowrap rounded-full border-[1.5px] border-nb-hairline bg-nb-surface px-4 py-2 text-[13px] font-semibold text-nb-muted"
-              >
-                <b className="font-extrabold text-nb-primary">{level}</b>
-                {" · "}
-                {title}
-              </span>
-            ))}
-          </div>
+        <div className="[content-visibility:auto] [contain-intrinsic-size:auto_600px]">
+          <ProblemSection />
+        </div>
+        <div className="[content-visibility:auto] [contain-intrinsic-size:auto_800px]">
+          <HowItWorksSection />
+        </div>
+        <div className="[content-visibility:auto] [contain-intrinsic-size:auto_600px]">
+          <BenefitsSection />
+        </div>
+        <div className="[content-visibility:auto] [contain-intrinsic-size:auto_700px]">
+          <ScienceSection />
         </div>
 
-        <ProblemSection />
-        <HowItWorksSection />
-        <BenefitsSection />
-        <ScienceSection />
-
-        {/* Below-fold lazy sections */}
-        <TestimonialsSection />
-        <FaqSection />
-        <FinalCtaSection />
-
-        {/* Honest footnote — handwriting, says the quiet part out loud */}
-        <p className="mx-auto max-w-[1020px] px-5 pb-4 pt-14 text-center font-hand text-[19px] text-nb-muted sm:px-8">
-          * mục tiêu học tập, không phải cam kết kết quả cho mọi người — tụi
-          mình nói thật.
-        </p>
+        {/* Below-fold lazy sections — browser can defer rendering */}
+        <div className="[content-visibility:auto] [contain-intrinsic-size:auto_800px]">
+          <TestimonialsSection />
+          <FaqSection />
+          <FinalCtaSection />
+        </div>
       </main>
 
-      {/* ===== Footer — notebook edge ===== */}
-      <footer className="mt-12 border-t-[1.5px] border-dashed border-nb-hairline py-8">
-        <div className="mx-auto flex max-w-[1020px] flex-col items-center justify-between gap-4 px-5 text-[13px] text-nb-muted sm:flex-row sm:px-7">
-          <span className="font-hand text-[24px] font-bold text-nb-ink">
-            Ato<span className="text-nb-annotation">E</span>nglish
+      {/* ===== Footer ===== */}
+      <footer className="border-t border-border/40 py-10 sm:py-12 px-5 sm:px-8 bg-card/20">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
+              <Sprout className="size-4.5" />
+            </span>
+            <div className="flex flex-col leading-none text-left">
+              <span className="text-sm font-bold tracking-tight text-foreground">
+                AtoEnglish
+              </span>
+              <span className="text-xs text-muted-foreground font-medium">
+                Grow every day
+              </span>
+            </div>
+          </div>
+
+          <span className="text-xs text-muted-foreground font-normal">
+            &copy; {new Date().getFullYear()} AtoEnglish. Bảo lưu mọi quyền.
           </span>
-          <span>© {new Date().getFullYear()} AtoEnglish</span>
-          <span className="flex items-center gap-5">
-            <Link href="/privacy" className="transition-colors hover:text-nb-ink">
+
+          <div className="flex items-center gap-5">
+            <Link
+              href="/privacy"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors font-normal"
+            >
               Bảo mật
             </Link>
-            <Link href="/terms" className="transition-colors hover:text-nb-ink">
+            <Link
+              href="/terms"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors font-normal"
+            >
               Điều khoản
             </Link>
             <Link
               href="mailto:support@atoenglish.com"
-              className="transition-colors hover:text-nb-ink"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors font-normal"
             >
               Hỗ trợ
             </Link>
-          </span>
+          </div>
         </div>
       </footer>
     </div>
