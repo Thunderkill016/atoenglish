@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { rpcService } from "@/lib/supabase/service";
 import {
   createRateLimiter,
   getClientIpFromHeaders,
@@ -159,31 +160,14 @@ export async function recordFlashcardSession(
   // Sync user_progress.last_active_date + streak so flashcard-only days
   // count toward the dashboard streak (best-effort, fire-and-forget)
   void (async () => {
-    const { data: up } = await supabase
-      .from("user_progress")
-      .select("total_xp, streak, last_active_date")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (up) {
-      let nextStreak = 1;
-      if (up.last_active_date === today) {
-        nextStreak = up.streak;
-      } else if (up.last_active_date === yesterday) {
-        nextStreak = up.streak + 1;
-      }
-      await supabase
-        .from("user_progress")
-        .update({ streak: nextStreak, last_active_date: today })
-        .eq("user_id", user.id);
-    } else {
-      await supabase.from("user_progress").insert({
-        user_id: user.id,
-        current_level: "A0",
-        streak: 1,
-        total_xp: 0,
-        last_active_date: today,
-      });
-    }
+    // award_user_xp(0) touches streak + last_active_date only — stat columns
+    // are revoked from the authenticated role (ATO-003).
+    await rpcService("award_user_xp", {
+      p_user_id: user.id,
+      p_xp_amount: 0,
+      p_today: today,
+      p_yesterday: yesterday,
+    });
   })();
 
   return { success: true, stats: data };

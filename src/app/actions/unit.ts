@@ -314,11 +314,12 @@ export async function resetUnitProgress(unitId: string) {
       };
     }
 
-    const { error: deleteProgressError } = await supabase
-      .from("user_lesson_progress")
-      .delete()
-      .eq("user_id", user.id)
-      .eq("unit_id", unitId);
+    // user_lesson_progress writes are revoked from the authenticated role
+    // (ATO-004) — reset goes through the auth_uid-bound SECURITY DEFINER RPC.
+    const { error: deleteProgressError } = await supabase.rpc(
+      "reset_unit_progress",
+      { p_unit_id: unitId },
+    );
 
     if (deleteProgressError) {
       return {

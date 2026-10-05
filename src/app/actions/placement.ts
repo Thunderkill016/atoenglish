@@ -62,48 +62,22 @@ async function persistPlacementLevel(
     timeZone: "Asia/Ho_Chi_Minh",
   });
   const startingUnitIndex = getStartingUnitIndex(cefr);
-  const now = new Date().toISOString();
+  const seedXp = source === "test" && score > 0 ? Math.round(score * 5) : 0;
 
-  const { data: existing } = await supabase
-    .from("user_progress")
-    .select("user_id, total_xp, streak")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  // Stat columns on user_progress are revoked from the authenticated role
+  // (ATO-003) — placement results persist only through this guarded RPC.
+  const { error } = await supabase.rpc("apply_placement_result", {
+    p_level: cefr,
+    p_starting_unit_index: startingUnitIndex,
+    p_seed_xp: seedXp,
+    p_today: today,
+  });
 
-  const basePayload = {
-    current_level: cefr,
-    starting_unit_index: startingUnitIndex,
-    placement_completed_at: now,
-    last_active_date: today,
-  };
-
-  if (existing) {
-    const { error } = await supabase
-      .from("user_progress")
-      .update(basePayload)
-      .eq("user_id", user.id);
-
-    if (error) {
-      return {
-        success: false as const,
-        error: `Lỗi lưu kết quả: ${error.message}`,
-      };
-    }
-  } else {
-    const seedXp = source === "test" && score > 0 ? Math.round(score * 5) : 0;
-    const { error } = await supabase.from("user_progress").insert({
-      user_id: user.id,
-      ...basePayload,
-      total_xp: seedXp,
-      streak: 0,
-    });
-
-    if (error) {
-      return {
-        success: false as const,
-        error: `Lỗi lưu kết quả: ${error.message}`,
-      };
-    }
+  if (error) {
+    return {
+      success: false as const,
+      error: `Lỗi lưu kết quả: ${error.message}`,
+    };
   }
 
   revalidatePath("/learn");

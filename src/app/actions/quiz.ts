@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { rpcService } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import {
@@ -32,41 +33,19 @@ async function awardQuizXp(
 ) {
   if (xpDelta <= 0) return;
 
-  const { data: userProgress } = await supabase
-    .from("user_progress")
-    .select("total_xp, streak, last_active_date")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (userProgress) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - 1);
-    const yesterday = d.toLocaleDateString("sv-SE", {
-      timeZone: "Asia/Ho_Chi_Minh",
-    });
-    let nextStreak = 1;
-    if (userProgress.last_active_date === today) {
-      nextStreak = userProgress.streak;
-    } else if (userProgress.last_active_date === yesterday) {
-      nextStreak = userProgress.streak + 1;
-    }
-    await supabase
-      .from("user_progress")
-      .update({
-        total_xp: userProgress.total_xp + xpDelta,
-        streak: nextStreak,
-        last_active_date: today,
-      })
-      .eq("user_id", userId);
-  } else {
-    await supabase.from("user_progress").insert({
-      user_id: userId,
-      current_level: "A0",
-      streak: 1,
-      total_xp: xpDelta,
-      last_active_date: today,
-    });
-  }
+  const d = new Date(today);
+  d.setDate(d.getDate() - 1);
+  const yesterday = d.toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+  // Stat columns on user_progress are revoked from the authenticated role
+  // (ATO-003) — XP/streak move only through the service-gated RPC.
+  await rpcService("award_user_xp", {
+    p_user_id: userId,
+    p_xp_amount: xpDelta,
+    p_today: today,
+    p_yesterday: yesterday,
+  });
 }
 
 /**

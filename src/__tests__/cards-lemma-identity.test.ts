@@ -35,6 +35,7 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/lib/security/rate-limit", () => ({
   createRateLimiter: () => ({ check: async () => ({ success: true }) }),
+  getClientIpFromHeaders: () => "10.0.0.1",
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
