@@ -6,7 +6,10 @@ import { revalidatePath } from "next/cache";
 import { reviewCardFSRS } from "@/lib/srs/fsrs";
 import { Card } from "@/types/database";
 import { headers } from "next/headers";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import {
   SaveCardSchema,
   ReviewCardSchema,
@@ -94,8 +97,7 @@ async function fetchUserLemmaMap(
 export async function saveCardToSRS(params: SaveCardParams) {
   try {
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await saveCardLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {
@@ -272,8 +274,7 @@ export async function reviewCard(
 ) {
   try {
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await reviewCardLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {
@@ -417,8 +418,7 @@ export async function seedUnitVocabToSRS(params: {
 }) {
   try {
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await seedVocabLimiter.check(ip);
     if (!rateLimitCheck.success) return { success: false, added: 0 };
 
@@ -489,8 +489,7 @@ export async function scheduleWrongWordsForReview(words: string[]) {
     if (!words.length) return { success: true, updated: 0 };
 
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await wrongWordsLimiter.check(ip);
     if (!rateLimitCheck.success) return { success: false, updated: 0 };
 

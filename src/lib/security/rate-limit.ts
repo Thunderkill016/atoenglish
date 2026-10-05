@@ -25,7 +25,10 @@ export class InMemoryRateLimiter {
   private lastSweep = Date.now();
   private static readonly SWEEP_INTERVAL_MS = 60_000; // Deterministic: sweep every 60s (P2-3 fix)
 
-  constructor(private limit: number, private windowMs: number) {}
+  constructor(
+    private limit: number,
+    private windowMs: number,
+  ) {}
 
   check(ip: string): RateLimitResult {
     const now = Date.now();
@@ -42,15 +45,30 @@ export class InMemoryRateLimiter {
     if (!record || now > record.resetTime) {
       const resetTime = now + this.windowMs;
       this.cache.set(ip, { count: 1, resetTime });
-      return { success: true, limit: this.limit, remaining: this.limit - 1, resetTime };
+      return {
+        success: true,
+        limit: this.limit,
+        remaining: this.limit - 1,
+        resetTime,
+      };
     }
 
     record.count++;
     const remaining = Math.max(0, this.limit - record.count);
     if (record.count > this.limit) {
-      return { success: false, limit: this.limit, remaining: 0, resetTime: record.resetTime };
+      return {
+        success: false,
+        limit: this.limit,
+        remaining: 0,
+        resetTime: record.resetTime,
+      };
     }
-    return { success: true, limit: this.limit, remaining, resetTime: record.resetTime };
+    return {
+      success: true,
+      limit: this.limit,
+      remaining,
+      resetTime: record.resetTime,
+    };
   }
 }
 
@@ -85,7 +103,10 @@ class UpstashRateLimiterImpl implements RateLimiter {
     const { Redis } = await import("@upstash/redis");
     this.ratelimit = new Ratelimit({
       redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(this.requestsPerWindow, `${this.windowSeconds} s`),
+      limiter: Ratelimit.slidingWindow(
+        this.requestsPerWindow,
+        `${this.windowSeconds} s`,
+      ),
       prefix: this.prefix,
     });
     return this.ratelimit;
@@ -103,7 +124,12 @@ class UpstashRateLimiterImpl implements RateLimiter {
       };
     } catch {
       // Upstash unavailable — fail open (allow request)
-      return { success: true, limit: this.requestsPerWindow, remaining: 1, resetTime: Date.now() + this.windowSeconds * 1000 };
+      return {
+        success: true,
+        limit: this.requestsPerWindow,
+        remaining: 1,
+        resetTime: Date.now() + this.windowSeconds * 1000,
+      };
     }
   }
 }
@@ -124,7 +150,7 @@ class UpstashRateLimiterImpl implements RateLimiter {
 export function createRateLimiter(
   requestsPerMinute: number,
   windowMs: number,
-  prefix = "rl"
+  prefix = "rl",
 ): RateLimiter {
   // NOTE: assertProductionEnv() intentionally NOT called here.
   // Calling it at module level would crash Next.js static page generation
@@ -149,11 +175,34 @@ export function createRateLimiter(
 
 // ─── IP Helper ───────────────────────────────────────────────────────────────
 
-export function getClientIp(req: Request | NextRequest): string {
-  if ("ip" in req && typeof req.ip === "string" && req.ip) return req.ip;
-  const xForwardedFor = req.headers.get("x-forwarded-for");
-  if (xForwardedFor) return xForwardedFor.split(",")[0].trim();
-  const realIp = req.headers.get("x-real-ip");
+/**
+ * Client IP for rate limiting. Trust order:
+ *   1. `cf-connecting-ip` — set by the Cloudflare edge and cannot be spoofed
+ *      by the client (CF overwrites any inbound value). This app only ever
+ *      serves traffic through Cloudflare Workers.
+ *   2. `req.ip` — platform-provided when the adapter populates it.
+ *   3. `x-forwarded-for` FIRST entry — spoofable, dev-only fallback.
+ *   4. `x-real-ip` — spoofable, dev-only fallback.
+ *
+ * Earlier code trusted XFF blindly, which let an attacker rotate a forged
+ * header to reset their per-IP budget on every request.
+ */
+export function getClientIpFromHeaders(headers: Headers): string {
+  const cfIp = headers.get("cf-connecting-ip");
+  if (cfIp) return cfIp;
+  const xForwardedFor = headers.get("x-forwarded-for");
+  if (xForwardedFor) {
+    const entries = xForwardedFor.split(",").map((v) => v.trim());
+    // Behind Cloudflare the LAST entry is the edge-observed peer; forged
+    // values can only prepend earlier entries.
+    return entries[entries.length - 1] || "127.0.0.1";
+  }
+  const realIp = headers.get("x-real-ip");
   if (realIp) return realIp;
   return "127.0.0.1";
+}
+
+export function getClientIp(req: Request | NextRequest): string {
+  if ("ip" in req && typeof req.ip === "string" && req.ip) return req.ip;
+  return getClientIpFromHeaders(req.headers);
 }

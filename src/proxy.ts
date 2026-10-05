@@ -3,15 +3,22 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/session";
 import { createRateLimiter, getClientIp } from "@/lib/security/rate-limit";
 
-// Rate limit auth routes (login, callback) to 30 requests per minute
+// Rate limit auth routes (login, callback, credential endpoints) to 30
+// requests per minute per client IP. `/api/auth/` is the Better Auth route
+// group — sign-in/sign-up/reset POSTs land here and must be throttled too.
 const authRateLimiter = createRateLimiter(30, 60 * 1000, "auth");
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  if (pathname === "/login" || pathname.startsWith("/auth/")) {
+  if (
+    pathname === "/login" ||
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/api/auth")
+  ) {
     const ip = getClientIp(request);
-    const { success, limit, remaining, resetTime } = await authRateLimiter.check(ip);
+    const { success, limit, remaining, resetTime } =
+      await authRateLimiter.check(ip);
 
     if (!success) {
       return new NextResponse(
@@ -24,7 +31,7 @@ export async function proxy(request: NextRequest) {
             "X-RateLimit-Remaining": remaining.toString(),
             "X-RateLimit-Reset": resetTime.toString(),
           },
-        }
+        },
       );
     }
   }

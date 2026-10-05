@@ -5,9 +5,15 @@ import { rpcService } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { UNIT_VOCABULARY } from "@/lib/constants/vocabulary";
 import { UNITS } from "@/lib/constants/units";
-import { getNextUnitFromProgress, getNextUnitRoute } from "@/lib/placement/starting-unit";
+import {
+  getNextUnitFromProgress,
+  getNextUnitRoute,
+} from "@/lib/placement/starting-unit";
 import { headers } from "next/headers";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { CompleteUnitSchema } from "@/lib/security/validation";
 
 const completeUnitLimiter = createRateLimiter(10, 60 * 1000, "complete-unit");
@@ -37,12 +43,12 @@ interface TransactionResult {
 export async function completeUnit(unitId: string, starCount: number = 3) {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await completeUnitLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {
         success: false,
-        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau."
+        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau.",
       };
     }
 
@@ -50,47 +56,55 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
     if (!validated.success) {
       return {
         success: false,
-        error: `Dữ liệu không hợp lệ: ${validated.error.issues.map(e => e.message).join(", ")}`
+        error: `Dữ liệu không hợp lệ: ${validated.error.issues.map((e) => e.message).join(", ")}`,
       };
     }
     const cleanParams = validated.data;
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return {
         success: false,
-        error: "Bạn cần đăng nhập để hoàn thành chương học."
+        error: "Bạn cần đăng nhập để hoàn thành chương học.",
       };
     }
 
-    const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+    const today = new Date().toLocaleDateString("sv-SE", {
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
 
     // Keep the trusted transaction contract intact for now. The database still
     // validates authoritative completion and derives legacy compatibility data.
-    const unitDef = UNITS.find(u => u.id === cleanParams.unitId);
+    const unitDef = UNITS.find((u) => u.id === cleanParams.unitId);
     const BASE_XP = unitDef?.xp ?? 80;
-    const xpMultiplier = cleanParams.starCount === 3 ? 1.0 : cleanParams.starCount === 2 ? 0.85 : 0.70;
+    const xpMultiplier =
+      cleanParams.starCount === 3
+        ? 1.0
+        : cleanParams.starCount === 2
+          ? 0.85
+          : 0.7;
     const xpEarned = Math.round(BASE_XP * xpMultiplier);
 
     // complete_unit_transaction is granted to service_role only (hardened XP
     // trust boundary) — invoke it through the owner-side service path, not
     // the user-scoped Data API client.
-    const { data: txResult, error: txError } = await rpcService<TransactionResult>(
-      "complete_unit_transaction",
-      {
+    const { data: txResult, error: txError } =
+      await rpcService<TransactionResult>("complete_unit_transaction", {
         p_user_id: user.id,
         p_unit_id: cleanParams.unitId,
         p_xp_earned: xpEarned,
         p_stars: cleanParams.starCount,
         p_today: today,
-      },
-    );
+      });
 
     if (txError) {
       return {
         success: false,
-        error: `Lỗi giao dịch hoàn thành bài học: ${txError.message}`
+        error: `Lỗi giao dịch hoàn thành bài học: ${txError.message}`,
       };
     }
 
@@ -100,7 +114,7 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
       return {
         success: true,
         message: "Unit này đã được bạn hoàn thành trước đó.",
-        alreadyCompleted: true
+        alreadyCompleted: true,
       };
     }
 
@@ -133,7 +147,10 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
 
       const { data: upserted, error: upsertError } = await supabase
         .from("cards")
-        .upsert(cardsToInsert, { onConflict: "user_id,word", ignoreDuplicates: true })
+        .upsert(cardsToInsert, {
+          onConflict: "user_id,word",
+          ignoreDuplicates: true,
+        })
         .select("id");
 
       if (!upsertError) addedCount = upserted?.length ?? 0;
@@ -159,7 +176,7 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: `Lỗi hệ thống: ${errorMessage}`
+      error: `Lỗi hệ thống: ${errorMessage}`,
     };
   }
 }
@@ -170,7 +187,10 @@ export async function completeUnit(unitId: string, starCount: number = 3) {
 export async function getUnitCompletionStatus(unitId: string) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return { success: false, completed: false };
@@ -191,7 +211,7 @@ export async function getUnitCompletionStatus(unitId: string) {
       success: true,
       completed: !!data,
       completedAt: data?.completed_at || null,
-      xpEarned: data?.xp_earned || 0
+      xpEarned: data?.xp_earned || 0,
     };
   } catch {
     return { success: false, completed: false };
@@ -207,10 +227,19 @@ export async function getAllUnitCompletionStatuses(): Promise<{
   success: boolean;
   completedMap: Map<string, { completedAt: string | null; xpEarned: number }>;
 }> {
-  const emptyResult = { success: false, completedMap: new Map<string, { completedAt: string | null; xpEarned: number }>() };
+  const emptyResult = {
+    success: false,
+    completedMap: new Map<
+      string,
+      { completedAt: string | null; xpEarned: number }
+    >(),
+  };
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) return emptyResult;
 
     const { data, error } = await supabase
@@ -220,7 +249,10 @@ export async function getAllUnitCompletionStatuses(): Promise<{
 
     if (error) return emptyResult;
 
-    const completedMap = new Map<string, { completedAt: string | null; xpEarned: number }>();
+    const completedMap = new Map<
+      string,
+      { completedAt: string | null; xpEarned: number }
+    >();
     for (const row of data ?? []) {
       if (row.unit_id) {
         completedMap.set(row.unit_id, {
@@ -241,7 +273,10 @@ export async function getAllUnitCompletionStatuses(): Promise<{
 export async function getCompletedUnitsCount() {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return { success: false, count: 0 };
@@ -267,31 +302,35 @@ export async function getCompletedUnitsCount() {
 export async function resetUnitProgress(unitId: string) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return {
         success: false,
-        error: "Bạn cần đăng nhập để reset tiến trình."
+        error: "Bạn cần đăng nhập để reset tiến trình.",
       };
     }
 
-    const { error: deleteProgressError } = await supabase
-      .from("user_lesson_progress")
-      .delete()
-      .eq("user_id", user.id)
-      .eq("unit_id", unitId);
+    // user_lesson_progress writes are revoked from the authenticated role
+    // (ATO-004) — reset goes through the auth_uid-bound SECURITY DEFINER RPC.
+    const { error: deleteProgressError } = await supabase.rpc(
+      "reset_unit_progress",
+      { p_unit_id: unitId },
+    );
 
     if (deleteProgressError) {
       return {
         success: false,
-        error: `Lỗi khi xóa tiến trình: ${deleteProgressError.message}`
+        error: `Lỗi khi xóa tiến trình: ${deleteProgressError.message}`,
       };
     }
 
     const vocabList = UNIT_VOCABULARY[unitId] || [];
     if (vocabList.length > 0) {
-      const wordList = vocabList.map(v => v.word.toLowerCase().trim());
+      const wordList = vocabList.map((v) => v.word.toLowerCase().trim());
       await supabase
         .from("cards")
         .delete()
@@ -305,13 +344,13 @@ export async function resetUnitProgress(unitId: string) {
 
     return {
       success: true,
-      message: `Đã reset thành công toàn bộ tiến trình bài học ${unitId}.`
+      message: `Đã reset thành công toàn bộ tiến trình bài học ${unitId}.`,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: `Lỗi hệ thống: ${errorMessage}`
+      error: `Lỗi hệ thống: ${errorMessage}`,
     };
   }
 }
@@ -323,7 +362,10 @@ export async function resetUnitProgress(unitId: string) {
 export async function getCurrentUnit() {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       const u1 = UNITS[0];
@@ -335,12 +377,12 @@ export async function getCurrentUnit() {
         currentPhase: "Pha 1: Input",
         progress: 0,
         completed: false,
-        route: u1.route
+        route: u1.route,
       };
     }
 
-    const allWords = UNITS.flatMap(unit =>
-      (UNIT_VOCABULARY[unit.id] || []).map(v => v.word.toLowerCase().trim())
+    const allWords = UNITS.flatMap((unit) =>
+      (UNIT_VOCABULARY[unit.id] || []).map((v) => v.word.toLowerCase().trim()),
     );
 
     const [progressRes, completedRes, cardsRes] = await Promise.all([
@@ -363,18 +405,22 @@ export async function getCurrentUnit() {
     if (completedRes.error) {
       return {
         success: false,
-        error: `Lỗi truy vấn database: ${completedRes.error.message}`
+        error: `Lỗi truy vấn database: ${completedRes.error.message}`,
       };
     }
 
-    const completedUnitIds = completedRes.data?.map(l => l.unit_id) || [];
-    const savedWords = new Set(cardsRes.data?.map(c => c.word.toLowerCase().trim()) || []);
+    const completedUnitIds = completedRes.data?.map((l) => l.unit_id) || [];
+    const savedWords = new Set(
+      cardsRes.data?.map((c) => c.word.toLowerCase().trim()) || [],
+    );
     const startingUnitIndex = progressRes.data?.starting_unit_index ?? 0;
 
-    const unitStatuses = UNITS.map(unit => {
+    const unitStatuses = UNITS.map((unit) => {
       const isCompleted = completedUnitIds.includes(unit.id);
       const vocab = UNIT_VOCABULARY[unit.id] || [];
-      const savedCount = vocab.filter(v => savedWords.has(v.word.toLowerCase().trim())).length;
+      const savedCount = vocab.filter((v) =>
+        savedWords.has(v.word.toLowerCase().trim()),
+      ).length;
 
       let progress = 0;
       let phase = "Pha 1: Input";
@@ -395,12 +441,18 @@ export async function getCurrentUnit() {
         currentPhase: isCompleted ? "Hoàn thành" : phase,
         progress: isCompleted ? 100 : progress,
         completed: isCompleted,
-        route: unit.route
+        route: unit.route,
       };
     });
 
-    const nextMeta = getNextUnitFromProgress(completedUnitIds, startingUnitIndex);
-    const canonicalRoute = getNextUnitRoute(completedUnitIds, startingUnitIndex);
+    const nextMeta = getNextUnitFromProgress(
+      completedUnitIds,
+      startingUnitIndex,
+    );
+    const canonicalRoute = getNextUnitRoute(
+      completedUnitIds,
+      startingUnitIndex,
+    );
     let activeUnit = nextMeta
       ? unitStatuses.find((u) => u.unitId === nextMeta.id)
       : undefined;
@@ -413,13 +465,13 @@ export async function getCurrentUnit() {
     return {
       success: true,
       ...(activeUnit || {}),
-      route
+      route,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: `Lỗi hệ thống: ${errorMessage}`
+      error: `Lỗi hệ thống: ${errorMessage}`,
     };
   }
 }

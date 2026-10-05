@@ -27,10 +27,15 @@ try {
     const eq = trimmed.indexOf("=");
     if (eq === -1) continue;
     const key = trimmed.slice(0, eq).trim();
-    const val = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+    const val = trimmed
+      .slice(eq + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
     if (key && !process.env[key]) process.env[key] = val;
   }
-} catch { /* .env.local not found — CI uses real env vars */ }
+} catch {
+  /* .env.local not found — CI uses real env vars */
+}
 
 import { neon } from "@neondatabase/serverless";
 import { createClient } from "@neondatabase/neon-js";
@@ -128,9 +133,8 @@ export let adminClient: NeonPostgrestClient<Database>;
 // globalThis bridge: vi.mock factory runs at import time (hoisted),
 // but createClient() is called at test runtime — AFTER beforeAll sets the client.
 declare global {
-   
   var __testSupabaseClient: unknown;
-   
+
   var __testUserId: string | undefined;
 }
 
@@ -147,9 +151,11 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("next/headers", () => ({
-  headers: vi.fn().mockResolvedValue(new Headers({
-    "x-forwarded-for": "127.0.0.1",
-  })),
+  headers: vi.fn().mockResolvedValue(
+    new Headers({
+      "x-forwarded-for": "127.0.0.1",
+    }),
+  ),
   cookies: vi.fn().mockResolvedValue(new Map()),
 }));
 
@@ -157,6 +163,7 @@ vi.mock("@/lib/security/rate-limit", () => ({
   createRateLimiter: vi.fn(() => ({
     check: vi.fn().mockResolvedValue({ success: true, remaining: 99 }),
   })),
+  getClientIpFromHeaders: () => "10.0.0.1",
 }));
 
 // ── KEY MOCK: @/lib/supabase/server ───────────────────────────────────────

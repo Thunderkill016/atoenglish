@@ -1,9 +1,13 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { rpcService } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { z } from "zod";
 import { quizXpFromPct } from "@/lib/quiz-scoring";
 
@@ -16,50 +20,32 @@ const QuizResultSchema = z.object({
 });
 
 function vnToday(): string {
-  return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+  return new Date().toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
 }
 
 async function awardQuizXp(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
   xpDelta: number,
-  today: string
+  today: string,
 ) {
   if (xpDelta <= 0) return;
 
-  const { data: userProgress } = await supabase
-    .from("user_progress")
-    .select("total_xp, streak, last_active_date")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (userProgress) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - 1);
-    const yesterday = d.toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
-    let nextStreak = 1;
-    if (userProgress.last_active_date === today) {
-      nextStreak = userProgress.streak;
-    } else if (userProgress.last_active_date === yesterday) {
-      nextStreak = userProgress.streak + 1;
-    }
-    await supabase
-      .from("user_progress")
-      .update({
-        total_xp: userProgress.total_xp + xpDelta,
-        streak: nextStreak,
-        last_active_date: today,
-      })
-      .eq("user_id", userId);
-  } else {
-    await supabase.from("user_progress").insert({
-      user_id: userId,
-      current_level: "A0",
-      streak: 1,
-      total_xp: xpDelta,
-      last_active_date: today,
-    });
-  }
+  const d = new Date(today);
+  d.setDate(d.getDate() - 1);
+  const yesterday = d.toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+  // Stat columns on user_progress are revoked from the authenticated role
+  // (ATO-003) — XP/streak move only through the service-gated RPC.
+  await rpcService("award_user_xp", {
+    p_user_id: userId,
+    p_xp_amount: xpDelta,
+    p_today: today,
+    p_yesterday: yesterday,
+  });
 }
 
 /**
@@ -73,7 +59,7 @@ export async function saveQuizResult(params: {
 }) {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await quizLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return { success: false, error: "Yêu cầu quá thường xuyên." };
@@ -186,6 +172,9 @@ export async function saveQuizResult(params: {
 
     return { success: true, xpEarned: xpForAttempt, pct };
   } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }

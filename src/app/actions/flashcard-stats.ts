@@ -2,11 +2,19 @@
 
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import { rpcService } from "@/lib/supabase/service";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { RecordFlashcardSessionSchema } from "@/lib/security/validation";
 import type { Database } from "@/types/supabase";
 
-const flashcardWriteLimiter = createRateLimiter(20, 60 * 1000, "flashcard-session");
+const flashcardWriteLimiter = createRateLimiter(
+  20,
+  60 * 1000,
+  "flashcard-session",
+);
 
 // Use auto-generated types — no more `as any` casts
 type FlashcardProgressRow =
@@ -51,7 +59,7 @@ export async function getFlashcardStats(): Promise<{
   const { data, error } = await supabase
     .from("user_flashcard_progress")
     .select(
-      "cards_reviewed_today, total_cards_reviewed, total_sessions, streak_days, best_streak, last_session_at"
+      "cards_reviewed_today, total_cards_reviewed, total_sessions, streak_days, best_streak, last_session_at",
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -67,12 +75,13 @@ export async function getFlashcardStats(): Promise<{
  * Tự động tính streak (liên tiếp ngày, reset nếu bỏ ngày).
  */
 export async function recordFlashcardSession(
-  cardsReviewed: number
+  cardsReviewed: number,
 ): Promise<{ success: boolean; stats?: FlashcardStats; error?: string }> {
   // Rate limiting
-  const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
+  const ip = getClientIpFromHeaders(await headers());
   const rateLimitCheck = await flashcardWriteLimiter.check(ip);
-  if (!rateLimitCheck.success) return { success: false, error: "Tốc độ quá giới hạn." };
+  if (!rateLimitCheck.success)
+    return { success: false, error: "Tốc độ quá giới hạn." };
 
   // Input validation
   const validated = RecordFlashcardSessionSchema.safeParse({ cardsReviewed });
@@ -92,10 +101,14 @@ export async function recordFlashcardSession(
   if (!user) return { success: false, error: "Unauthenticated" };
 
   // Use Vietnam timezone consistently — UTC dates cause off-by-one at night
-  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+  const today = new Date().toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
   const d = new Date(today);
   d.setDate(d.getDate() - 1);
-  const yesterday = d.toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+  const yesterday = d.toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
 
   // Fetch existing row
   const { data: existing } = await supabase
@@ -125,7 +138,8 @@ export async function recordFlashcardSession(
     cards_reviewed_today: isNewDay
       ? cleanParams.cardsReviewed
       : (existing?.cards_reviewed_today ?? 0) + cleanParams.cardsReviewed,
-    total_cards_reviewed: (existing?.total_cards_reviewed ?? 0) + cleanParams.cardsReviewed,
+    total_cards_reviewed:
+      (existing?.total_cards_reviewed ?? 0) + cleanParams.cardsReviewed,
     total_sessions: (existing?.total_sessions ?? 0) + 1,
     streak_days: newStreak,
     best_streak: Math.max(newStreak, existing?.best_streak ?? 0),
@@ -137,7 +151,7 @@ export async function recordFlashcardSession(
     .from("user_flashcard_progress")
     .upsert(upsertData, { onConflict: "user_id" })
     .select(
-      "cards_reviewed_today, total_cards_reviewed, total_sessions, streak_days, best_streak, last_session_at"
+      "cards_reviewed_today, total_cards_reviewed, total_sessions, streak_days, best_streak, last_session_at",
     )
     .single();
 
@@ -146,35 +160,15 @@ export async function recordFlashcardSession(
   // Sync user_progress.last_active_date + streak so flashcard-only days
   // count toward the dashboard streak (best-effort, fire-and-forget)
   void (async () => {
-    const { data: up } = await supabase
-      .from("user_progress")
-      .select("total_xp, streak, last_active_date")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (up) {
-      let nextStreak = 1;
-      if (up.last_active_date === today) {
-        nextStreak = up.streak;
-      } else if (up.last_active_date === yesterday) {
-        nextStreak = up.streak + 1;
-      }
-      await supabase
-        .from("user_progress")
-        .update({ streak: nextStreak, last_active_date: today })
-        .eq("user_id", user.id);
-    } else {
-      await supabase
-        .from("user_progress")
-        .insert({
-          user_id: user.id,
-          current_level: "A0",
-          streak: 1,
-          total_xp: 0,
-          last_active_date: today,
-        });
-    }
+    // award_user_xp(0) touches streak + last_active_date only — stat columns
+    // are revoked from the authenticated role (ATO-003).
+    await rpcService("award_user_xp", {
+      p_user_id: user.id,
+      p_xp_amount: 0,
+      p_today: today,
+      p_yesterday: yesterday,
+    });
   })();
 
   return { success: true, stats: data };
 }
-

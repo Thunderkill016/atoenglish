@@ -1,9 +1,13 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { rpcService } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { geminiGenerateUrl } from "@/lib/ai/gemini";
 import { SpeakingSessionSchema } from "@/lib/security/validation";
 import {
@@ -111,8 +115,7 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
   try {
     // Rate Limiting
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await speakingLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {
@@ -182,42 +185,19 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
       timeZone: "Asia/Ho_Chi_Minh",
     });
 
-    const { data: userProgress } = await supabase
-      .from("user_progress")
-      .select("total_xp, streak, last_active_date")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (userProgress) {
-      const lastActive = userProgress.last_active_date;
-      let nextStreak = 1;
-      if (lastActive === today) {
-        nextStreak = userProgress.streak;
-      } else {
-        const d = new Date(today);
-        d.setDate(d.getDate() - 1);
-        const yesterday = d.toLocaleDateString("sv-SE", {
-          timeZone: "Asia/Ho_Chi_Minh",
-        });
-        nextStreak = lastActive === yesterday ? userProgress.streak + 1 : 1;
-      }
-      await supabase
-        .from("user_progress")
-        .update({
-          total_xp: userProgress.total_xp + xpEarned,
-          streak: nextStreak,
-          last_active_date: today,
-        })
-        .eq("user_id", user.id);
-    } else {
-      await supabase.from("user_progress").insert({
-        user_id: user.id,
-        current_level: "A0",
-        streak: 1,
-        total_xp: xpEarned,
-        last_active_date: today,
-      });
-    }
+    const d = new Date(today);
+    d.setDate(d.getDate() - 1);
+    const yesterday = d.toLocaleDateString("sv-SE", {
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
+    // Stat columns on user_progress are revoked from the authenticated role
+    // (ATO-003) — XP/streak move only through the service-gated RPC.
+    await rpcService("award_user_xp", {
+      p_user_id: user.id,
+      p_xp_amount: xpEarned,
+      p_today: today,
+      p_yesterday: yesterday,
+    });
 
     // Revalidate speaking + dashboard so XP and streak update immediately
     revalidatePath("/me/speaking");
@@ -297,8 +277,7 @@ export async function generateRoleplayTurn(
   try {
     // 1. Rate Limiting
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await aiLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {
@@ -478,8 +457,7 @@ export async function evaluateSpeakingSession(
   try {
     // 1. Rate Limiting
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await aiLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {
