@@ -38,12 +38,18 @@ type RpcFn = (
 export async function claimMissionCheckpoint(input: unknown) {
   const parsed = missionCheckpointClaimSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false as const, error: "Kết quả checkpoint không hợp lệ." };
+    return {
+      success: false as const,
+      error: "Kết quả checkpoint không hợp lệ.",
+    };
   }
 
   const mission = getMissionForLesson(parsed.data.lessonId);
   if (!mission) {
-    return { success: false as const, error: "Không tìm thấy mission tương ứng." };
+    return {
+      success: false as const,
+      error: "Không tìm thấy mission tương ứng.",
+    };
   }
 
   const allAnswered = mission.checkpoint.questions.every(
@@ -82,7 +88,10 @@ export async function claimMissionCheckpoint(input: unknown) {
     error: authError,
   } = await supabase.auth.getUser();
   if (authError || !user) {
-    return { success: false as const, error: "Bạn cần đăng nhập để ghi nhận mastery." };
+    return {
+      success: false as const,
+      error: "Bạn cần đăng nhập để ghi nhận mastery.",
+    };
   }
 
   const { data, error } = await (supabase.rpc as unknown as RpcFn)(

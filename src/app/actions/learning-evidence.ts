@@ -14,7 +14,10 @@ import {
   NếpPracticeSubmissionSchema,
   type NếpPracticeSubmission,
 } from "@/lib/nep/practice-execution.v1";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { rpcService } from "@/lib/supabase/service";
 
@@ -142,8 +145,7 @@ export async function recordNếpPracticeAttempt(
 ): Promise<RecordNếpPracticeAttemptResult> {
   try {
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await learningAttemptLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {

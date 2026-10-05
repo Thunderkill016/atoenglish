@@ -2,7 +2,10 @@
 
 import { headers } from "next/headers";
 
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { lemmaKey } from "@/lib/vocab/lemma";
 import type { LearnerKnownWordRow } from "@/types/learning-tables";
@@ -139,8 +142,7 @@ function normalizeInput(word: unknown): string | null {
 
 async function limitedRate(): Promise<boolean> {
   const reqHeaders = await headers();
-  const ip =
-    reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+  const ip = getClientIpFromHeaders(reqHeaders);
   return (await readLimiter.check(ip)).success;
 }
 

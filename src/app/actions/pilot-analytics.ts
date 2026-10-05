@@ -2,7 +2,10 @@
 
 import { headers } from "next/headers";
 
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { PilotEventInputSchema } from "@/lib/pilot/pilot-analytics";
 
@@ -28,15 +31,14 @@ type PilotEventsClient = {
   };
 };
 
-export async function recordPilotEvent(input: unknown): Promise<{ success: boolean }> {
+export async function recordPilotEvent(
+  input: unknown,
+): Promise<{ success: boolean }> {
   const parsed = PilotEventInputSchema.safeParse(input);
   if (!parsed.success || !parsed.data.anonymousId) return { success: false };
 
   const requestHeaders = await headers();
-  const ip =
-    requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    requestHeaders.get("x-real-ip") ||
-    "127.0.0.1";
+  const ip = getClientIpFromHeaders(requestHeaders);
   const rateLimit = await pilotEventLimiter.check(ip);
   if (!rateLimit.success) return { success: false };
 

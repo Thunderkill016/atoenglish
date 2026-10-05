@@ -3,7 +3,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { geminiGenerateUrl } from "@/lib/ai/gemini";
 import { SpeakingSessionSchema } from "@/lib/security/validation";
 import {
@@ -111,8 +114,7 @@ export async function saveSpeakingSession(params: SaveSpeakingSessionParams) {
   try {
     // Rate Limiting
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await speakingLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {
@@ -297,8 +299,7 @@ export async function generateRoleplayTurn(
   try {
     // 1. Rate Limiting
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await aiLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {
@@ -478,8 +479,7 @@ export async function evaluateSpeakingSession(
   try {
     // 1. Rate Limiting
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await aiLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return {

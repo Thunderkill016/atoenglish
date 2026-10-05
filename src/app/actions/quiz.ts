@@ -3,7 +3,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { z } from "zod";
 import { quizXpFromPct } from "@/lib/quiz-scoring";
 
@@ -16,14 +19,16 @@ const QuizResultSchema = z.object({
 });
 
 function vnToday(): string {
-  return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+  return new Date().toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
 }
 
 async function awardQuizXp(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
   xpDelta: number,
-  today: string
+  today: string,
 ) {
   if (xpDelta <= 0) return;
 
@@ -36,7 +41,9 @@ async function awardQuizXp(
   if (userProgress) {
     const d = new Date(today);
     d.setDate(d.getDate() - 1);
-    const yesterday = d.toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+    const yesterday = d.toLocaleDateString("sv-SE", {
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
     let nextStreak = 1;
     if (userProgress.last_active_date === today) {
       nextStreak = userProgress.streak;
@@ -73,7 +80,7 @@ export async function saveQuizResult(params: {
 }) {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await quizLimiter.check(ip);
     if (!rateLimitCheck.success) {
       return { success: false, error: "Yêu cầu quá thường xuyên." };
@@ -186,6 +193,9 @@ export async function saveQuizResult(params: {
 
     return { success: true, xpEarned: xpForAttempt, pct };
   } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }

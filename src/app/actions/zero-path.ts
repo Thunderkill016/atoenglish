@@ -35,7 +35,10 @@ import {
 import { nepLessonRegistryV1 } from "@/lib/nep/lesson-registry.v1";
 import { createZeroPathSessionPersistence } from "@/lib/nep/zero-path-session-persistence";
 import { zeroPathLessonIndex } from "@/lib/nep/zero-path-pilot.v1";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import type { ZeroPathSessionRow } from "@/types/learning-tables";
 
@@ -168,8 +171,7 @@ export async function startZeroPathPilotSession(
   mode?: "review",
 ): Promise<{ sessionId: string | null }> {
   const reqHeaders = await headers();
-  const ip =
-    reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+  const ip = getClientIpFromHeaders(reqHeaders);
   const rateLimitCheck = await zeroPathStartLimiter.check(ip);
   if (!rateLimitCheck.success) return { sessionId: null };
 
@@ -204,8 +206,7 @@ export async function submitZeroPathResponse(
   input: NếpPracticeSubmission,
 ): Promise<ZeroPathSubmissionResult> {
   const reqHeaders = await headers();
-  const ip =
-    reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+  const ip = getClientIpFromHeaders(reqHeaders);
   const rateLimitCheck = await zeroPathLimiter.check(ip);
   if (!rateLimitCheck.success) return { kind: "rate-limited" };
 
@@ -498,8 +499,7 @@ export async function completeZeroPathUnitSession(
   unitSlug: string,
 ): Promise<{ success: boolean; error?: string }> {
   const reqHeaders = await headers();
-  const ip =
-    reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+  const ip = getClientIpFromHeaders(reqHeaders);
   const rateLimitCheck = await zeroPathLimiter.check(ip);
   if (!rateLimitCheck.success) {
     return { success: false, error: "Yêu cầu quá thường xuyên." };

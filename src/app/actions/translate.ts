@@ -1,7 +1,10 @@
 "use server";
 
 import { headers } from "next/headers";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { geminiGenerateUrl } from "@/lib/ai/gemini";
 
 const translateLimiter = createRateLimiter(20, 60 * 1000, "translate-grade");
@@ -25,8 +28,7 @@ export async function gradeTranslation(
 ): Promise<{ success: boolean; grade?: TranslationGrade; error?: string }> {
   try {
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateCheck = await translateLimiter.check(ip);
     if (!rateCheck.success) {
       return {

@@ -18,7 +18,10 @@ import {
   scoreTrialCheckpoint,
 } from "@/lib/lessons/trial-checkpoint";
 import { GOLD_MISSION_01 } from "@/lib/missions/gold-mission-01";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 const attemptLimiter = createRateLimiter(60, 60_000, "learning-attempts");
@@ -42,13 +45,15 @@ type RpcClient = {
 export async function recordLearningAttempts(input: LearningAttemptBatchInput) {
   const parsed = LearningAttemptBatchSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false as const, error: "Dữ liệu lần học không hợp lệ.", inserted: 0 };
+    return {
+      success: false as const,
+      error: "Dữ liệu lần học không hợp lệ.",
+      inserted: 0,
+    };
   }
 
   const requestHeaders = await headers();
-  const ip =
-    requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "127.0.0.1";
+  const ip = getClientIpFromHeaders(requestHeaders);
   const rateCheck = await attemptLimiter.check(ip);
   if (!rateCheck.success) {
     return {
@@ -64,7 +69,11 @@ export async function recordLearningAttempts(input: LearningAttemptBatchInput) {
     error: authError,
   } = await supabase.auth.getUser();
   if (authError || !user) {
-    return { success: false as const, error: "Bạn cần đăng nhập để lưu tiến độ.", inserted: 0 };
+    return {
+      success: false as const,
+      error: "Bạn cần đăng nhập để lưu tiến độ.",
+      inserted: 0,
+    };
   }
 
   const rpcClient = supabase as unknown as RpcClient;
@@ -102,7 +111,10 @@ const trialCheckpointClaimSchema = z
 export async function claimTrialCheckpoint(input: unknown) {
   const parsed = trialCheckpointClaimSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false as const, error: "Kết quả checkpoint không hợp lệ." };
+    return {
+      success: false as const,
+      error: "Kết quả checkpoint không hợp lệ.",
+    };
   }
 
   const allAnswered = TRIAL_CHECKPOINT_QUESTIONS.every(

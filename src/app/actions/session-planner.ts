@@ -26,10 +26,17 @@ import {
   type NếpPracticeEnvelope,
 } from "@/lib/nep/practice-execution.v1";
 import { nepSessionCatalogV1 } from "@/lib/nep/session-catalog.v1";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
-const plannerReadLimiter = createRateLimiter(90, 60 * 1000, "session-planner-read");
+const plannerReadLimiter = createRateLimiter(
+  90,
+  60 * 1000,
+  "session-planner-read",
+);
 
 type QueryError = { message: string } | null;
 type QueryResult<T> = Promise<{ data: T[] | null; error: QueryError }>;
@@ -91,16 +98,25 @@ export async function getNếpSessionPlan(
 ): Promise<GetNếpSessionPlanResult> {
   try {
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await plannerReadLimiter.check(ip);
     if (!rateLimitCheck.success) {
-      return { success: false, error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau." };
+      return {
+        success: false,
+        error: "Yêu cầu quá thường xuyên. Vui lòng thử lại sau.",
+      };
     }
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return { success: false, error: "Bạn cần đăng nhập để tạo session học thích ứng." };
+      return {
+        success: false,
+        error: "Bạn cần đăng nhập để tạo session học thích ứng.",
+      };
     }
 
     const sessionSize = normalizeSessionSize(
@@ -140,15 +156,22 @@ export async function getNếpSessionPlan(
       .order("created_at", { ascending: false })
       .limit(200);
 
-    const [stateResult, evidenceCoverageResult, recentAttemptResult, errorMemoryResult] =
-      await Promise.all([
-        stateQuery,
-        evidenceCoverageQuery,
-        recentAttemptQuery,
-        errorMemoryQuery,
-      ]);
+    const [
+      stateResult,
+      evidenceCoverageResult,
+      recentAttemptResult,
+      errorMemoryResult,
+    ] = await Promise.all([
+      stateQuery,
+      evidenceCoverageQuery,
+      recentAttemptQuery,
+      errorMemoryQuery,
+    ]);
     if (stateResult.error) {
-      return { success: false, error: `Không thể đọc learner state: ${stateResult.error.message}` };
+      return {
+        success: false,
+        error: `Không thể đọc learner state: ${stateResult.error.message}`,
+      };
     }
     if (evidenceCoverageResult.error) {
       return {
@@ -157,17 +180,27 @@ export async function getNếpSessionPlan(
       };
     }
     if (recentAttemptResult.error) {
-      return { success: false, error: `Không thể đọc lịch sử practice gần đây: ${recentAttemptResult.error.message}` };
+      return {
+        success: false,
+        error: `Không thể đọc lịch sử practice gần đây: ${recentAttemptResult.error.message}`,
+      };
     }
     if (errorMemoryResult.error) {
-      return { success: false, error: `Không thể đọc error memory: ${errorMemoryResult.error.message}` };
+      return {
+        success: false,
+        error: `Không thể đọc error memory: ${errorMemoryResult.error.message}`,
+      };
     }
 
-    const evidenceCoverage = buildLearnerEvidenceCoverage(evidenceCoverageResult.data ?? []);
+    const evidenceCoverage = buildLearnerEvidenceCoverage(
+      evidenceCoverageResult.data ?? [],
+    );
     const states = (stateResult.data ?? []).map((row) =>
       mapLearnerSkillStateRow(row, evidenceCoverage.get(row.target_id) ?? {}),
     );
-    const recentHistory = deriveRecentPlannerHistory(recentAttemptResult.data ?? []);
+    const recentHistory = deriveRecentPlannerHistory(
+      recentAttemptResult.data ?? [],
+    );
     const errorMemory = buildErrorMemory(errorMemoryResult.data ?? []);
     const plan = planSession({
       candidates: nepSessionCatalogV1,
@@ -205,6 +238,9 @@ export async function getNếpSessionPlan(
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return { success: false, error: `Lỗi hệ thống khi tạo session plan: ${message}` };
+    return {
+      success: false,
+      error: `Lỗi hệ thống khi tạo session plan: ${message}`,
+    };
   }
 }

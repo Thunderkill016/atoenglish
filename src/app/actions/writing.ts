@@ -2,7 +2,10 @@
 
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import { geminiGenerateUrl } from "@/lib/ai/gemini";
 import { z } from "zod";
 
@@ -38,8 +41,7 @@ export async function analyzeWriting(formData: {
   try {
     // Rate limit
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ?? "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateCheck = await writingLimiter.check(ip);
     if (!rateCheck.success) {
       return {
@@ -159,8 +161,7 @@ export async function saveWritingSentence(params: {
 }) {
   try {
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ?? "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateCheck = await saveLimiter.check(ip);
     if (!rateCheck.success) {
       return { success: false as const, error: "Quá nhiều yêu cầu." };
@@ -266,8 +267,7 @@ export async function deleteUserSentence(id: string): Promise<{
 }> {
   try {
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ?? "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateCheck = await deleteLimiter.check(ip);
     if (!rateCheck.success)
       return { success: false, error: "Quá nhiều yêu cầu." };

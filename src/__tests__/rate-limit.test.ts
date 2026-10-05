@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import { createRateLimiter, getClientIp, InMemoryRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIp,
+  InMemoryRateLimiter,
+} from "@/lib/security/rate-limit";
 
 const mockLimit = vi.fn();
 
@@ -8,7 +12,7 @@ vi.mock("@upstash/ratelimit", () => {
     Ratelimit: class {
       static slidingWindow = vi.fn().mockReturnValue({});
       limit = (ip: string) => mockLimit(ip);
-    }
+    },
   };
 });
 
@@ -16,7 +20,7 @@ vi.mock("@upstash/redis", () => {
   return {
     Redis: {
       fromEnv: vi.fn().mockReturnValue({}),
-    }
+    },
   };
 });
 
@@ -88,10 +92,12 @@ describe("createRateLimiter (InMemory fallback)", () => {
 });
 
 describe("getClientIp", () => {
-  const makeRequest = (overrides: {
-    ip?: string;
-    headers?: Record<string, string>;
-  } = {}) => {
+  const makeRequest = (
+    overrides: {
+      ip?: string;
+      headers?: Record<string, string>;
+    } = {},
+  ) => {
     const headers = new Headers(overrides.headers ?? {});
     const req = {
       headers,
@@ -105,11 +111,24 @@ describe("getClientIp", () => {
     expect(getClientIp(req)).toBe("1.2.3.4");
   });
 
-  it("returns first IP from x-forwarded-for header", () => {
+  it("prefers cf-connecting-ip over spoofable forwarded headers", () => {
+    const req = makeRequest({
+      headers: {
+        "cf-connecting-ip": "203.0.113.7",
+        "x-forwarded-for": "1.1.1.1",
+        "x-real-ip": "2.2.2.2",
+      },
+    });
+    expect(getClientIp(req)).toBe("203.0.113.7");
+  });
+
+  it("returns the LAST x-forwarded-for entry (edge-observed, unforgeable tail)", () => {
+    // Attacker-controlled XFF values can only prepend earlier entries; the
+    // Cloudflare edge appends the real peer last.
     const req = makeRequest({
       headers: { "x-forwarded-for": "5.6.7.8, 9.10.11.12" },
     });
-    expect(getClientIp(req)).toBe("5.6.7.8");
+    expect(getClientIp(req)).toBe("9.10.11.12");
   });
 
   it("returns x-real-ip when x-forwarded-for is absent", () => {
@@ -122,11 +141,11 @@ describe("getClientIp", () => {
     expect(getClientIp(req)).toBe("127.0.0.1");
   });
 
-  it("trims whitespace from x-forwarded-for IP", () => {
+  it("trims whitespace and takes the last x-forwarded-for entry", () => {
     const req = makeRequest({
       headers: { "x-forwarded-for": "  192.168.1.1  , 10.0.0.1" },
     });
-    expect(getClientIp(req)).toBe("192.168.1.1");
+    expect(getClientIp(req)).toBe("10.0.0.1");
   });
 });
 
@@ -153,7 +172,6 @@ describe("createRateLimiter (Additional Coverage)", () => {
     vi.useRealTimers();
   });
 
-
   it("works as expected with synchronous check method wrapper of legacy InMemoryRateLimiter", () => {
     const limiter = new InMemoryRateLimiter(2, 60_000);
     const result1 = limiter.check("127.0.0.1");
@@ -171,7 +189,7 @@ describe("createRateLimiter (Additional Coverage)", () => {
   it("uses Upstash in production when configured", async () => {
     process.env.UPSTASH_REDIS_REST_URL = "https://mock-redis.upstash.io";
     process.env.UPSTASH_REDIS_REST_TOKEN = "mock-token";
-    
+
     mockLimit.mockResolvedValue({
       success: true,
       limit: 10,
@@ -194,7 +212,7 @@ describe("createRateLimiter (Additional Coverage)", () => {
   it("fails open if Upstash throws an error", async () => {
     process.env.UPSTASH_REDIS_REST_URL = "https://mock-redis.upstash.io";
     process.env.UPSTASH_REDIS_REST_TOKEN = "mock-token";
-    
+
     mockLimit.mockRejectedValue(new Error("Upstash connection failed"));
 
     try {

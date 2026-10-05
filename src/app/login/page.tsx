@@ -101,7 +101,12 @@ const QUESTIONS = [
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/learn";
+  // `next` is attacker-controllable (?next=https://evil.tld). Only same-origin
+  // absolute paths are allowed — anything else falls back to /learn so a
+  // crafted login link can't bounce a user off-site after sign-in.
+  const rawNext = searchParams.get("next") ?? "/learn";
+  const next =
+    rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/learn";
   const mode = searchParams.get("mode");
 
   const [email, setEmail] = useState("");

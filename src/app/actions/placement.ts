@@ -3,7 +3,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import {
+  createRateLimiter,
+  getClientIpFromHeaders,
+} from "@/lib/security/rate-limit";
 import {
   getPlacementLearnPath,
   getStartingUnitIndex,
@@ -81,11 +84,13 @@ async function persistPlacementLevel(
       .eq("user_id", user.id);
 
     if (error) {
-      return { success: false as const, error: `Lỗi lưu kết quả: ${error.message}` };
+      return {
+        success: false as const,
+        error: `Lỗi lưu kết quả: ${error.message}`,
+      };
     }
   } else {
-    const seedXp =
-      source === "test" && score > 0 ? Math.round(score * 5) : 0;
+    const seedXp = source === "test" && score > 0 ? Math.round(score * 5) : 0;
     const { error } = await supabase.from("user_progress").insert({
       user_id: user.id,
       ...basePayload,
@@ -94,7 +99,10 @@ async function persistPlacementLevel(
     });
 
     if (error) {
-      return { success: false as const, error: `Lỗi lưu kết quả: ${error.message}` };
+      return {
+        success: false as const,
+        error: `Lỗi lưu kết quả: ${error.message}`,
+      };
     }
   }
 
@@ -118,11 +126,13 @@ export async function savePlacementResult(
 ): Promise<PlacementSaveResult> {
   try {
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await placementLimiter.check(ip);
     if (!rateLimitCheck.success) {
-      return { success: false, error: "Vui lòng chờ trước khi làm lại test." } satisfies PlacementSaveResult;
+      return {
+        success: false,
+        error: "Vui lòng chờ trước khi làm lại test.",
+      } satisfies PlacementSaveResult;
     }
 
     return await persistPlacementLevel(level, score, "test");
@@ -133,14 +143,18 @@ export async function savePlacementResult(
 }
 
 /** Self-select level without taking the full test (quick path). */
-export async function setPlacementLevel(level: string): Promise<PlacementSaveResult> {
+export async function setPlacementLevel(
+  level: string,
+): Promise<PlacementSaveResult> {
   try {
     const reqHeaders = await headers();
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const ip = getClientIpFromHeaders(reqHeaders);
     const rateLimitCheck = await placementLimiter.check(ip);
     if (!rateLimitCheck.success) {
-      return { success: false, error: "Vui lòng chờ trước khi thử lại." } satisfies PlacementSaveResult;
+      return {
+        success: false,
+        error: "Vui lòng chờ trước khi thử lại.",
+      } satisfies PlacementSaveResult;
     }
 
     return await persistPlacementLevel(level, 0, "self-select");
