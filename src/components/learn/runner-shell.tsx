@@ -154,7 +154,7 @@ interface RunnerSpeechInputProps {
   fallbackText: string;
   setFallbackText: Dispatch<SetStateAction<string>>;
   startRecognition: StartRecognition;
-  onSubmit: (value: string) => void;
+  onSubmit: (value: string, source: "speech" | "text") => void;
   placeholder?: string;
 }
 
@@ -187,7 +187,7 @@ export function RunnerSpeechInput({
         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
         placeholder={placeholder}
       />
-      <MinimalButton fullWidth onClick={() => onSubmit(fallbackText)}>
+      <MinimalButton fullWidth onClick={() => onSubmit(fallbackText, "text")}>
         Gửi câu vừa nói <ArrowRight className="size-4" />
       </MinimalButton>
     </div>
@@ -202,7 +202,9 @@ export function RunnerSpeechInput({
           <MinimalButton
             fullWidth
             disabled={isListening}
-            onClick={() => startRecognition(onSubmit)}
+            onClick={() =>
+              startRecognition((transcript) => onSubmit(transcript, "speech"))
+            }
           >
             <Mic className="size-4" />
             {isListening ? "Đang nghe..." : "Bắt đầu nói"}

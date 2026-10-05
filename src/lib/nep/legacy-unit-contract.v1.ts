@@ -118,6 +118,9 @@ function displayWordBank(words: readonly string[]): string {
     .join(" · ");
 }
 
+/** Max listen-and-repeat items per unit — bounded spoken retrieval practice. */
+const ECHO_TASKS_PER_UNIT = 2;
+
 type WordBankSource = {
   id: string;
   prompt_vn: string;
@@ -230,12 +233,13 @@ function compileLegacyActions(
       modality: "read",
       title: dialogue.title ? stripLegacyHtml(dialogue.title) : "Hội thoại",
       instruction:
-        "Đọc hội thoại mẫu — chú ý cách người ta dùng mẫu câu mục tiêu.",
+        "Nghe và đọc hội thoại mẫu — chú ý cách người ta dùng mẫu câu mục tiêu.",
       model: joinLines(
         dialogue.lines.map(
           (line) => `${line.speaker}: ${line.text} (${line.translation})`,
         ),
       ),
+      audioSrc: dialogue.audio || undefined,
     });
   });
 
@@ -351,15 +355,17 @@ function compileLegacyActions(
     }
   }
 
-  // listenAndChoose items have no audio in the session runtime — presented
-  // honestly as reading comprehension, never labeled as listening.
+  // listenAndChoose: stimulus is delivered as audio (TTS) in the session UI —
+  // the prompt text stays in the contract for server-side eval + TTS input but
+  // the learner surface plays it instead of displaying it. Modality "listen"
+  // makes the evidence claim "listening-reception" rather than reading.
   for (const item of unit.listenAndChoose ?? []) {
     actions.push({
       id: `cmp-${item.id}`,
       kind: "comprehend",
-      modality: "choice",
-      title: "Đọc hiểu",
-      instruction: "Đọc nội dung rồi chọn đáp án đúng.",
+      modality: "listen",
+      title: "Nghe và chọn",
+      instruction: "Nghe câu tiếng Anh rồi chọn đáp án đúng.",
       prompt: stripLegacyHtml(item.audio_text),
       choices: item.options.map(stripLegacyHtml),
       targetSignals: [stripLegacyHtml(item.answer)],
@@ -368,6 +374,35 @@ function compileLegacyActions(
         evidenceType: "recognition",
         contextId: contextId("comprehend", item.id),
         evaluator: "nep-choice-v1",
+      },
+    });
+  }
+
+  // Listen-and-repeat (echo): reuse listenAndChoose audio_text as the spoken
+  // target — the first assessed spoken task in compiled units. The stimulus
+  // is played (hidden prompt); the transcript/typed echo is matched against
+  // the target sentence by the canonical signal evaluator. Evidence binds as
+  // retrieval (reproduce a heard form — honestly not free production).
+  for (const item of (unit.listenAndChoose ?? []).slice(
+    0,
+    ECHO_TASKS_PER_UNIT,
+  )) {
+    const sentence = stripLegacyHtml(item.audio_text);
+    if (sentence.length < 4) continue;
+    actions.push({
+      id: `echo-${item.id}`,
+      kind: "retrieve",
+      modality: "listen",
+      title: "Nghe và nói lại",
+      instruction:
+        "Nghe câu tiếng Anh rồi nói lại nguyên câu. Không nói được thì gõ lại điều bạn nghe được.",
+      prompt: sentence,
+      targetSignals: [sentence],
+      assessment: {
+        targetCapabilityId: capabilityId,
+        evidenceType: "retrieval",
+        contextId: contextId("echo", item.id),
+        evaluator: "nep-target-signal-v1",
       },
     });
   }
@@ -444,7 +479,7 @@ function compileLegacyActions(
     actions.push({
       id: "speak-1",
       kind: "produce",
-      modality: "text",
+      modality: "speech",
       title: "Nói hoặc viết tự do",
       instruction: stripLegacyHtml(unit.speaking.level1Prompt),
       prompt: unit.speaking.level1Placeholder
@@ -457,7 +492,7 @@ function compileLegacyActions(
     actions.push({
       id: "speak-2",
       kind: "produce",
-      modality: "text",
+      modality: "speech",
       title: "Tình huống tự do",
       instruction: stripLegacyHtml(unit.speaking.level2Situation),
       supportVi: unit.speaking.level2Hint
@@ -527,6 +562,7 @@ export function compileLegacyUnitContract(
         "Oral-only sections (pronunciation focus, fluency drills, shadowing video) are omitted honestly: v1 has no speech evaluator.",
         "listenAndArrange audio_text is never surfaced (it is the answer); arrange tasks compile to scaffolded retrieval with an alphabetized word bank.",
         "Open-ended speaking prompts stay self-reports: no evaluator can honestly score free production at this level.",
+        "Listen-and-repeat items are assessed against the audio_text target — a bounded spoken retrieval task, not free-production evidence.",
       ],
     },
     actions,
