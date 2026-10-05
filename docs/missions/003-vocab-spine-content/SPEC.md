@@ -100,7 +100,25 @@ node scripts/check-unit.mjs --all [--json]     # chạy cho mọi unit trong seq
 
 ---
 
-## PART B — M1: Content pipeline
+## PART B — M1: Content pipeline (bản sửa 20:45 — bài học LẤY TỪ TƯ LIỆU THẬT)
+
+> **Thay đổi theo ý Hoàng:** bài học không phải do AI bịa ra từ blueprint. Mỗi unit bắt đầu từ **một bài báo / video / hội thoại THẬT**, AI chỉ làm công việc sư phạm: trích từ vựng, viết worked examples từ câu thật, ra câu hỏi về nội dung thật, thiết kế transfer task từ chủ đề thật. Blueprint của Hoàng quyết định **chủ đề + can-do**; Devin đi tìm tư liệu thật khớp chủ đề đó.
+>
+> **Về bản quyền (nói thẳng):** app chỉ một mình bạn dùng, không republish, không bán, không chia sẻ ra ngoài → rủi ro bản quyền gần như bằng 0. Đọc báo, xem YouTube, lưu transcript để tự học là việc hàng triệu người làm mỗi ngày. Mỗi unit ghi `source.url` là đủ minh bạch. Cái duy nhất không làm: copy nguyên xi sách giáo trình thương mại (kiểu English File) vào app — mà mình cũng không cần, vì nguồn của mình là báo/video công khai.
+
+### B0. Chọn nguồn tư liệu (bước mới, trước blueprint)
+
+Devin tìm 3–5 ứng viên cho mỗi unit theo thang level (đã nghiên cứu):
+
+| Level unit | Nguồn được phép |
+|---|---|
+| A0–A1 | News in Levels Level 1–2, VOA Learning English Beginning (tin THẬT, ngôn ngữ đơn giản hóa) |
+| A2 | News in Levels Level 3, VOA Intermediate, BBC 6 Minute English |
+| B1 | VOA Advanced, VnExpress International, BBC Learning English, YouTube có transcript |
+| B2 | Báo thật (BBC, Reuters…), podcast có transcript, YouTube không phụ đề |
+
+Tiêu chí chọn: (1) đúng chủ đề blueprint, (2) độ dài vừa bài 25 phút (báo ~300–600 từ / video 3–8 phút), (3) có audio hoặc transcript, (4) 5-finger rule: đọc thử 1 đoạn, 2–3 từ lạ/đoạn là chuẩn, 5+ thì đổi bài.
+Hoàng chốt 1 nguồn trong 3–5 ứng viên (hoặc ủy quyền cho Devin chọn theo tiêu chí).
 
 ### B1. `units/sequence.yaml`
 ```yaml
@@ -126,6 +144,14 @@ can_do:                             # required — 1 objective duy nhất
 prerequisites: []                    # list unit id; rỗng = không yêu cầu
 target_vocab: [hello, hi, name, ...] # required, 8–15 từ, PHẢI có trong spine
 proper_nouns: [Lan]                  # tên riêng, loại khỏi coverage
+source:                             # required — tư liệu THẬT làm gốc bài học
+  url: "https://www.newsinlevels.com/..."  # link gốc
+  title: "New colleagues at the office"    # tiêu đề gốc
+  publisher: "News in Levels"              # tên nguồn
+  type: article | video | audio            # loại tư liệu
+  level_original: "Level 2"                # cấp độ gốc của nguồn (nếu có)
+  adapted: true                            # true nếu AI đã rút gọn/đơn giản hóa câu gốc
+  notes: "giữ nguyên 5 câu gốc ở worked_example 1–3"  # optional
 phases:                              # required, đúng 5 phase theo thứ tự
   - n: 1
     name: goal_setting
@@ -202,47 +228,61 @@ phases:                              # required, đúng 5 phase theo thứ tự
 8. **Rubric gate:** Phase 4 có đúng 1 `transfer_task` với `rubric` đủ 3 criteria enum chuẩn; không xuất hiện ký tự `%` trong rubric/descriptors.
 9. **Banned-pattern gate:** FAIL nếu phát hiện: bài tập `controlled_production` không có `prompt_vi` mang nghĩa (drill cơ học); text chứa "XP", "streak", "điểm" như phần thưởng; Phase 1 có chấm điểm prereq_check.
 10. **Retrieval gate:** `retrieval_items` 3–5 items, tất cả dạng VI→EN (prompt_vi bắt buộc, expected_en bắt buộc).
+11. **Source gate:** `source.url` + `source.title` + `source.publisher` bắt buộc; `source.type` thuộc enum; Phase 2 phải có ít nhất 2 `worked_example` ghi `adapted_from_source: true` (câu lấy từ tư liệu gốc, được phép rút gọn nhưng không bịa mới hoàn toàn).
 
-### B4. Prompt template sinh draft bằng AI (Devin dùng cho từng blueprint)
+### B4. Prompt template sinh draft bằng AI — PHIÊN BẢN TƯ LIỆU THẬT (Devin dùng cho từng unit)
 
-Devin paste prompt này (điền phần trong ngoặc) vào model để sinh draft. Mỗi blueprint sinh **3–5 drafts**, mỗi draft là 1 file YAML đầy đủ:
+Devin paste prompt này (điền phần trong ngoặc) vào model. Mỗi unit sinh **3–5 drafts**, mỗi draft là 1 file YAML đầy đủ. **Điểm khác biệt với bản cũ: AI không bịa nội dung — nó ĐỌC tư liệu thật và xây bài học từ đó.**
 
 ```
 Bạn là chuyên gia viết giáo trình tiếng Anh cho người Việt đi làm, trình độ [A0].
-Nhiệm vụ: viết 1 unit hoàn chỉnh dưới dạng YAML theo schema sau:
-[SCHEMA — Devin paste toàn bộ B2 rút gọn: field required + ví dụ 1 step mỗi type]
+Nhiệm vụ: đọc TƯ LIỆU THẬT dưới đây và xây 1 unit hoàn chỉnh (YAML) theo 5 phase, BÁM VÀO tư liệu.
+
+TƯ LIỆU GỐC:
+Tiêu đề: [paste title]
+Nguồn: [paste publisher + url]
+Nội dung (toàn văn / transcript):
+[paste toàn bộ text bài báo hoặc transcript video]
 
 RÀNG BUỘC BẮT BUỘC (vi phạm là draft bị loại):
 1. Blueprint (bám sát tuyệt đối):
    - Can-do: [paste can_do]
-   - Tình huống: [paste situation]
-   - Target vocab (chỉ dùng các từ này làm từ mới, có thể tái dùng từ unit trước): [paste list]
-   - Transfer task: [paste transfer task idea]
-2. Chỉ dùng từ trong danh sách cho phép (spine excerpt đính kèm). Từ nào ngoài danh sách → phải là tên riêng và khai vào proper_nouns.
-3. Mỗi phase đúng số phút: 2/6/8/5/4 (tổng ≤ 27).
-4. Phase 2: 3–5 worked_example, mỗi cái có noticing_prompt_vi; brief_rule đứng SAU ví dụ, tối đa 2 câu.
-5. Mọi bài tập phải có feedback_explain_vi bằng tiếng Việt, giải thích TẠI SAO — không chỉ "sai rồi".
-6. KHÔNG mở bài bằng task lạnh (không ném người học vào bài tập khi chưa dạy gì).
-7. KHÔNG drill thay thế cơ học không ngữ cảnh. Mọi câu đều phải có nghĩa thật, gắn với tình huống.
-8. Phase 4: tình huống MỚI (không lặp lại dialogue đã học), rubric đúng 3 tiêu chí task_completion/target_language_use/intelligibility, KHÔNG dùng thang %.
-9. Phase 5: retrieval_items dạng Việt→Anh, 3–5 items.
-10. Phát âm: ưu tiên lỗi người Việt (phụ âm cuối, -s/-ed, trọng âm từ). Không drill /θ, ð/ như mục tiêu chính.
-11. Output: CHỈ YAML, không giải thích ngoài YAML.
+   - Target vocab (từ mới của bài — ƯU TIÊN từ xuất hiện trong tư liệu gốc; chỉ thêm từ ngoài khi thật cần): [paste list]
+2. NỘI DUNG LẤY TỪ TƯ LIỆU THẬT:
+   - Phase 2 (worked_example): ít nhất 2/3–5 ví dụ PHẢI là câu thật từ tư liệu (được rút gọn cho vừa trình độ nhưng không bịa câu mới hoàn toàn); mỗi ví dụ ghi adapted_from_source: true.
+   - Phase 3 (comprehension): câu hỏi PHẢI hỏi về nội dung tư liệu thật (ai, cái gì, ở đâu trong bài).
+   - Phase 4 (transfer_task): tình huống MỚI nhưng cùng chủ đề với tư liệu (vd: đọc tin về đồng nghiệp mới → transfer: tự giới thiệu với đồng nghiệp mới).
+   - Không bịa số liệu, tên riêng, sự kiện ngoài tư liệu gốc.
+3. Chỉ dùng từ trong danh sách cho phép (spine excerpt đính kèm). Từ nào ngoài danh sách → phải là tên riêng và khai vào proper_nouns.
+4. Mỗi phase đúng số phút: 2/6/8/5/4 (tổng ≤ 27).
+5. Phase 2: 3–5 worked_example, mỗi cái có noticing_prompt_vi; brief_rule đứng SAU ví dụ, tối đa 2 câu.
+6. Mọi bài tập phải có feedback_explain_vi bằng tiếng Việt, giải thích TẠI SAO — không chỉ "sai rồi".
+7. KHÔNG mở bài bằng task lạnh (không ném người học vào bài tập khi chưa dạy gì).
+8. KHÔNG drill thay thế cơ học không ngữ cảnh. Mọi câu đều phải có nghĩa thật.
+9. Phase 4: rubric đúng 3 tiêu chí task_completion/target_language_use/intelligibility, KHÔNG dùng thang %.
+10. Phase 5: retrieval_items dạng Việt→Anh, 3–5 items (lấy câu từ tư liệu đã học).
+11. Phát âm: ưu tiên lỗi người Việt (phụ âm cuối, -s/-ed, trọng âm từ). Không drill /θ, ð/ như mục tiêu chính.
+12. Điền đầy đủ block `source:` (url, title, publisher, type, adapted: true/false).
+13. Output: CHỈ YAML, không giải thích ngoài YAML.
 
 Spine excerpt (từ được phép dùng):
 [paste các entry spine: word, band, vi_gloss — chỉ các từ band ≤ level + từ các unit trước]
+
+Schema YAML:
+[Devin paste toàn bộ B2 rút gọn: field required + ví dụ 1 step mỗi type]
 ```
 
-Sau khi sinh 3–5 drafts → chạy `check-unit.mjs` cho từng draft → **chỉ giữ draft pass đủ 10 gates** → trong các draft pass, Devin chọn 1 (tiêu chí: dialogue tự nhiên nhất, transfer task mới mẻ nhất) → mở PR → Hoàng duyệt cuối.
+Sau khi sinh 3–5 drafts → chạy `check-unit.mjs` cho từng draft → **chỉ giữ draft pass đủ 11 gates** → trong các draft pass, Devin chọn 1 (tiêu chí: bám sát tư liệu gốc nhất, transfer task mới mẻ nhất) → mở PR → Hoàng duyệt cuối.
 
 ### B5. Human review checklist (Hoàng dùng khi duyệt PR unit)
 - [ ] Can-do objective có quan sát được trong 1 bài 25 phút không?
-- [ ] Dialogue có tự nhiên như người thật nói không? (đọc to thử)
+- [ ] **Nội dung có bám tư liệu gốc không?** (mở link source, đối chiếu 2–3 câu worked_example — có thật trong bài không hay AI bịa?)
+- [ ] Câu trích từ tư liệu có bị rút gọn quá đà / sai nghĩa gốc không?
 - [ ] Gloss tiếng Việt có chính xác, tự nhiên không?
 - [ ] Target vocab có đúng thứ tôi cần cho công việc không?
 - [ ] Phase 2 có "dạy trước" đàng hoàng, không ném vào task lạnh không?
 - [ ] Feedback tiếng Việt có giải thích được TẠI SAO không (hay chỉ chữa đáp án)?
-- [ ] Transfer task có phải tình huống MỚI không (không copy dialogue)?
+- [ ] Transfer task có cùng chủ đề với tư liệu nhưng là tình huống MỚI không?
 - [ ] Pronunciation target có trúng lỗi người Việt không?
 - [ ] Có chỗ nào "game hóa" lố (XP/streak/điểm %) lọt vào không?
 
@@ -252,12 +292,12 @@ Sau khi sinh 3–5 drafts → chạy `check-unit.mjs` cho từng draft → **ch�
 # Blueprint <unit-id>
 ## 1. Can-do (1 câu, quan sát được)
 _Tôi có thể ... (khi/ở đâu)_
-## 2. Tình huống
-_Bối cảnh cụ thể ở công ty/đời sống: ..._
+## 2. Chủ đề (để Devin đi tìm tư liệu thật)
+_Chủ đề tin tức/video: ... (vd: tin công nghệ, chuyện công sở, du lịch...)_
 ## 3. Target vocab (10–15 từ, ưu tiên từ tôi cần cho việc)
 1. ...
 ## 4. Từ mới đề xuất thêm vào spine (nếu có, kèm nghĩa + band đoán)
-## 5. Transfer task (việc làm được sau bài, tình huống mới)
+## 5. Transfer task (việc làm được sau bài, cùng chủ đề với tư liệu nhưng tình huống mới)
 _Nói/Viết: ..._
 ## 6. Ghi chú đặc biệt
 _Ngữ cảnh văn hóa, lỗi tôi hay mắc, ..._
@@ -269,29 +309,30 @@ _Ngữ cảnh văn hóa, lỗi tôi hay mắc, ..._
 # Blueprint unit-a0-1
 ## 1. Can-do
 Tôi có thể chào hỏi và giới thiệu tên + nghề nghiệp khi gặp đồng nghiệp mới lần đầu.
-## 2. Tình huống
-Ngày đầu vào công ty / gặp đồng nghiệp mới ở pantry, thang máy. Hội thoại ngắn, lịch sự.
+## 2. Chủ đề (để Devin tìm tư liệu thật)
+Tin/chuyện công sở: ngày đầu đi làm, gặp gỡ đồng nghiệp mới. Nguồn gợi ý: News in Levels Level 1–2, VOA Beginning.
 ## 3. Target vocab (12 từ)
 hello, hi, morning, name, my, your, I, am, meet, nice, work, colleague
 ## 4. Từ mới đề xuất thêm vào spine
 colleague (A0, "đồng nghiệp"); nice to meet you (phrase A0, "rất vui được gặp bạn")
 ## 5. Transfer task (nói, 30–60 giây)
-Tưởng tượng bạn gặp một đồng nghiệp mới tên Lan ở thang máy. Tự giới thiệu: chào, tên bạn, bạn làm việc ở đâu / làm nghề gì, kết thúc lịch sự.
+Đọc xong bài báo về ngày đầu đi làm → tưởng tượng bạn gặp một đồng nghiệp mới tên Lan ở thang máy. Tự giới thiệu: chào, tên bạn, bạn làm nghề gì, kết thúc lịch sự.
 ## 6. Ghi chú
 Tôi hay quên -s ở "works"; bài này cần drill "I work as..." vs "She works...".
 ```
 
 ### B7. Devin task breakdown M1 (thứ tự làm)
 1. Viết `BLUEPRINT-TEMPLATE.md` + schema docs trong README.
-2. Mở rộng `check-unit.mjs` đủ 10 gates B3 (B2 schema là nền).
-3. Devin **tự soạn 5 blueprint** (A0-1 → A0-5, theo mẫu B6, logic nối tiếp: chào hỏi → giới thiệu → hỏi thăm → số/điện thoại/email → tạm biệt + hẹn gặp) → **Hoàng duyệt/sửa blueprint trước** (gate người).
-4. Mỗi blueprint đã duyệt → sinh 3–5 drafts bằng prompt B4 → chạy gate → chọn 1 → PR.
-5. Hoàng duyệt PR theo checklist B5 → merge.
+2. Mở rộng `check-unit.mjs` đủ 11 gates B3 (B2 schema là nền).
+3. Devin **tìm 3–5 tư liệu thật ứng viên cho mỗi unit** (A0-1 → A0-5, theo thang B0, đúng chủ đề blueprint) → **Hoàng chốt 1 nguồn/unit** (hoặc ủy quyền cho Devin).
+4. Devin **tự soạn 5 blueprint** (theo mẫu B6, logic nối tiếp: chào hỏi → giới thiệu → hỏi thăm → số/điện thoại/email → tạm biệt + hẹn gặp) → **Hoàng duyệt/sửa blueprint** (gate người 1).
+5. Mỗi blueprint + nguồn đã chốt → sinh 3–5 drafts bằng prompt B4 → chạy gate → chọn 1 → PR.
+6. Hoàng duyệt PR theo checklist B5 (trong đó có đối chiếu tư liệu gốc) → merge (gate người 2).
 
 ### B8. Acceptance criteria M1
-- [ ] `check-unit.mjs` implement đủ 10 gates B3; test với unit cố tình vi phạm từng gate → fail đúng gate.
-- [ ] 5 blueprint A0-1→A0-5 được Hoàng duyệt (bằng tin nhắn/xác nhận).
-- [ ] 5 file YAML pilot pass đủ 10 gates, merge vào `units/A0/`.
+- [ ] `check-unit.mjs` implement đủ 11 gates B3; test với unit cố tình vi phạm từng gate → fail đúng gate.
+- [ ] 5 blueprint A0-1→A0-5 được Hoàng duyệt (bằng tin nhắn/xác nhận); mỗi blueprint đã chốt 1 nguồn tư liệu thật (B0).
+- [ ] 5 file YAML pilot pass đủ 11 gates, merge vào `units/A0/`; mỗi file có block `source` đầy đủ, ít nhất 2 worked_example lấy câu từ tư liệu gốc.
 - [ ] Mỗi pilot có đủ: dialogue + audio refs (audio có thể placeholder `audio: TBD` ở M1 — thu âm ở M2), 3–5 worked examples, transfer task + rubric 3 criteria, 3–5 retrieval_items VI→EN.
 - [ ] Hoàng học thử 5 bài trên giấy/file (đọc YAML hoặc bản render đơn giản) và cho feedback → ghi lại thành revision notes.
 

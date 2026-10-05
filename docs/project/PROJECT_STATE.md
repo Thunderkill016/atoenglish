@@ -1,6 +1,6 @@
 # AtoEnglish — Current Project State
 
-**Effective:** 2026-09-07  
+**Effective:** 2026-10-05 (direction pivot: IELTS 0→9.0)  
 **Project:** AtoEnglish
 
 ## Current state
@@ -11,24 +11,36 @@ Existing features, curriculum, branches, historical plans, experiments and R&D r
 
 ## Single active direction
 
-Build **AtoEnglish as a practical English-learning web product whose curriculum, lessons, practice, assessment and language-skill progression are grounded in official language-learning standards and source documents**.
+Build **AtoEnglish as a personal IELTS-preparation web product for one learner (Hoàng), covering the full 0→9.0 journey** — owner decision 2026-10-05, replacing the previous generic CEFR-standards direction.
+
+The curriculum follows the four-stage map in `docs/missions/003-vocab-spine-content/IELTS-0-to-9-research.md`:
+
+1. **Foundation (A0–A2, band 0–3.5)** — no IELTS format yet. Core vocabulary via the gated spine, foundation grammar, slow→natural listening, graded reading, sentence→paragraph writing, pronunciation (final consonants, word stress — the documented Vietnamese-learner profile). *This is the current active stage; the M0/M1 vocab-spine + real-material content pipeline serves it directly.*
+2. **IELTS Bridge (B1, band 4.0–5.0)** — teach each IELTS question type with worked examples; Listening Part 1–2, Reading Section 1; Task 1 vocab (trends/comparison) + letter structures; Speaking Part 1–2.
+3. **IELTS Core (B2, band 5.5–6.5)** — timed full sections; Listening Part 3–4, Academic Passage 2–3; all Task 1 types + 5 Task 2 types; Speaking Part 3; error journal per question type; fight the 5.5–6.0 plateau (error-free sentences, flexible cohesion, developed ideas).
+4. **IELTS Mastery (C1, band 7.0–8.0+)** — timed full mocks; band-descriptor feedback; less-common vocabulary + collocation; paraphrase drills; AI scoring shown **as a range, never a single number** (AI scoring MAE ≈ 0.66 band per research).
 
 The current reference foundation is:
 
-- Council of Europe — CEFR Companion Volume;
-- Council of Europe — action-oriented language education guidance;
+- IELTS official sources — ielts.org format/scoring, public band descriptors, Cambridge practice materials;
+- Council of Europe — CEFR Companion Volume and action-oriented language education guidance;
 - Council of Europe / ALTE — language test development and examining guidance;
 - British Council — lesson planning and course-planning guidance;
 - official technical standards only where implementation requires them, such as W3C accessibility guidance and browser/platform documentation.
 
-This direction means the product is shaped from real learner outcomes and official language-learning guidance first. Existing implementation is a substrate to inspect, keep, change or remove according to that direction; it is not a competing roadmap.
+Honest-measurement rules baked into the direction (from the IELTS research):
+
+- Listening/Reading scores use official raw→band conversion tables; Writing/Speaking AI scores always display as a **range with confidence**, never a single number;
+- pronunciation targets intelligibility, not accent elimination (Band 8 descriptor: "L1 accent has minimal effect");
+- most study time goes to real proficiency, not test tricks — the "IELTS trap" (templates without ability) is a documented failure mode;
+- no score claims the system cannot measure.
 
 ## Minimum active product surface
 
 Only the following areas are active product scope:
 
-1. curriculum and CEFR/action-oriented learning outcomes;
-2. lesson delivery for reading, listening, speaking, writing and interaction as required by those outcomes;
+1. curriculum and learning outcomes mapped to the four-stage IELTS map (CEFR bands as the scale);
+2. lesson delivery for reading, listening, speaking, writing and interaction — the gated 5-phase flow (goal_setting → observe_learn → guided_practice → prove → lock_in) built from real source materials, with IELTS-format tasks entering from the Bridge stage;
 3. practice and assessment that produce honest evidence of learner performance;
 4. progression/review needed to retain and reuse learned language, including SRS where it directly serves retention;
 5. authentication, learner-data integrity, accessibility, security and release reliability required to operate the learning product.
