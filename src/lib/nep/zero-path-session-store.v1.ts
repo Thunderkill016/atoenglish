@@ -16,12 +16,13 @@
  * Stored outcome rows deliberately exclude raw learner response strings —
  * only evaluated outcomes and reference evidence fields are persisted.
  */
+import crypto from "node:crypto";
+
 import type { ReferenceCoreEvidence } from "@/lib/core/certified-evidence";
 import type { ZeroPathClaimId } from "@/lib/nep/core-evidence-wiring.v1";
 import type { SessionSubmissionOutcome } from "@/lib/nep/session-runner.v1";
 import { createZeroPathSession } from "@/lib/nep/session-runner.v1";
 import type {
-  ZeroPathSessionInsert,
   ZeroPathSessionRow,
   ZeroPathSessionSubmissionInsert,
   ZeroPathSessionSubmissionRow,
@@ -34,6 +35,13 @@ type StoredOutcome = Exclude<SessionSubmissionOutcome, { kind: "duplicate" }>;
 export type SessionEntry = {
   readonly sessionId: string;
   readonly userId: string | null;
+  /**
+   * Plaintext capability secret for anonymous (user_id NULL) sessions. The
+   * database stores only a bcrypt hash; the plaintext lives here for the
+   * process cache and in the caller's HttpOnly cookie — holder-of-secret is
+   * the guest authorization boundary.
+   */
+  readonly accessSecret: string | null;
   readonly mode: ZeroPathSessionMode;
   readonly runner: ReturnType<typeof createZeroPathSession>;
   nextSeq: number;
@@ -42,12 +50,24 @@ export type SessionEntry = {
 
 /**
  * Narrow persistence interface — the actions layer injects the real
- * Supabase-backed implementation; tests inject in-memory fakes. Every method
+ * capability-RPC implementation; tests inject in-memory fakes. Every method
  * returns explicit failure states rather than throwing so a storage outage
  * degrades the session to memory-only instead of killing it.
+ *
+ * All methods operate through the zero_path_* SECURITY DEFINER functions:
+ * callers must hold either row ownership (auth.uid()) or the session's
+ * access secret. The secret is resolved by the persistence implementation —
+ * the store only threads it through for the in-memory owner check.
  */
 export type ZeroPathSessionPersistence = {
-  insertSession(row: ZeroPathSessionInsert): Promise<boolean>;
+  openSession(args: {
+    /** Present for interface/test fidelity — the real RPC derives the owner
+     *  from auth.uid() and ignores caller-supplied identity entirely. */
+    userId: string | null;
+    lessonId: string;
+    lessonVersion: number;
+    mode: ZeroPathSessionMode;
+  }): Promise<{ sessionId: string; accessSecret: string } | null>;
   getSession(sessionId: string): Promise<ZeroPathSessionRow | null>;
   listSubmissions(
     sessionId: string,
@@ -74,13 +94,35 @@ export type StartSessionArgs = {
   readonly sessionId?: string;
 };
 
-export async function startZeroPathSession(
-  args: StartSessionArgs,
-): Promise<{ sessionId: string; mode: ZeroPathSessionMode }> {
-  const sessionId = args.sessionId ?? crypto.randomUUID();
+export async function startZeroPathSession(args: StartSessionArgs): Promise<{
+  sessionId: string;
+  mode: ZeroPathSessionMode;
+  accessSecret: string | null;
+}> {
+  // The durable boundary mints the session id + capability secret atomically;
+  // persistence.openSession is the only way a session becomes shared state.
+  // Without persistence the session stays isolate-local — memory-only mode
+  // gets a random id with no durable capability attached.
+  let sessionId = args.sessionId ?? crypto.randomUUID();
+  let accessSecret: string | null = null;
+  if (args.persistence) {
+    // Durable mirror is best-effort: a failed insert degrades this session to
+    // memory-only (pre-durability behaviour) rather than failing the learner.
+    const opened = await args.persistence.openSession({
+      userId: args.userId,
+      lessonId: args.lessonId,
+      lessonVersion: args.lessonVersion,
+      mode: args.mode,
+    });
+    if (opened) {
+      sessionId = opened.sessionId;
+      accessSecret = opened.accessSecret;
+    }
+  }
   const entry: SessionEntry = {
     sessionId,
     userId: args.userId,
+    accessSecret,
     mode: args.mode,
     runner: createZeroPathSession({ sessionId }),
     nextSeq: 0,
@@ -88,41 +130,42 @@ export async function startZeroPathSession(
   };
   entries.set(entry.sessionId, entry);
   pruneEntries();
-  if (args.persistence) {
-    // Durable mirror is best-effort: a failed insert degrades this session to
-    // memory-only (pre-durability behaviour) rather than failing the learner.
-    await args.persistence.insertSession({
-      id: entry.sessionId,
-      user_id: args.userId,
-      lesson_id: args.lessonId,
-      lesson_version: args.lessonVersion,
-      mode: args.mode,
-      expires_at: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
-    });
-  }
-  return { sessionId: entry.sessionId, mode: entry.mode };
+  return { sessionId: entry.sessionId, mode: entry.mode, accessSecret };
 }
 
 /**
  * Resolve a session for a submission. Checks the runner cache first; on a
  * miss, loads + rehydrates from the durable store. `userId` is the caller's
- * authenticated id (null for anonymous). Returns:
+ * authenticated id (null for anonymous); `accessSecret` is the per-session
+ * capability presented via cookie. A session is usable iff:
+ *   - it is owner-bound (user_id set) and the caller IS that owner, or
+ *   - it is anonymous (user_id null) and the caller presents the access
+ *     secret minted at session creation.
+ * Returns:
  *   - "ok"        — session is usable
- *   - "forbidden" — session exists but belongs to a different signed-in user
+ *   - "forbidden" — session exists but the caller cannot prove access
  *   - "absent"    — unknown or expired id
  */
 export async function getZeroPathSession(
   sessionId: string,
   callerUserId: string | null,
   persistence: ZeroPathSessionPersistence | null,
+  accessSecret: string | null = null,
 ): Promise<ZeroPathSessionLookup> {
   const cached = entries.get(sessionId);
   if (cached) {
     cached.touchedAt = Date.now();
-    if (!isOwner(cached.userId, callerUserId)) return { status: "forbidden" };
+    if (
+      !canAccess(cached.userId, cached.accessSecret, callerUserId, accessSecret)
+    )
+      return { status: "forbidden" };
     return { status: "ok", entry: cached };
   }
   if (!persistence) return { status: "absent" };
+  // The capability RPC only returns rows the caller proved access to
+  // (ownership or secret). A missing row deliberately collapses "does not
+  // exist" and "access denied" into one "absent" — probing for existence
+  // must not be possible.
   const row = await persistence.getSession(sessionId);
   if (
     !row ||
@@ -131,8 +174,7 @@ export async function getZeroPathSession(
   ) {
     return { status: "absent" };
   }
-  if (!isOwner(row.user_id, callerUserId)) return { status: "forbidden" };
-  const restored = await buildRestoredEntry(row, persistence);
+  const restored = await buildRestoredEntry(row, persistence, accessSecret);
   if (!restored) return { status: "absent" };
   entries.set(sessionId, restored);
   pruneEntries();
@@ -173,17 +215,34 @@ export async function listOpenZeroPathSessions(
   return rows.filter((row) => new Date(row.expires_at).getTime() > Date.now());
 }
 
-function isOwner(
+/**
+ * Cache-hit authorization. Anonymous sessions (`userId === null`) require the
+ * presented secret to equal the one minted at creation — constant-time since
+ * this check decides access to another guest's session state.
+ */
+function canAccess(
   sessionUserId: string | null,
+  sessionSecret: string | null,
   callerUserId: string | null,
+  presentedSecret: string | null,
 ): boolean {
-  if (sessionUserId === null) return true; // anonymous holder-of-id
-  return callerUserId !== null && sessionUserId === callerUserId;
+  if (sessionUserId !== null && sessionUserId === callerUserId) {
+    return true;
+  }
+  return secretsEqual(sessionSecret, presentedSecret);
+}
+
+function secretsEqual(a: string | null, b: string | null): boolean {
+  if (a === null || b === null) return false;
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
 }
 
 async function buildRestoredEntry(
   row: ZeroPathSessionRow,
   persistence: ZeroPathSessionPersistence,
+  accessSecret: string | null,
 ): Promise<SessionEntry | null> {
   const rows = await persistence.listSubmissions(row.id);
   const outcomesByKey = new Map<string, StoredOutcome>();
@@ -229,6 +288,9 @@ async function buildRestoredEntry(
   return {
     sessionId: row.id,
     userId: row.user_id,
+    // The presented secret was already verified by the capability RPC —
+    // storing it keeps cache-hit checks consistent with the DB decision.
+    accessSecret,
     mode: row.mode,
     runner: createZeroPathSession({
       sessionId: row.id,

@@ -11,7 +11,6 @@ import {
   startZeroPathSession,
 } from "@/lib/nep/zero-path-session-store.v1";
 import type {
-  ZeroPathSessionInsert,
   ZeroPathSessionRow,
   ZeroPathSessionSubmissionInsert,
   ZeroPathSessionSubmissionRow,
@@ -20,26 +19,59 @@ import type {
 const USER_A = "11111111-1111-4111-8111-111111111111";
 const USER_B = "22222222-2222-4222-8222-222222222222";
 
-function inMemoryPersistence() {
+/**
+ * In-memory mirror of the capability-RPC boundary: sessions carry a minted
+ * secret; reads only return rows the caller proved access to (ownership for
+ * user-bound rows, secret match for anonymous rows — same contract as the
+ * zero_path_* SECURITY DEFINER functions).
+ */
+function inMemoryPersistence(
+  opts: {
+    callerUserId?: string | null;
+    heldSecrets?: ReadonlyMap<string, string>;
+  } = {},
+) {
   const sessions = new Map<string, ZeroPathSessionRow>();
+  const sessionSecrets = new Map<string, string>();
   const submissions = new Map<string, ZeroPathSessionSubmissionRow[]>();
+  const callerUserId = opts.callerUserId ?? null;
+  const heldSecrets = opts.heldSecrets ?? new Map<string, string>();
+
+  const canAccess = (row: ZeroPathSessionRow) =>
+    (row.user_id !== null && row.user_id === callerUserId) ||
+    heldSecrets.get(row.id) === sessionSecrets.get(row.id);
+
   const persistence: ZeroPathSessionPersistence = {
-    async insertSession(row: ZeroPathSessionInsert) {
-      sessions.set(row.id, {
+    async openSession({ userId, lessonId, lessonVersion, mode }) {
+      const sessionId = crypto.randomUUID();
+      const accessSecret = `secret-${sessionId}`;
+      sessions.set(sessionId, {
+        id: sessionId,
+        user_id: userId,
+        lesson_id: lessonId,
+        lesson_version: lessonVersion,
+        mode,
         status: "open",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        ...row,
+        expires_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
       });
-      return true;
+      sessionSecrets.set(sessionId, accessSecret);
+      return { sessionId, accessSecret };
     },
     async getSession(sessionId) {
-      return sessions.get(sessionId) ?? null;
+      const row = sessions.get(sessionId);
+      if (!row || !canAccess(row)) return null;
+      return row;
     },
     async listSubmissions(sessionId) {
+      const row = sessions.get(sessionId);
+      if (!row || !canAccess(row)) return [];
       return submissions.get(sessionId) ?? [];
     },
     async insertSubmission(row: ZeroPathSessionSubmissionInsert) {
+      const session = sessions.get(row.session_id);
+      if (!session || !canAccess(session)) return false;
       const list = submissions.get(row.session_id) ?? [];
       if (list.some((item) => item.idempotency_key === row.idempotency_key))
         return true;
@@ -57,7 +89,7 @@ function inMemoryPersistence() {
       );
     },
   };
-  return { persistence, sessions, submissions };
+  return { persistence, sessions, sessionSecrets, submissions };
 }
 
 function submission(
@@ -85,7 +117,7 @@ const startArgs = {
 describe("durable zero-path session store", () => {
   it("hydrates a runner from stored outcome snapshots after cache loss", async () => {
     clearZeroPathSessionsForTests();
-    const { persistence } = inMemoryPersistence();
+    const { persistence } = inMemoryPersistence({ callerUserId: USER_A });
     const { sessionId } = await startZeroPathSession({
       ...startArgs,
       userId: USER_A,
@@ -116,7 +148,7 @@ describe("durable zero-path session store", () => {
 
   it("replays idempotent duplicate across restart without re-minting evidence", async () => {
     clearZeroPathSessionsForTests();
-    const { persistence } = inMemoryPersistence();
+    const { persistence } = inMemoryPersistence({ callerUserId: USER_A });
     const { sessionId } = await startZeroPathSession({
       ...startArgs,
       userId: USER_A,
@@ -146,19 +178,63 @@ describe("durable zero-path session store", () => {
 
   it("enforces the ownership boundary — another user is forbidden, not absent", async () => {
     clearZeroPathSessionsForTests();
-    const { persistence } = inMemoryPersistence();
+    const { persistence: writer } = inMemoryPersistence({
+      callerUserId: USER_A,
+    });
     const { sessionId } = await startZeroPathSession({
       ...startArgs,
       userId: USER_A,
+      persistence: writer,
+    });
+    // USER_B's persistence only returns rows B proved access to; the shared
+    // module-level entry cache still holds A's entry, so the store-level
+    // capability check is what decides.
+    const { persistence: reader } = inMemoryPersistence({
+      callerUserId: USER_B,
+    });
+    const cached = await getZeroPathSession(sessionId, USER_B, reader);
+    expect(cached.status).toBe("forbidden");
+  });
+
+  it("denies a guest session to a caller without the access secret", async () => {
+    clearZeroPathSessionsForTests();
+    const { persistence } = inMemoryPersistence({ callerUserId: null });
+    const { sessionId } = await startZeroPathSession({
+      ...startArgs,
+      userId: null,
       persistence,
     });
-    const lookup = await getZeroPathSession(sessionId, USER_B, persistence);
-    expect(lookup.status).toBe("forbidden");
+    // Warm cache: guest session entry exists; a stranger presents no secret.
+    const stranger = await getZeroPathSession(sessionId, null, persistence);
+    expect(stranger.status).toBe("forbidden");
+  });
+
+  it("grants a guest session to the holder of the access secret", async () => {
+    clearZeroPathSessionsForTests();
+    const { persistence, sessionSecrets } = inMemoryPersistence({
+      callerUserId: null,
+    });
+    const { sessionId, accessSecret } = await startZeroPathSession({
+      ...startArgs,
+      userId: null,
+      persistence,
+    });
+    expect(accessSecret).not.toBeNull();
+    const holder = await getZeroPathSession(
+      sessionId,
+      null,
+      persistence,
+      accessSecret,
+    );
+    expect(holder.status).toBe("ok");
+    expect(sessionSecrets.get(sessionId)).toBe(accessSecret);
   });
 
   it("treats expired sessions as absent", async () => {
     clearZeroPathSessionsForTests();
-    const { persistence, sessions } = inMemoryPersistence();
+    const { persistence, sessions } = inMemoryPersistence({
+      callerUserId: USER_A,
+    });
     const { sessionId } = await startZeroPathSession({
       ...startArgs,
       userId: USER_A,
