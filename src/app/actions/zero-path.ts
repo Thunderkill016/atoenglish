@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import type { NếpEvaluationResult } from "@/lib/nep/evaluator";
 import {
@@ -47,9 +47,13 @@ import type { ZeroPathSessionRow } from "@/types/learning-tables";
  * and the read-model DTO are returned.
  *
  * Session state is durable: sessions + per-submission outcome snapshots live
- * in `zero_path_sessions`/`zero_path_session_submissions` (RLS owner-checked;
- * anonymous sessions are reachable by holder-of-id only). Storage failures
- * degrade a session to memory-only instead of failing the learner.
+ * in `zero_path_sessions`/`zero_path_session_submissions`. Anonymous callers
+ * have no direct table access — every read/write goes through capability
+ * SECURITY DEFINER functions that require either row ownership or the
+ * per-session access secret. The secret is delivered to the browser via the
+ * HttpOnly `ato_zp_caps` cookie at session start, so it is never enumerable
+ * and never JS-readable. Storage failures degrade a session to memory-only
+ * instead of failing the learner.
  *
  * Assessed outcomes are additionally persisted through the canonical
  * `record_learning_attempt` boundary for signed-in learners.
@@ -65,6 +69,62 @@ const zeroPathStartLimiter = createRateLimiter(
   60 * 1000,
   "zero-path-start",
 );
+
+/**
+ * Guest-session capability cookie: `{ [sessionId]: accessSecret }` for the
+ * few most recent sessions. HttpOnly + SameSite=Strict — the secret cannot be
+ * read by JS, is never sent cross-site, and lives at most as long as the
+ * sessions themselves (4h TTL mirrors SESSION_TTL_MS in the store).
+ */
+const CAPS_COOKIE = "ato_zp_caps";
+const CAPS_MAX_ENTRIES = 12;
+const CAPS_MAX_AGE_S = 4 * 60 * 60;
+
+async function readSessionCapabilities(): Promise<Record<string, string>> {
+  try {
+    const store = await cookies();
+    const raw = store.get(CAPS_COOKIE)?.value;
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+      return {};
+    const caps: Record<string, string> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === "string") caps[key] = value;
+    }
+    return caps;
+  } catch {
+    return {};
+  }
+}
+
+async function resolveSessionSecret(sessionId: string): Promise<string | null> {
+  const caps = await readSessionCapabilities();
+  return caps[sessionId] ?? null;
+}
+
+async function storeSessionCapability(
+  sessionId: string,
+  accessSecret: string,
+): Promise<void> {
+  try {
+    const caps = await readSessionCapabilities();
+    const entries = Object.entries({ ...caps, [sessionId]: accessSecret });
+    // Bounded map — drop oldest entries; sessions expire within maxAge anyway.
+    const pruned = Object.fromEntries(entries.slice(-CAPS_MAX_ENTRIES));
+    const store = await cookies();
+    store.set(CAPS_COOKIE, JSON.stringify(pruned), {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      path: "/",
+      maxAge: CAPS_MAX_AGE_S,
+    });
+  } catch {
+    // Cookie write outside a mutable context degrades to no-capability —
+    // the session remains usable in-memory for the current request path.
+  }
+}
 
 export type ZeroPathSubmissionResult =
   | { readonly kind: "rate-limited" }
@@ -126,13 +186,16 @@ export async function startZeroPathPilotSession(
     data: { user },
   } = await supabase.auth.getUser();
   const persistence = createZeroPathSessionPersistence(supabase);
-  const { sessionId } = await startZeroPathSession({
+  const { sessionId, accessSecret } = await startZeroPathSession({
     mode: mode === "review" ? "review" : "learn",
     userId: user?.id ?? null,
     lessonId: resolvedLessonId,
     lessonVersion: resolvedLessonVersion,
     persistence,
   });
+  // The capability is the guest authorization boundary — it must reach the
+  // browser via HttpOnly cookie, never through the response payload.
+  if (accessSecret) await storeSessionCapability(sessionId, accessSecret);
   return { sessionId };
 }
 
@@ -158,11 +221,15 @@ export async function submitZeroPathResponse(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const persistence = createZeroPathSessionPersistence(supabase);
+  const persistence = createZeroPathSessionPersistence(
+    supabase,
+    resolveSessionSecret,
+  );
   const lookup = await getZeroPathSession(
     sessionId,
     user?.id ?? null,
     persistence,
+    await resolveSessionSecret(sessionId),
   );
   if (lookup.status === "forbidden") return { kind: "forbidden" };
   if (lookup.status === "absent") return { kind: "no-session" };
@@ -258,11 +325,15 @@ export async function getZeroPathReadModel(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const persistence = createZeroPathSessionPersistence(supabase);
+  const persistence = createZeroPathSessionPersistence(
+    supabase,
+    resolveSessionSecret,
+  );
   const lookup = await getZeroPathSession(
     sessionId,
     user?.id ?? null,
     persistence,
+    await resolveSessionSecret(sessionId),
   );
   return lookup.status === "ok" ? lookup.entry.runner.readModel() : null;
 }
@@ -287,10 +358,12 @@ export async function getZeroPathResumeState(
   sessionId: string,
 ): Promise<ZeroPathResumeState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const persistence = createZeroPathSessionPersistence(supabase);
+  const persistence = createZeroPathSessionPersistence(
+    supabase,
+    resolveSessionSecret,
+  );
+  // The capability RPC returns the row only when the caller proved ownership
+  // or presented the session secret — no row collapses missing/forbidden.
   const row = await persistence.getSession(sessionId);
   if (
     !row ||
@@ -299,8 +372,6 @@ export async function getZeroPathResumeState(
   ) {
     return { status: "absent" };
   }
-  if (row.user_id !== null && row.user_id !== user?.id)
-    return { status: "forbidden" };
   const rows = await persistence.listSubmissions(sessionId);
   return {
     status: "ok",
@@ -440,7 +511,10 @@ export async function completeZeroPathUnitSession(
   } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Bạn cần đăng nhập." };
 
-  const persistence = createZeroPathSessionPersistence(supabase);
+  const persistence = createZeroPathSessionPersistence(
+    supabase,
+    resolveSessionSecret,
+  );
   const sessionRow = await persistence.getSession(sessionId);
   if (!sessionRow || sessionRow.user_id !== user.id) {
     return { success: false, error: "Phiên không hợp lệ." };

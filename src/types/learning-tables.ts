@@ -63,11 +63,6 @@ export type ZeroPathSessionSubmissionRow = {
   readonly created_at: string;
 };
 
-export type ZeroPathSessionInsert = Omit<
-  ZeroPathSessionRow,
-  "created_at" | "updated_at" | "status"
->;
-
 export type LearnerKnownWordRow = {
   readonly id: number;
   readonly user_id: string;
