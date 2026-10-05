@@ -61,7 +61,11 @@ export const SpeakingSessionSchema = z.object({
   practiceType: z.enum(["shadowing", "roleplay", "journal"]),
   duration: z.number().nonnegative("Thời lượng không được âm"),
   // P0-2: Max 2000 chars to prevent prompt injection and unbounded Gemini API cost
-  transcript: z.string().max(2000, "Nội dung không được vượt quá 2000 ký tự").nullable().optional(),
+  transcript: z
+    .string()
+    .max(2000, "Nội dung không được vượt quá 2000 ký tự")
+    .nullable()
+    .optional(),
   accuracyScore: z
     .number()
     .min(0, "Điểm chính xác không được nhỏ hơn 0")
@@ -83,7 +87,7 @@ export const SeedVocabSchema = z.object({
         phonetic: z.string().max(100).nullable().optional(),
         meaning_vn: z.string().min(1).max(300).trim(),
         example_en: z.string().max(500).nullable().optional(),
-      })
+      }),
     )
     .min(1, "Cần ít nhất 1 từ vựng")
     .max(30, "Tối đa 30 từ vựng mỗi lần"),
@@ -96,10 +100,7 @@ export const SeedVocabSchema = z.object({
  * Sends rated "Again" to bring them back to the front of the queue.
  */
 export const WrongWordsSchema = z.object({
-  words: z
-    .array(z.string().min(1).max(100).trim())
-    .min(1)
-    .max(30),
+  words: z.array(z.string().min(1).max(100).trim()).min(1).max(30),
 });
 
 /**
@@ -108,32 +109,3 @@ export const WrongWordsSchema = z.object({
 export const RecordFlashcardSessionSchema = z.object({
   cardsReviewed: z.number().int().positive("Số thẻ ôn tập phải lớn hơn 0"),
 });
-/**
- * P0-3: Production environment validation.
- * Call assertProductionEnv() at module init in any file that creates rate limiters.
- * Throws at startup if critical env vars are missing in production.
- */
-export const ProductionEnvSchema = z.object({
-  UPSTASH_REDIS_REST_URL: z.string().url("UPSTASH_REDIS_REST_URL must be a valid URL"),
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(10, "UPSTASH_REDIS_REST_TOKEN is required"),
-  NEON_AUTH_BASE_URL: z.string().url("NEON_AUTH_BASE_URL must be a valid URL"),
-  NEON_DATA_API_URL: z.string().url("NEON_DATA_API_URL must be a valid URL"),
-  NEON_AUTH_COOKIE_SECRET: z.string().min(32, "NEON_AUTH_COOKIE_SECRET is required (min 32 chars)"),
-});
-
-/**
- * Validates critical production env vars.
- * Safe to call at module level — only throws in production.
- * In development, missing Upstash vars are expected (in-memory fallback is used).
- */
-export function assertProductionEnv(): void {
-  if (process.env.NODE_ENV !== "production") return;
-  const result = ProductionEnvSchema.safeParse(process.env);
-  if (!result.success) {
-    const missing = result.error.issues.map(i => i.path.join(".")).join(", ");
-    throw new Error(
-      `[AtoEnglish] Missing required production environment variables: ${missing}. ` +
-      `Rate limiting will be BYPASSED. Fix immediately.`
-    );
-  }
-}

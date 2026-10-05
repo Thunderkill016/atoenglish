@@ -116,6 +116,16 @@ jobs:
           node scripts/neon/adapt-tests.mjs
           node scripts/neon/run-pgtap.mjs
 
+      - name: Check generated DB types are in sync
+        env:
+          DATABASE_URL_UNPOOLED: ${{ steps.conn.outputs.url }}
+        run: |
+          npm run db:types
+          git diff --exit-code -- src/types/supabase.ts || {
+            echo "::error::src/types/supabase.ts is stale — run 'npm run db:types' and commit the result"
+            exit 1
+          }
+
       - name: Delete ephemeral branch
         if: always()
         run: |

@@ -1,12 +1,10 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   LoginSchema,
   SaveCardSchema,
   ReviewCardSchema,
   CompleteUnitSchema,
   SpeakingSessionSchema,
-  assertProductionEnv,
-  ProductionEnvSchema,
 } from "@/lib/security/validation";
 import { LearningAttemptBatchSchema } from "@/lib/lessons/learning-attempt";
 
@@ -29,13 +27,17 @@ const validAttemptBatch = {
 
 describe("LearningAttemptBatchSchema", () => {
   it("accepts bounded evidence without raw learner media", () => {
-    expect(LearningAttemptBatchSchema.safeParse(validAttemptBatch).success).toBe(true);
+    expect(
+      LearningAttemptBatchSchema.safeParse(validAttemptBatch).success,
+    ).toBe(true);
   });
 
   it("requires a score only when status is scored", () => {
     const invalid = {
       ...validAttemptBatch,
-      attempts: [{ ...validAttemptBatch.attempts[0], status: "unscored", score: 100 }],
+      attempts: [
+        { ...validAttemptBatch.attempts[0], status: "unscored", score: 100 },
+      ],
     };
 
     expect(LearningAttemptBatchSchema.safeParse(invalid).success).toBe(false);
@@ -60,24 +62,36 @@ describe("LearningAttemptBatchSchema", () => {
 // ─── LoginSchema ─────────────────────────────────────────────────────────────
 describe("LoginSchema", () => {
   it("accepts valid email + password", () => {
-    const result = LoginSchema.safeParse({ email: "user@example.com", password: "secret123" });
+    const result = LoginSchema.safeParse({
+      email: "user@example.com",
+      password: "secret123",
+    });
     expect(result.success).toBe(true);
   });
 
   it("rejects invalid email", () => {
-    const result = LoginSchema.safeParse({ email: "notanemail", password: "secret123" });
+    const result = LoginSchema.safeParse({
+      email: "notanemail",
+      password: "secret123",
+    });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0].message).toBe("Email không hợp lệ");
   });
 
   it("rejects short password", () => {
-    const result = LoginSchema.safeParse({ email: "user@example.com", password: "abc" });
+    const result = LoginSchema.safeParse({
+      email: "user@example.com",
+      password: "abc",
+    });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0].message).toContain("6 ký tự");
   });
 
   it("normalises email to lowercase", () => {
-    const result = LoginSchema.safeParse({ email: "USER@EXAMPLE.COM", password: "secret123" });
+    const result = LoginSchema.safeParse({
+      email: "USER@EXAMPLE.COM",
+      password: "secret123",
+    });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.email).toBe("user@example.com");
@@ -97,17 +111,27 @@ describe("SaveCardSchema", () => {
   });
 
   it("rejects empty word", () => {
-    const result = SaveCardSchema.safeParse({ word: "", meaning_vn: "xin chào" });
+    const result = SaveCardSchema.safeParse({
+      word: "",
+      meaning_vn: "xin chào",
+    });
     expect(result.success).toBe(false);
   });
 
   it("rejects word longer than 100 chars", () => {
-    const result = SaveCardSchema.safeParse({ word: "a".repeat(101), meaning_vn: "test" });
+    const result = SaveCardSchema.safeParse({
+      word: "a".repeat(101),
+      meaning_vn: "test",
+    });
     expect(result.success).toBe(false);
   });
 
   it("rejects invalid level", () => {
-    const result = SaveCardSchema.safeParse({ word: "hello", meaning_vn: "test", level: "D1" });
+    const result = SaveCardSchema.safeParse({
+      word: "hello",
+      meaning_vn: "test",
+      level: "D1",
+    });
     expect(result.success).toBe(false);
   });
 
@@ -135,7 +159,10 @@ describe("ReviewCardSchema", () => {
   });
 
   it("rejects invalid rating", () => {
-    const result = ReviewCardSchema.safeParse({ cardId: "uuid-123", rating: "Perfect" });
+    const result = ReviewCardSchema.safeParse({
+      cardId: "uuid-123",
+      rating: "Perfect",
+    });
     expect(result.success).toBe(false);
   });
 
@@ -145,21 +172,36 @@ describe("ReviewCardSchema", () => {
   });
 
   it("accepts valid retentionRate", () => {
-    const result = ReviewCardSchema.safeParse({ cardId: "uuid-123", rating: "Good", retentionRate: 0.85 });
+    const result = ReviewCardSchema.safeParse({
+      cardId: "uuid-123",
+      rating: "Good",
+      retentionRate: 0.85,
+    });
     expect(result.success).toBe(true);
     expect(result.data?.retentionRate).toBe(0.85);
   });
 
   it("rejects invalid retentionRate (too low or too high)", () => {
-    const resultLow = ReviewCardSchema.safeParse({ cardId: "uuid-123", rating: "Good", retentionRate: 0.49 });
+    const resultLow = ReviewCardSchema.safeParse({
+      cardId: "uuid-123",
+      rating: "Good",
+      retentionRate: 0.49,
+    });
     expect(resultLow.success).toBe(false);
 
-    const resultHigh = ReviewCardSchema.safeParse({ cardId: "uuid-123", rating: "Good", retentionRate: 1.0 });
+    const resultHigh = ReviewCardSchema.safeParse({
+      cardId: "uuid-123",
+      rating: "Good",
+      retentionRate: 1.0,
+    });
     expect(resultHigh.success).toBe(false);
   });
 
   it("allows omitted/undefined retentionRate", () => {
-    const result = ReviewCardSchema.safeParse({ cardId: "uuid-123", rating: "Good" });
+    const result = ReviewCardSchema.safeParse({
+      cardId: "uuid-123",
+      rating: "Good",
+    });
     expect(result.success).toBe(true);
     expect(result.data?.retentionRate).toBeUndefined();
   });
@@ -190,8 +232,11 @@ describe("CompleteUnitSchema", () => {
   });
 
   it("accepts valid starCount values (1, 2, 3)", () => {
-    [1, 2, 3].forEach(starCount => {
-      const result = CompleteUnitSchema.safeParse({ unitId: "unit-1", starCount });
+    [1, 2, 3].forEach((starCount) => {
+      const result = CompleteUnitSchema.safeParse({
+        unitId: "unit-1",
+        starCount,
+      });
       expect(result.success).toBe(true);
     });
   });
@@ -203,8 +248,11 @@ describe("CompleteUnitSchema", () => {
   });
 
   it("rejects invalid starCount (0, 4, non-integer)", () => {
-    [0, 4, 1.5, -1].forEach(starCount => {
-      const result = CompleteUnitSchema.safeParse({ unitId: "unit-1", starCount });
+    [0, 4, 1.5, -1].forEach((starCount) => {
+      const result = CompleteUnitSchema.safeParse({
+        unitId: "unit-1",
+        starCount,
+      });
       expect(result.success).toBe(false);
     });
   });
@@ -222,7 +270,10 @@ describe("SpeakingSessionSchema", () => {
   });
 
   it("rejects negative duration", () => {
-    const result = SpeakingSessionSchema.safeParse({ practiceType: "roleplay", duration: -1 });
+    const result = SpeakingSessionSchema.safeParse({
+      practiceType: "roleplay",
+      duration: -1,
+    });
     expect(result.success).toBe(false);
   });
 
@@ -245,12 +296,18 @@ describe("SpeakingSessionSchema", () => {
   });
 
   it("rejects invalid practiceType", () => {
-    const result = SpeakingSessionSchema.safeParse({ practiceType: "karaoke", duration: 60 });
+    const result = SpeakingSessionSchema.safeParse({
+      practiceType: "karaoke",
+      duration: 60,
+    });
     expect(result.success).toBe(false);
   });
 
   it("allows zero duration", () => {
-    const result = SpeakingSessionSchema.safeParse({ practiceType: "journal", duration: 0 });
+    const result = SpeakingSessionSchema.safeParse({
+      practiceType: "journal",
+      duration: 0,
+    });
     expect(result.success).toBe(true);
   });
 
@@ -293,99 +350,8 @@ describe("SpeakingSessionSchema", () => {
   });
 });
 
-// ─── ProductionEnvSchema ─────────────────────────────────────────────────────────────────
-describe("ProductionEnvSchema", () => {
-  it("accepts a fully valid production env", () => {
-    const result = ProductionEnvSchema.safeParse({
-      UPSTASH_REDIS_REST_URL: "https://valid-redis.upstash.io",
-      UPSTASH_REDIS_REST_TOKEN: "a".repeat(20),
-      NEON_AUTH_BASE_URL: "https://auth.neon.tech",
-      NEON_DATA_API_URL: "https://data.neon.tech",
-      NEON_AUTH_COOKIE_SECRET: "a".repeat(32),
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects missing UPSTASH_REDIS_REST_URL", () => {
-    const result = ProductionEnvSchema.safeParse({
-      UPSTASH_REDIS_REST_TOKEN: "a".repeat(20),
-      NEON_AUTH_BASE_URL: "https://auth.neon.tech",
-      NEON_DATA_API_URL: "https://data.neon.tech",
-      NEON_AUTH_COOKIE_SECRET: "a".repeat(32),
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects invalid URL for UPSTASH_REDIS_REST_URL", () => {
-    const result = ProductionEnvSchema.safeParse({
-      UPSTASH_REDIS_REST_URL: "not-a-url",
-      UPSTASH_REDIS_REST_TOKEN: "a".repeat(20),
-      NEON_AUTH_BASE_URL: "https://auth.neon.tech",
-      NEON_DATA_API_URL: "https://data.neon.tech",
-      NEON_AUTH_COOKIE_SECRET: "a".repeat(32),
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects UPSTASH_REDIS_REST_TOKEN shorter than 10 chars", () => {
-    const result = ProductionEnvSchema.safeParse({
-      UPSTASH_REDIS_REST_URL: "https://valid.upstash.io",
-      UPSTASH_REDIS_REST_TOKEN: "short",
-      NEON_AUTH_BASE_URL: "https://auth.neon.tech",
-      NEON_DATA_API_URL: "https://data.neon.tech",
-      NEON_AUTH_COOKIE_SECRET: "a".repeat(32),
-    });
-    expect(result.success).toBe(false);
-  });
-});
-
-// ─── assertProductionEnv ─────────────────────────────────────────────────────────────────
-describe("assertProductionEnv", () => {
-  const originalEnv = process.env;
-
-  afterEach(() => {
-    // Restore original env after each test
-    process.env = originalEnv;
-    vi.unstubAllEnvs();
-  });
-
-  it("does NOT throw in development (NODE_ENV=test)", () => {
-    // In the test runner, NODE_ENV=test ≠ production — must not throw
-    expect(() => assertProductionEnv()).not.toThrow();
-  });
-
-  it("does NOT throw in production when all vars present", () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://valid.upstash.io");
-    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "a".repeat(20));
-    vi.stubEnv("NEON_AUTH_BASE_URL", "https://auth.neon.tech");
-    vi.stubEnv("NEON_DATA_API_URL", "https://data.neon.tech");
-    vi.stubEnv("NEON_AUTH_COOKIE_SECRET", "a".repeat(32));
-    expect(() => assertProductionEnv()).not.toThrow();
-  });
-
-  it("throws in production when UPSTASH vars are missing", () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
-    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
-    vi.stubEnv("NEON_AUTH_BASE_URL", "https://auth.neon.tech");
-    vi.stubEnv("NEON_DATA_API_URL", "https://data.neon.tech");
-    vi.stubEnv("NEON_AUTH_COOKIE_SECRET", "a".repeat(32));
-    expect(() => assertProductionEnv()).toThrow(/Missing required production environment variables/);
-  });
-
-  it("error message lists all missing variable names", () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
-    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
-    vi.stubEnv("NEON_AUTH_BASE_URL", "");
-    vi.stubEnv("NEON_DATA_API_URL", "");
-    vi.stubEnv("NEON_AUTH_COOKIE_SECRET", "");
-    let errorMessage = "";
-    try { assertProductionEnv(); } catch (e) {
-      errorMessage = (e as Error).message;
-    }
-    expect(errorMessage).toContain("UPSTASH_REDIS_REST_URL");
-    expect(errorMessage).toContain("Rate limiting will be BYPASSED");
-  });
-});
+// ─── In-memory limiter production signal ─────────────────────────────────────
+// assertProductionEnv/ProductionEnvSchema were removed (P2-2): they demanded
+// Upstash vars in production even though Cloudflare bindings are the primary
+// distributed limiter there, and they were never invoked. The truthful check
+// lives inside InMemoryRateLimiterImpl.check() — see rate-limit.test.ts.

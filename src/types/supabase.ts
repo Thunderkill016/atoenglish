@@ -1224,6 +1224,7 @@ export type Database = {
           created_at: string;
           updated_at: string;
           expires_at: string;
+          access_secret_hash: string | null;
         };
         Insert: {
           id?: string;
@@ -1235,6 +1236,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           expires_at: string;
+          access_secret_hash?: string | null;
         };
         Update: {
           id?: string;
@@ -1246,6 +1248,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           expires_at?: string;
+          access_secret_hash?: string | null;
         };
         Relationships: [
           {
@@ -1290,8 +1293,8 @@ export type Database = {
         Args: {
           p_level: string;
           p_starting_unit_index: number;
-          p_seed_xp: number;
-          p_today: string;
+          p_seed_xp?: number;
+          p_today?: string;
         };
         Returns: undefined;
       };
@@ -1686,10 +1689,6 @@ export type Database = {
         };
         Returns: string;
       };
-      reset_unit_progress: {
-        Args: { p_unit_id: string };
-        Returns: undefined;
-      };
       record_learning_attempt_trusted: {
         Args: {
           p_user_id: string;
@@ -1716,6 +1715,10 @@ export type Database = {
           p_evidence_metadata: Json;
         };
         Returns: string;
+      };
+      reset_unit_progress: {
+        Args: { p_unit_id: string };
+        Returns: undefined;
       };
       set_updated_at: {
         Args: {};
@@ -1920,6 +1923,61 @@ export type Database = {
       vector_typmod_in: {
         Args: {};
         Returns: number;
+      };
+      zero_path_append_submission: {
+        Args: {
+          p_session_id: string;
+          p_access_secret: string;
+          p_seq: number;
+          p_action_id: string;
+          p_idempotency_key: string;
+          p_outcome_kind: string;
+          p_outcome: Json;
+        };
+        Returns: boolean;
+      };
+      zero_path_get_session: {
+        Args: { p_session_id: string; p_access_secret: string };
+        Returns: {
+          id: string;
+          user_id: string;
+          lesson_id: string;
+          lesson_version: number;
+          mode: string;
+          status: string;
+          created_at: string;
+          updated_at: string;
+          expires_at: string;
+        }[];
+      };
+      zero_path_list_own_open_sessions: {
+        Args: {};
+        Returns: {
+          id: string;
+          user_id: string;
+          lesson_id: string;
+          lesson_version: number;
+          mode: string;
+          status: string;
+          created_at: string;
+          updated_at: string;
+          expires_at: string;
+        }[];
+      };
+      zero_path_list_submissions: {
+        Args: { p_session_id: string; p_access_secret: string };
+        Returns: Database["public"]["Tables"]["zero_path_session_submissions"]["Row"][];
+      };
+      zero_path_open_session: {
+        Args: { p_lesson_id: string; p_lesson_version: number; p_mode: string };
+        Returns: {
+          session_id: string;
+          access_secret: string;
+        }[];
+      };
+      zero_path_session_accessible: {
+        Args: { p_session_id: string; p_access_secret: string };
+        Returns: boolean;
       };
     };
     Enums: {
