@@ -7,6 +7,9 @@ export interface RateLimitResult {
   limit: number;
   remaining: number;
   resetTime: number;
+  /** Which backend produced the verdict — diagnostic, surfaced as
+   * X-RateLimit-Backend on the auth route. */
+  backend?: "workers-binding" | "upstash" | "memory" | "open";
 }
 
 export interface RateLimiter {
@@ -50,6 +53,7 @@ export class InMemoryRateLimiter {
         limit: this.limit,
         remaining: this.limit - 1,
         resetTime,
+        backend: "memory",
       };
     }
 
@@ -61,6 +65,7 @@ export class InMemoryRateLimiter {
         limit: this.limit,
         remaining: 0,
         resetTime: record.resetTime,
+        backend: "memory",
       };
     }
     return {
@@ -68,6 +73,7 @@ export class InMemoryRateLimiter {
       limit: this.limit,
       remaining,
       resetTime: record.resetTime,
+      backend: "memory",
     };
   }
 }
@@ -113,6 +119,7 @@ export class WorkersRateLimiterImpl implements RateLimiter {
         // from our own config so 429 headers stay sensible.
         remaining: success ? 1 : 0,
         resetTime: Date.now() + this.windowMs,
+        backend: "workers-binding",
       };
     } catch (e) {
       // Binding unreachable — degrade to the configured fallback limiter
@@ -213,6 +220,7 @@ class UpstashRateLimiterImpl implements RateLimiter {
         limit: result.limit,
         remaining: result.remaining,
         resetTime: result.reset,
+        backend: "upstash",
       };
     } catch {
       // Upstash unavailable — fail open (allow request)
@@ -221,6 +229,7 @@ class UpstashRateLimiterImpl implements RateLimiter {
         limit: this.requestsPerWindow,
         remaining: 1,
         resetTime: Date.now() + this.windowSeconds * 1000,
+        backend: "open",
       };
     }
   }
