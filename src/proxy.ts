@@ -6,7 +6,14 @@ import { createRateLimiter, getClientIp } from "@/lib/security/rate-limit";
 // Rate limit auth routes (login, callback, credential endpoints) to 30
 // requests per minute per client IP. `/api/auth/` is the Better Auth route
 // group — sign-in/sign-up/reset POSTs land here and must be throttled too.
-const authRateLimiter = createRateLimiter(30, 60 * 1000, "auth");
+// AUTH_RATE_LIMITER is the Workers rate-limit binding (cloudflare.config.ts);
+// without it, in-memory counting is per-isolate and never trips in prod.
+const authRateLimiter = createRateLimiter(
+  30,
+  60 * 1000,
+  "auth",
+  "AUTH_RATE_LIMITER",
+);
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
