@@ -92,6 +92,7 @@ export const unit23: UnitData = {
     {
       id: 4,
       word: "discount",
+      review: true,
       emoji: "🏷️",
       phonetic: "/ˈdɪskaʊnt/",
       meaning: "chiết khấu / giảm giá",
@@ -106,6 +107,7 @@ export const unit23: UnitData = {
     {
       id: 5,
       word: "deadline",
+      review: true,
       emoji: "⏰",
       phonetic: "/ˈdedlaɪn/",
       meaning: "hạn chót",
@@ -132,6 +134,7 @@ export const unit23: UnitData = {
     {
       id: 7,
       word: "consequence",
+      review: true,
       emoji: "⚡",
       phonetic: "/ˈkɒnsɪkwəns/",
       meaning: "hậu quả",
@@ -158,6 +161,7 @@ export const unit23: UnitData = {
     {
       id: 9,
       word: "penalty",
+      review: true,
       emoji: "💸",
       phonetic: "/ˈpenəlti/",
       meaning: "phạt / tiền phạt",
@@ -171,6 +175,7 @@ export const unit23: UnitData = {
     {
       id: 10,
       word: "opportunity",
+      review: true,
       emoji: "🌟",
       phonetic: "/ˌɒpəˈtjuːnɪti/",
       meaning: "cơ hội",

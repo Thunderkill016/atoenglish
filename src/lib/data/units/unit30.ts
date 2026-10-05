@@ -97,6 +97,7 @@ export const unit30: UnitData = {
     {
       id: 4,
       word: "sustainable",
+      review: true,
       emoji: "♻️",
       phonetic: "/səˈsteɪnəbəl/",
       meaning: "bền vững",

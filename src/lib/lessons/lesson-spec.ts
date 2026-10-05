@@ -98,6 +98,13 @@ export interface VocabItem {
   emoji?: string;
   image_url?: string;
   l1_interference_vn?: string;
+  /**
+   * True when this word was already taught as target vocabulary in an
+   * earlier unit. Review words are recycled deliberately (spaced exposure)
+   * but must never be presented to the learner as "new" — the compiled
+   * contract renders them under an explicit review label.
+   */
+  review?: boolean;
 }
 
 export interface WarmupCard {

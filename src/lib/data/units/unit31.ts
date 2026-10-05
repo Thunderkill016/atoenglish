@@ -69,6 +69,7 @@ export const unit31: UnitData = {
     {
       id: 1,
       word: "confirm",
+      review: true,
       emoji: "✅",
       phonetic: "/kənˈfɜːm/",
       meaning: "xác nhận",
@@ -123,6 +124,7 @@ export const unit31: UnitData = {
     {
       id: 5,
       word: "recommend",
+      review: true,
       emoji: "👍",
       phonetic: "/ˌrekəˈmend/",
       meaning: "khuyến nghị / khuyên",
@@ -162,6 +164,7 @@ export const unit31: UnitData = {
     {
       id: 8,
       word: "proposal",
+      review: true,
       emoji: "📂",
       phonetic: "/prəˈpəʊzəl/",
       meaning: "bản đề xuất / kế hoạch",
@@ -201,6 +204,7 @@ export const unit31: UnitData = {
     {
       id: 11,
       word: "deadline",
+      review: true,
       emoji: "🏁",
       phonetic: "/ˈdedlaɪn/",
       meaning: "hạn chót / thời hạn cuối",

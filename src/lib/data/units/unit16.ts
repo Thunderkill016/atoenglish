@@ -122,6 +122,7 @@ export const unit16: UnitData = {
     {
       id: 6,
       word: "opposite",
+      review: true,
       emoji: "⇔",
       phonetic: "/ˈɒpəzɪt/",
       meaning: "đối diện",

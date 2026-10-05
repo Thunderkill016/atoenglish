@@ -57,6 +57,7 @@ export const unit42: UnitData = {
     {
       id: 1,
       word: "expertise",
+      review: true,
       emoji: "🎓",
       phonetic: "/ˌekspɜːˈtiːz/",
       meaning: "chuyên môn / kinh nghiệm chuyên sâu",
@@ -71,6 +72,7 @@ export const unit42: UnitData = {
     {
       id: 2,
       word: "sustainable",
+      review: true,
       emoji: "♻️",
       phonetic: "/səˈsteɪnəbəl/",
       meaning: "bền vững",
@@ -85,6 +87,7 @@ export const unit42: UnitData = {
     {
       id: 3,
       word: "implementation",
+      review: true,
       emoji: "⚙️",
       phonetic: "/ˌɪmplɪmenˈteɪʃən/",
       meaning: "sự triển khai / thực hiện",
@@ -98,6 +101,7 @@ export const unit42: UnitData = {
     {
       id: 4,
       word: "collaborate",
+      review: true,
       emoji: "🤝",
       phonetic: "/kəˈlæbəreɪt/",
       meaning: "cộng tác",
@@ -111,6 +115,7 @@ export const unit42: UnitData = {
     {
       id: 5,
       word: "alternative",
+      review: true,
       emoji: "🔄",
       phonetic: "/ɒlˈtɜːnətɪv/",
       meaning: "lựa chọn thay thế",
@@ -125,6 +130,7 @@ export const unit42: UnitData = {
     {
       id: 6,
       word: "resolution",
+      review: true,
       emoji: "✅",
       phonetic: "/ˌrezəˈluːʃən/",
       meaning: "sự giải quyết / nghị quyết",
@@ -138,6 +144,7 @@ export const unit42: UnitData = {
     {
       id: 7,
       word: "compliance",
+      review: true,
       emoji: "🛡️",
       phonetic: "/kənˈplaɪəns/",
       meaning: "sự tuân thủ quy định/pháp luật",
@@ -152,6 +159,7 @@ export const unit42: UnitData = {
     {
       id: 8,
       word: "environmental degradation",
+      review: true,
       emoji: "🍂",
       phonetic: "/ɪnˌvaɪrənˈmentəl ˌdeɡrəˈdeɪʃən/",
       meaning: "sự suy thoái môi trường",
@@ -164,6 +172,7 @@ export const unit42: UnitData = {
     {
       id: 9,
       word: "artificial intelligence",
+      review: true,
       emoji: "🤖",
       phonetic: "/ˌɑːtɪˈfɪʃəl ɪnˈtelɪdʒəns/",
       meaning: "trí tuệ nhân tạo (AI)",
@@ -177,6 +186,7 @@ export const unit42: UnitData = {
     {
       id: 10,
       word: "nevertheless",
+      review: true,
       emoji: "⚖️",
       phonetic: "/ˌnevəðəˈles/",
       meaning: "tuy nhiên / mặc dù vậy",
@@ -190,6 +200,7 @@ export const unit42: UnitData = {
     {
       id: 11,
       word: "consequence",
+      review: true,
       emoji: "💥",
       phonetic: "/ˈkɒnsɪkwəns/",
       meaning: "hậu quả / hệ quả",
@@ -203,6 +214,7 @@ export const unit42: UnitData = {
     {
       id: 12,
       word: "validate",
+      review: true,
       emoji: "✔️",
       phonetic: "/ˈvælɪdeɪt/",
       meaning: "xác thực / phê chuẩn",

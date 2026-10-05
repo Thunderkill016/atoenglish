@@ -188,22 +188,41 @@ function compileLegacyActions(
   }
 
   const vocab = unit.vocab ?? [];
-  for (let i = 0; i < vocab.length; i += VOCAB_CHUNK_SIZE) {
-    const chunk = vocab.slice(i, i + VOCAB_CHUNK_SIZE);
-    actions.push({
-      id: `notice-vocab-${i / VOCAB_CHUNK_SIZE + 1}`,
-      kind: "notice",
-      modality: "read",
+  const newVocab = vocab.filter((item) => !item.review);
+  const reviewVocab = vocab.filter((item) => item.review);
+  const vocabGroups = [
+    {
+      items: newVocab,
+      idPrefix: "notice-vocab",
       title: "Từ vựng mới",
       instruction:
         "Đọc kỹ từng từ, nghĩa và ví dụ. Đây là từ mục tiêu của bài.",
-      model: joinLines(
-        chunk.map(
-          (item) =>
-            `${item.word} — ${item.meaning}${item.example ? ` (${item.example})` : ""}`,
+    },
+    {
+      items: reviewVocab,
+      idPrefix: "notice-review-vocab",
+      title: "Ôn lại từ đã học",
+      instruction:
+        "Những từ này đã học ở bài trước và quay lại đúng lúc cần nhớ. Đọc lại để gợi nhớ — không phải từ mới.",
+    },
+  ];
+  for (const group of vocabGroups) {
+    for (let i = 0; i < group.items.length; i += VOCAB_CHUNK_SIZE) {
+      const chunk = group.items.slice(i, i + VOCAB_CHUNK_SIZE);
+      actions.push({
+        id: `${group.idPrefix}-${i / VOCAB_CHUNK_SIZE + 1}`,
+        kind: "notice",
+        modality: "read",
+        title: group.title,
+        instruction: group.instruction,
+        model: joinLines(
+          chunk.map(
+            (item) =>
+              `${item.word} — ${item.meaning}${item.example ? ` (${item.example})` : ""}`,
+          ),
         ),
-      ),
-    });
+      });
+    }
   }
 
   if (unit.grammar) {
@@ -528,6 +547,8 @@ export function compileLegacyUnitContract(
     (action) => action.kind === "comprehend",
   );
   const hasRetrieval = actions.some((action) => action.kind === "retrieve");
+  const newVocab = (unit.vocab ?? []).filter((item) => !item.review);
+  const reviewVocab = (unit.vocab ?? []).filter((item) => item.review);
 
   // Typed edges: the registry's `next` links are the authored curriculum
   // order; reverse-lookup gives this unit's prerequisite. Only explicit
@@ -548,15 +569,15 @@ export function compileLegacyUnitContract(
     learnerCanDo: stripLegacyHtml(
       unit.learningOutcomes?.[0] ?? unit.description,
     ),
-    newItems: (unit.vocab ?? []).map((item) => stripLegacyHtml(item.word)),
-    reviewTargets: [],
+    newItems: newVocab.map((item) => stripLegacyHtml(item.word)),
+    reviewTargets: reviewVocab.map((item) => stripLegacyHtml(item.word)),
     evidenceChannels: [
       ...(hasComprehension ? (["comprehension"] as const) : []),
       ...(hasRetrieval ? (["retrieval"] as const) : []),
     ],
     sourceDerived: { principleIds: [], claimIds: [] },
     productInference: {
-      maxNewItems: Math.max((unit.vocab ?? []).length, 1),
+      maxNewItems: Math.max(newVocab.length, 1),
       notes: [
         "Compiled from legacy UnitData — no research trace.",
         "Oral-only sections (pronunciation focus, fluency drills, shadowing video) are omitted honestly: v1 has no speech evaluator.",

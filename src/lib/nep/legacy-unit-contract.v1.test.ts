@@ -165,6 +165,33 @@ describe("legacy contract lint (coverage report)", () => {
     }
   });
 
+  it("labels recycled vocabulary as review — never as new items", () => {
+    // unit-15 re-teaches cheap/expensive/discount/receipt (unit-7) and
+    // better (unit-11): spaced recycling is correct, but presenting them as
+    // "Từ vựng mới" would lie about novelty.
+    const contract = compileLegacyUnitContract("unit-15")!;
+    const reviewWords = ["cheap", "expensive", "discount", "receipt", "better"];
+    for (const word of reviewWords) {
+      expect(contract.newItems).not.toContain(word);
+      expect(contract.reviewTargets).toContain(word);
+    }
+    const reviewActions = contract.actions.filter((action) =>
+      action.id.startsWith("notice-review-vocab-"),
+    );
+    expect(reviewActions.length).toBeGreaterThan(0);
+    for (const action of reviewActions) {
+      expect(action.title).toBe("Ôn lại từ đã học");
+      expect(action.model).not.toBe("");
+    }
+    const newVocabModel = contract.actions
+      .filter((action) => action.id.startsWith("notice-vocab-"))
+      .map((action) => action.model ?? "")
+      .join("\n");
+    for (const word of reviewWords) {
+      expect(newVocabModel).not.toMatch(new RegExp(`^${word} —`, "m"));
+    }
+  });
+
   it("declares prerequisites from the authored next-chain only", () => {
     const unit1 = compileLegacyUnitContract("unit-1")!;
     expect(unit1.prerequisites).toEqual(["legacy.unit-a0-8"]);

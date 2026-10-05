@@ -122,6 +122,7 @@ export const unit11: UnitData = {
     {
       id: 6,
       word: "happy",
+      review: true,
       emoji: "😊",
       phonetic: "/ˈhæpi/",
       meaning: "vui vẻ / hạnh phúc",

@@ -125,6 +125,7 @@ export const unit34: UnitData = {
     {
       id: 6,
       word: "investigate",
+      review: true,
       emoji: "🕵️",
       phonetic: "/ɪnˈvestɪɡeɪt/",
       meaning: "điều tra / tìm hiểu kỹ",

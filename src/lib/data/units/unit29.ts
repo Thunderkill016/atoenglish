@@ -81,6 +81,7 @@ export const unit29: UnitData = {
     {
       id: 3,
       word: "propose",
+      review: true,
       emoji: "🙋",
       phonetic: "/prəˈpəʊz/",
       meaning: "đề xuất / đề nghị",
@@ -94,6 +95,7 @@ export const unit29: UnitData = {
     {
       id: 4,
       word: "resolve",
+      review: true,
       emoji: "✅",
       phonetic: "/rɪˈzɒlv/",
       meaning: "giải quyết triệt để",

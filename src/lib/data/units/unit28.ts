@@ -57,6 +57,7 @@ export const unit28: UnitData = {
     {
       id: 1,
       word: "progress",
+      review: true,
       emoji: "📈",
       phonetic: "/ˈprəʊɡres/",
       meaning: "tiến triển / tiến bộ",
@@ -171,6 +172,7 @@ export const unit28: UnitData = {
     {
       id: 10,
       word: "collaborate",
+      review: true,
       emoji: "🤝",
       phonetic: "/kəˈlæbəreɪt/",
       meaning: "cộng tác",

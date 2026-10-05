@@ -57,6 +57,7 @@ export const unit35: UnitData = {
     {
       id: 1,
       word: "agreement",
+      review: true,
       emoji: "🤝",
       phonetic: "/əˈɡriːmənt/",
       meaning: "sự thỏa thuận / hợp đồng",
@@ -70,6 +71,7 @@ export const unit35: UnitData = {
     {
       id: 2,
       word: "negotiate",
+      review: true,
       emoji: "🗣️",
       phonetic: "/nɪˈɡəʊʃɪeɪt/",
       meaning: "đàm phán / thương lượng",
@@ -109,6 +111,7 @@ export const unit35: UnitData = {
     {
       id: 5,
       word: "condition",
+      review: true,
       emoji: "⚙️",
       phonetic: "/kənˈdɪʃən/",
       meaning: "điều kiện",
@@ -151,6 +154,7 @@ export const unit35: UnitData = {
     {
       id: 8,
       word: "guarantee",
+      review: true,
       emoji: "🛡️",
       phonetic: "/ˌɡærənˈtiː/",
       meaning: "sự bảo đảm / cam kết",
@@ -203,6 +207,7 @@ export const unit35: UnitData = {
     {
       id: 12,
       word: "penalty",
+      review: true,
       emoji: "💸",
       phonetic: "/ˈpenəlti/",
       meaning: "khoản phạt / hình phạt",
