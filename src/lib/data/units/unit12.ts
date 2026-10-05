@@ -760,14 +760,14 @@ export const unit12: UnitData = {
   // ── FLUENCY: fluencyDrill ≥5 (Nation Strand 4 automaticity)
   fluencyDrill: {
     items: [
-      { en: "bigger", vn: "lớn hơn" },
-      { en: "the biggest", vn: "lớn nhất" },
-      { en: "better", vn: "tốt hơn" },
-      { en: "the best", vn: "tốt nhất" },
-      { en: "more expensive", vn: "đắt hơn" },
-      { en: "the most expensive", vn: "đắt nhất" },
-      { en: "faster", vn: "nhanh hơn" },
-      { en: "the fastest", vn: "nhanh nhất" },
+      { en: "every day", vn: "mỗi ngày" },
+      { en: "goes to work", vn: "đi làm" },
+      { en: "I can help", vn: "tôi có thể giúp" },
+      { en: "there is", vn: "có" },
+      { en: "a lot of", vn: "nhiều" },
+      { en: "how much", vn: "bao nhiêu" },
+      { en: "I feel tired", vn: "tôi thấy mệt" },
+      { en: "next to", vn: "cạnh" },
     ],
   },
 

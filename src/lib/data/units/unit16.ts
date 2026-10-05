@@ -382,8 +382,8 @@ export const unit16: UnitData = {
 
   // ── GRAMMAR: Inductive (Meaning→Form→CCQ) + vnNote L1
   grammar: {
-    title: "Prepositions of Place & Giving Directions",
-    rule: "Location prepositions: opposite, next to, near, in front of, behind, between\nDirections: go straight / turn left|right / take the first/second left",
+    title: "Ôn lại giới từ chỉ nơi chốn & Chỉ đường",
+    rule: "Ôn (đã học Unit 9): opposite, next to, near, in front of, behind, between\nMới: go straight / turn left|right / take the first/second left",
     examples: [
       {
         en: "The café is next to the bank.",
