@@ -5,16 +5,19 @@ test.describe("Landing Page", () => {
     await page.goto("/");
   });
 
-  test("renders hero section with headline", async ({ page }) => {
+  test("renders honest 28-day headline", async ({ page }) => {
     await expect(page).toHaveTitle(/AtoEnglish/);
-    // Check Vietnamese headline
-    await expect(page.locator("h1")).toContainText("Học tiếng Anh");
+    await expect(
+      page.getByRole("heading", { level: 1, name: /28 ngày/ }),
+    ).toBeVisible();
   });
 
-  test("has Start Learning CTA button", async ({ page }) => {
-    const cta = page.getByRole("link", { name: /Bắt đầu học/i }).first();
+  test("primary CTA opens the free first lesson", async ({ page }) => {
+    const cta = page
+      .getByRole("link", { name: /Học bài đầu tiên/i })
+      .first();
     await expect(cta).toBeVisible();
-    await expect(cta).toHaveAttribute("href", /login/);
+    await expect(cta).toHaveAttribute("href", "/learn/unit-a0-1");
   });
 
   test("has navigation with logo", async ({ page }) => {
@@ -22,19 +25,19 @@ test.describe("Landing Page", () => {
     await expect(page.locator("nav").getByText("AtoEnglish")).toBeVisible();
   });
 
-  test("shows stats bar with Open Beta badge", async ({ page }) => {
-    // Target the stats bar specifically (first exact match)
+  test("shows the honest 28-day scope section", async ({ page }) => {
     await expect(
-      page.locator("text=Open Beta").first()
+      page.getByRole("heading", { name: /28 ngày nói được gì/i }),
     ).toBeVisible();
+    await expect(page.getByText(/28 ngày không làm được/)).toBeVisible();
   });
 
   test("footer has links to privacy and terms", async ({ page }) => {
     await expect(
-      page.getByRole("link", { name: /Bảo mật|Privacy/i })
+      page.getByRole("link", { name: /Bảo mật|Privacy/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Điều khoản|Terms/i })
+      page.getByRole("link", { name: /Điều khoản|Terms/i }),
     ).toBeVisible();
   });
 });

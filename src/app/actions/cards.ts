@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { rpcService } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { reviewCardFSRS } from "@/lib/srs/fsrs";
 import { Card } from "@/types/database";
@@ -36,15 +35,16 @@ type FsrsReviewResult = ReturnType<typeof reviewCardFSRS>;
 
 /**
  * Persist card state + review log in one PostgreSQL transaction.
- * apply_fsrs_card_review is a SECURITY INVOKER wrapper over a private.*
- * helper, so it is only callable from the service path (neondb_owner), not
- * the user-scoped Data API client.
+ * apply_fsrs_card_review resolves the caller via public.auth_uid(), so it
+ * must run on the user-scoped Data API client where the JWT is present —
+ * a service (JWT-less) connection always raises 'Unauthenticated'.
  */
 async function persistFsrsReview(
+  supabase: CardsClient,
   cardId: string,
   result: FsrsReviewResult,
 ): Promise<{ success: true } | { success: false; error: string }> {
-  const { error } = await rpcService("apply_fsrs_card_review", {
+  const { error } = await supabase.rpc("apply_fsrs_card_review", {
     p_card_id: cardId,
     p_state: result.state,
     p_difficulty: result.difficulty,
@@ -327,7 +327,11 @@ export async function reviewCard(
       cleanParams.rating,
       cleanParams.retentionRate,
     );
-    const persisted = await persistFsrsReview(cleanParams.cardId, fsrsUpdates);
+    const persisted = await persistFsrsReview(
+      supabase,
+      cleanParams.cardId,
+      fsrsUpdates,
+    );
     if (!persisted.success) {
       return {
         success: false,
@@ -525,7 +529,7 @@ export async function scheduleWrongWordsForReview(words: string[]) {
     const results = await Promise.all(
       cards.map(async (card) => {
         const fsrsResult = reviewCardFSRS(card as unknown as Card, "Again");
-        return persistFsrsReview(card.id, fsrsResult);
+        return persistFsrsReview(supabase, card.id, fsrsResult);
       }),
     );
 

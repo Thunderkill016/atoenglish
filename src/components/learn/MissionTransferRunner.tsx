@@ -24,12 +24,14 @@ import {
   type MissionEvaluationResult,
 } from "@/lib/missions/mission-evaluator";
 import type {
-  MissionSpecV1,
+  MissionLearnerSpecV1,
   MissionTransferVariant,
 } from "@/lib/missions/mission-spec";
 import { speakEnglish } from "@/lib/speech";
 
-type MissionLesson = LessonSpecV1 & { mission: MissionSpecV1 };
+type MissionLesson = Omit<LessonSpecV1, "mission"> & {
+  mission: MissionLearnerSpecV1;
+};
 type TransferStage = "scenario" | "roleplay" | "feedback" | "retry" | "done";
 
 interface MissionTransferRunnerProps {

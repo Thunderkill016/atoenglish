@@ -159,6 +159,16 @@ vi.mock("next/headers", () => ({
   cookies: vi.fn().mockResolvedValue(new Map()),
 }));
 
+// Real `after` throws outside a request scope; there is no Next server in
+// vitest. Run the registered post-response task inline so its DB effects
+// remain observable to the suite. Spread the real module so NextResponse
+// et al. keep working for any other integration import.
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  after: (task: Promise<unknown> | (() => unknown)) =>
+    typeof task === "function" ? task() : task,
+}));
+
 vi.mock("@/lib/security/rate-limit", () => ({
   createRateLimiter: vi.fn(() => ({
     check: vi.fn().mockResolvedValue({ success: true, remaining: 99 }),

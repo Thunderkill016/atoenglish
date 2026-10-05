@@ -187,6 +187,7 @@ export const unit14: UnitData = {
     {
       id: 11,
       word: "improve",
+      review: true,
       emoji: "📈",
       phonetic: "/ɪmˈpruːv/",
       meaning: "cải thiện / tiến bộ",

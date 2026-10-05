@@ -347,7 +347,6 @@ export type TodayMissionFlags = {
   speakingDoneToday: boolean;
   lessonCompletedToday: boolean;
   lessonCompletedOnCurrentUnit: boolean;
-  challengeDoneToday: boolean;
 };
 
 /**
@@ -362,7 +361,6 @@ export async function getTodayMissionFlags(
     speakingDoneToday: false,
     lessonCompletedToday: false,
     lessonCompletedOnCurrentUnit: false,
-    challengeDoneToday: false,
   };
 
   try {
@@ -378,34 +376,28 @@ export async function getTodayMissionFlags(
     });
     const startUtc = `${today}T00:00:00+07:00`;
 
-    const [flashcardRes, quizRes, speakingRes, lessonsRes, challengeRes] =
-      await Promise.all([
-        supabase
-          .from("user_flashcard_progress")
-          .select("last_session_date, cards_reviewed_today")
-          .eq("user_id", user.id)
-          .maybeSingle(),
-        supabase
-          .from("quiz_results")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("quiz_date", today),
-        supabase
-          .from("speaking_sessions")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .gte("created_at", startUtc),
-        supabase
-          .from("user_lesson_progress")
-          .select("unit_id, completed_at")
-          .eq("user_id", user.id)
-          .gte("completed_at", startUtc),
-        supabase
-          .from("challenge_results")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("challenge_date", today),
-      ]);
+    const [flashcardRes, quizRes, speakingRes, lessonsRes] = await Promise.all([
+      supabase
+        .from("user_flashcard_progress")
+        .select("last_session_date, cards_reviewed_today")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("quiz_results")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("quiz_date", today),
+      supabase
+        .from("speaking_sessions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", startUtc),
+      supabase
+        .from("user_lesson_progress")
+        .select("unit_id, completed_at")
+        .eq("user_id", user.id)
+        .gte("completed_at", startUtc),
+    ]);
 
     const flashcard = flashcardRes.data;
     const lessonsToday = lessonsRes.data ?? [];
@@ -422,7 +414,6 @@ export async function getTodayMissionFlags(
         lessonCompletedOnCurrentUnit: lessonsToday.some(
           (row) => row.unit_id === currentUnitId,
         ),
-        challengeDoneToday: (challengeRes.count ?? 0) > 0,
       },
     };
   } catch {

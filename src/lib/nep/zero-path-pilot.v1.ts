@@ -21,6 +21,8 @@ export type ZeroPathActionEnvelope = {
   readonly instruction: string;
   readonly prompt: string | null;
   readonly model: string | null;
+  /** Recorded audio asset (public path) for dialogue/context blocks, when the unit ships one. */
+  readonly audioSrc: string | null;
   readonly choices: readonly string[];
   readonly supportVi: string | null;
   /** Ordered support rungs the learner may reveal one at a time (0 = none used). */
@@ -84,6 +86,7 @@ function envelopeForContract(lesson: LessonContract): ZeroPathLessonEnvelope {
       instruction: action.instruction,
       prompt: action.prompt ?? null,
       model: action.model ?? null,
+      audioSrc: action.audioSrc ?? null,
       choices: [...(action.choices ?? [])],
       supportVi: action.supportVi ?? null,
       supportSteps:

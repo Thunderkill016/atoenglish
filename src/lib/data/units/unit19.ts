@@ -134,6 +134,7 @@ export const unit19: UnitData = {
     {
       id: 6,
       word: "deadline",
+      review: true,
       l1_interference_vn:
         "⚠️ \'Meet a deadline\' (kịp hạn) hoặc \'miss a deadline\' (trễ hạn). KHÔNG dùng \'do/finish the deadline\'.",
       emoji: "⏰",

@@ -3,7 +3,7 @@
 /* ─── Theme Tokens (replaces tailwind.config.ts extend) ─────────────────────── */
 @theme {
   /* Font */
-  --font-sans: var(--font-sans-var, ui-sans-serif), system-ui, sans-serif;
+  --font-sans: var(--font-jakarta, ui-sans-serif), system-ui, sans-serif;
 
   /* Brand Colors (mapped from CSS variables set in :root / .dark) */
   --color-border: var(--border);
@@ -288,7 +288,9 @@ body {
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  /* no overflow-x on body: any non-visible value makes body the scroll
+     container, breaking position:sticky descendants. html's overflow-x:hidden
+     propagates to the viewport and still prevents page-level h-scroll. */
   max-width: 100%;
 }
 

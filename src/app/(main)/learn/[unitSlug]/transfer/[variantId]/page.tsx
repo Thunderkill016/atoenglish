@@ -8,7 +8,10 @@ import {
   attemptRowToTransferEvidence,
   summarizeTransferEvidence,
 } from "@/lib/missions/mission-progress";
-import type { MissionSpecV1 } from "@/lib/missions/mission-spec";
+import {
+  toLearnerMission,
+  type MissionSpecV1,
+} from "@/lib/missions/mission-spec";
 import { createClient } from "@/lib/supabase/server";
 
 type MissionLesson = LessonSpecV1 & { mission: MissionSpecV1 };
@@ -102,7 +105,7 @@ export default async function MissionTransferPage({
 
   return (
     <MissionTransferTemplate
-      lesson={lesson}
+      lesson={{ ...lesson, mission: toLearnerMission(lesson.mission) }}
       variant={variant}
       returnRoute="/learn"
     />

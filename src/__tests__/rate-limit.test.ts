@@ -57,6 +57,37 @@ describe("createRateLimiter (InMemory fallback)", () => {
     expect(result.limit).toBe(10);
   });
 
+  it("warns once when an in-memory limiter serves a production request", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const limiter = createRateLimiter(5, 60_000, "test-prod-warn");
+      await limiter.check("1.2.3.4");
+      await limiter.check("1.2.3.4");
+      const warnings = errorSpy.mock.calls.filter((call) =>
+        String(call[0]).includes("in-memory limiter active in production"),
+      );
+      expect(warnings).toHaveLength(1);
+    } finally {
+      errorSpy.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("stays quiet outside production", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const limiter = createRateLimiter(5, 60_000, "test-dev-quiet");
+      await limiter.check("1.2.3.4");
+      const warnings = errorSpy.mock.calls.filter((call) =>
+        String(call[0]).includes("in-memory limiter active in production"),
+      );
+      expect(warnings).toHaveLength(0);
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
   it("different IPs are tracked independently", async () => {
     const limiter = createRateLimiter(2, 60_000, "test-ips");
     await limiter.check("10.0.0.1");

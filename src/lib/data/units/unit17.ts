@@ -135,6 +135,7 @@ export const unit17: UnitData = {
     {
       id: 7,
       word: "achieve",
+      review: true,
       emoji: "🏆",
       phonetic: "/əˈtʃiːv/",
       meaning: "đạt được",

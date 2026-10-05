@@ -57,6 +57,7 @@ export const unit32: UnitData = {
     {
       id: 1,
       word: "accumulate",
+      review: true,
       emoji: "📦",
       phonetic: "/əˈkjuːmjuleɪt/",
       meaning: "tích lũy",
@@ -70,6 +71,7 @@ export const unit32: UnitData = {
     {
       id: 2,
       word: "sustainable",
+      review: true,
       emoji: "♻️",
       phonetic: "/səˈsteɪnəbəl/",
       meaning: "bền vững",
@@ -83,6 +85,7 @@ export const unit32: UnitData = {
     {
       id: 3,
       word: "recommend",
+      review: true,
       emoji: "👍",
       phonetic: "/ˌrekəˈmend/",
       meaning: "khuyến nghị / khuyên",
@@ -96,6 +99,7 @@ export const unit32: UnitData = {
     {
       id: 4,
       word: "collaborate",
+      review: true,
       emoji: "🤝",
       phonetic: "/kəˈlæbəreɪt/",
       meaning: "cộng tác",
@@ -107,6 +111,7 @@ export const unit32: UnitData = {
     {
       id: 5,
       word: "alternative",
+      review: true,
       emoji: "🔄",
       phonetic: "/ɒlˈtɜːnətɪv/",
       meaning: "lựa chọn thay thế",
@@ -144,6 +149,7 @@ export const unit32: UnitData = {
     {
       id: 8,
       word: "policy",
+      review: true,
       emoji: "📜",
       phonetic: "/ˈpɒlɪsi/",
       meaning: "chính sách / quy định",
@@ -157,6 +163,7 @@ export const unit32: UnitData = {
     {
       id: 9,
       word: "consensus",
+      review: true,
       emoji: "🤝",
       phonetic: "/kənˈsensəs/",
       meaning: "sự đồng thuận / nhất trí",
@@ -170,6 +177,7 @@ export const unit32: UnitData = {
     {
       id: 10,
       word: "initiative",
+      review: true,
       emoji: "🚀",
       phonetic: "/ɪnˈɪʃətɪv/",
       meaning: "sáng kiến / sự chủ động",
@@ -181,6 +189,7 @@ export const unit32: UnitData = {
     {
       id: 11,
       word: "consequence",
+      review: true,
       emoji: "💥",
       phonetic: "/ˈkɒnsɪkwəns/",
       meaning: "hậu quả / hệ quả",
@@ -194,6 +203,7 @@ export const unit32: UnitData = {
     {
       id: 12,
       word: "deal with",
+      review: true,
       emoji: "🛠️",
       phonetic: "/diːl wɪð/",
       meaning: "giải quyết / đối phó với",

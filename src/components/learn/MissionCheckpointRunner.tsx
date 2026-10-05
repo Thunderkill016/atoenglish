@@ -8,11 +8,38 @@ import { toast } from "sonner";
 import { claimMissionCheckpoint } from "@/app/actions/mission-checkpoint";
 import { MinimalButton } from "@/components/design-system";
 import { RunnerShell } from "@/components/learn/runner-shell";
-import type { MissionSpecV1 } from "@/lib/missions/mission-spec";
+
+/**
+ * Learner-safe checkpoint descriptor — question text and options only.
+ * `answer`/`explanationVi` are returned inside the claim response after the
+ * full answer set is submitted, never inside the client bundle.
+ */
+export interface MissionCheckpointView {
+  lessonId: string;
+  titleVi: string;
+  canDoVi: string;
+  passThreshold: number;
+  questions: ReadonlyArray<{
+    id: string;
+    questionVi: string;
+    options: string[];
+  }>;
+}
 
 interface MissionCheckpointRunnerProps {
-  mission: MissionSpecV1;
+  checkpoint: MissionCheckpointView;
   nextRoute: string;
+}
+
+interface ReviewItem {
+  questionId: string;
+  selected: string;
+  correct: boolean;
+  // Present only once the claim has passed — a failed attempt reveals which
+  // answers were wrong but not the key, so the free retry still needs the
+  // underlying knowledge.
+  correctAnswer: string | null;
+  explanationVi: string | null;
 }
 
 interface ClaimResult {
@@ -20,10 +47,11 @@ interface ClaimResult {
   correctCount: number;
   totalCount: number;
   reviewTargetsAdded: number;
+  review: ReviewItem[];
 }
 
 export default function MissionCheckpointRunner({
-  mission,
+  checkpoint,
   nextRoute,
 }: MissionCheckpointRunnerProps) {
   const router = useRouter();
@@ -42,7 +70,7 @@ export default function MissionCheckpointRunner({
       return;
     }
     if (
-      mission.checkpoint.questions.some(
+      checkpoint.questions.some(
         (question) => answers[question.id] === undefined,
       )
     ) {
@@ -53,7 +81,7 @@ export default function MissionCheckpointRunner({
     setSubmitting(true);
     const response = await claimMissionCheckpoint({
       sessionId,
-      lessonId: mission.lessonId,
+      lessonId: checkpoint.lessonId,
       answers,
     });
     setSubmitting(false);
@@ -68,6 +96,7 @@ export default function MissionCheckpointRunner({
       correctCount: response.correctCount,
       totalCount: response.totalCount,
       reviewTargetsAdded: response.reviewTargetsAdded,
+      review: response.review ?? [],
     });
   };
 
@@ -88,7 +117,7 @@ export default function MissionCheckpointRunner({
               <RotateCcw className="size-9 text-warning" />
             )}
             <p className="mt-4 text-xs font-black uppercase tracking-widest text-muted-foreground">
-              Checkpoint · {mission.titleVi}
+              Checkpoint · {checkpoint.titleVi}
             </p>
             <h1 className="mt-2 text-2xl font-black">
               {result.passed
@@ -104,25 +133,32 @@ export default function MissionCheckpointRunner({
           </div>
 
           <div className="space-y-3">
-            {mission.checkpoint.questions.map((question) => {
-              const selected = answers[question.id];
-              const correct = selected === question.answer;
+            {result.review.map((item) => {
+              const question = checkpoint.questions.find(
+                (entry) => entry.id === item.questionId,
+              );
               return (
                 <div
-                  key={question.id}
+                  key={item.questionId}
                   className="rounded-xl border border-border/60 bg-card p-4"
                 >
-                  <p className="text-sm font-bold">{question.questionVi}</p>
+                  <p className="text-sm font-bold">{question?.questionVi}</p>
                   <p
-                    className={`mt-2 text-sm ${correct ? "text-primary" : "text-warning"}`}
+                    className={`mt-2 text-sm ${item.correct ? "text-primary" : "text-warning"}`}
                   >
-                    {correct
-                      ? `Đúng: ${question.answer}`
-                      : `Đáp án đúng: ${question.answer}`}
+                    {item.correct
+                      ? item.correctAnswer
+                        ? `Đúng: ${item.correctAnswer}`
+                        : "Đúng."
+                      : item.correctAnswer
+                        ? `Đáp án đúng: ${item.correctAnswer}`
+                        : "Chưa đúng — ôn lại mission rồi thử lại."}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {question.explanationVi}
-                  </p>
+                  {item.explanationVi && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {item.explanationVi}
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -145,7 +181,7 @@ export default function MissionCheckpointRunner({
               <MinimalButton
                 fullWidth
                 variant="secondary"
-                onClick={() => router.push(`/learn/${mission.lessonId}`)}
+                onClick={() => router.push(`/learn/${checkpoint.lessonId}`)}
               >
                 Luyện lại mission
               </MinimalButton>
@@ -167,14 +203,13 @@ export default function MissionCheckpointRunner({
 
   return (
     <RunnerShell
-      onBack={() => router.push(`/learn/${mission.lessonId}`)}
+      onBack={() => router.push(`/learn/${checkpoint.lessonId}`)}
       backLabel="Quay lại"
       title="Checkpoint"
-      subtitle={mission.titleVi}
+      subtitle={checkpoint.titleVi}
       status={
         <span className="text-xs font-bold text-primary">
-          Cần {mission.checkpoint.passThreshold}/
-          {mission.checkpoint.questions.length}
+          Cần {checkpoint.passThreshold}/{checkpoint.questions.length}
         </span>
       }
     >
@@ -182,7 +217,7 @@ export default function MissionCheckpointRunner({
         <p className="text-xs font-black uppercase tracking-widest text-primary">
           Xác nhận mastery
         </p>
-        <h1 className="mt-2 text-2xl font-black">{mission.canDoVi}</h1>
+        <h1 className="mt-2 text-2xl font-black">{checkpoint.canDoVi}</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           Chọn đáp án không xem lại chunks. Checkpoint không thay thế spoken
           evidence; nó kiểm tra các quyết định ngôn ngữ cốt lõi của cùng nhiệm
@@ -191,7 +226,7 @@ export default function MissionCheckpointRunner({
       </div>
 
       <div className="space-y-5">
-        {mission.checkpoint.questions.map((question, questionIndex) => (
+        {checkpoint.questions.map((question, questionIndex) => (
           <fieldset
             key={question.id}
             className="rounded-xl border border-border/60 bg-card p-4"

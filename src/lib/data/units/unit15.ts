@@ -57,6 +57,7 @@ export const unit15: UnitData = {
     {
       id: 1,
       word: "cheap",
+      review: true,
       emoji: "💰",
       phonetic: "/tʃiːp/",
       meaning: "rẻ",
@@ -70,6 +71,7 @@ export const unit15: UnitData = {
     {
       id: 2,
       word: "expensive",
+      review: true,
       emoji: "💎",
       phonetic: "/ɪkˈspensɪv/",
       meaning: "đắt tiền",
@@ -96,6 +98,7 @@ export const unit15: UnitData = {
     {
       id: 4,
       word: "discount",
+      review: true,
       emoji: "🏷️",
       phonetic: "/ˈdɪskaʊnt/",
       meaning: "giảm giá",
@@ -109,6 +112,7 @@ export const unit15: UnitData = {
     {
       id: 5,
       word: "receipt",
+      review: true,
       emoji: "🧾",
       phonetic: "/rɪˈsiːt/",
       meaning: "hóa đơn",
@@ -148,6 +152,7 @@ export const unit15: UnitData = {
     {
       id: 8,
       word: "better",
+      review: true,
       emoji: "⬆️",
       phonetic: "/ˈbetər/",
       meaning: "tốt hơn (comparative của good)",

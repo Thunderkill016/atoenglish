@@ -10,6 +10,10 @@ import {
   startZeroPathPilotSession,
   submitZeroPathResponse,
 } from "@/app/actions/zero-path";
+import {
+  RunnerSpeechInput,
+  useSpeechRecognition,
+} from "@/components/learn/runner-shell";
 import type { ZeroPathSessionReadModel } from "@/lib/nep/session-read-model";
 import type { ZeroPathClaimId } from "@/lib/nep/core-evidence-wiring.v1";
 import type {
@@ -17,6 +21,7 @@ import type {
   ZeroPathLessonEnvelope,
 } from "@/lib/nep/zero-path-pilot.v1";
 import { looksEnglish, speakEnglish } from "@/lib/speech";
+import { playUnitAudio } from "@/lib/utils/unit-audio";
 
 const ACTIVITY_LABELS: Record<string, string> = {
   "reading-reception": "Đọc hiểu",
@@ -103,6 +108,9 @@ export function ZeroPathSession({
   );
   const [step, setStep] = useState<StepState>({ phase: "answering" });
   const [response, setResponse] = useState("");
+  const [fallbackText, setFallbackText] = useState("");
+  const { speechSupported, isListening, startRecognition } =
+    useSpeechRecognition();
   const [supportLevel, setSupportLevel] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
@@ -115,6 +123,18 @@ export function ZeroPathSession({
     actionStartedAt.current = Date.now();
     idempotencyKey.current = crypto.randomUUID();
   }, [index]);
+
+  // Listening items play their stimulus once when the action appears — the
+  // evidence claim is recognize_audio, so the learner must hear it, not read
+  // it. The replay button stays available for repeats.
+  useEffect(() => {
+    if (!started) return;
+    const current = lesson.actions[index];
+    if (current?.modality === "listen" && current.prompt) {
+      speakEnglish(current.prompt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per action
+  }, [index, started]);
 
   // Award unit XP once when the summary read model loads. The server derives
   // stars from persisted outcomes — the client only reports "session ended".
@@ -161,6 +181,7 @@ export function ZeroPathSession({
 
   function advance() {
     setResponse("");
+    setFallbackText("");
     setSupportLevel(0);
     setStep({ phase: "answering" });
     if (isLast && sessionId) {
@@ -172,7 +193,10 @@ export function ZeroPathSession({
     }
   }
 
-  async function submit(rawResponse: string) {
+  async function submit(
+    rawResponse: string,
+    source: "speech" | "text" = "text",
+  ) {
     if (!action?.respondable) {
       advance();
       return;
@@ -186,7 +210,7 @@ export function ZeroPathSession({
         actionId: action.actionId,
         idempotencyKey: idempotencyKey.current,
         response: rawResponse,
-        responseSource: rawResponse.trim() ? "text" : null,
+        responseSource: rawResponse.trim() ? source : null,
         supportLevelUsed: supportLevel,
         latencyMs: Math.max(0, Date.now() - actionStartedAt.current),
       });
@@ -267,11 +291,15 @@ export function ZeroPathSession({
 
       <div className="flex-1 space-y-5 py-6">
         <p className="text-xs font-bold uppercase tracking-widest text-primary">
-          {KIND_LABELS[action.kind] ?? action.kind}
+          {action.modality === "listen"
+            ? "Nghe hiểu"
+            : (KIND_LABELS[action.kind] ?? action.kind)}
         </p>
         <h2 className="text-xl font-bold text-foreground">{action.title}</h2>
         <p className="text-sm text-muted-foreground">{action.instruction}</p>
-        {action.prompt ? (
+        {action.modality === "listen" && action.prompt ? (
+          <ListenStimulusCard text={action.prompt} />
+        ) : action.prompt ? (
           <div className="flex items-center justify-between gap-3 rounded-2xl border-2 border-border bg-card px-5 py-4">
             <p className="text-lg font-medium text-foreground">
               {action.prompt}
@@ -280,6 +308,9 @@ export function ZeroPathSession({
               <SpeakerButton text={action.prompt} />
             ) : null}
           </div>
+        ) : null}
+        {action.audioSrc ? (
+          <DialogueAudioButton src={action.audioSrc} model={action.model} />
         ) : null}
         {action.model ? <ModelBlock model={action.model} /> : null}
 
@@ -327,6 +358,17 @@ export function ZeroPathSession({
                 </button>
               ))}
             </div>
+          ) : action.modality === "speech" ||
+            (action.modality === "listen" && action.choices.length === 0) ? (
+            <RunnerSpeechInput
+              speechSupported={speechSupported}
+              isListening={isListening}
+              fallbackText={fallbackText}
+              setFallbackText={setFallbackText}
+              startRecognition={startRecognition}
+              onSubmit={(value, source) => void submit(value, source)}
+              placeholder="Nhập lại câu bạn vừa nói…"
+            />
           ) : (
             <textarea
               value={response}
@@ -380,7 +422,10 @@ export function ZeroPathSession({
             {isLast ? "Xem bằng chứng buổi học" : "Tiếp tục"}
           </button>
         </div>
-      ) : action.respondable && action.choices.length === 0 ? (
+      ) : action.respondable &&
+        action.choices.length === 0 &&
+        action.modality !== "speech" &&
+        action.modality !== "listen" ? (
         <button
           type="button"
           disabled={submitting || !response.trim() || !sessionId}
@@ -418,6 +463,48 @@ function speechTextFor(line: string): string | null {
   const parts = [head, ...(paren && looksEnglish(paren) ? [paren] : [])];
   const spoken = parts.filter(looksEnglish).join(". ");
   return spoken || null;
+}
+
+/** Audio-only stimulus for listen-modality items — the prompt text stays hidden. */
+function ListenStimulusCard({ text }: { text: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border-2 border-primary/40 bg-primary/10 px-5 py-4">
+      <p className="text-base font-semibold text-primary">
+        Nghe câu — bấm để nghe lại
+      </p>
+      <SpeakerButton text={text} />
+    </div>
+  );
+}
+
+/** Plays a dialogue's recorded MP3 when shipped; falls back to TTS on the English lines. */
+function DialogueAudioButton({
+  src,
+  model,
+}: {
+  src: string;
+  model: string | null;
+}) {
+  const spoken = (model ?? "")
+    .split(/\n+/)
+    .map((line) => speechTextFor(line.replace(/^[^:：]{1,24}[:：]\s*/, "")))
+    .filter((line): line is string => Boolean(line))
+    .join(". ");
+  return (
+    <button
+      type="button"
+      disabled={!spoken}
+      onClick={() =>
+        void playUnitAudio({ src, text: spoken }, (t, rate) =>
+          speakEnglish(t, rate),
+        )
+      }
+      className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-primary/40 bg-primary/10 px-5 py-3.5 text-base font-bold text-primary transition hover:bg-primary/20 disabled:opacity-40"
+    >
+      <Volume2 className="size-5" aria-hidden />
+      Nghe hội thoại
+    </button>
+  );
 }
 
 function SpeakerButton({ text }: { text: string }) {

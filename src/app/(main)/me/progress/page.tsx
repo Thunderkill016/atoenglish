@@ -6,6 +6,7 @@ import {
   SecondaryPageShell,
   StatLine,
   ListSection,
+  EmptyState,
 } from "@/components/design-system";
 import { ActivityHeatmap } from "@/components/progress/ActivityHeatmap";
 import { createClient } from "@/lib/supabase/server";
@@ -106,13 +107,24 @@ export default async function ProgressPage() {
       subtitle={`${stats.completedUnits} bài đã hoàn thành${placementDone ? ` · Trình độ đầu vào ${stats.currentLevel}` : ""}`}
     >
       <div className="space-y-5 pb-16 sm:space-y-8">
+        {stats.completedUnits === 0 &&
+          stats.totalCards === 0 &&
+          (stats.totalSpeakingSessions ?? 0) === 0 && (
+            <EmptyState
+              icon={BookOpen}
+              title="Chưa có dữ liệu học tập"
+              description="Số liệu tiến độ sẽ xuất hiện ở đây sau buổi học đầu tiên — bài hoàn thành, từ vựng SRS và buổi luyện nói."
+              actionLabel="Học bài đầu tiên"
+              actionHref="/learn"
+            />
+          )}
         <ListSection title="Tổng quan">
           <div className="rounded-xl border border-border/60 bg-card px-4">
             {placementDone ? (
               <StatLine
-                label="Trình độ đầu vào"
+                label="Mốc trình độ"
                 value={stats.currentLevel}
-                caption="Từ bài kiểm tra đầu vào — không phải thước đo tiến độ"
+                caption="Ước tính từ bài đầu vào và số bài đã hoàn thành — không phải đánh giá CEFR chính thức"
               />
             ) : null}
             <StatLine

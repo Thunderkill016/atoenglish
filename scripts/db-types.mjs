@@ -2,6 +2,7 @@
 // Emits the same shape as `supabase gen types typescript` so the Neon Data API
 // types stay compatible with existing createClient<Database> call sites.
 // Requires DATABASE_URL_UNPOOLED (or DATABASE_URL) in env or .env.local.
+import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { neon } from "@neondatabase/serverless";
 
@@ -260,4 +261,12 @@ ${Object.entries(enumMap).map(([n, ls]) => `      ${ident(n)}: [${ls.map((l) => 
 } as const
 `);
 writeFileSync("src/types/supabase.ts", parts.join("\n") + "\n");
+// The emitted shape isn't the repo's prettier style — normalize in place so
+// a regen only ever shows semantic drift in `git diff` (the verify-db
+// workflow relies on that to flag a stale committed file).
+try {
+  execSync("npx --yes prettier --write src/types/supabase.ts", { stdio: "inherit" });
+} catch {
+  console.warn("prettier formatting failed — committed file may differ stylistically");
+}
 console.log(`Wrote src/types/supabase.ts: ${tables.length} tables, ${functions.length} functions, ${Object.keys(enumMap).length} enums`);

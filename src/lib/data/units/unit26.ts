@@ -194,6 +194,7 @@ export const unit26: UnitData = {
     {
       id: 12,
       word: "negotiate",
+      review: true,
       emoji: "🤝",
       phonetic: "/nɪˈɡəʊʃieɪt/",
       meaning: "đàm phán",

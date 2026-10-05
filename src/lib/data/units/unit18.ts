@@ -200,6 +200,7 @@ export const unit18: UnitData = {
     {
       id: 12,
       word: "fluent",
+      review: true,
       emoji: "🗣️",
       phonetic: "/ˈfluːənt/",
       meaning: "thành thạo / trôi chảy",

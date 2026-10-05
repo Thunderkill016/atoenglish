@@ -1,11 +1,13 @@
 /**
  * Hand-maintained row types for the learning-evidence schema.
  *
- * `src/types/supabase.ts` is generated and currently predates the September
- * learning-evidence migrations — these tables are missing from it, so code
- * was compensating with `as unknown as RpcClient` casts. This module is the
- * honest typed boundary until the generated file is refreshed; keep it in
- * sync with `supabase/migrations/`.
+ * `src/types/supabase.ts` IS regenerated from the live schema (`npm run
+ * db:types`) and does contain these tables/functions — but PostgREST
+ * introspection cannot express function-argument nullability, so generated
+ * RPC Args types mark nullable parameters as required `string`. The narrow
+ * `as unknown as RpcClient` client interfaces at call sites remain the
+ * honest typed boundary for nullable RPC args; keep this file in sync with
+ * `supabase/migrations/`.
  *
  * Row types only — each call site declares the narrow client interface for
  * the exact chained calls it makes (matching existing repo convention).

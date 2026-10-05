@@ -612,21 +612,26 @@ export const unit3: UnitData = {
     {
       id: "cr3-1",
       question:
-        "Chọn dạng đúng: 'She ___ to school every day.' (Unit 2: Present Simple)",
-      options: ["go", "goes", "going", "gone"],
-      answer: "goes",
+        "Chọn câu hỏi đúng: (Ôn lại Unit 2: Wh- Questions)",
+      options: [
+        "What your name is?",
+        "What is your name?",
+        "Your name what is?",
+        "What your is name?",
+      ],
+      answer: "What is your name?",
       type: "multiple-choice",
     },
     {
       id: "cr3-2",
-      question: "Cô ấy đi làm bằng xe buýt mỗi ngày.",
+      question: "Bạn tên gì? (Ôn lại Unit 2: Wh- Questions)",
       options: [],
-      answer: "She goes to work by bus every day.",
+      answer: "What is your name?",
       type: "translate",
     },
     {
       id: "cr3-3",
-      question: "Dịch: 'Tên tôi là Minh.' (Unit 1)",
+      question: "Dịch: 'Tên tôi là Minh.' (Ôn lại Unit 1)",
       options: [],
       answer: "My name is Minh.",
       type: "translate",

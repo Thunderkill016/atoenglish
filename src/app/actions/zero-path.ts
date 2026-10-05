@@ -22,8 +22,9 @@ import {
   startZeroPathSession,
   type ZeroPathSessionLookup,
 } from "@/lib/nep/zero-path-session-store.v1";
-import { completeUnit } from "@/app/actions/unit";
+import { completeUnit } from "@/lib/progress/complete-unit";
 import {
+  compileLegacyUnitContract,
   legacyContractLessonId,
   resolveLegacyContract,
 } from "@/lib/nep/legacy-unit-contract.v1";
@@ -489,6 +490,10 @@ export async function getZeroPathReviewIndex(): Promise<ZeroPathReviewIndex> {
  * the client cannot claim a performance level.
  *
  * - Session must exist, belong to the caller, and match `legacy.<unitSlug>`.
+ * - Every action in the compiled contract must have a non-rejected persisted
+ *   submission — an open-but-unplayed session cannot be claimed as complete.
+ * - Mission lessons and unknown slugs have no compiled contract here; their
+ *   completion only comes through the DB-validated checkpoint path.
  * - Review-mode sessions never re-award unit XP.
  * - Star ratio counts only evaluated outcomes (self-reports and rejected
  *   submissions are ignored); units with no assessed actions award the
@@ -505,6 +510,14 @@ export async function completeZeroPathUnitSession(
     return { success: false, error: "Yêu cầu quá thường xuyên." };
   }
 
+  const contract = compileLegacyUnitContract(unitSlug);
+  if (!contract) {
+    return {
+      success: false,
+      error: "Bài học này hoàn thành qua checkpoint xác nhận.",
+    };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -519,12 +532,27 @@ export async function completeZeroPathUnitSession(
   if (!sessionRow || sessionRow.user_id !== user.id) {
     return { success: false, error: "Phiên không hợp lệ." };
   }
-  if (sessionRow.lesson_id !== legacyContractLessonId(unitSlug)) {
+  if (sessionRow.lesson_id !== contract.id) {
     return { success: false, error: "Phiên không khớp bài học." };
   }
   if (sessionRow.mode !== "learn") return { success: true };
 
   const submissions = await persistence.listSubmissions(sessionId);
+  const completedActionIds = new Set(
+    submissions
+      .filter((row) => row.outcome_kind !== "rejected")
+      .map((row) => row.action_id),
+  );
+  const unfinished = contract.actions.some(
+    (action) => !completedActionIds.has(action.id),
+  );
+  if (unfinished) {
+    return {
+      success: false,
+      error: "Bài học chưa hoàn thành — còn phần chưa trả lời.",
+    };
+  }
+
   const evaluated = submissions.filter((row) =>
     ["attempt-only", "evidence", "invalid-evidence"].includes(row.outcome_kind),
   );

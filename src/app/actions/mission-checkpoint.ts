@@ -111,6 +111,21 @@ export async function claimMissionCheckpoint(input: unknown) {
   }
 
   const trusted = data as TrustedCheckpointResult;
+  // Post-submission reveal: correctness is always returned. The canonical
+  // answer key and explanations return only once the claim has passed —
+  // revealing them on a failed attempt would make the free retry trivially
+  // passable and inflate completion evidence. They never ship in the bundle.
+  const review = mission.checkpoint.questions.map((question) => {
+    const selected = parsed.data.answers[question.id] ?? "";
+    return {
+      questionId: question.id,
+      selected,
+      correct: selected === question.answer,
+      correctAnswer: trusted.passed ? question.answer : null,
+      explanationVi: trusted.passed ? question.explanationVi : null,
+    };
+  });
+
   if (!trusted.passed) {
     return {
       success: true as const,
@@ -119,6 +134,7 @@ export async function claimMissionCheckpoint(input: unknown) {
       totalCount: trusted.total_count,
       masteryRecorded: false,
       reviewTargetsAdded: 0,
+      review,
     };
   }
 
@@ -140,5 +156,6 @@ export async function claimMissionCheckpoint(input: unknown) {
     totalCount: trusted.total_count,
     masteryRecorded: trusted.mastery_recorded,
     reviewTargetsAdded: reviewSeed.success ? reviewSeed.added : 0,
+    review,
   };
 }

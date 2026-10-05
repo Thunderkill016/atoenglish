@@ -166,7 +166,7 @@ export function ReaderClient({
             value={pasted}
             onChange={(event) => setPasted(event.target.value)}
             rows={5}
-            placeholder="Paste an English text here…"
+            placeholder="Dán đoạn văn tiếng Anh vào đây…"
             className="w-full rounded-xl border border-border px-4 py-3 text-sm outline-none focus:border-foreground/40"
           />
           {pasteError ? (

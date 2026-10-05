@@ -58,21 +58,23 @@ describe("learning-flow", () => {
 });
 
 describe("trial checkpoint", () => {
-  it("requires evidence from at least two of three mission-aligned questions", () => {
+  it("requires evidence from every mission-aligned checkpoint question", () => {
     expect(
       scoreTrialCheckpoint({
-        "trial-1": "My name is Lan.",
-        "trial-2": "I work as a designer.",
-        "trial-3": "Nice yesterday.",
+        name: "My name is Lan.",
+        role: "I work as a designer.",
+        "ask-name": "What is your name?",
+        repair: "Could you say that again?",
       }),
-    ).toEqual({ correctCount: 2, passed: true });
+    ).toEqual({ correctCount: 4, passed: true });
 
     expect(
       scoreTrialCheckpoint({
-        "trial-1": "I am fine.",
-        "trial-2": "I work as a designer.",
-        "trial-3": "Nice yesterday.",
+        name: "My name is Lan.",
+        role: "I work as a designer.",
+        "ask-name": "What is your name?",
+        repair: "Nice yesterday.",
       }),
-    ).toEqual({ correctCount: 1, passed: false });
+    ).toEqual({ correctCount: 3, passed: false });
   });
 });

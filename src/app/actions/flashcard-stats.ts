@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rpcService } from "@/lib/supabase/service";
 import {
@@ -158,17 +159,20 @@ export async function recordFlashcardSession(
   if (error) return { success: false, error: error.message };
 
   // Sync user_progress.last_active_date + streak so flashcard-only days
-  // count toward the dashboard streak (best-effort, fire-and-forget)
-  void (async () => {
+  // count toward the dashboard streak. Scheduled via after() so it runs
+  // after the response without blocking it — and, on Workers, is registered
+  // with ctx.waitUntil so it is durable rather than fire-and-forget.
+  after(() =>
     // award_user_xp(0) touches streak + last_active_date only — stat columns
-    // are revoked from the authenticated role (ATO-003).
-    await rpcService("award_user_xp", {
+    // are revoked from the authenticated role (ATO-003). rpcService never
+    // throws; its { data, error } result is intentionally discarded.
+    rpcService("award_user_xp", {
       p_user_id: user.id,
       p_xp_amount: 0,
       p_today: today,
       p_yesterday: yesterday,
-    });
-  })();
+    }),
+  );
 
   return { success: true, stats: data };
 }

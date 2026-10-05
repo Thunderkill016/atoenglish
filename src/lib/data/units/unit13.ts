@@ -734,24 +734,24 @@ export const unit13: UnitData = {
     {
       id: "cr13-1",
       question:
-        "Chọn dạng đúng: 'This hotel is ___ than that one.' (Unit 12: Comparatives)",
-      options: ["more cheap", "cheaper", "cheapest", "cheap"],
-      answer: "cheaper",
+        "Chọn dạng đúng: 'She ___ to work every day.' (Ôn lại Unit 4: Daily Routines)",
+      options: ["go", "goes", "going", "went"],
+      answer: "goes",
       type: "multiple-choice",
     },
     {
       id: "cr13-2",
       question:
-        "Điền từ: 'She ___ emails right now.' (Unit 11: Present Continuous)",
+        "Điền từ: 'He ___ swim very well.' (Ôn lại Unit 10: Abilities)",
       options: [],
-      answer: "is writing",
+      answer: "can",
       type: "cloze",
     },
     {
       id: "cr13-3",
-      question: "Sản phẩm này phổ biến nhất. (Unit 12: Superlative)",
+      question: "Tôi bị đau đầu. (Ôn lại Unit 11: Health & Feelings)",
       options: [],
-      answer: "This product is the most popular.",
+      answer: "I have a headache.",
       type: "translate",
     },
   ],

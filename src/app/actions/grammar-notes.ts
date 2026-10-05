@@ -6,7 +6,7 @@ import {
   createRateLimiter,
   getClientIpFromHeaders,
 } from "@/lib/security/rate-limit";
-import { geminiGenerateUrl } from "@/lib/ai/gemini";
+import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
 import { z } from "zod";
 
 const grammarNoteLimiter = createRateLimiter(10, 60_000, "grammar-notes");
@@ -100,7 +100,7 @@ Requirements:
 - Focus on the specific grammar point, not general advice
 - Appropriate for ${cefr_level} learners`;
 
-    const res = await fetch(geminiGenerateUrl("gemini-2.0-flash", apiKey), {
+    const res = await fetch(geminiGenerateUrl(GEMINI_MODEL, apiKey), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

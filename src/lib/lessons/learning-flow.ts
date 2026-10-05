@@ -3,7 +3,7 @@
  *
  * Evidence base (SDL redesign, unit1.ts):
  * - Nation & Webb 2011: pre-teach vocab before dialogue → lower cognitive load
- * - IPOR: Input → Processing → Output → Review (landing ScienceSection)
+ * - IPOR: Input → Processing → Output → Review
  * - Active recall + FSRS warmup (section 1)
  * - Csikszentmihalyi: ~80% success target in practice/quiz sections
  */

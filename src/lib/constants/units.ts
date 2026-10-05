@@ -110,7 +110,7 @@ const BASE_UNITS: UnitMetadata[] = [
     route: "/learn/unit-1",
     xp: 80,
     estimatedTime: 40,
-    tags: ["Từ vựng +12", "Giao tiếp", "To be"],
+    tags: ["Từ vựng +10", "Giao tiếp", "To be"],
   },
   {
     id: "unit-2",
@@ -381,7 +381,7 @@ const BASE_UNITS: UnitMetadata[] = [
     route: "/learn/unit-27",
     xp: 100,
     estimatedTime: 55,
-    tags: ["Phrasal Verbs +20", "Công sở", "Giao tiếp tự nhiên"],
+    tags: ["Phrasal Verbs +12", "Công sở", "Giao tiếp tự nhiên"],
   },
   {
     id: "unit-28",
@@ -517,7 +517,7 @@ const BASE_UNITS: UnitMetadata[] = [
     route: "/learn/unit-40",
     xp: 120,
     estimatedTime: 60,
-    tags: ["Discourse Markers +30", "Writing Cohesion", "IELTS 6.5"],
+    tags: ["Discourse Markers +8", "Writing Cohesion", "IELTS 6.5"],
   },
   {
     id: "unit-41",
@@ -527,7 +527,7 @@ const BASE_UNITS: UnitMetadata[] = [
     route: "/learn/unit-41",
     xp: 120,
     estimatedTime: 65,
-    tags: ["Academic Vocab +60", "IELTS Topics", "TOEIC Advanced"],
+    tags: ["Academic Vocab +16", "IELTS Topics", "TOEIC Advanced"],
   },
   {
     id: "unit-42",

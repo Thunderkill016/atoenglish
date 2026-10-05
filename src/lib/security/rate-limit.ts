@@ -85,11 +85,22 @@ export class InMemoryRateLimiter {
 
 class InMemoryRateLimiterImpl implements RateLimiter {
   private limiter: InMemoryRateLimiter;
+  private warned = false;
   constructor(limit: number, windowMs: number) {
     this.limiter = new InMemoryRateLimiter(limit, windowMs);
   }
 
   async check(ip: string): Promise<RateLimitResult> {
+    // Per-isolate memory cannot survive Cloudflare isolate fan-out — in
+    // production this means the limiter effectively never trips. Fail
+    // observable (not closed): legitimate traffic still gets best-effort
+    // limiting while the missing UPSTASH/CF-binding config is fixed.
+    if (!this.warned && process.env.NODE_ENV === "production") {
+      this.warned = true;
+      console.error(
+        "[rate-limit] in-memory limiter active in production — effective only within one isolate. Configure UPSTASH_REDIS_REST_* or a Cloudflare binding for distributed limiting.",
+      );
+    }
     return this.limiter.check(ip);
   }
 }
@@ -328,8 +339,10 @@ class UpstashRateLimiterImpl implements RateLimiter {
  * Create a rate limiter.
  * - Uses Upstash Redis in production when UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set.
  * - Falls back to in-memory (single-instance only) for local development.
- * - assertProductionEnv() is checked LAZILY on first .check() call — NOT at module load time.
- *   This prevents Next.js ISR/static generation from throwing during page config collection.
+ * - An in-memory limiter that ends up serving a production request logs a
+ *   one-time error on first .check() — per-isolate counters cannot survive
+ *   Cloudflare isolate fan-out, so that state means limiting is effectively
+ *   off and must be fixed at the platform level.
  *
  * @param requestsPerMinute  Maximum requests allowed per window
  * @param windowMs           Window duration in milliseconds (used for in-memory fallback)
@@ -348,10 +361,10 @@ export function createRateLimiter(
   prefix = "rl",
   cf?: { rateLimit?: string; durableObject?: string },
 ): RateLimiter {
-  // NOTE: assertProductionEnv() intentionally NOT called here.
-  // Calling it at module level would crash Next.js static page generation
-  // (ISR revalidate runs module initializers outside of request context).
-  // The check is deferred to the first actual .check() invocation below.
+  // NOTE: no env validation at construction time — module-level checks would
+  // crash Next.js static page generation (ISR revalidate runs initializers
+  // outside of request context). The production signal fires lazily inside
+  // InMemoryRateLimiterImpl.check() instead.
 
   const isUpstashConfigured =
     typeof process !== "undefined" &&

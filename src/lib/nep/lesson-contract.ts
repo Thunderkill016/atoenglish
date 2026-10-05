@@ -34,6 +34,8 @@ export type LessonAction = {
   modality: LessonModality;
   prompt?: string;
   model?: string;
+  /** Optional recorded audio asset (public path) for context/dialogue blocks. */
+  audioSrc?: string;
   supportVi?: string;
   /**
    * Ordered support rungs (index 0 = level 1). The learner reveals them one at a
@@ -353,7 +355,10 @@ export function qaLesson(lesson: LessonContract): QaIssue[] {
         });
       }
     }
-    if (action.modality === "choice") {
+    // Any action answering by learner-visible choice must satisfy the choice
+    // contract regardless of stimulus modality (listen items hide the prompt
+    // text but still answer by choice).
+    if (action.modality === "choice" || (action.choices ?? []).length > 0) {
       const choices = action.choices ?? [];
       if (choices.length < 2) {
         issues.push({

@@ -102,6 +102,18 @@ function typeAndSubmit(container: HTMLElement, text: string) {
   textarea.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+/** Types then clicks whichever submit the action renders ("Kiểm tra" for text, "Gửi câu vừa nói" for speech). */
+function submitTypedAnswer(container: HTMLElement, text: string) {
+  typeAndSubmit(container, text);
+  const button = [...container.querySelectorAll("button")].find((b) =>
+    ["Kiểm tra", "Gửi câu vừa nói"].some((label) =>
+      b.textContent?.includes(label),
+    ),
+  );
+  expect(button, "submit button").toBeTruthy();
+  button!.click();
+}
+
 describe("ZeroPathSession", () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -143,15 +155,13 @@ describe("ZeroPathSession", () => {
     await flush();
 
     // retrieve: free text.
-    await act(async () => typeAndSubmit(container, "my name is hoang"));
-    clickButton(container, "Kiểm tra");
+    await act(async () => submitTypedAnswer(container, "my name is hoang"));
     await flush();
     clickButton(container, "Tiếp tục");
     await flush();
 
     // produce: free text.
-    await act(async () => typeAndSubmit(container, "my name is hoang"));
-    clickButton(container, "Kiểm tra");
+    await act(async () => submitTypedAnswer(container, "my name is hoang"));
     await flush();
     clickButton(container, "Tiếp tục");
     await flush();
@@ -162,25 +172,22 @@ describe("ZeroPathSession", () => {
 
     // repair: free text with repair signal.
     await act(async () =>
-      typeAndSubmit(container, "sorry could you say that again"),
+      submitTypedAnswer(container, "sorry could you say that again"),
     );
-    clickButton(container, "Kiểm tra");
     await flush();
     clickButton(container, "Tiếp tục");
     await flush();
 
     // retry is attempt-only: respondable (feedback) but mints no evidence.
-    await act(async () => typeAndSubmit(container, "my name is hoang"));
-    clickButton(container, "Kiểm tra");
+    await act(async () => submitTypedAnswer(container, "my name is hoang"));
     await flush();
     clickButton(container, "Tiếp tục");
     await flush();
 
     // transfer: free text.
     await act(async () =>
-      typeAndSubmit(container, "could you say that again my name is hoang"),
+      submitTypedAnswer(container, "could you say that again my name is hoang"),
     );
-    clickButton(container, "Kiểm tra");
     await flush();
     clickButton(container, "Tiếp tục");
     await flush();

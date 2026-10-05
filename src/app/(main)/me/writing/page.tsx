@@ -11,6 +11,7 @@ import {
   RotateCcw,
   ChevronRight,
   BookOpen,
+  Plus,
   BookmarkPlus,
   BookmarkCheck,
   History,
@@ -243,9 +244,10 @@ export default function WriteImprovePage() {
               <button
                 key={i}
                 onClick={() => handlePrompt(p)}
+                aria-label={`Dùng câu mẫu: ${p}`}
                 className="w-full text-left px-3 py-2 rounded-xl bg-white/60 border border-border/60 text-foreground text-sm hover:bg-card hover:border-border transition-colors flex items-center gap-2 group"
               >
-                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                <Plus className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                 <span className="italic">&ldquo;{p}&rdquo;</span>
               </button>
             ))}

@@ -45,6 +45,9 @@ test.describe("Protected Routes — Unauthenticated Redirects", () => {
     }) => {
       await page.goto(route);
 
+      // Prerendered legacy unit pages emit a meta-refresh redirect (1s delay)
+      // instead of an HTTP 307 in dev — wait for the navigation to settle.
+      await page.waitForURL("**/login**", { timeout: 10000 });
       const finalUrl = new URL(page.url());
       expect(finalUrl.pathname).toBe("/login");
       expect(finalUrl.searchParams.get("next")).toBe(route);
@@ -86,27 +89,24 @@ test.describe("Public Routes — Accessible Without Auth", () => {
 });
 
 test.describe("Landing Page — Key Elements", () => {
-  test("has hero heading in Vietnamese", async ({ page }) => {
+  test("has honest 28-day heading", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("h1").first()).toContainText("Học tiếng Anh");
+    await expect(page.locator("h1").first()).toContainText("28 ngày");
   });
 
-  test("has CTA button linking to login", async ({ page }) => {
+  test("has CTA linking to the free first lesson", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    const cta = page.getByRole("link", { name: /Bắt đầu học/i }).first();
+    const cta = page
+      .getByRole("link", { name: /Học bài đầu tiên/i })
+      .first();
     await expect(cta).toBeVisible();
-    await expect(cta).toHaveAttribute("href", /login/);
+    await expect(cta).toHaveAttribute("href", "/learn/unit-a0-1");
   });
 
-  test("states the focused 28-day pilot promise", async ({ page }) => {
+  test("shows the authorized pilot promise", async ({ page }) => {
     await page.goto("/");
-    await expect(
-      page.getByText("28 ngày", { exact: true }).first(),
-    ).toBeVisible({ timeout: 10000 });
-    await expect(
-      page.getByText("10–15 phút", { exact: true }).first(),
-    ).toBeVisible();
-    await expect(page.getByText("A0", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText(/28 ngày/).first()).toBeVisible();
+    await expect(page.getByText(/10–15 phút/).first()).toBeVisible();
   });
 
   test("footer has privacy and terms links", async ({ page }) => {

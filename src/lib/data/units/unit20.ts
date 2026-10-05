@@ -167,6 +167,7 @@ export const unit20: UnitData = {
     {
       id: 9,
       word: "launch",
+      review: true,
       emoji: "🚀",
       phonetic: "/lɔːntʃ/",
       meaning: "ra mắt / khởi động",

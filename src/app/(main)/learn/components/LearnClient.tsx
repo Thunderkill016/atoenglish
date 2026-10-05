@@ -2,8 +2,8 @@
 
 import { BookOpen, CheckCircle, Lock } from "lucide-react";
 import {
+  CollapsibleGroup,
   ContinueCard,
-  ListSection,
   PrimaryRow,
   SecondaryPageShell,
 } from "@/components/design-system";
@@ -60,51 +60,63 @@ export default function LearnClient({
           xp={activeUnit.xp}
         />
 
-        {groups.map((group) => (
-          <ListSection key={group.level} title={group.title}>
-            {group.units.map((unit) => {
-              // Guest locks every unit except the first in catalog order.
-              const index = unitStatuses.indexOf(unit);
-              const isCompleted = completedUnitIds.includes(unit.id);
-              const isGuestLocked = isGuest && index > 0;
+        {groups.map((group) => {
+          const doneCount = group.units.filter((unit) =>
+            completedUnitIds.includes(unit.id),
+          ).length;
+          return (
+            <CollapsibleGroup
+              key={group.level}
+              title={group.title}
+              meta={`${doneCount}/${group.units.length} bài`}
+              defaultOpen={group.units.some(
+                (unit) => unit.id === activeUnit.id,
+              )}
+            >
+              {group.units.map((unit) => {
+                // Guest locks every unit except the first in catalog order.
+                const index = unitStatuses.indexOf(unit);
+                const isCompleted = completedUnitIds.includes(unit.id);
+                const isGuestLocked = isGuest && index > 0;
 
-              if (isGuestLocked) {
+                if (isGuestLocked) {
+                  return (
+                    <div
+                      key={unit.id}
+                      className="flex min-h-[var(--minimal-touch)] items-center gap-3 rounded-lg border border-border/40 bg-muted/30 px-4 py-3 opacity-70"
+                    >
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                        <Lock className="size-4" aria-hidden />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[var(--minimal-body-size)] font-semibold text-muted-foreground">
+                          {unit.title}
+                        </span>
+                        <span className="mt-0.5 block text-[var(--minimal-caption-size)] text-muted-foreground/80">
+                          Đăng nhập sau bài học thử
+                        </span>
+                      </span>
+                    </div>
+                  );
+                }
+
                 return (
-                  <div
+                  <PrimaryRow
                     key={unit.id}
-                    className="flex min-h-[var(--minimal-touch)] items-center gap-3 rounded-lg border border-border/40 bg-muted/30 px-4 py-3 opacity-70"
-                  >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                      <Lock className="size-4" aria-hidden />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[var(--minimal-body-size)] font-semibold text-muted-foreground">
-                        {unit.title}
-                      </span>
-                      <span className="mt-0.5 block text-[var(--minimal-caption-size)] text-muted-foreground/80">
-                        Đăng nhập sau bài học thử
-                      </span>
-                    </span>
-                  </div>
+                    href={unit.route}
+                    label={unit.title}
+                    description={`${isCompleted ? "Hoàn thành" : `${unit.progress}%`} · ${unit.estimatedTime} phút`}
+                    icon={isCompleted ? CheckCircle : BookOpen}
+                  />
                 );
-              }
-
-              return (
-                <PrimaryRow
-                  key={unit.id}
-                  href={unit.route}
-                  label={unit.title}
-                  description={`${isCompleted ? "Hoàn thành" : `${unit.progress}%`} · ${unit.estimatedTime} phút`}
-                  icon={isCompleted ? CheckCircle : BookOpen}
-                />
-              );
-            })}
-          </ListSection>
-        ))}
+              })}
+            </CollapsibleGroup>
+          );
+        })}
 
         <p className="px-1 text-[var(--minimal-caption-size)] text-muted-foreground/80">
-          Phần nói &amp; nghe trong bài hiện là tự luyện — chưa được chấm tự
-          động. Kết quả ghi nhận dựa trên phần đọc, chọn và gõ.
+          Phần nghe dùng giọng đọc tổng hợp và được chấm theo câu trả lời. Phần
+          nói là tự luyện — nói bằng micro hoặc gõ — chưa được chấm phát âm.
         </p>
       </div>
     </SecondaryPageShell>

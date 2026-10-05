@@ -96,6 +96,19 @@ export interface MissionSpecV1 {
   transferVariants: MissionTransferVariant[];
 }
 
+/**
+ * Learner-facing mission view — the checkpoint answer key and explanations
+ * never enter the client bundle. Correctness data reaches the client only
+ * post-submit through `claimMissionCheckpoint`/`revealTrialCheckpointAnswer`.
+ * If the spec ever gains another secret-bearing field, strip it here too.
+ */
+export type MissionLearnerSpecV1 = Omit<MissionSpecV1, "checkpoint">;
+
+export function toLearnerMission(mission: MissionSpecV1): MissionLearnerSpecV1 {
+  const { checkpoint: _checkpoint, ...learnerMission } = mission;
+  return learnerMission;
+}
+
 export function validateMissionSpec(mission: MissionSpecV1): string[] {
   const failures: string[] = [];
   const intentIds = new Set(mission.intents.map((intent) => intent.id));
@@ -121,7 +134,9 @@ export function validateMissionSpec(mission: MissionSpecV1): string[] {
   if (!mission.intents.some((intent) => intent.required)) {
     failures.push("missing_required_intent");
   }
-  if (!mission.intents.some((intent) => intent.required && intent.interactional)) {
+  if (
+    !mission.intents.some((intent) => intent.required && intent.interactional)
+  ) {
     failures.push("missing_interactional_intent");
   }
   if (
@@ -170,9 +185,7 @@ export function validateMissionSpec(mission: MissionSpecV1): string[] {
   if (!mission.retry.requiredAfterFeedback) {
     failures.push("retry_must_follow_feedback");
   }
-  if (
-    !mission.review.transferAfterDays.every((day) => transferDays.has(day))
-  ) {
+  if (!mission.review.transferAfterDays.every((day) => transferDays.has(day))) {
     failures.push("missing_transfer_window");
   }
   if (

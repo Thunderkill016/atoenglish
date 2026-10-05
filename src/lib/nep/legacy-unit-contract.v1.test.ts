@@ -165,6 +165,33 @@ describe("legacy contract lint (coverage report)", () => {
     }
   });
 
+  it("labels recycled vocabulary as review — never as new items", () => {
+    // unit-15 re-teaches cheap/expensive/discount/receipt (unit-7) and
+    // better (unit-11): spaced recycling is correct, but presenting them as
+    // "Từ vựng mới" would lie about novelty.
+    const contract = compileLegacyUnitContract("unit-15")!;
+    const reviewWords = ["cheap", "expensive", "discount", "receipt", "better"];
+    for (const word of reviewWords) {
+      expect(contract.newItems).not.toContain(word);
+      expect(contract.reviewTargets).toContain(word);
+    }
+    const reviewActions = contract.actions.filter((action) =>
+      action.id.startsWith("notice-review-vocab-"),
+    );
+    expect(reviewActions.length).toBeGreaterThan(0);
+    for (const action of reviewActions) {
+      expect(action.title).toBe("Ôn lại từ đã học");
+      expect(action.model).not.toBe("");
+    }
+    const newVocabModel = contract.actions
+      .filter((action) => action.id.startsWith("notice-vocab-"))
+      .map((action) => action.model ?? "")
+      .join("\n");
+    for (const word of reviewWords) {
+      expect(newVocabModel).not.toMatch(new RegExp(`^${word} —`, "m"));
+    }
+  });
+
   it("declares prerequisites from the authored next-chain only", () => {
     const unit1 = compileLegacyUnitContract("unit-1")!;
     expect(unit1.prerequisites).toEqual(["legacy.unit-a0-8"]);
@@ -264,6 +291,130 @@ describe("legacy HTML markup hygiene", () => {
         }
       }
     }
+  });
+});
+
+describe("compiled listening and speech surfaces", () => {
+  it("listenAndChoose compiles to listen-modality recognition, not reading", () => {
+    const contract = compileLegacyUnitContract("unit-1")!;
+    const listen = contract.actions.filter(
+      (action) => action.modality === "listen" && action.kind === "comprehend",
+    );
+    expect(listen.length).toBeGreaterThan(0);
+    for (const action of listen) {
+      expect(action.kind).toBe("comprehend");
+      expect(action.assessment?.evidenceType).toBe("recognition");
+      // Hidden stimulus text stays in the contract as TTS input + eval key.
+      expect(action.prompt?.length).toBeGreaterThan(0);
+      // The widened choice contract applies: answer present among choices.
+      const choices = (action.choices ?? []).map((choice) =>
+        choice.trim().toLowerCase(),
+      );
+      expect(choices).toContain(action.targetSignals![0].trim().toLowerCase());
+    }
+  });
+
+  it("a listen attempt mints listening-reception evidence, not reading", async () => {
+    const { createZeroPathSession } = await import("./session-runner.v1");
+    const contract = compileLegacyUnitContract("unit-1")!;
+    const listen = contract.actions.find(
+      (action) =>
+        action.modality === "listen" &&
+        action.kind === "comprehend" &&
+        action.assessment,
+    )!;
+    const runner = createZeroPathSession({ sessionId: "listen-evidence" });
+    const outcome = runner.recordSubmission({
+      lessonId: contract.id,
+      lessonVersion: 1,
+      actionId: listen.id,
+      idempotencyKey: "listen-key-1",
+      response: listen.targetSignals![0],
+      responseSource: "text",
+      supportLevelUsed: 0,
+      latencyMs: 900,
+    });
+    // The same recognition evidenceType binds to the audio claim when the
+    // stimulus modality is listen — never the reading claim.
+    expect(outcome).toMatchObject({
+      kind: "evidence",
+      claim: "recognize_audio",
+      evidence: {
+        targetId: "nep.en.v1.communication-activity.listening-reception",
+      },
+    });
+  });
+
+  it("self-report speaking prompts compile to speech modality, still unassessed", () => {
+    const contract = compileLegacyUnitContract("unit-1")!;
+    const speak = contract.actions.filter((action) =>
+      action.id.startsWith("speak-"),
+    );
+    expect(speak.length).toBeGreaterThan(0);
+    for (const action of speak) {
+      expect(action.kind).toBe("produce");
+      expect(action.modality).toBe("speech");
+      // Self-report practice captures the attempt but mints no evidence —
+      // speech input ≠ pronunciation assessment.
+      expect(action.collectsResponse).toBe(true);
+      expect(action.assessment).toBeUndefined();
+    }
+  });
+
+  it("listen-and-repeat compiles a bounded assessed spoken task", async () => {
+    const { createZeroPathSession } = await import("./session-runner.v1");
+    const contract = compileLegacyUnitContract("unit-1")!;
+    const echo = contract.actions.filter((action) =>
+      action.id.startsWith("echo-"),
+    );
+    expect(echo.length).toBeGreaterThan(0);
+    expect(echo.length).toBeLessThanOrEqual(2);
+    for (const action of echo) {
+      // Reproducing a heard form is retrieval evidence, not free production.
+      expect(action.kind).toBe("retrieve");
+      expect(action.modality).toBe("listen");
+      // Hidden audio stimulus = the repeat target.
+      expect(action.prompt).toBe(action.targetSignals![0]);
+      expect(action.assessment?.evidenceType).toBe("retrieval");
+    }
+
+    // A spoken echo that reproduces the sentence mints spoken retrieval
+    // evidence — the first assessed spoken channel in compiled units.
+    const runner = createZeroPathSession({ sessionId: "echo-evidence" });
+    const outcome = runner.recordSubmission({
+      lessonId: contract.id,
+      lessonVersion: 1,
+      actionId: echo[0].id,
+      idempotencyKey: "echo-key-1",
+      response: echo[0].targetSignals![0],
+      responseSource: "speech",
+      supportLevelUsed: 0,
+      latencyMs: 1500,
+    });
+    expect(outcome).toMatchObject({
+      kind: "evidence",
+      claim: "retrieve_form",
+      evidence: {
+        targetId: "nep.en.v1.communication-activity.spoken-production",
+      },
+    });
+  });
+
+  it("dialogue context actions carry the recorded audio asset", () => {
+    const contract = compileLegacyUnitContract("unit-1")!;
+    const dialogueContexts = contract.actions.filter(
+      (action) => action.audioSrc,
+    );
+    expect(dialogueContexts.length).toBeGreaterThan(0);
+    for (const action of dialogueContexts) {
+      expect(action.audioSrc).toMatch(/^\/audio\/unit-1\/.+\.mp3$/);
+    }
+  });
+
+  it("envelope exposes audioSrc to the learner surface", () => {
+    const envelope = zeroPathLessonEnvelope("legacy.unit-1")!;
+    const withAudio = envelope.actions.filter((action) => action.audioSrc);
+    expect(withAudio.length).toBeGreaterThan(0);
   });
 });
 
