@@ -69,6 +69,15 @@ export async function updateSession(request: NextRequest) {
   );
 
   if (result.action === "redirect_oauth") {
+    // Neon managed OAuth returns the user to the trusted-domain root with the
+    // verifier (the configured callbackURL path is not preserved upstream), so
+    // post-exchange the redirect target is "/". Landing a freshly-authenticated
+    // user there skips onboarding seeding and leaves them on the marketing
+    // page — route them through /auth/callback so user_progress is seeded and
+    // the destination contract (/learn or the onboarding path) still applies.
+    if (result.redirectUrl.pathname === "/") {
+      result.redirectUrl.pathname = "/auth/callback";
+    }
     return appendCookies(
       NextResponse.redirect(result.redirectUrl),
       result.cookies,
