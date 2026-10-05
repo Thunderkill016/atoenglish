@@ -5,10 +5,10 @@
 
 ## Supported Versions
 
-| Version | Supported |
-|---------|-----------|
-| Latest (main branch) | ✅ |
-| Older releases | ❌ |
+| Version              | Supported |
+| -------------------- | --------- |
+| Latest (main branch) | ✅        |
+| Older releases       | ❌        |
 
 ## Reporting a Vulnerability
 
@@ -24,23 +24,31 @@ Chúng tôi sẽ phản hồi trong vòng **48 giờ** và cố gắng vá lỗi
 ## Security Architecture
 
 ### Authentication
+
 - **Neon Managed Auth (Better Auth)**: Google OAuth 2.0 + Email/Password
 - Session tokens lưu trong httpOnly cookies (không accessible từ JS)
-- Middleware guard tất cả routes `/(main)/*`
+- `src/proxy.ts` guard tất cả routes; `/login`, `/auth/*`, `/api/auth/*` được rate-limit riêng
 
 ### Database
-- **Row Level Security (RLS)** bật trên tất cả tables
+
+- **Row Level Security (RLS)** bật trên tất cả tables (Neon Postgres)
 - Policy pattern: `(select auth.uid()) = user_id`
+- Write operations vào bảng điểm/level (`user_progress`, `user_lesson_progress`) chỉ qua RPC có guard `auth_uid()` — client không thể tự forge XP/level/streak
+- Zero Path guest sessions dùng capability-secret model (HttpOnly cookie + server-side hash), không đếm được/tamper được session của người khác
 - Không có route nào expose raw SQL
 
 ### Rate Limiting
-- Server Actions có write operations đều có rate limiting (Upstash Redis)
+
+- Auth endpoints (`/login`, `/auth/*`, `/api/auth/*`): **30 req/60s per client IP**, enforced bởi `AuthRateLimiterDO` (Durable Object — strict per-key counting), key lấy từ `cf-connecting-ip` (không spoof được qua X-Forwarded-For)
+- Server Actions có write operations đều có rate limiting (Upstash Redis khi configured, in-memory cho local dev)
 - `completeUnit`: 10 lần/giờ/IP
 - `saveCardToSRS`: 60 lần/phút/IP
 - `reviewCard`: 120 lần/phút/IP
 
 ### HTTP Security Headers
+
 Tất cả routes có các headers:
+
 - `Content-Security-Policy` (CSP) — whitelist chỉ trusted domains
 - `Strict-Transport-Security` — HSTS với `max-age=63072000; preload`
 - `X-Frame-Options: DENY` — chống clickjacking
@@ -50,10 +58,12 @@ Tất cả routes có các headers:
 - `Permissions-Policy`: tắt camera, chỉ cho microphone (self)
 
 ### Input Validation
+
 - Tất cả Server Actions validate input với **Zod schemas**
 - Không có raw string interpolation trong SQL queries
 - User IDs luôn lấy từ server-side auth session — không nhận từ client
 
 ### Dependency Security
+
 - `npm audit` chạy trong CI pipeline
 - Dependencies được review định kỳ
