@@ -1,6 +1,6 @@
 # AtoEnglish — Current Project State
 
-**Effective:** 2026-10-05 (direction pivot: IELTS 0→9.0)  
+**Effective:** 2026-10-06 (owner decision: free practical English from zero to B2/C1)  
 **Project:** AtoEnglish
 
 ## Current state
@@ -11,41 +11,45 @@ Existing features, curriculum, branches, historical plans, experiments and R&D r
 
 ## Single active direction
 
-Build **AtoEnglish as a personal IELTS-preparation web product for one learner (Hoàng), covering the full 0→9.0 journey** — owner decision 2026-10-05, replacing the previous generic CEFR-standards direction.
+**Owner decision — 2026-10-06, Asia/Ho_Chi_Minh:** replace the IELTS-first 0→9.0 direction with a **free personal English-learning web product for Hoàng, starting from zero and progressing towards practical B2 proficiency across listening, speaking, reading, writing and real interaction, with C1 / approximately IELTS 7.0 as the subsequent stretch target**.
 
-The curriculum follows the four-stage map in `docs/missions/003-vocab-spine-content/IELTS-0-to-9-research.md`:
+The owner explicitly requested a website that helps him learn for free from the beginning until he can communicate naturally with foreigners. IELTS is a reference and an optional later assessment/preparation track inside this same program; it is no longer the curriculum spine. There is exactly one program, not separate competing general-English and IELTS roadmaps.
 
-1. **Foundation (A0–A2, band 0–3.5)** — no IELTS format yet. Core vocabulary via the gated spine, foundation grammar, slow→natural listening, graded reading, sentence→paragraph writing, pronunciation (final consonants, word stress — the documented Vietnamese-learner profile). *This is the current active stage; the M0/M1 vocab-spine + real-material content pipeline serves it directly.*
-2. **IELTS Bridge (B1, band 4.0–5.0)** — teach each IELTS question type with worked examples; Listening Part 1–2, Reading Section 1; Task 1 vocab (trends/comparison) + letter structures; Speaking Part 1–2.
-3. **IELTS Core (B2, band 5.5–6.5)** — timed full sections; Listening Part 3–4, Academic Passage 2–3; all Task 1 types + 5 Task 2 types; Speaking Part 3; error journal per question type; fight the 5.5–6.0 plateau (error-free sentences, flexible cohesion, developed ideas).
-4. **IELTS Mastery (C1, band 7.0–8.0+)** — timed full mocks; band-descriptor feedback; less-common vocabulary + collocation; paraphrase drills; AI scoring shown **as a range, never a single number** (AI scoring MAE ≈ 0.66 band per research).
+B2 and IELTS 7.0 are not identical. IELTS/CEFR comparison is approximate, and skill profiles can differ. Do not infer an IELTS band from lesson completion or assign the learner one overall level from vocabulary coverage.
 
-The current reference foundation is:
+### Curriculum sequence
 
-- IELTS official sources — ielts.org format/scoring, public band descriptors, Cambridge practice materials;
-- Council of Europe — CEFR Companion Volume and action-oriented language education guidance;
-- Council of Europe / ALTE — language test development and examining guidance;
-- British Council — lesson planning and course-planning guidance;
-- official technical standards only where implementation requires them, such as W3C accessibility guidance and browser/platform documentation.
+1. **Pre-A1 → A1:** sound–meaning connections, high-frequency language, short understandable conversations, greetings/personal details, numbers and everyday requests; Vietnamese scaffolding; short reading and sentence writing.
+2. **A1 → A2:** routine situations, shopping/travel/directions, daily life, short messages, short connected speech and comprehension at increasing speed.
+3. **A2 → B1:** narratives, plans, explanations, opinions, conversational repair, sustained familiar-topic interaction and connected writing.
+4. **B1 → B2:** spontaneous interaction, supporting opinions, varied speakers and accents, longer authentic reading/listening, coherent detailed writing and unfamiliar-context transfer.
+5. **B2 → C1:** nuanced expression, complex material, longer discussions and precise writing; optional IELTS format practice to verify the relevant exam goal.
 
-Honest-measurement rules baked into the direction (from the IELTS research):
+These are design targets, not attained-level claims. The bounded recovery task, including the first foundation sequence, is [Mission 004](../missions/004-free-english-recovery/TASK_CONTRACT.md). Later-stage material must show coverage and readiness honestly; do not present unimplemented lessons as available.
 
-- Listening/Reading scores use official raw→band conversion tables; Writing/Speaking AI scores always display as a **range with confidence**, never a single number;
-- pronunciation targets intelligibility, not accent elimination (Band 8 descriptor: "L1 accent has minimal effect");
-- most study time goes to real proficiency, not test tricks — the "IELTS trap" (templates without ability) is a documented failure mode;
-- no score claims the system cannot measure.
+### Free-use requirement
+
+Core learning must not require paid courses, a paid AI subscription, API credits, or a paid speech evaluator. Optional AI assistance must have a usable free fallback. Report hosting/storage/service limits separately; do not promise infinite free infrastructure. Retain the existing Cloudflare/Neon stack unless a concrete blocker requires a separately justified change.
+
+### Learning and measurement requirements
+
+- Use meaningful communicative outcomes and free source material suited to each stage; official CEFR descriptors guide outcomes, not a fixed lesson count.
+- Each sequence integrates reception, production and interaction; vocabulary/grammar/pronunciation serve those outcomes.
+- Teach → guided use → feedback/repair → unaided attempt → delayed review → a fresh context.
+- Introduced vocabulary is not known vocabulary. Track exposure, supported performance and independent performance separately.
+- Listening/reading performance, self-review, recorded speech and AI suggestions have different evidential strength. Do not invent mastery or CEFR/IELTS scores.
+- Genuine human interaction is part of transfer practice: the web supplies prompts, preparation and reflection; a scripted roleplay cannot establish natural live conversation.
+- No promise of a fixed time to fluency or a guaranteed exam score.
 
 ## Minimum active product surface
 
-Only the following areas are active product scope:
+1. One coherent Pre-A1→B2→C1 curriculum and a clear daily next action.
+2. Source-backed lessons with usable audio, Vietnamese support, listening, reading, speaking, writing and interaction.
+3. Explanatory feedback, error repair and fresh-task checks.
+4. Learner-data integrity, review and progression based on observed performance.
+5. Authentication, accessibility, security and release reliability needed to use the product.
 
-1. curriculum and learning outcomes mapped to the four-stage IELTS map (CEFR bands as the scale);
-2. lesson delivery for reading, listening, speaking, writing and interaction — the gated 5-phase flow (goal_setting → observe_learn → guided_practice → prove → lock_in) built from real source materials, with IELTS-format tasks entering from the Bridge stage;
-3. practice and assessment that produce honest evidence of learner performance;
-4. progression/review needed to retain and reuse learned language, including SRS where it directly serves retention;
-5. authentication, learner-data integrity, accessibility, security and release reliability required to operate the learning product.
-
-Everything else must justify itself against one of these five areas. Existing code is not sufficient justification.
+Recovery delivery is **one usable foundation lesson inside a mapped full journey**, followed by expansion after real learner feedback. Documents, YAML, synthetic tests and green CI do not substitute for the working lesson.
 
 ## Explicitly closed / non-core scope
 
@@ -117,6 +121,6 @@ Issue #152's release invariant is unchanged: **production must be traceable to a
 
 ## Active work
 
-There is no inherited product roadmap or parallel workstream. Work selection must stay inside the single active direction and minimum active product surface above.
+The owner authorized Mission 004 on 2026-10-06: reconcile the direction, map the full journey, audit the existing learner flow, and deliver one integrated foundation lesson. See [the task contract](../missions/004-free-english-recovery/TASK_CONTRACT.md).
 
-When no explicit bounded task exists inside that direction, stop rather than manufacture one.
+Mission 003 remains historical implementation input. Its content-only scope, mandatory approvals for each blueprint, and audio/player deferral do not govern Mission 004. Reuse useful work; do not continue a competing IELTS-first or content-only workstream.
