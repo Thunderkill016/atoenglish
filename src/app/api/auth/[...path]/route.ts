@@ -19,9 +19,11 @@ const authRateLimiter = createRateLimiter(
 type RouteContext = { params: Promise<{ path: string[] }> };
 
 async function handle(request: NextRequest, context: RouteContext) {
-  const { success, limit, remaining, resetTime } = await authRateLimiter.check(
-    getClientIp(request),
-  );
+  const { success, limit, remaining, resetTime, backend } =
+    await authRateLimiter.check(getClientIp(request));
+  const backendHeader: Record<string, string> = backend
+    ? { "X-RateLimit-Backend": backend }
+    : {};
   if (!success) {
     return new NextResponse(
       "Too Many Requests. Bạn đã gửi quá nhiều yêu cầu. Vui lòng đợi và thử lại sau.",
@@ -32,6 +34,7 @@ async function handle(request: NextRequest, context: RouteContext) {
           "X-RateLimit-Limit": limit.toString(),
           "X-RateLimit-Remaining": remaining.toString(),
           "X-RateLimit-Reset": resetTime.toString(),
+          ...backendHeader,
         },
       },
     );
@@ -42,10 +45,17 @@ async function handle(request: NextRequest, context: RouteContext) {
     string,
     (req: NextRequest, ctx: RouteContext) => Promise<Response>
   >;
-  return (
-    handlers[request.method]?.(request, context) ??
-    new Response(null, { status: 405 })
-  );
+  const response =
+    (await handlers[request.method]?.(request, context)) ??
+    new Response(null, { status: 405 });
+  if (!backend) return response;
+  const headers = new Headers(response.headers);
+  headers.set("X-RateLimit-Backend", backend);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 export const GET = handle;
