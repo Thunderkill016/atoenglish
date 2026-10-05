@@ -31,7 +31,7 @@ export function MobileMenuButton() {
     <button
       onClick={() => setOpen(!open)}
       aria-label={open ? "Đóng menu" : "Mở menu"}
-      className="md:hidden flex items-center justify-center size-9 rounded-xl hover:bg-muted text-foreground transition-colors duration-200"
+      className="flex size-9 items-center justify-center rounded-xl text-nb-ink transition-colors duration-200 hover:bg-nb-paper-deep md:hidden"
     >
       {open ? <X className="size-5" /> : <Menu className="size-5" />}
     </button>
@@ -49,7 +49,7 @@ export function MobileMenu() {
 
   return (
     <div
-      className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out border-t border-border/40 bg-white/95 backdrop-blur-md ${
+      className={`overflow-hidden border-t border-dashed border-nb-hairline bg-nb-surface transition-all duration-300 ease-in-out md:hidden ${
         open ? "max-h-64 opacity-100" : "max-h-0 opacity-0"
       }`}
     >
@@ -59,16 +59,16 @@ export function MobileMenu() {
             key={link.href}
             href={link.href}
             onClick={() => setOpen(false)}
-            className="flex items-center h-11 px-3 rounded-xl text-sm font-bold text-foreground hover:text-primary hover:bg-card transition-all duration-200"
+            className="flex h-11 items-center rounded-xl px-3 text-sm font-bold text-nb-ink transition-colors duration-200 hover:bg-nb-paper-deep hover:text-nb-primary"
           >
             {link.label}
           </a>
         ))}
-        <div className="border-t border-border/40 my-1" />
+        <div className="my-1 border-t border-dashed border-nb-hairline" />
         <Link
           href="/login?mode=login"
           onClick={() => setOpen(false)}
-          className="flex items-center h-11 px-3 rounded-xl text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-card transition-all duration-200"
+          className="flex h-11 items-center rounded-xl px-3 text-sm font-semibold text-nb-muted transition-colors duration-200 hover:bg-nb-paper-deep hover:text-nb-ink"
         >
           Đăng nhập
         </Link>
