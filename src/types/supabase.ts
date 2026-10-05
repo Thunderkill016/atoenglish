@@ -1385,10 +1385,6 @@ export type Database = {
         Args: {};
         Returns: string;
       };
-      diag_claims: {
-        Args: {};
-        Returns: Json;
-      };
       digest: {
         Args: {};
         Returns: string;
