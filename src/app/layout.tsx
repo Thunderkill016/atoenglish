@@ -10,7 +10,7 @@ import "./globals.css";
 
 const sansFont = Plus_Jakarta_Sans({
   subsets: ["latin", "vietnamese"],
-  variable: "--font-sans",
+  variable: "--font-jakarta",
   display: "swap",
 });
 

@@ -5,18 +5,19 @@ test.describe("Landing Page", () => {
     await page.goto("/");
   });
 
-  test("renders placeholder headline", async ({ page }) => {
+  test("renders honest 28-day headline", async ({ page }) => {
     await expect(page).toHaveTitle(/AtoEnglish/);
     await expect(
-      page.getByRole("heading", { level: 1, name: "AtoEnglish" }),
+      page.getByRole("heading", { level: 1, name: /28 ngày/ }),
     ).toBeVisible();
-    await expect(page.getByText("đang được cập nhật")).toBeVisible();
   });
 
-  test("has Start Learning CTA button", async ({ page }) => {
-    const cta = page.getByRole("link", { name: /Bắt đầu học/i }).first();
+  test("primary CTA opens the free first lesson", async ({ page }) => {
+    const cta = page
+      .getByRole("link", { name: /Học bài đầu tiên/i })
+      .first();
     await expect(cta).toBeVisible();
-    await expect(cta).toHaveAttribute("href", /login/);
+    await expect(cta).toHaveAttribute("href", "/learn/unit-a0-1");
   });
 
   test("has navigation with logo", async ({ page }) => {
@@ -24,11 +25,11 @@ test.describe("Landing Page", () => {
     await expect(page.locator("nav").getByText("AtoEnglish")).toBeVisible();
   });
 
-  test("has no marketing sections while placeholder is active", async ({
-    page,
-  }) => {
-    await expect(page.locator("text=Open Beta")).toHaveCount(0);
-    await expect(page.locator("text=28 ngày")).toHaveCount(0);
+  test("shows the honest 28-day scope section", async ({ page }) => {
+    await expect(
+      page.getByRole("heading", { name: /28 ngày nói được gì/i }),
+    ).toBeVisible();
+    await expect(page.getByText(/28 ngày không làm được/)).toBeVisible();
   });
 
   test("footer has links to privacy and terms", async ({ page }) => {

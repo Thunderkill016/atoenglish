@@ -129,7 +129,7 @@ test.describe("Public accessibility smoke", () => {
     await expect(page.locator("html")).toHaveAttribute("lang", "vi");
     await expect(page.locator("main#main-content")).toBeVisible();
     await expect(
-      page.getByRole("heading", { level: 1, name: "AtoEnglish" }),
+      page.getByRole("heading", { level: 1 }),
     ).toHaveCount(1);
     await expect(page.getByRole("navigation")).toBeVisible();
     await expect(page.getByRole("contentinfo")).toBeVisible();
@@ -171,7 +171,7 @@ test.describe("Public accessibility smoke", () => {
       dimensions.clientWidth + 2,
     );
     await expect(
-      page.getByRole("link", { name: /Bắt đầu học/i }),
+      page.getByRole("link", { name: /Học bài đầu tiên/i }).first(),
     ).toBeVisible();
   });
 });
