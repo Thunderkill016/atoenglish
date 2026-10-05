@@ -148,7 +148,7 @@ export default function LandingPage() {
               Xem bài học
             </Link>
             <Link
-              href="/login"
+              href="/login?mode=login"
               prefetch={false}
               className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-bold text-white shadow-sm shadow-primary/20 transition-transform hover:scale-[1.03] active:scale-[0.98]"
             >
