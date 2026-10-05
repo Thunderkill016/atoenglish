@@ -83,6 +83,83 @@ class InMemoryRateLimiterImpl implements RateLimiter {
   }
 }
 
+// ─── Cloudflare Workers native rate-limit binding (production) ────────────────
+
+/**
+ * Shape of the Workers `rate-limit` binding (env.AUTH_RATE_LIMITER etc).
+ * `.limit()` counts + decides atomically on the edge — works across isolates,
+ * unlike the in-memory Map which resets per isolate and therefore never trips
+ * under real Cloudflare request fan-out.
+ */
+interface WorkersRateLimitBinding {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
+export class WorkersRateLimiterImpl implements RateLimiter {
+  constructor(
+    private binding: WorkersRateLimitBinding,
+    private requestsPerWindow: number,
+    private windowMs: number,
+    private fallback: RateLimiter,
+  ) {}
+
+  async check(ip: string): Promise<RateLimitResult> {
+    try {
+      const { success } = await this.binding.limit({ key: ip });
+      return {
+        success,
+        limit: this.requestsPerWindow,
+        // The native binding doesn't expose remaining/reset — approximate
+        // from our own config so 429 headers stay sensible.
+        remaining: success ? 1 : 0,
+        resetTime: Date.now() + this.windowMs,
+      };
+    } catch {
+      // Binding unreachable — degrade to the configured fallback limiter
+      // rather than failing open entirely.
+      return this.fallback.check(ip);
+    }
+  }
+}
+
+class BindingResolvingRateLimiter implements RateLimiter {
+  private resolved: Promise<RateLimiter> | null = null;
+
+  constructor(
+    private bindingName: string,
+    private requestsPerWindow: number,
+    private windowMs: number,
+    private fallback: RateLimiter,
+  ) {}
+
+  private resolve(): Promise<RateLimiter> {
+    this.resolved ??= (async () => {
+      const cfModuleSpecifier = "cloudflare:workers";
+      const mod = (await import(
+        /* webpackIgnore: true */ cfModuleSpecifier
+      ).catch(() => null)) as { env?: Record<string, unknown> } | null;
+      const binding = mod?.env?.[this.bindingName];
+      if (
+        binding &&
+        typeof (binding as WorkersRateLimitBinding).limit === "function"
+      ) {
+        return new WorkersRateLimiterImpl(
+          binding as WorkersRateLimitBinding,
+          this.requestsPerWindow,
+          this.windowMs,
+          this.fallback,
+        );
+      }
+      return this.fallback;
+    })();
+    return this.resolved;
+  }
+
+  async check(ip: string): Promise<RateLimitResult> {
+    return (await this.resolve()).check(ip);
+  }
+}
+
 // ─── Upstash Redis Rate Limiter (production) ──────────────────────────────────
 
 class UpstashRateLimiterImpl implements RateLimiter {
@@ -146,11 +223,16 @@ class UpstashRateLimiterImpl implements RateLimiter {
  * @param requestsPerMinute  Maximum requests allowed per window
  * @param windowMs           Window duration in milliseconds (used for in-memory fallback)
  * @param prefix             Upstash key prefix (use unique value per limiter)
+ * @param cfBinding          Optional Workers `rate-limit` binding name (e.g.
+ *                           "AUTH_RATE_LIMITER"). When the binding exists on
+ *                           env it wins over Upstash/in-memory — it's the only
+ *                           counter that actually persists across isolates.
  */
 export function createRateLimiter(
   requestsPerMinute: number,
   windowMs: number,
   prefix = "rl",
+  cfBinding?: string,
 ): RateLimiter {
   // NOTE: assertProductionEnv() intentionally NOT called here.
   // Calling it at module level would crash Next.js static page generation
@@ -162,15 +244,25 @@ export function createRateLimiter(
     !!process.env.UPSTASH_REDIS_REST_URL &&
     !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  if (isUpstashConfigured) {
-    const windowSeconds = Math.round(windowMs / 1000);
-    return new UpstashRateLimiterImpl(requestsPerMinute, windowSeconds, prefix);
-  }
+  const fallback: RateLimiter = isUpstashConfigured
+    ? new UpstashRateLimiterImpl(
+        requestsPerMinute,
+        Math.round(windowMs / 1000),
+        prefix,
+      )
+    : // In-memory is per-isolate — correct locally, ineffective under real
+      // Cloudflare isolate fan-out. That's why the cf binding wins when set.
+      new InMemoryRateLimiterImpl(requestsPerMinute, windowMs);
 
-  // Fallback: in-memory limiter (dev or production without Upstash configured).
-  // In production, add UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to production env vars
-  // to enable distributed Redis-backed rate limiting.
-  return new InMemoryRateLimiterImpl(requestsPerMinute, windowMs);
+  if (cfBinding) {
+    return new BindingResolvingRateLimiter(
+      cfBinding,
+      requestsPerMinute,
+      windowMs,
+      fallback,
+    );
+  }
+  return fallback;
 }
 
 // ─── IP Helper ───────────────────────────────────────────────────────────────
@@ -181,7 +273,7 @@ export function createRateLimiter(
  *      by the client (CF overwrites any inbound value). This app only ever
  *      serves traffic through Cloudflare Workers.
  *   2. `req.ip` — platform-provided when the adapter populates it.
- *   3. `x-forwarded-for` FIRST entry — spoofable, dev-only fallback.
+ *   3. `x-forwarded-for` LAST entry — spoofable, dev-only fallback.
  *   4. `x-real-ip` — spoofable, dev-only fallback.
  *
  * Earlier code trusted XFF blindly, which let an attacker rotate a forged

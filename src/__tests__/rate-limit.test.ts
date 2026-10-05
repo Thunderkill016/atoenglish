@@ -3,6 +3,7 @@ import {
   createRateLimiter,
   getClientIp,
   InMemoryRateLimiter,
+  WorkersRateLimiterImpl,
 } from "@/lib/security/rate-limit";
 
 const mockLimit = vi.fn();
@@ -224,5 +225,36 @@ describe("createRateLimiter (Additional Coverage)", () => {
       delete process.env.UPSTASH_REDIS_REST_URL;
       delete process.env.UPSTASH_REDIS_REST_TOKEN;
     }
+  });
+});
+
+describe("WorkersRateLimiterImpl (Cloudflare rate-limit binding)", () => {
+  const fallback = createRateLimiter(2, 60_000, "test-cf-fallback");
+
+  it("delegates to the binding and honors its deny", async () => {
+    const binding = {
+      limit: vi.fn().mockResolvedValue({ success: false }),
+    };
+    const limiter = new WorkersRateLimiterImpl(binding, 30, 60_000, fallback);
+    const result = await limiter.check("9.9.9.9");
+    expect(binding.limit).toHaveBeenCalledWith({ key: "9.9.9.9" });
+    expect(result.success).toBe(false);
+    expect(result.limit).toBe(30);
+    expect(result.remaining).toBe(0);
+  });
+
+  it("reports success when the binding allows", async () => {
+    const binding = { limit: vi.fn().mockResolvedValue({ success: true }) };
+    const limiter = new WorkersRateLimiterImpl(binding, 30, 60_000, fallback);
+    const result = await limiter.check("9.9.9.8");
+    expect(result.success).toBe(true);
+    expect(result.remaining).toBe(1);
+  });
+
+  it("falls back when the binding throws", async () => {
+    const binding = { limit: vi.fn().mockRejectedValue(new Error("down")) };
+    const limiter = new WorkersRateLimiterImpl(binding, 30, 60_000, fallback);
+    const result = await limiter.check("9.9.9.7");
+    expect(result.success).toBe(true); // fallback (in-memory) allows
   });
 });

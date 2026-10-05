@@ -20,6 +20,13 @@ export default defineConfig({
       // Pre-generated Aura-2 lesson audio keyed by text hash — see
       // scripts/tts/generate-audio.ts and /api/audio.
       AUDIO_KV: bindings.kv({ id: "113dff2180e249c589f2f3c949abb178" }),
+      // Distributed auth rate limiting — in-memory counters don't survive
+      // Cloudflare's per-request isolate fan-out, so the proxy delegates to
+      // the native rate-limit binding when present (src/proxy.ts).
+      AUTH_RATE_LIMITER: bindings.rateLimit({
+        namespace: "1001",
+        simple: { limit: 30, period: 60 },
+      }),
       // Worker version metadata ({id, tag, timestamp}) for /api/health.
       CF_VERSION_METADATA: bindings.versionMetadata(),
       // Route Gemini calls through the `atoenglish` AI Gateway: request logs,
