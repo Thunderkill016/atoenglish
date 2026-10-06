@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Be_Vietnam_Pro, Playfair } from "next/font/google";
 import { Toaster } from "sonner";
 import { MotionProvider } from "@/components/providers/motion-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -8,16 +8,26 @@ import { SITE_URL } from "@/lib/site";
 
 import "./globals.css";
 
-const sansFont = Plus_Jakarta_Sans({
+const sansFont = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
-  variable: "--font-jakarta",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-be-vietnam",
+  display: "swap",
+});
+
+// Display serif for headlines/wordmark ("Bàn học" editorial direction).
+// Playfair is the 2023 variable family — the older Playfair Display has a
+// Vietnamese bold-diacritic defect (google/fonts#10100).
+const serifFont = Playfair({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-playfair",
   display: "swap",
 });
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f3ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#1b1815" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -103,7 +113,7 @@ export default function RootLayout({
     <html
       lang="vi"
       suppressHydrationWarning
-      className={cn("font-sans", sansFont.variable)}
+      className={cn("font-sans", sansFont.variable, serifFont.variable)}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />

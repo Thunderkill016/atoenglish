@@ -139,14 +139,18 @@ export default async function DiscoverPage() {
   const week = currentWeekActivity(activityDates);
 
   return (
-    <div className="flex flex-col gap-8 xl:flex-row">
-      <div className="flex min-w-0 flex-1 flex-col gap-8">
-        {/* Floating search row — replaces the old top header (REDESIGN §4.3). */}
-        <section className="space-y-3">
+    <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="flex min-w-0 flex-col gap-10">
+        {/* Desk header — date line + serif headline, then the paste field. */}
+        <section className="space-y-4">
           {signedIn && (
-            <p className="text-sm text-muted-foreground">{greeting()}</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+              {greeting()}
+            </p>
           )}
-          <h1 className="text-2xl font-bold tracking-tight">Khám phá</h1>
+          <h1 className="font-serif text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
+            Hôm nay học gì?
+          </h1>
           <DiscoverSearch />
           {!signedIn && (
             <p className="text-sm text-muted-foreground">
@@ -159,14 +163,14 @@ export default async function DiscoverPage() {
           )}
         </section>
 
-        {/* Single "next action" CTA for returning learners — the resume
-            banner (Anki Study Now / Drops last-topic pattern). */}
+        {/* Single "next action" for returning learners — a hairline bookmark
+            card, like the open book left on the desk. */}
         {hero && (
           <Link
             href={`/watch/${hero.external_id}?t=${hero.last_position_ms}`}
-            className="group flex items-center gap-4 rounded-xl border border-border bg-card p-3 transition hover:border-primary/50"
+            className="group flex items-center gap-5 border-y border-border py-4 transition-colors hover:border-primary/50"
           >
-            <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted sm:w-36">
+            <div className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg bg-muted sm:w-40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`https://i.ytimg.com/vi/${hero.external_id}/hqdefault.jpg`}
@@ -179,13 +183,13 @@ export default async function DiscoverPage() {
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-muted-foreground">
+              <p className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 Đang xem dở
               </p>
-              <p className="mt-0.5 line-clamp-2 text-[15px] font-semibold leading-snug">
+              <p className="mt-1 line-clamp-2 font-serif text-lg font-medium leading-snug">
                 {hero.title ?? "Video YouTube"}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1.5 text-[13px] font-medium text-primary">
                 Xem tiếp từ {formatTimestamp(hero.last_position_ms)}
                 {hero.duration_ms != null &&
                   hero.duration_ms > hero.last_position_ms &&
@@ -197,7 +201,7 @@ export default async function DiscoverPage() {
 
         {strip.length > 0 && (
           <section>
-            <h2 className="mb-3 text-lg font-bold tracking-tight">
+            <h2 className="mb-4 font-serif text-xl font-medium tracking-tight">
               Đang xem dở
             </h2>
             <div className="no-scrollbar -mx-4 flex gap-5 overflow-x-auto px-4 pb-1">
@@ -218,7 +222,7 @@ export default async function DiscoverPage() {
         )}
 
         <section>
-          <h2 className="mb-3 text-lg font-bold tracking-tight">
+          <h2 className="mb-4 font-serif text-xl font-medium tracking-tight">
             Thư viện chọn sẵn
           </h2>
           <DiscoverCatalog videos={getCatalog()} />

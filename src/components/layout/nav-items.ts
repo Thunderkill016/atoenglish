@@ -2,9 +2,9 @@ import { BookOpen, Compass, Library, RefreshCw, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 /**
- * Shared main-nav entries for the desktop `IconRail` and mobile `BottomNav`
- * (REDESIGN §4.3). Routes beyond /discover land in later slices — the rail
- * shape is fixed now so the shell never changes again.
+ * Shared main-nav entries for the masthead text nav and mobile `BottomNav`.
+ * Routes beyond /discover land in later slices — the nav shape is fixed now
+ * so the shell never changes again.
  */
 export interface NavItem {
   href: string;

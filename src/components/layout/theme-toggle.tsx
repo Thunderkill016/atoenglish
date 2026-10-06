@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * Light/dark toggle for the app shell (next-themes, storageKey "ato-ui-white",
- * ThemeProvider mounted in the root layout). Pinned at the bottom of the
- * desktop IconRail (REDESIGN §4.3).
+ * ThemeProvider mounted in the root layout). Lives at the right edge of the
+ * masthead.
  */
 export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();

@@ -109,3 +109,20 @@ New AtoEnglish learning system at the Trancy standard, replacing the old curricu
 - Verdict: `PENDING`
 - Acceptance criteria met: 0/n
 - Accepted by / date:
+
+## Home v4 — "Bàn học" (Study Desk) reskin — 2026-10-06
+
+**Research round 3** (2 subagents): mined corpus ảnh Trancy + wave-2 products; added LingQ 5.0 backlash lesson (visual novelty forgiven, workflow regressions not — every capability stayed ≤1 click), Netflix/Spotify "personal-first" ordering, VN mobile reality (bottom nav kept), premium-vs-cluttered craft attributes (one accent budget, hairline > shadow, tinted neutrals).
+
+**New visual direction — full reskin, not polish:**
+- Palette: warm paper canvas `oklch(0.966 0.008 95)` + warm ink + deep-green accent (same hue family, quieter); dark = warm charcoal (not blue-black). `--mark` highlighter token reserved for saved words.
+- Typography: **Be Vietnam Pro** (VN-native diacritics) body + **Playfair** variable serif for display/wordmark — replaces Plus Jakarta Sans.
+- Shell: icon rail → **masthead** (serif wordmark, text nav with underline-active, theme toggle right); mobile bottom nav unchanged.
+- `/discover`: serif "Hôm nay học gì?" + micro-caps date line; resume hero → hairline bookmark card; widgets → borderless margin column (micro-caps titles + hairline separators); WeekStrip → 7 dots; topic chips → underline tabs; level segment → ink pill.
+- VideoCard: meta pills + avatar removed → single dot-separated meta line + colored level dot.
+- Landing: serif wordmark/headlines, hairline header.
+- Dead-code cleanup in globals.css: removed unused minimal-*/chart-*/sidebar-*/phase-*/feedback tokens + streak/spotlight/lesson-flip/metal-reflect/step-dot utilities (zero usage verified by grep).
+
+**Rejected (documented):** dark-first cinema shelves (catalog too small, NN/g horizontal-scroll-on-desktop evidence), Duolingo-style forced path, Lingopie-style "a lot going on" metric strip.
+
+**Gate:** tsc ✓ · eslint 0/0 ✓ · 164/164 unit ✓ · 36/36 e2e ✓ · build ✓ · source-of-truth ✓

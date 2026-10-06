@@ -3,9 +3,11 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * T5 — right rail on /discover (≥xl, ~320px per REDESIGN §4.3); on mobile it
- * stacks below the main column. The rail is sticky on desktop so widgets stay
- * visible while the feed scrolls. Widgets render only when their data exists.
+ * Margin column on /discover (≥xl, ~280px — "Bàn học" editorial direction);
+ * on mobile it stacks below the main column. Borderless "margin note"
+ * widgets: micro-caps titles separated by hairlines, sticky on desktop so
+ * they stay visible while the feed scrolls. Widgets render only when their
+ * data exists.
  */
 export function RightRail({
   children,
@@ -17,7 +19,7 @@ export function RightRail({
   return (
     <aside
       className={cn(
-        "flex w-full flex-col gap-4 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:w-[320px] xl:shrink-0 xl:self-start xl:overflow-y-auto",
+        "flex w-full flex-col xl:sticky xl:top-10 xl:max-h-[calc(100vh-5rem)] xl:w-[280px] xl:shrink-0 xl:self-start xl:overflow-y-auto",
         className,
       )}
     >
@@ -37,9 +39,11 @@ export function WidgetCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-4">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">{title}</h2>
+    <section className="border-t border-border py-4">
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          {title}
+        </h2>
         {action}
       </div>
       {children}

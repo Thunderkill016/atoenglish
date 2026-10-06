@@ -7,8 +7,8 @@ import { MAIN_NAV_ITEMS, isNavActive } from "@/components/layout/nav-items";
 import { cn } from "@/lib/utils";
 
 /**
- * T-shell — mobile bottom navigation (REDESIGN §4.3): the IconRail collapses
- * into a fixed 5-item bar below md. Active item is tinted text-primary.
+ * Mobile bottom navigation — the masthead's text nav collapses into a fixed
+ * 5-item bar below md. Active item is tinted text-primary.
  */
 export function BottomNav() {
   const pathname = usePathname();
