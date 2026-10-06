@@ -127,7 +127,7 @@ New AtoEnglish learning system at the Trancy standard, replacing the old curricu
 
 **Gate:** tsc ✓ · eslint 0/0 ✓ · 164/164 unit ✓ · 36/36 e2e ✓ · build ✓ · source-of-truth ✓
 
-## Home v5 — Trancy-faithful reskin — $(date +%Y-%m-%d)
+## Home v5 — Trancy-faithful reskin — 2026-10-06
 
 Owner rejected the v4 "Bàn học" editorial direction ("phải làm giống home của trancy"). Re-grounded on the actual captured Trancy home screenshot (`/tmp/trancy-research/live/shots/home.png`) and restored/derived from `bc5c55f7`:
 
