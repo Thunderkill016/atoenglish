@@ -27,7 +27,7 @@ export function WeekStrip({
         <div
           key={i}
           className={cn(
-            "flex flex-col items-center gap-0.5 rounded-md py-1.5",
+            "flex flex-col items-center gap-1 rounded-md py-2",
             activeDays[i] ? "bg-primary/15" : "bg-muted/50",
             i === todayIndex && "ring-1 ring-primary",
           )}

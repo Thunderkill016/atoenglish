@@ -17,7 +17,7 @@ export function RightRail({
   return (
     <aside
       className={cn(
-        "flex w-full flex-col gap-4 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:w-[320px] xl:shrink-0 xl:self-start xl:overflow-y-auto xl:border-l xl:border-border xl:pl-5",
+        "flex w-full flex-col gap-4 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:w-[320px] xl:shrink-0 xl:self-start xl:overflow-y-auto",
         className,
       )}
     >
@@ -39,7 +39,7 @@ export function WidgetCard({
   return (
     <section className="rounded-xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">{title}</h2>
+        <h2 className="text-sm font-semibold">{title}</h2>
         {action}
       </div>
       {children}
