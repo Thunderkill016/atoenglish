@@ -1,6 +1,6 @@
 # AtoEnglish — Current Project State
 
-**Effective:** 2026-10-06 (direction replaced: IELTS 0→9.0 → học tiếng Anh qua video; same day: owner set **eJOY and Trancy as the product standard** and confirmed the new system **replaces** the existing learning system)  
+**Effective:** 2026-10-06 (direction replaced: IELTS 0→9.0 → học tiếng Anh qua video; same day: owner set **Trancy as the product standard** — eJOY and the 39-repo research package remain design/technical reference — and confirmed the new system **replaces** the existing learning system; UI/UX redesign spec approved same day)  
 **Project:** AtoEnglish
 
 ## Current state
@@ -10,7 +10,7 @@ AtoEnglish has exactly **one active product direction**. All previous, parallel,
 **Owner decisions 2026-10-06:**
 
 1. The IELTS 0→9.0 direction (effective 2026-10-05) is **replaced** by the direction below. `docs/missions/003-vocab-spine-content/IELTS-0-to-9-research.md` and the IELTS stage map are no longer authority.
-2. **eJOY and Trancy are the two reference products** that define the standard for the new learning experience. The 39 open-source repositories in the owner's research package are the technical reference set for building it.
+2. **Trancy is the reference product** that defines the standard for the new learning experience. eJOY and the 39 open-source repositories in the owner's research package remain design and technical reference only.
 3. The new system **replaces** the existing learning system (A0–B2 units, 5-phase lesson player, placement, checkpoints, roadmap, zero-path, quiz). It is not a loop bolted onto the old curriculum.
 4. The earlier mission 004 spec (v1 on `main`, v2 in PR #234) is superseded by mission 005; PR #232 ("0→B2/C1 free") is closed.
 
@@ -18,9 +18,9 @@ Existing features, curriculum, branches, historical plans, experiments and R&D r
 
 ## Single active direction
 
-Build **AtoEnglish as a free web product, modelled on eJOY and Trancy, that helps Vietnamese self-learners turn English videos they choose into language they can understand, remember and reuse.**
+Build **AtoEnglish as a free web product, modelled on Trancy, that helps Vietnamese self-learners turn English videos they choose into language they can understand, remember and reuse.**
 
-The core loop (shared by eJOY and Trancy):
+The core loop (modelled on Trancy's watch → understand → save → practise → review loop, verified by authenticated inspection):
 
 1. **Discover / choose** — pick a video from a curated library or paste any YouTube link; paste text to read;
 2. **Understand** — bilingual (EN + VI) subtitles organised into whole sentences, synced to playback; loop, slow down, auto-pause; tap a word or select a phrase for a contextual Vietnamese meaning; AI sentence analysis on demand; theater mode and read mode;
@@ -33,11 +33,11 @@ Owner decisions defining scope (2026-10-06):
 
 - **Primary learner:** Vietnamese self-learners who learn through videos and films they already watch.
 - **Scale:** one learner (Hoàng) validates the loop first; the architecture must stay multi-user-ready (per-user data ownership and RLS), but no public launch work until the loop is validated.
-- **Monetization:** none. No paywall, subscription, plan tiers, quotas or payment integration — eJOY/Trancy pricing tiers are not copied.
+- **Monetization:** none. No paywall, subscription, plan tiers, quotas or payment integration — Trancy's pricing tiers and upsell UX are explicitly not copied (REDESIGN §2).
 - **Platform:** web only. Browser extension and native mobile apps stay closed until the web loop is validated.
-- **Content:** a curated video library plus any pasted YouTube link; the product fetches the video's existing captions automatically (eJOY/Trancy-style) and falls back to a learner-provided transcript when fetching fails — see the constraint below.
+- **Content:** a curated video library plus any pasted YouTube link; the product fetches the video's existing captions automatically (Trancy-style) and falls back to a learner-provided transcript when fetching fails — see the constraint below.
 
-Product references: a desk study of eJOY, the Trancy official pages, and a static review of 39 open-source learning repositories (owner research package, branch `research/ejoy-archive-2026-10-06`; summarised in `docs/missions/005-ejoy-trancy-learning-system/RESEARCH-NOTES.md`). Nothing in that package was run or measured: it defines the product standard and design evidence, not evidence that the loop works for AtoEnglish learners.
+Product references: an authenticated deep-dive of Trancy (extension code, Learning Center, live API traffic, 36 screenshots — `docs/missions/005-ejoy-trancy-learning-system/TRANCY-DEEP-DIVE.md`), a desk study of eJOY, and a static review of 39 open-source learning repositories (owner research package, branch `research/ejoy-archive-2026-10-06`; summarised in `docs/missions/005-ejoy-trancy-learning-system/RESEARCH-NOTES.md`). The UI/UX adaptation of Trancy is specified in `docs/missions/005-ejoy-trancy-learning-system/REDESIGN.md` — take the verified layout/interaction patterns, drop what does not fit (dark-only, paywall nags, machine-translated Vietnamese, 40-route sprawl). Trancy's design defines the standard; it is not evidence the loop works for AtoEnglish learners.
 
 ### System shape
 

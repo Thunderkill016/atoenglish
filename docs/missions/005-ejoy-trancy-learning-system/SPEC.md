@@ -1,12 +1,12 @@
-# Spec 005 — Hệ thống học mới của AtoEnglish theo chuẩn eJOY + Trancy
+# Spec 005 — Hệ thống học mới của AtoEnglish theo chuẩn Trancy
 
-Ngày 2026-10-06. Ngôn ngữ spec: tiếng Việt; code/schema: tiếng Anh. Hướng sản phẩm: `docs/project/PROJECT_STATE.md`. Hợp đồng: [TASK_CONTRACT.md](./TASK_CONTRACT.md). Căn cứ nghiên cứu: [RESEARCH-NOTES.md](./RESEARCH-NOTES.md).
+Ngày 2026-10-06. Ngôn ngữ spec: tiếng Việt; code/schema: tiếng Anh. Hướng sản phẩm: `docs/project/PROJECT_STATE.md`. Hợp đồng: [TASK_CONTRACT.md](./TASK_CONTRACT.md). Căn cứ nghiên cứu: [RESEARCH-NOTES.md](./RESEARCH-NOTES.md), [TRANCY-DEEP-DIVE.md](./TRANCY-DEEP-DIVE.md). Thiết kế giao diện/tương tác: [REDESIGN.md](./REDESIGN.md).
 
-Spec này **viết lại từ đầu** theo quyết định của chủ dự án ngày 06/10: hai sản phẩm **eJOY** và **Trancy** là quy chuẩn trải nghiệm; **39 repo** trong gói nghiên cứu là nguồn tham khảo kỹ thuật. Nó thay mission 004 (v1 trên `main`, v2 ở PR #234). Những phần đúng của 004 (chuỗi lấy phụ đề, tách năm đối tượng dữ liệu, kế hoạch gỡ hệ cũ) được giữ lại ở đây; phần còn thiếu so với eJOY/Trancy được bổ sung.
+Spec này **viết lại từ đầu** theo quyết định của chủ dự án ngày 06/10: **Trancy** là quy chuẩn trải nghiệm duy nhất (đã khảo sát xác thực sâu — xem TRANCY-DEEP-DIVE); eJOY và **39 repo** trong gói nghiên cứu chỉ còn là nguồn tham khảo. Nó thay mission 004 (v1 trên `main`, v2 ở PR #234). Những phần đúng của 004 (chuỗi lấy phụ đề, tách năm đối tượng dữ liệu, kế hoạch gỡ hệ cũ) được giữ lại ở đây; phần còn thiếu so với Trancy được bổ sung.
 
 ## 1. Nguyên lý
 
-1. **Chuẩn sản phẩm là eJOY + Trancy**: mọi tính năng cốt lõi chung của hai sản phẩm (mục 2) phải có trong AtoEnglish, trừ khi bị loại có lý do ghi rõ (mục 2, cột "Quyết định").
+1. **Chuẩn sản phẩm là Trancy**: mọi tính năng cốt lõi của Trancy (mục 2) phải có trong AtoEnglish, trừ khi bị loại có lý do ghi rõ (mục 2, cột "Quyết định"). eJOY chỉ là tham khảo bổ sung.
 2. **Học từ nội dung thật người học tự chọn**: video YouTube (thư viện chọn sẵn hoặc dán link) và văn bản dán vào. Không có giáo trình cố định A0–B2, không xếp trình độ đầu vào.
 3. **Câu là đơn vị trung tâm**: phụ đề được ghép thành câu hoàn chỉnh; dịch, tra, lưu, luyện đều theo câu (như "Intelligent Sentence Segmentation" của Trancy).
 4. **Năm đối tượng tách rời**: nguồn nội dung → câu + timestamp (+ bản dịch) → mục đã lưu kèm ngữ cảnh → thẻ + lịch FSRS → kết quả từng lần luyện. Scheduler chỉ nhận kết quả luyện. AI chỉ đọc dữ liệu học qua server action có kiểm soát, không ghi vào lịch.
@@ -14,7 +14,7 @@ Spec này **viết lại từ đầu** theo quyết định của chủ dự án
 6. **Trung thực**: không bịa nghĩa; mọi đầu ra AI (dịch, nghĩa theo ngữ cảnh, phân tích câu, phản hồi) gắn nhãn "AI"; độ khớp nhận dạng giọng nói không gọi là chấm phát âm; số mục đã lưu, số video đã xem, thời gian dùng không phải tiến bộ.
 7. **Miễn phí, không giới hạn lượt**: không gói trả phí, không quota như eJOY/Trancy. Mọi bước có đường chạy không cần API trả phí; Gemini (qua AI Gateway) là lớp bổ sung, hỏng thì vẫn xem, tra curated, lưu và ôn được.
 
-## 2. Đối chiếu tính năng eJOY / Trancy → AtoEnglish
+## 2. Đối chiếu tính năng Trancy (eJOY tham khảo) → AtoEnglish
 
 | Tính năng                                         | eJOY                         | Trancy                           | Quyết định AtoEnglish                                                                 | Phần |
 | ------------------------------------------------- | ---------------------------- | -------------------------------- | ------------------------------------------------------------------------------------- | ---- |
@@ -54,9 +54,11 @@ Spec này **viết lại từ đầu** theo quyết định của chủ dự án
 | `/review`          | Hàng đợi FSRS; nhiều dạng luyện trên cùng thẻ; "xem lại đoạn gốc"                                    | `/review` hiện có (viết lại trên thẻ mới), `/quiz`                       |
 | `/me`              | Bằng chứng tiến bộ (mục 8), cài đặt, xoá tài khoản/dữ liệu                                           | `/me/progress`, `/me/grammar`, `/placement`, `/checkpoint`, `/zero-path` |
 
-Điều hướng chính: **Khám phá · Đọc · Ôn · Thư viện · Tôi**. `/watch/[videoId]` mở từ Khám phá, Thư viện hoặc nút "xem lại đoạn gốc"; tham số `?t=<ms>` tua tới mốc giờ.
+Điều hướng chính: **Khám phá · Đọc · Ôn · Thư viện · Tôi** — trên desktop hiển thị dạng icon rail trái 56px theo REDESIGN §4.3. `/watch/[videoId]` mở từ Khám phá, Thư viện hoặc nút "xem lại đoạn gốc"; tham số `?t=<ms>` tua tới mốc giờ.
 
 ## 4. Trình phát và phụ đề (`/watch/[videoId]`)
+
+Bố cục và tương tác chi tiết theo [REDESIGN.md](./REDESIGN.md) §5.2 (video trái + cột transcript phải, dict drawer trượt từ phải, dark-first).
 
 ### 4.1 Nhận link
 
@@ -226,7 +228,7 @@ Ràng buộc: `practice_attempts` phải có `card_id` hoặc (`source_id` + `se
 
 ## 15. Quyết định đã có / còn mở
 
-Đã quyết (chủ dự án, 06/10): thay hẳn hệ cũ; chuẩn sản phẩm là eJOY + Trancy; 39 repo là nguồn tham khảo kỹ thuật; viết spec mới thay 004; đưa vào phụ đề song ngữ + ghép câu, lưu câu + luyện trên video, AI phân tích câu + chế độ đọc, thư viện video gợi ý; chỉ web; một người học kiểm chứng, kiến trúc nhiều người; không thu phí; tự lấy phụ đề với fallback; đóng PR #232.
+Đã quyết (chủ dự án, 06/10): thay hẳn hệ cũ; chuẩn sản phẩm là **Trancy** (eJOY hạ xuống tham khảo); 39 repo là nguồn tham khảo kỹ thuật; viết spec mới thay 004; đưa vào phụ đề song ngữ + ghép câu, lưu câu + luyện trên video, AI phân tích câu + chế độ đọc, thư viện video gợi ý; chỉ web; một người học kiểm chứng, kiến trúc nhiều người; không thu phí; tự lấy phụ đề với fallback; đóng PR #232; duyệt thiết kế lại theo Trancy (REDESIGN.md — lấy layout/tương tác đã kiểm chứng, bỏ dark-only/paywall/chữ VI dịch máy/loãng route).
 
 Còn mở:
 

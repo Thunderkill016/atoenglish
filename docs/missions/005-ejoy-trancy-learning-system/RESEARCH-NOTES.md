@@ -5,6 +5,7 @@ Ngày 2026-10-06. Nguồn: nhánh `research/ejoy-archive-2026-10-06` (commit `aa
 ## Giới hạn bằng chứng
 
 - eJOY và Trancy: nghiên cứu tài liệu công khai (website, help center, cửa hàng ứng dụng); **chưa cài, chưa dùng thử**. Trancy không có mã nguồn công khai để xác minh.
+- **Cập nhật cùng ngày**: Trancy sau đó đã được khảo sát xác thực (đăng nhập Learning Center, đọc gói extension, bắt API live, 36 ảnh chụp) — xem [TRANCY-DEEP-DIVE.md](./TRANCY-DEEP-DIVE.md). Quyết định chủ dự án: **Trancy là chuẩn duy nhất**; eJOY chỉ còn vai trò tham khảo.
 - 39 repo: nghiên cứu **tĩnh** — đã lập chỉ mục ~27.000 blob (~1,83 GB) nhưng chỉ khoảng 56 file được đọc ngữ nghĩa thủ công; **không build, không chạy repo nào**.
 - Vì vậy gói này là **chuẩn sản phẩm và bằng chứng thiết kế** (mức "market/product evidence" trong `SOURCE_OF_TRUTH.md`), không phải bằng chứng học tập của AtoEnglish.
 
