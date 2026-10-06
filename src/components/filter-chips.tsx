@@ -27,10 +27,10 @@ export function FilterChips({
 }) {
   const chipClass = (active: boolean) =>
     cn(
-      "shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
+      "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
       active
-        ? "border-primary bg-primary text-primary-foreground"
-        : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground",
+        ? "bg-primary text-primary-foreground"
+        : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-foreground",
     );
 
   return (

@@ -74,6 +74,7 @@ test.describe("/discover", () => {
     await seedWatchedSource(userId!, VIDEO_ID, "Never Gonna Give You Up");
 
     await loginAsE2ETestUser(page);
+    // Resume banner is the hero "next action" — first match is the banner.
     await expect(page.getByText("Đang xem dở").first()).toBeVisible();
     const resumeLink = page
       .getByRole("link", { name: /Never Gonna Give You Up/ })
@@ -82,7 +83,10 @@ test.describe("/discover", () => {
       "href",
       `/watch/${VIDEO_ID}?t=65000`,
     );
-    await expect(page.getByText("Xem tiếp từ 1:05")).toBeVisible();
-    await expect(page.getByText("video đã mở")).toBeVisible();
+    await expect(page.getByText(/Xem tiếp từ 1:05/)).toBeVisible();
+    await expect(page.getByText("Tuần này")).toBeVisible();
+    // 7-day activity strip renders weekday labels.
+    await expect(page.getByText("T2", { exact: true })).toBeVisible();
+    await expect(page.getByText(/video$/)).toBeVisible();
   });
 });

@@ -56,19 +56,19 @@ const SAMPLE_VIDEOS = [
     id: "8jPQjjsBbIc",
     title: "How to stay calm when you know you'll be stressed",
     channel: "TED",
-    note: "Phụ đề thủ công + tiếng Việt",
+    captionLabel: "Phụ đề tay + tiếng Việt",
   },
   {
     id: "UF8uR6Z6KLc",
     title: "Steve Jobs' 2005 Stanford Commencement Address",
     channel: "Stanford",
-    note: "Phụ đề thủ công",
+    captionLabel: "Phụ đề tay",
   },
   {
     id: "dQw4w9WgXcQ",
     title: "Rick Astley — Never Gonna Give You Up",
     channel: "Rick Astley",
-    note: "Phụ đề tự động",
+    captionLabel: "Phụ đề tự động",
   },
 ];
 
@@ -156,14 +156,14 @@ export default function LandingPage() {
               Xem tất cả →
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-3 sm:gap-6">
             {SAMPLE_VIDEOS.map((v) => (
               <VideoCard
                 key={v.id}
                 videoId={v.id}
                 title={v.title}
                 channel={v.channel}
-                note={v.note}
+                captionLabel={v.captionLabel}
               />
             ))}
           </div>

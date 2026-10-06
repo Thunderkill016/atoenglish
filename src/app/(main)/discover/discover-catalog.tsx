@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { SearchX } from "lucide-react";
 
 import {
+  CAPTION_LABELS,
   LEVEL_LABELS,
   TOPIC_LABELS,
   type CatalogLevel,
@@ -80,14 +81,17 @@ export function DiscoverCatalog({ videos }: { videos: CatalogVideo[] }) {
           </div>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
           {filtered.map((v) => (
             <VideoCard
               key={v.id}
               videoId={v.id}
               title={v.title}
               channel={v.channel}
-              note={`${TOPIC_LABELS[v.topic]} · ${LEVEL_LABELS[v.level]}`}
+              topicLabel={TOPIC_LABELS[v.topic]}
+              level={v.level}
+              levelLabel={LEVEL_LABELS[v.level]}
+              captionLabel={CAPTION_LABELS[v.captions]}
               durationMs={v.durationSec * 1000}
             />
           ))}
