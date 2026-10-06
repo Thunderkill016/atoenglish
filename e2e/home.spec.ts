@@ -46,8 +46,9 @@ test.describe("/discover", () => {
     await expect(page.getByPlaceholder(/link YouTube/i)).toBeVisible();
     await expect(page.getByText("Đang xem dở")).toHaveCount(0);
     await expect(page.getByText("Thư viện chọn sẵn")).toBeVisible();
+    // "Bắt đầu từ đây" guest widget also links this easy-level video.
     await expect(
-      page.getByRole("link", { name: /Never Gonna Give You Up/ }),
+      page.getByRole("link", { name: /Never Gonna Give You Up/ }).first(),
     ).toHaveAttribute("href", `/watch/${VIDEO_ID}`);
     await expect(
       page.getByRole("link", { name: "Đăng nhập", exact: true }),

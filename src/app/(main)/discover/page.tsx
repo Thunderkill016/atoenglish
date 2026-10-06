@@ -230,52 +230,79 @@ export default async function DiscoverPage() {
         </p>
       </div>
 
-      {signedIn && (
-        <RightRail>
-          <WidgetCard
-            title="Tuần này"
-            action={
-              <span className="text-xs text-muted-foreground">
-                {videosThisWeek} video
-              </span>
-            }
-          >
-            <WeekStrip
-              days={week.days}
-              activeDays={week.activeDays}
-              todayIndex={week.todayIndex}
-            />
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <CalendarDays className="h-3.5 w-3.5" />
-              Ôn tập từ vựng sẽ hiện ở đây khi bạn lưu từ đầu tiên.
+      <RightRail>
+        {signedIn ? (
+          <>
+            <WidgetCard
+              title="Tuần này"
+              action={
+                <span className="text-xs text-muted-foreground">
+                  {videosThisWeek} video
+                </span>
+              }
+            >
+              <WeekStrip
+                days={week.days}
+                activeDays={week.activeDays}
+                todayIndex={week.todayIndex}
+              />
+              <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarDays className="h-3.5 w-3.5" />
+                Ôn tập từ vựng sẽ hiện ở đây khi bạn lưu từ đầu tiên.
+              </p>
+            </WidgetCard>
+            {recentSources.length > 0 && (
+              <WidgetCard title="Hoạt động">
+                <ul className="space-y-2.5">
+                  {recentSources.map((s) => (
+                    <li key={s.external_id}>
+                      <Link
+                        href={`/watch/${s.external_id}${
+                          isResumable(s) ? `?t=${s.last_position_ms}` : ""
+                        }`}
+                        className="line-clamp-1 text-sm font-medium hover:text-primary hover:underline"
+                      >
+                        {s.title ?? "Video YouTube"}
+                      </Link>
+                      <p className="text-xs text-muted-foreground">
+                        {isResumable(s)
+                          ? `Xem đến ${formatTimestamp(s.last_position_ms)} · `
+                          : ""}
+                        {formatRelativeAge(s.updated_at)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </WidgetCard>
+            )}
+          </>
+        ) : (
+          <WidgetCard title="Bắt đầu từ đây">
+            <p className="text-xs text-muted-foreground">
+              Dán link YouTube → xem phụ đề từng câu → luyện lại ngay trên
+              video. Không cần tài khoản.
             </p>
-          </WidgetCard>
-          {recentSources.length > 0 && (
-            <WidgetCard title="Hoạt động">
-              <ul className="space-y-2.5">
-                {recentSources.map((s) => (
-                  <li key={s.external_id}>
+            <ul className="mt-3 space-y-2">
+              {getCatalog()
+                .filter((v) => v.level === "easy")
+                .slice(0, 3)
+                .map((v) => (
+                  <li key={v.id}>
                     <Link
-                      href={`/watch/${s.external_id}${
-                        isResumable(s) ? `?t=${s.last_position_ms}` : ""
-                      }`}
+                      href={`/watch/${v.id}`}
                       className="line-clamp-1 text-sm font-medium hover:text-primary hover:underline"
                     >
-                      {s.title ?? "Video YouTube"}
+                      {v.title}
                     </Link>
                     <p className="text-xs text-muted-foreground">
-                      {isResumable(s)
-                        ? `Xem đến ${formatTimestamp(s.last_position_ms)} · `
-                        : ""}
-                      {formatRelativeAge(s.updated_at)}
+                      {v.channel} · {formatTimestamp(v.durationSec * 1000)}
                     </p>
                   </li>
                 ))}
-              </ul>
-            </WidgetCard>
-          )}
-        </RightRail>
-      )}
+            </ul>
+          </WidgetCard>
+        )}
+      </RightRail>
     </div>
   );
 }
