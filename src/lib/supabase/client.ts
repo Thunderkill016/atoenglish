@@ -1,4 +1,7 @@
-import { createClient as createDataClient, SupabaseAuthAdapter } from "@neondatabase/neon-js";
+import {
+  createClient as createDataClient,
+  SupabaseAuthAdapter,
+} from "@neondatabase/neon-js";
 
 import type { Database } from "@/types/supabase";
 

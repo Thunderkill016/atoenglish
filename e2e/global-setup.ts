@@ -1,10 +1,6 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import {
-  ensureE2ETestUser,
-  hasE2EAdminCredentials,
-  resetE2EPlacementState,
-} from "./helpers/auth";
+import { ensureE2ETestUser, hasE2EAdminCredentials } from "./helpers/auth";
 
 try {
   const envPath = resolve(process.cwd(), ".env.local");
@@ -15,7 +11,10 @@ try {
     const eq = trimmed.indexOf("=");
     if (eq === -1) continue;
     const key = trimmed.slice(0, eq).trim();
-    const val = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+    const val = trimmed
+      .slice(eq + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
     if (key && !process.env[key]) process.env[key] = val;
   }
 } catch {
@@ -31,6 +30,5 @@ export default async function globalSetup(): Promise<void> {
   }
 
   const userId = await ensureE2ETestUser();
-  await resetE2EPlacementState(userId);
   console.log("[e2e] Test user ready:", userId);
 }

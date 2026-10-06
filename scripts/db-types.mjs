@@ -10,7 +10,8 @@ if (!process.env.DATABASE_URL_UNPOOLED && !process.env.DATABASE_URL) {
   try {
     for (const line of readFileSync(".env.local", "utf8").split("\n")) {
       const m = line.match(/^([A-Z_]+)=(.*)$/);
-      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+      if (m && !process.env[m[1]])
+        process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
     }
   } catch {}
 }
@@ -22,12 +23,23 @@ if (!url) {
 const sql = neon(url);
 
 const PG_TO_TS = {
-  int2: "number", int4: "number", int8: "number", float4: "number",
-  float8: "number", numeric: "number", money: "number", oid: "number",
+  int2: "number",
+  int4: "number",
+  int8: "number",
+  float4: "number",
+  float8: "number",
+  numeric: "number",
+  money: "number",
+  oid: "number",
   bool: "boolean",
-  json: "Json", jsonb: "Json",
-  date: "string", time: "string", timetz: "string", timestamp: "string",
-  timestamptz: "string", interval: "string",
+  json: "Json",
+  jsonb: "Json",
+  date: "string",
+  time: "string",
+  timetz: "string",
+  timestamp: "string",
+  timestamptz: "string",
+  interval: "string",
   bytea: "string",
 };
 
@@ -72,7 +84,7 @@ function tsType(udt, dataType) {
     return `${inner}[]`;
   }
   if (enumMap[udt]) return `Database["public"]["Enums"]["${udt}"]`;
-  const base = dataType === "USER-DEFINED" ? udt : udt ?? dataType;
+  const base = dataType === "USER-DEFINED" ? udt : (udt ?? dataType);
   return PG_TO_TS[base] ?? "string";
 }
 
@@ -85,7 +97,9 @@ for (const c of columns) (byTable[c.table_name] ??= []).push(c);
 const fkByTable = {};
 for (const f of fks) (fkByTable[f.table_name] ??= []).push(f);
 
-function ident(k) { return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k) ? k : JSON.stringify(k); }
+function ident(k) {
+  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k) ? k : JSON.stringify(k);
+}
 
 const parts = [];
 parts.push(`export type Json =
@@ -112,26 +126,35 @@ for (const t of tables) {
         Row: {`);
   for (const c of cols) {
     const ts = tsType(c.udt_name, c.data_type);
-    parts.push(`          ${ident(c.column_name)}: ${ts}${c.is_nullable === "YES" ? " | null" : ""}`);
+    parts.push(
+      `          ${ident(c.column_name)}: ${ts}${c.is_nullable === "YES" ? " | null" : ""}`,
+    );
   }
   parts.push(`        }
         Insert: {`);
   for (const c of cols) {
     const ts = tsType(c.udt_name, c.data_type);
-    const opt = c.is_nullable === "YES" || c.column_default != null ||
-      c.is_identity === "YES" || c.is_generated === "ALWAYS";
-    parts.push(`          ${ident(c.column_name)}${opt ? "?" : ""}: ${ts}${c.is_nullable === "YES" ? " | null" : ""}`);
+    const opt =
+      c.is_nullable === "YES" ||
+      c.column_default != null ||
+      c.is_identity === "YES" ||
+      c.is_generated === "ALWAYS";
+    parts.push(
+      `          ${ident(c.column_name)}${opt ? "?" : ""}: ${ts}${c.is_nullable === "YES" ? " | null" : ""}`,
+    );
   }
   parts.push(`        }
         Update: {`);
   for (const c of cols) {
     const ts = tsType(c.udt_name, c.data_type);
-    parts.push(`          ${ident(c.column_name)}?: ${ts}${c.is_nullable === "YES" ? " | null" : ""}`);
+    parts.push(
+      `          ${ident(c.column_name)}?: ${ts}${c.is_nullable === "YES" ? " | null" : ""}`,
+    );
   }
   // Group FK columns by constraint.
   const byConstraint = {};
   for (const f of fkByTable[name] ?? []) {
-    (byConstraint[f.constraint_name] ??= { cols: [], refs: new Map() });
+    byConstraint[f.constraint_name] ??= { cols: [], refs: new Map() };
     byConstraint[f.constraint_name].cols.push(f.column_name);
     byConstraint[f.constraint_name].refs.set(f.ref_table, [
       ...(byConstraint[f.constraint_name].refs.get(f.ref_table) ?? []),
@@ -143,7 +166,8 @@ for (const t of tables) {
   for (const [cname, rel] of Object.entries(byConstraint)) {
     for (const [refTable, refCols] of rel.refs) {
       const oneToOne = (uniqueSets[name] ?? []).some(
-        (u) => u.length === rel.cols.length && u.every((c) => rel.cols.includes(c)),
+        (u) =>
+          u.length === rel.cols.length && u.every((c) => rel.cols.includes(c)),
       );
       parts.push(`          {
             foreignKeyName: "${cname}"
@@ -166,14 +190,24 @@ parts.push(`    }
 
 function argTs(argType) {
   const t = argType.trim().toLowerCase().replace(/\[\]$/, "");
-  const base = { integer: "int4", bigint: "int8", smallint: "int2",
-    "double precision": "float8", real: "float4",
-    "character varying": "text", character: "text",
-    "timestamp with time zone": "timestamptz",
-    "timestamp without time zone": "timestamp",
-    "time with time zone": "timetz", "time without time zone": "time",
-    boolean: "bool" }[t] ?? t;
-  const ts = PG_TO_TS[base] ?? (enumMap[base] ? `Database["public"]["Enums"]["${base}"]` : "string");
+  const base =
+    {
+      integer: "int4",
+      bigint: "int8",
+      smallint: "int2",
+      "double precision": "float8",
+      real: "float4",
+      "character varying": "text",
+      character: "text",
+      "timestamp with time zone": "timestamptz",
+      "timestamp without time zone": "timestamp",
+      "time with time zone": "timetz",
+      "time without time zone": "time",
+      boolean: "bool",
+    }[t] ?? t;
+  const ts =
+    PG_TO_TS[base] ??
+    (enumMap[base] ? `Database["public"]["Enums"]["${base}"]` : "string");
   return argType.trim().endsWith("[]") ? `${ts}[]` : ts;
 }
 
@@ -228,7 +262,9 @@ for (const fn of functions) {
 parts.push(`    }
     Enums: {`);
 for (const [name, labels] of Object.entries(enumMap)) {
-  parts.push(`      ${ident(name)}: ${labels.map((l) => JSON.stringify(l)).join(" | ")}`);
+  parts.push(
+    `      ${ident(name)}: ${labels.map((l) => JSON.stringify(l)).join(" | ")}`,
+  );
 }
 parts.push(`    }
     CompositeTypes: {
@@ -247,7 +283,9 @@ try {
   const prev = readFileSync("src/types/supabase.ts", "utf8");
   tail = prev.slice(prev.indexOf(MARKER), prev.indexOf(CONST_MARKER));
 } catch {
-  console.error("Cannot read tail from existing src/types/supabase.ts — keep a copy on first generation.");
+  console.error(
+    "Cannot read tail from existing src/types/supabase.ts — keep a copy on first generation.",
+  );
   process.exit(1);
 }
 
@@ -255,7 +293,12 @@ parts.push(tail);
 parts.push(`export const Constants = {
   public: {
     Enums: {
-${Object.entries(enumMap).map(([n, ls]) => `      ${ident(n)}: [${ls.map((l) => JSON.stringify(l)).join(", ")}],`).join("\n")}
+${Object.entries(enumMap)
+  .map(
+    ([n, ls]) =>
+      `      ${ident(n)}: [${ls.map((l) => JSON.stringify(l)).join(", ")}],`,
+  )
+  .join("\n")}
     },
   },
 } as const
@@ -265,8 +308,14 @@ writeFileSync("src/types/supabase.ts", parts.join("\n") + "\n");
 // a regen only ever shows semantic drift in `git diff` (the verify-db
 // workflow relies on that to flag a stale committed file).
 try {
-  execSync("npx --yes prettier --write src/types/supabase.ts", { stdio: "inherit" });
+  execSync("npx --yes prettier --write src/types/supabase.ts", {
+    stdio: "inherit",
+  });
 } catch {
-  console.warn("prettier formatting failed — committed file may differ stylistically");
+  console.warn(
+    "prettier formatting failed — committed file may differ stylistically",
+  );
 }
-console.log(`Wrote src/types/supabase.ts: ${tables.length} tables, ${functions.length} functions, ${Object.keys(enumMap).length} enums`);
+console.log(
+  `Wrote src/types/supabase.ts: ${tables.length} tables, ${functions.length} functions, ${Object.keys(enumMap).length} enums`,
+);

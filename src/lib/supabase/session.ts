@@ -11,13 +11,11 @@ import {
 // session refresh Set-Cookie forwarding), while keeping the app's own
 // protected-route list and redirect contract (?next + mode=login).
 const PROTECTED_ROUTES = [
-  // Guests may self-study the trial lesson surface (/learn, /review stay open).
-  // /me covers progress, speaking, writing, grammar, pronunciation, settings.
+  // /discover, /watch and /read stay open for guests (viewing requires no
+  // account). These routes hold learner data and therefore need a session.
+  "/library",
+  "/review",
   "/me",
-  "/roadmap",
-  "/placement",
-  "/checkpoint",
-  "/quiz",
 ];
 
 const NEON_AUTH_VERIFIER_PARAM = "neon_auth_session_verifier";
@@ -71,10 +69,8 @@ export async function updateSession(request: NextRequest) {
   if (result.action === "redirect_oauth") {
     // Neon managed OAuth returns the user to the trusted-domain root with the
     // verifier (the configured callbackURL path is not preserved upstream), so
-    // post-exchange the redirect target is "/". Landing a freshly-authenticated
-    // user there skips onboarding seeding and leaves them on the marketing
-    // page — route them through /auth/callback so user_progress is seeded and
-    // the destination contract (/learn or the onboarding path) still applies.
+    // post-exchange the redirect target is "/". Route through /auth/callback
+    // so the destination contract (?next, default /discover) still applies.
     if (result.redirectUrl.pathname === "/") {
       result.redirectUrl.pathname = "/auth/callback";
     }
@@ -112,7 +108,7 @@ export async function updateSession(request: NextRequest) {
       : null;
     if (session?.user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/learn";
+      url.pathname = "/discover";
       url.search = "";
       return appendCookies(
         NextResponse.redirect(url),

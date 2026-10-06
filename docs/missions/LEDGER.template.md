@@ -26,7 +26,7 @@ at each transition with date.
 ## EVIDENCE LOG
 
 | Date | Evidence (command/output/doc) | Supports |
-| ---- | --------------------------- | -------- |
+| ---- | ----------------------------- | -------- |
 
 ## FINDINGS
 

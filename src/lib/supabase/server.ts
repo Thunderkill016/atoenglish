@@ -43,7 +43,9 @@ async function getAnonymousToken(): Promise<string | null> {
     return anonymousToken.token;
   }
   try {
-    const res = await fetch(`${process.env.NEON_AUTH_BASE_URL}/token/anonymous`);
+    const res = await fetch(
+      `${process.env.NEON_AUTH_BASE_URL}/token/anonymous`,
+    );
     if (!res.ok) return null;
     const data = (await res.json()) as { token?: string; expires_at?: number };
     if (!data.token || !data.expires_at) return null;
@@ -82,7 +84,8 @@ export async function createClient() {
         // carrying role "anonymous" (RLS keeps enforcing row isolation).
         try {
           const jar = await cookies();
-          if (!jar.get(NEON_AUTH_SESSION_COOKIE_NAME)) return getAnonymousToken();
+          if (!jar.get(NEON_AUTH_SESSION_COOKIE_NAME))
+            return getAnonymousToken();
         } catch {
           return getAnonymousToken();
         }

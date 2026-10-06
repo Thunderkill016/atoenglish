@@ -7,11 +7,12 @@ export type NativeSpeechRecognitionConstructor<T = unknown> = new () => T;
  * would hide the unavailable state from the learner.
  */
 export function getNativeSpeechRecognitionConstructor<T = unknown>(
-  windowLike: Record<string, unknown> | null | undefined
+  windowLike: Record<string, unknown> | null | undefined,
 ): NativeSpeechRecognitionConstructor<T> | null {
   if (!windowLike) return null;
 
-  const candidate = windowLike.SpeechRecognition ?? windowLike.webkitSpeechRecognition;
+  const candidate =
+    windowLike.SpeechRecognition ?? windowLike.webkitSpeechRecognition;
   return typeof candidate === "function"
     ? (candidate as NativeSpeechRecognitionConstructor<T>)
     : null;

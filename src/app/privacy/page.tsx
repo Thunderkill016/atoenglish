@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Screen, LargeTitle, Prose } from "@/components/design-system";
 
 export const metadata: Metadata = {
   title: "Chính sách Bảo mật | AtoEnglish",
@@ -9,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <Screen narrow>
+    <div className="mx-auto w-full max-w-3xl px-4 py-10">
       <main id="main-content">
         <Link
           href="/"
@@ -18,11 +17,16 @@ export default function PrivacyPage() {
           ← Trang chủ
         </Link>
 
-        <LargeTitle subtitle="Cập nhật lần cuối: Tháng 6 năm 2025">
-          Chính sách Bảo mật
-        </LargeTitle>
+        <div className="mb-8 space-y-1">
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            Chính sách Bảo mật
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Cập nhật lần cuối: Tháng 6 năm 2025
+          </p>
+        </div>
 
-        <Prose>
+        <div className="space-y-8">
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold">
               1. Thông tin chúng tôi thu thập
@@ -109,7 +113,7 @@ export default function PrivacyPage() {
               </a>
             </p>
           </section>
-        </Prose>
+        </div>
 
         <div className="pt-8 border-t border-border/40 flex gap-4 text-sm">
           <Link
@@ -126,6 +130,6 @@ export default function PrivacyPage() {
           </Link>
         </div>
       </main>
-    </Screen>
+    </div>
   );
 }

@@ -215,13 +215,12 @@ Ràng buộc: `practice_attempts` phải có `card_id` hoặc (`source_id` + `se
 - `src/lib/speech.ts`: Web Speech API cho shadowing.
 - `src/lib/security/rate-limit.ts`, auth Neon, mẫu server action + Zod trong `src/app/actions/cards.ts`.
 
-## 13. Gỡ hệ cũ theo giai đoạn
+## 13. Gỡ hệ cũ
 
-| Giai đoạn | Việc làm                                                                                                                                                                              | Điều kiện                                                       |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| A         | Khi điều hướng mới ra mắt (phần 3 trở đi): bỏ các mục cũ khỏi điều hướng chính; route cũ vẫn chạy; không làm thêm gì cho hệ cũ                                                        | Cùng PR thêm điều hướng mới                                     |
-| B         | PR riêng (phần 7): xoá route/UI/dữ liệu bài học cũ, `/discover` thành trang chủ sau đăng nhập, landing/metadata/manifest bỏ "IELTS", điều chỉnh `test:content-standard` và smoke test | Chủ dự án duyệt + Hoàng đã dùng vòng mới ≥ 1 tuần               |
-| C         | Bảng dữ liệu người học cũ (`user_progress`, `lesson_history`, `learning_attempts`, `zero_path_*`, `cards`)                                                                            | **Không bao giờ** xoá trong cùng PR gỡ UI; chờ quyết định riêng |
+Chủ dự án duyệt dọn sạch bề mặt cũ **trước** khi code (thay kế hoạch gỡ theo giai đoạn ban đầu — codebase một người học, route mới trùng tên route cũ, không nên code hệ mới trong đống code chết):
+
+- **Slice 0 — dọn vỏ (đã làm)**: xoá route/UI/actions/lib/test của hệ cũ (`learn`, `quiz`, `placement`, `roadmap`, `checkpoint`, `zero-path`, `review`/`read`/`me` bản cũ), trích `UNIT_VOCABULARY` → `src/lib/dict/vocabulary.ts` (501 từ, phẳng, không khoá theo unit), viết lại landing/login/manifest/sitemap theo hướng mới, bỏ `test:content-standard` khỏi CI. Giữ: hạ tầng (vinext, Neon auth/DB, proxy rate-limit), lib tái dùng (`tokenize`, `lemma`, `gloss`, `fsrs`, `gemini`, `speech`, `rate-limit`), `components/ui` + `providers`.
+- **Dữ liệu cũ (chưa đụng)**: `user_progress`, `lesson_history`, `learning_attempts`, `zero_path_*`, `cards` — **không bao giờ** xoá cùng PR gỡ UI; chờ quyết định riêng về nhập `cards` → `study_cards` (mục 15.3).
 
 ## 14. Bảo mật và quyền riêng tư
 

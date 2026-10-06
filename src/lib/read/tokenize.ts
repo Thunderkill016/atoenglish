@@ -12,7 +12,11 @@
  */
 
 export type ReadToken =
-  | { readonly type: "word"; readonly text: string; readonly normalized: string }
+  | {
+      readonly type: "word";
+      readonly text: string;
+      readonly normalized: string;
+    }
   | { readonly type: "space" | "punct" | "other"; readonly text: string };
 
 // A word is an ASCII-letter run with an optional internal apostrophe tail.
@@ -37,7 +41,11 @@ export function tokenizeText(text: string): ReadToken[] {
     WORD_RE.lastIndex = pos;
     let match = WORD_RE.exec(text);
     if (match) {
-      tokens.push({ type: "word", text: match[0], normalized: normalizeWord(match[0]) });
+      tokens.push({
+        type: "word",
+        text: match[0],
+        normalized: normalizeWord(match[0]),
+      });
       pos += match[0].length;
       continue;
     }

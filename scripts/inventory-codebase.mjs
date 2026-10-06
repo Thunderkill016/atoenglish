@@ -17,7 +17,11 @@ import process from "node:process";
 
 const ROOT = process.cwd();
 const SRC_DIR = path.join(ROOT, "src");
-const OUTPUT_PATH = path.join(ROOT, "reports", "codebase-inventory.generated.md");
+const OUTPUT_PATH = path.join(
+  ROOT,
+  "reports",
+  "codebase-inventory.generated.md",
+);
 const WRITE_REPORT = process.argv.includes("--write");
 
 const SOURCE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
@@ -157,7 +161,10 @@ function resolveInternalImport(fromFile, specifier) {
 
 function isTestFile(filePath) {
   const name = path.basename(filePath);
-  return /\.(test|spec)\.[^.]+$/.test(name) || relative(filePath).includes("/__tests__/");
+  return (
+    /\.(test|spec)\.[^.]+$/.test(name) ||
+    relative(filePath).includes("/__tests__/")
+  );
 }
 
 function isNextEntry(filePath) {
@@ -203,7 +210,9 @@ function parseJsonFile(filePath) {
 }
 
 if (!fs.existsSync(SRC_DIR)) {
-  console.error("Missing src/ directory. Run this command from the repository root.");
+  console.error(
+    "Missing src/ directory. Run this command from the repository root.",
+  );
   process.exit(1);
 }
 
@@ -241,7 +250,10 @@ const unreachableCandidates = sourceFiles
   .sort();
 
 const largeFiles = sourceFiles
-  .map((file) => ({ file: relative(file), lines: readText(file).split("\n").length }))
+  .map((file) => ({
+    file: relative(file),
+    lines: readText(file).split("\n").length,
+  }))
   .filter(({ lines }) => lines >= 500)
   .sort((a, b) => b.lines - a.lines);
 
@@ -254,7 +266,11 @@ const usedPackages = new Set();
 
 const repositoryTextFiles = walk(ROOT, (file) => {
   const base = path.basename(file);
-  return TEXT_EXTENSIONS.has(path.extname(file)) || base === "Dockerfile" || base === "Makefile";
+  return (
+    TEXT_EXTENSIONS.has(path.extname(file)) ||
+    base === "Dockerfile" ||
+    base === "Makefile"
+  );
 });
 
 for (const file of repositoryTextFiles) {
@@ -289,8 +305,11 @@ if (fs.existsSync(tsconfigPath)) {
   }
 }
 
-if (packageJson.scripts?.["test:coverage"]) usedPackages.add("@vitest/coverage-v8");
-if (readText(path.join(ROOT, "vitest.config.ts")).includes('environment: "jsdom"')) {
+if (packageJson.scripts?.["test:coverage"])
+  usedPackages.add("@vitest/coverage-v8");
+if (
+  readText(path.join(ROOT, "vitest.config.ts")).includes('environment: "jsdom"')
+) {
   usedPackages.add("jsdom");
 }
 
@@ -307,12 +326,13 @@ const possibleUnusedDependencies = Object.keys(declaredDependencies)
 const possibleUnusedRuntimeDependencies = possibleUnusedDependencies.filter(
   (packageName) => !packageName.startsWith("@types/"),
 );
-const possibleUnusedTypePackages = possibleUnusedDependencies.filter((packageName) =>
-  packageName.startsWith("@types/"),
+const possibleUnusedTypePackages = possibleUnusedDependencies.filter(
+  (packageName) => packageName.startsWith("@types/"),
 );
 
 const generatedAt = new Date().toISOString();
-const report = `# Generated codebase inventory\n\n` +
+const report =
+  `# Generated codebase inventory\n\n` +
   `Generated: ${generatedAt}\n\n` +
   `> Conservative static analysis only. Every item requires manual verification. Framework conventions, runtime strings, generated code, package CLIs, CSS plugins, and external tooling can create false positives.\n\n` +
   `## Summary\n\n` +

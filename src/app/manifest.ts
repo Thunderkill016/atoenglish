@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AtoEnglish — Luyện IELTS từ nền tảng",
+    name: "AtoEnglish — Học tiếng Anh qua video",
     short_name: "AtoEnglish",
     description:
-      "Lộ trình IELTS 0→9.0 cho người Việt: nền tảng trước, format đề sau, ôn tập thông minh FSRS.",
+      "Học tiếng Anh qua video YouTube tự chọn: phụ đề song ngữ, tra từ ngữ cảnh, ôn tập FSRS.",
     start_url: "/",
     display: "standalone",
     background_color: "#09090b",

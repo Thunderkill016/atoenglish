@@ -14,24 +14,19 @@ test.describe("Login Page", () => {
     await expect(page.locator("body")).not.toContainText("Application error");
   });
 
-  test("shows welcome screen by default", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Bắt đầu hành trình nói");
-  });
-
-  test("?mode=login skips survey to auth form", async ({ page }) => {
-    await page.goto("/login?mode=login");
-    // Should show email input directly
+  test("shows the auth form", async ({ page }) => {
+    await expect(page.locator("h1")).toContainText("Đăng nhập");
     await expect(
       page.getByLabel(/email/i).or(page.getByPlaceholder(/email/i)),
     ).toBeVisible({ timeout: 5000 });
   });
 });
 
-// NOTE: /learn, /review, /read are guest self-study routes by product
-// design (see e2e/protected-routes.spec.ts). The routes below are genuinely
-// auth-gated per PROTECTED_ROUTES in src/lib/supabase/session.ts.
+// /discover, /watch and /read stay open for guests by design (viewing needs
+// no account). These routes hold learner data and are auth-gated per
+// PROTECTED_ROUTES in src/lib/supabase/session.ts.
 test.describe("Auth Redirects", () => {
-  for (const route of ["/me/settings", "/me/progress", "/checkpoint"]) {
+  for (const route of ["/library", "/review", "/me"]) {
     test(`unauthenticated user visiting ${route} is redirected to /login`, async ({
       page,
     }) => {

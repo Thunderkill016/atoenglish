@@ -25,7 +25,7 @@ It is the diagnosis input for `docs/architecture/devin-development-operating-mod
   self-reviewed** across learning science, curriculum, UX, engineering and
   security in one continuous thread.
 - `docs/core/HANDOFF_GEMINI_PR128_REVIEW_V2.md` and
-  `CHATGPT_GEMINI_COLLABORATION_V1.md` show specialization was *wanted* earlier,
+  `CHATGPT_GEMINI_COLLABORATION_V1.md` show specialization was _wanted_ earlier,
   but implemented as copy-paste handoffs to other products (Gemini, Codex),
   not as a durable Devin mechanism.
 
@@ -102,7 +102,7 @@ It is the diagnosis input for `docs/architecture/devin-development-operating-mod
 **Evidence**
 
 - All P0–P2 commits were self-reviewed by the authoring session. Several
-  findings the session *did* catch (mislabels, dead code) were caught only
+  findings the session _did_ catch (mislabels, dead code) were caught only
   because the owner explicitly ordered an audit — not by any standing gate.
 
 ### F9 — Activity confused with milestone progress
@@ -133,7 +133,7 @@ It is the diagnosis input for `docs/architecture/devin-development-operating-mod
 
 ## 3. Root-cause summary
 
-The failure is **not** missing tests or missing process *ideas*. It is that:
+The failure is **not** missing tests or missing process _ideas_. It is that:
 
 1. Specialization existed only **inside prompts**, not as enforceable
    structure — whoever writes the prompt does every role.

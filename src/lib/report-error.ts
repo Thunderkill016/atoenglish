@@ -4,7 +4,7 @@
 // (e.g. @sentry/cloudflare) can replace this without touching components.
 export function captureException(
   error: unknown,
-  context?: { tags?: Record<string, string> }
+  context?: { tags?: Record<string, string> },
 ): void {
   const location = context?.tags?.location;
   console.error(location ? `[error:${location}]` : "[error]", error);

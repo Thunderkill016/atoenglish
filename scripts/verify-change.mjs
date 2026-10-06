@@ -8,7 +8,7 @@ import { buildVerificationPlan } from "./verification-plan.mjs";
 function parseArguments(argv) {
   const args = new Set(argv);
   const scopeIndex = argv.indexOf("--scope");
-  const scope = scopeIndex >= 0 ? argv[scopeIndex + 1] : "curriculum";
+  const scope = scopeIndex >= 0 ? argv[scopeIndex + 1] : "feature";
 
   if (scopeIndex >= 0 && !scope) {
     throw new Error("--scope requires a value");
@@ -53,7 +53,9 @@ function runCheck(check) {
         ...check,
         status: code === 0 ? "passed" : "failed",
         durationMs: Math.round(performance.now() - startedAt),
-        detail: signal ? `terminated by ${signal}` : `exit code ${code ?? "unknown"}`,
+        detail: signal
+          ? `terminated by ${signal}`
+          : `exit code ${code ?? "unknown"}`,
       });
     });
   });
@@ -76,7 +78,9 @@ function printSummary(plan, results) {
   console.log("====================");
   for (const result of results) {
     const durationSeconds = (result.durationMs / 1000).toFixed(1);
-    console.log(`${result.status.toUpperCase().padEnd(11)} ${result.label} (${durationSeconds}s)`);
+    console.log(
+      `${result.status.toUpperCase().padEnd(11)} ${result.label} (${durationSeconds}s)`,
+    );
   }
 
   console.log("\nManual product review still required:");
@@ -106,6 +110,8 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(`AtoEnglish verification failed to start: ${error instanceof Error ? error.message : String(error)}`);
+  console.error(
+    `AtoEnglish verification failed to start: ${error instanceof Error ? error.message : String(error)}`,
+  );
   process.exitCode = 1;
 });

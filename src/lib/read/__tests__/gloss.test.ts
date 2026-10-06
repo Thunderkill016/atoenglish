@@ -23,7 +23,9 @@ describe("inflection resolution", () => {
   it("resolves -ing forms — exact entry or doubled-consonant undo", () => {
     // "swimming" exists in the dictionary itself → direct hit, no rule needed.
     const entry = lookupGloss("swimming");
-    expect(entry === null || entry.word === "swim" || entry.word === "swimming").toBe(true);
+    expect(
+      entry === null || entry.word === "swim" || entry.word === "swimming",
+    ).toBe(true);
   });
 
   it("resolves -ed to the headword", () => {

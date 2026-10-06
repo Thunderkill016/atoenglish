@@ -20,6 +20,7 @@ Chat transcripts are temporary working context. Important conclusions must be pr
 ## Agent roles
 
 ### ChatGPT — architect / integrator / skeptic
+
 Default responsibilities:
 
 - maintain system architecture and invariants;
@@ -32,6 +33,7 @@ Default responsibilities:
 - design discriminating experiments when agents disagree.
 
 ### Gemini Deep Research — independent research lead
+
 Best used for:
 
 - broad literature/standards/technology searches;
@@ -44,6 +46,7 @@ Best used for:
 Research output is evidence input, not an architectural decision.
 
 ### Gemini Antigravity / coding agent — implementation lead
+
 Best used for:
 
 - repository-scale inspection;
@@ -56,6 +59,7 @@ Best used for:
 A coding agent does not choose product/core scope merely because it can implement it.
 
 ### Gemini API / managed agents — later automation layer
+
 Use only after the manual protocol works. Candidate automation:
 
 - structured research extraction;
@@ -70,6 +74,7 @@ Automation must emit typed artifacts and must not auto-merge, auto-promote model
 ## Four collaboration modes
 
 ### Mode A — independent discovery
+
 Use when the design space is unknown.
 
 1. ChatGPT researches independently.
@@ -80,6 +85,7 @@ Use when the design space is unknown.
 Goal: reduce correlated blind spots.
 
 ### Mode B — adversarial review
+
 Use for consequential architecture/model/data decisions.
 
 - Author A proposes.
@@ -90,6 +96,7 @@ Use for consequential architecture/model/data decisions.
 The objective is not consensus. It is discovering what experiment is needed.
 
 ### Mode C — builder/reviewer split
+
 Use for implementation.
 
 - One agent implements from a frozen issue/spec.
@@ -100,6 +107,7 @@ Use for implementation.
 Rotate builder/reviewer roles across workstreams to avoid one model owning a subsystem unchallenged.
 
 ### Mode D — tournament / benchmark
+
 Use when several approaches are plausible.
 
 Example:

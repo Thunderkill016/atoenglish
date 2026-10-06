@@ -161,7 +161,7 @@ describe("updateSession", () => {
     );
   });
 
-  it("redirects an authenticated login request to /learn", async () => {
+  it("redirects an authenticated login request to /discover", async () => {
     arrangeAuthResult("allow", { cookies: undefined });
     arrangeSession({ id: "user-1" });
     const request = createRequest("/login");
@@ -169,7 +169,7 @@ describe("updateSession", () => {
     const response = await updateSession(request as never);
 
     expect(response).toBe(redirectResponses[0]);
-    expect(redirectUrls[0]).toBe("http://localhost/learn");
+    expect(redirectUrls[0]).toBe("http://localhost/discover");
     expect(response.headers.append).toHaveBeenCalledWith(
       "set-cookie",
       "session_data=refreshed; Path=/; HttpOnly",

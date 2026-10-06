@@ -16,9 +16,8 @@ let instance: NeonAuth | null = null;
 
 export async function getAuth(): Promise<NeonAuth> {
   if (!instance) {
-    const { createNeonAuth } = await import(
-      "@neondatabase/neon-js/auth/next/server"
-    );
+    const { createNeonAuth } =
+      await import("@neondatabase/neon-js/auth/next/server");
     instance = createNeonAuth({
       baseUrl: process.env.NEON_AUTH_BASE_URL!,
       cookies: {

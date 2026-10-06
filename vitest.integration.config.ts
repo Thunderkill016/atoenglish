@@ -15,6 +15,7 @@ export default defineConfig({
     setupFiles: ["./src/__tests__/setup-integration.ts"],
     include: ["src/__tests__/integration/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["node_modules", ".next"],
+    passWithNoTests: true, // suite rebuilt with the new product slices
     fileParallelism: false, // Run test files sequentially — they share DB state
     testTimeout: 30000,
   },

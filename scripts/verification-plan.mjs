@@ -1,12 +1,7 @@
-export const SUPPORTED_SCOPES = ["curriculum", "cleanup"];
+export const SUPPORTED_SCOPES = ["feature", "cleanup"];
 
-const focusedLessonTests = [
-  "src/lib/nep/legacy-unit-contract.v1.test.ts",
-];
-
-const curriculumManualReview = [
-  "Confirm the changed lesson still matches its task-level can-do outcome.",
-  "Open the changed lesson and one neighboring unit in the preview; compare title, step count, section labels, and navigation.",
+const featureManualReview = [
+  "Confirm the change matches the active direction in docs/project/PROJECT_STATE.md and the bounded task contract.",
   "Review the changed-file list against the approved scope and explain every shared-file change.",
   "Confirm no learner audio, transcript, name, employer, email, or free-text content was added to analytics payloads.",
   "Record any unavailable check instead of claiming it passed.",
@@ -19,7 +14,10 @@ const cleanupManualReview = [
   "Record any unavailable check instead of claiming it passed.",
 ];
 
-export function buildVerificationPlan({ scope = "curriculum", fast = false } = {}) {
+export function buildVerificationPlan({
+  scope = "feature",
+  fast = false,
+} = {}) {
   if (!SUPPORTED_SCOPES.includes(scope)) {
     throw new Error(
       `Unsupported verification scope: ${scope}. Supported scopes: ${SUPPORTED_SCOPES.join(", ")}`,
@@ -27,23 +25,6 @@ export function buildVerificationPlan({ scope = "curriculum", fast = false } = {
   }
 
   const checks = [];
-
-  if (scope === "curriculum") {
-    checks.push(
-      {
-        id: "focused-lesson-tests",
-        label: "Focused lesson regression tests",
-        command: "npm",
-        args: ["exec", "--", "vitest", "run", ...focusedLessonTests],
-      },
-      {
-        id: "content-standard",
-        label: "Lesson content standards",
-        command: "npm",
-        args: ["run", "test:content-standard"],
-      },
-    );
-  }
 
   checks.push({
     id: "typecheck",
@@ -79,6 +60,7 @@ export function buildVerificationPlan({ scope = "curriculum", fast = false } = {
     scope,
     mode: fast ? "fast" : "full",
     technicalChecks: checks,
-    manualReview: scope === "cleanup" ? cleanupManualReview : curriculumManualReview,
+    manualReview:
+      scope === "cleanup" ? cleanupManualReview : featureManualReview,
   };
 }

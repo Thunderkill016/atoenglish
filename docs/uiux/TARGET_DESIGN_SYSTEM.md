@@ -12,7 +12,7 @@ Not a rebrand. Vietnamese-first, evidence-honest, CEFR-framed.
 - Quiet, structured, trustworthy. A workbook that tells you exactly what
   to do next and records honest evidence.
 - One accent (green) means "actionable". Warm neutrals do everything else.
-- Vietnamese chrome everywhere; English is *content*, visually framed
+- Vietnamese chrome everywhere; English is _content_, visually framed
   (italic serif or distinct weight acceptable) so learner instantly
   separates "language being studied" from "instructions".
 - No decorative reward surfaces, no mascots, no streak theater —
@@ -21,15 +21,15 @@ Not a rebrand. Vietnamese-first, evidence-honest, CEFR-framed.
 
 ## 2. Page archetypes (all pages must be one of these)
 
-| Archetype | Contract | Pages |
-|-----------|----------|-------|
-| **A. Marketing** | Centered prose, section rhythm, 1 primary CTA per section | `/`, `/privacy`, `/terms` |
-| **B. Auth/Form** | Single card ≤480px, visible labels, inline errors, one submit | `/login` |
-| **C. Hub/Index** | Section-label + row-card groups, ≤2 levels deep | `/me`, `/me/speaking`, `/me/grammar`, `/review` |
-| **D. Dashboard** | Next-action block first, then evidence, then inventory | `/learn`, `/me/progress` |
-| **E. Curriculum list** | Chunked accordion groups (stage → units), continue row pinned top | `/roadmap`, `/quiz`, unit inventory inside `/learn` |
-| **F. Task/Practice** | Full-bleed focus chrome: exit + n/N progress + one action | `/learn/[unit]/*`, `/checkpoint/*`, speaking modes, `/review/cards` |
-| **G. Picker/Onboarding** | Labeled choice cards + one alternative path | `/placement`, `/zero-path` |
+| Archetype                | Contract                                                          | Pages                                                               |
+| ------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **A. Marketing**         | Centered prose, section rhythm, 1 primary CTA per section         | `/`, `/privacy`, `/terms`                                           |
+| **B. Auth/Form**         | Single card ≤480px, visible labels, inline errors, one submit     | `/login`                                                            |
+| **C. Hub/Index**         | Section-label + row-card groups, ≤2 levels deep                   | `/me`, `/me/speaking`, `/me/grammar`, `/review`                     |
+| **D. Dashboard**         | Next-action block first, then evidence, then inventory            | `/learn`, `/me/progress`                                            |
+| **E. Curriculum list**   | Chunked accordion groups (stage → units), continue row pinned top | `/roadmap`, `/quiz`, unit inventory inside `/learn`                 |
+| **F. Task/Practice**     | Full-bleed focus chrome: exit + n/N progress + one action         | `/learn/[unit]/*`, `/checkpoint/*`, speaking modes, `/review/cards` |
+| **G. Picker/Onboarding** | Labeled choice cards + one alternative path                       | `/placement`, `/zero-path`                                          |
 
 Rule: adding a page = choosing an archetype. No bespoke layouts.
 
@@ -63,7 +63,7 @@ Keep the existing token layer; add usage law on top:
   active nav, progress-fill. Never decoration.
 - Domain tokens stay semantic: `state-new/learning/known/due` for vocab,
   `phase-input/processing/output/review` for lesson phases, `success/
-  warning/info/destructive` for status. No new ad-hoc colors.
+warning/info/destructive` for status. No new ad-hoc colors.
 - Locked/unavailable = `muted` + lock icon + reduced contrast, never
   just a different chevron.
 - Dark theme: keep token parity; verify muted text ≥4.5:1 on dark bg
@@ -92,6 +92,7 @@ error text below in `destructive` + `aria-invalid` + `aria-describedby`.
 Placeholder = format example only.
 
 **Error system** — three tiers, chosen by scope:
+
 1. Field-level inline (form errors) — always.
 2. Error summary card top-of-form (multi-field or server errors) —
    GOV.UK pattern, anchored to fields.

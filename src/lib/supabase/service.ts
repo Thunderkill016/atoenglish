@@ -55,9 +55,7 @@ export async function rpcService<T = unknown>(
       return { data: null, error: { message: `invalid rpc arg: ${k}` } };
     }
   }
-  const signature = keys
-    .map((k, i) => `${k} => $${i + 1}`)
-    .join(", ");
+  const signature = keys.map((k, i) => `${k} => $${i + 1}`).join(", ");
   try {
     const rows = await getSql().query(
       `select public.${fn}(${signature}) as result`,

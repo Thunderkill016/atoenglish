@@ -72,7 +72,7 @@ Không ghi số lượng test cố định vào tài liệu; output CI/test runn
 ## Source kỹ thuật
 
 - Runtime: `src/`
-- Curriculum đang tồn tại: `src/lib/data/units/`
+- Từ điển curated (tách khỏi giáo trình cũ): `src/lib/dict/vocabulary.ts`
 - Database migrations: `supabase/migrations/`
 - Generated DB types: `src/types/supabase.ts`
 - CI chính: `.github/workflows/verify.yml`

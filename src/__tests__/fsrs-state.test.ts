@@ -40,11 +40,13 @@ describe("FSRS database mapping", () => {
   });
 
   it("does not infer elapsed days from next due minus last review", () => {
-    const mapped = mapDbCardToFSRSCard(makeCard({
-      elapsed_days: 20,
-      last_review: "2026-09-01T00:00:00.000Z",
-      next_review: "2026-09-05T00:00:00.000Z",
-    }));
+    const mapped = mapDbCardToFSRSCard(
+      makeCard({
+        elapsed_days: 20,
+        last_review: "2026-09-01T00:00:00.000Z",
+        next_review: "2026-09-05T00:00:00.000Z",
+      }),
+    );
     expect(mapped.elapsed_days).toBe(20);
   });
 });
