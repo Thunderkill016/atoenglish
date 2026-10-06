@@ -1,6 +1,6 @@
 # AtoEnglish — Current Project State
 
-**Effective:** 2026-10-06 (direction replaced: IELTS 0→9.0 → học tiếng Anh qua video)  
+**Effective:** 2026-10-06 (direction replaced: IELTS 0→9.0 → học tiếng Anh qua video; same day: owner confirmed the new system **replaces** the existing learning system)  
 **Project:** AtoEnglish
 
 ## Current state
@@ -30,7 +30,13 @@ Owner decisions defining scope (2026-10-06):
 - **Monetization:** none. No paywall, subscription, plan tiers or payment integration.
 - **Content:** learners may paste any YouTube link; the product fetches the video's existing captions automatically (eJOY-style) and falls back to a learner-provided transcript when fetching fails — see the constraint below.
 
-Product reference: a desk study of eJOY (content → contextual lookup → save with context → spaced review → use) informed this direction. It is a competitive reference, not evidence that the loop works for AtoEnglish learners.
+**Owner decision 2026-10-06 (later the same day):** this is a **new learning system that replaces the existing one**. The A0–B2 unit curriculum, 5-phase lesson player, placement, checkpoints, roadmap, zero-path and quiz are to be retired in phases (see "Status of pre-existing surfaces"), not kept as a parallel path.
+
+Product reference: a desk study of eJOY and a static review of 39 open-source learning projects plus Trancy (owner research package `research/ejoy-archive-2026-10-06`; summarised in `docs/missions/004-video-learning-loop/RESEARCH-NOTES.md`) informed this direction and the system shape below. Nothing in that package was run or measured; it is design evidence, not evidence that the loop works for AtoEnglish learners.
+
+### System shape (from the research, adopted 2026-10-06)
+
+Five separate objects: **content source → sentence + timestamp → expression with context → card + FSRS schedule → practice attempt**. One card per expression per learner carries the schedule; every occurrence keeps its own source sentence, position and timestamp. The scheduler only receives practice outcomes; AI reads learning data through controlled server actions and never writes the schedule. Detailed spec: `docs/missions/004-video-learning-loop/SPEC.md`.
 
 ### YouTube content constraint (verified 2026-10-06)
 
@@ -42,27 +48,30 @@ Product reference: a desk study of eJOY (content → contextual lookup → save 
 
 Only the following areas are active product scope:
 
-1. **content intake** — YouTube link → embedded playback; captions fetched automatically with learner-provided fallback; learner-pasted text;
+1. **content intake** (`/watch`, `/read`) — YouTube link → embedded playback; captions fetched automatically with learner-provided fallback; learner-pasted text;
 2. **understanding in context** — synced transcript, line loop/slow, word/phrase lookup with honest misses (no fabricated meanings; AI explanations labelled as AI);
-3. **saving with context** — per-learner saved expressions linked to source sentence, video and timestamp;
-4. **review and reuse** — FSRS-scheduled retrieval of saved expressions and production tasks that use them in new contexts;
-5. authentication, learner-data integrity, privacy, accessibility, security and release reliability required to operate the above.
+3. **saving with context** (`/library`) — one card per expression per learner, every occurrence linked to source sentence, position and timestamp;
+4. **review and reuse** (`/review`) — FSRS-scheduled retrieval with several practice modes on the same card (recall, listen-and-fill, optional speak-repeat with transcript similarity only, write-reuse); each attempt recorded separately;
+5. **evidence view** (`/me`) — exposure / supported / independent / delayed-recall, each with its denominator; no CEFR, band, XP or streak;
+6. authentication, learner-data integrity, privacy, accessibility, security and release reliability required to operate the above.
 
-Everything else must justify itself against one of these five areas. Existing code is not sufficient justification.
+Everything else must justify itself against one of these six areas. Existing code is not sufficient justification.
 
 ## Measurement rules
 
 - Saved-word counts, time-on-app and streaks are not learning evidence.
 - Track separately: loop completion (watch → save → review → reuse), reviews done when due (denominator = items actually due), delayed recall with/without hints, and reuse in a new context.
 - Self-marked word status ("known/learning") is self-report and never becomes assessed evidence.
+- Speech-recognition transcript similarity is not a pronunciation score and never changes the review schedule.
+- AI glosses and AI feedback are labelled as AI and are not assessment.
 - No CEFR, band or proficiency claims the system cannot measure.
 
 ## Status of pre-existing surfaces
 
-- **Reader (`/read`), FSRS (`ts-fsrs`, `cards`, review queue), writing/speaking practice, Gemini gateway:** reusable building blocks for the loop; extend only where the loop needs them.
-- **A0–B2 unit curriculum, 5-phase lesson player, placement, checkpoints, IELTS stage map:** not active scope. Frozen compatibility surface — keep working, do not extend.
-- **`atoenglish-content` vocabulary spine:** may be reused as a gloss/difficulty asset for transcripts. The unit-authoring pipeline (mission 003 M1) is paused.
-- **Landing page / metadata (`src/app/page.tsx`, `layout.tsx`, `manifest.ts`):** still advertise IELTS; must be corrected before any public promotion.
+- **Reader (`/read`), FSRS (`ts-fsrs`), Gemini gateway, Web Speech wrapper, tokenizer/lemma, rate limiting, auth:** building blocks of the new system; `/read` is re-pointed to the new data model, the review queue is rebuilt on the new cards.
+- **A0–B2 unit curriculum, 5-phase lesson player, placement, checkpoints, roadmap, zero-path, quiz, grammar/pronunciation pages, roleplay/phoneme/journal, old `cards` review queue:** **scheduled for removal** (owner decision 2026-10-06). Phase A: keep running, remove from main navigation, no new work. Phase B (own PR, after owner approval and ≥ 1 week of real use of the new loop): delete routes, UI and unit data; fix landing/metadata. Phase C: learner-data tables (`user_progress`, `lesson_history`, `learning_attempts`, `zero_path_*`, `cards`) are **never dropped in the same PR**; kept until a separate owner decision.
+- **`atoenglish-content` vocabulary spine:** reused as the curated gloss layer. The unit-authoring pipeline (mission 003 M1) is closed with the curriculum.
+- **Landing page / metadata (`src/app/page.tsx`, `layout.tsx`, `manifest.ts`):** still advertise IELTS; corrected in phase B.
 
 ## Explicitly closed / non-core scope
 
@@ -103,7 +112,7 @@ The single active direction can be replaced only by an explicit current owner de
 
 ## Runtime reality
 
-`main` contains the current Next.js/React/TypeScript application on Cloudflare Workers + Neon, existing A0–B2 curriculum data, learning surfaces, progress/review systems, tests and migrations.
+`main` contains the current Next.js/React/TypeScript application on Cloudflare Workers + Neon, existing A0–B2 curriculum data, learning surfaces, progress/review systems, tests and migrations. As of 2026-10-06 none of the new system (`/watch`, `/library`, new tables) exists in code yet; the old surfaces still run.
 
 These describe the current implementation only. Their existence does not grant them product authority and does not create separate workstreams.
 
@@ -137,6 +146,8 @@ Issue #152's release invariant is unchanged: **production must be traceable to a
 
 ## Active work
 
-There is no inherited product roadmap or parallel workstream. Work selection must stay inside the single active direction and minimum active product surface above.
+Mission `docs/missions/004-video-learning-loop/` (contract v2: full-system replacement, status DEFINING until owner review). Slices: 1 `/watch` + caption fetch → 2 save with context + `/library` → 3 `/review` + `/me` → 4 retire old system.
+
+There is no other inherited product roadmap or parallel workstream. Work selection must stay inside the single active direction and minimum active product surface above.
 
 When no explicit bounded task exists inside that direction, stop rather than manufacture one.
