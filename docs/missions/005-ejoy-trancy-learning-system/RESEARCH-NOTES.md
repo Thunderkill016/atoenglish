@@ -37,6 +37,8 @@ Chỉ liệt kê repo hữu ích trực tiếp cho từng phần; danh mục đ�
 
 Quy tắc chung: chỉ mượn mã từ repo MIT/Apache-2.0/Unlicense, ghi nguồn trong comment và PR; repo GPL/AGPL/chưa rõ giấy phép chỉ dùng làm ý tưởng. `mLearn` (Sustainable Use License) và `openkoto` (Apache + điều kiện riêng) không mượn mã.
 
+**Đọc sâu code thật** (cùng ngày, reading-packets): kỹ thuật cụ thể trích từng repo — parser ASR, PO Token, FSRS helpers, model bookmark, CSS Highlight, similarity, dictation blanking, prompt agent — xem [TECH-KNOWLEDGE.md](./TECH-KNOWLEDGE.md). §9 của file đó liệt kê các thay đổi đề xuất cho SPEC/TASK_CONTRACT.
+
 ## Kiểm chứng kỹ thuật của mission này (06/10)
 
 Một lần thử trên một video công khai từ IP dân dụng (không phải từ Cloudflare Worker):
