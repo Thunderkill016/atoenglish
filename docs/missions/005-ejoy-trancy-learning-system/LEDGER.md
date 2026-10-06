@@ -126,3 +126,17 @@ New AtoEnglish learning system at the Trancy standard, replacing the old curricu
 **Rejected (documented):** dark-first cinema shelves (catalog too small, NN/g horizontal-scroll-on-desktop evidence), Duolingo-style forced path, Lingopie-style "a lot going on" metric strip.
 
 **Gate:** tsc ✓ · eslint 0/0 ✓ · 164/164 unit ✓ · 36/36 e2e ✓ · build ✓ · source-of-truth ✓
+
+## Home v5 — Trancy-faithful reskin — $(date +%Y-%m-%d)
+
+Owner rejected the v4 "Bàn học" editorial direction ("phải làm giống home của trancy"). Re-grounded on the actual captured Trancy home screenshot (`/tmp/trancy-research/live/shots/home.png`) and restored/derived from `bc5c55f7`:
+
+- **Dark-first** (defaultTheme="dark", Trancy home is dark; light theme still available via toggle). Neutral palette — warm-paper experiment reverted; dead-token cleanup kept (minimal-*/chart-*/sidebar-*/phase-*/streak/flip utilities).
+- **IconRail restored** (masthead removed); active item = neutral gray square per Trancy.
+- Top paste field is the page header — greeting/H1 removed to match Trancy home (no "Khám phá" title).
+- VideoCard: channel avatar circle moved onto the thumb's bottom-left corner (TED-logo position in Trancy), pill meta kept.
+- Right rail: Trancy panel look (rounded bg-card) + new "Bộ sưu tập" tile grid with **real counts** (Video đã mở / Đang xem dở); vocab/sentence counts deferred until study_cards exists — honest note shown.
+- Font: Be Vietnam Pro kept (VN diacritics); Playfair removed.
+- Search input + button rounded-full per Trancy chrome.
+
+**Gate:** tsc ✓ · eslint 0/0 ✓ · 164/164 unit ✓ · 36/36 e2e ✓ · build ✓ · source-of-truth ✓

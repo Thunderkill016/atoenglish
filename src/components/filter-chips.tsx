@@ -8,9 +8,9 @@ export interface FilterChipOption {
 }
 
 /**
- * Topic filter for `/discover` — underline tabs over a hairline
- * ("Bàn học" editorial direction, replaces the old pill chips).
- * `value === null` selects the "Tất cả" tab. Overflow scrolls horizontally.
+ * T7 — horizontal scrollable chip row for `/discover` topic filters
+ * (REDESIGN §5.1). `value === null` selects the "Tất cả" chip.
+ * Scrollbar is hidden; overflow scrolls horizontally on touch/drag.
  */
 export function FilterChips({
   options,
@@ -27,10 +27,10 @@ export function FilterChips({
 }) {
   const chipClass = (active: boolean) =>
     cn(
-      "shrink-0 border-b-2 px-1 py-2 text-sm font-medium transition-colors",
+      "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
       active
-        ? "border-primary text-foreground"
-        : "border-transparent text-muted-foreground hover:text-foreground",
+        ? "bg-primary text-primary-foreground"
+        : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-foreground",
     );
 
   return (
@@ -38,7 +38,7 @@ export function FilterChips({
       role="group"
       aria-label={allLabel}
       className={cn(
-        "flex gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         className,
       )}
     >

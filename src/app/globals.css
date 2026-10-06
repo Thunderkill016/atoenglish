@@ -1,10 +1,9 @@
 @import "tailwindcss";
 
-/* ─── Theme Tokens — "Bàn học" (study desk): warm paper, deep-green accent ── */
+/* ─── Theme Tokens (replaces tailwind.config.ts extend) ─────────────────────── */
 @theme {
-  /* Fonts */
+  /* Font */
   --font-sans: var(--font-be-vietnam, ui-sans-serif), system-ui, sans-serif;
-  --font-serif: var(--font-playfair, Georgia), "Times New Roman", serif;
 
   /* Brand Colors (mapped from CSS variables set in :root / .dark) */
   --color-border: var(--border);
@@ -42,58 +41,58 @@
 
 /* ─── Design Tokens / CSS Variables ─────────────────────────────────────────── */
 :root {
-  --background: oklch(0.966 0.008 95);
-  --foreground: oklch(0.24 0.015 70);
-  --card: oklch(0.99 0.005 95);
-  --card-foreground: oklch(0.24 0.015 70);
-  --primary: oklch(0.45 0.095 165);
-  --primary-foreground: oklch(0.97 0.008 95);
-  --secondary: oklch(0.925 0.014 90);
-  --secondary-foreground: oklch(0.3 0.015 70);
-  --muted: oklch(0.925 0.014 90);
-  --muted-foreground: oklch(0.5 0.015 75);
-  --accent: oklch(0.91 0.018 90);
-  --accent-foreground: oklch(0.3 0.015 70);
-  --destructive: oklch(0.55 0.22 27);
-  --destructive-foreground: oklch(0.97 0.008 95);
-  --border: oklch(0.885 0.012 90);
-  --input: oklch(0.885 0.012 90);
-  --ring: oklch(0.45 0.095 165);
-  --mark: oklch(0.9 0.1 95);
-  --radius: 0.75rem;
+  --background: oklch(0.99 0.003 240);
+  --foreground: oklch(0.25 0.015 240);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.015 240);
+  --primary: oklch(0.52 0.14 160);
+  --primary-foreground: oklch(0.99 0.003 240);
+  --secondary: oklch(0.96 0.004 240);
+  --secondary-foreground: oklch(0.3 0.01 240);
+  --muted: oklch(0.96 0.004 240);
+  --muted-foreground: oklch(0.55 0.01 240);
+  --accent: oklch(0.94 0.005 240);
+  --accent-foreground: oklch(0.3 0.01 240);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.99 0.003 240);
+  --border: oklch(0.93 0.005 240);
+  --input: oklch(0.93 0.005 240);
+  --ring: oklch(0.52 0.14 160);
+  --mark: oklch(0.88 0.1 95);
+  --radius: 0.625rem;
 
   /* Learning-state roles: unseen content, in-progress, acquired, due-for-review */
-  --state-new: oklch(0.58 0.12 235);
-  --state-learning: oklch(0.68 0.13 80);
-  --state-known: oklch(0.58 0.14 150);
-  --state-due: oklch(0.6 0.19 30);
+  --state-new: oklch(0.6 0.12 230);
+  --state-learning: oklch(0.7 0.14 80);
+  --state-known: oklch(0.62 0.17 150);
+  --state-due: oklch(0.63 0.2 30);
 }
 
 .dark {
-  /* Warm charcoal — deliberately not blue-black. */
-  --background: oklch(0.185 0.01 70);
-  --foreground: oklch(0.93 0.01 90);
-  --card: oklch(0.23 0.012 70);
-  --card-foreground: oklch(0.93 0.01 90);
-  --primary: oklch(0.72 0.12 165);
-  --primary-foreground: oklch(0.16 0.008 70);
-  --secondary: oklch(0.27 0.012 70);
-  --secondary-foreground: oklch(0.93 0.01 90);
-  --muted: oklch(0.27 0.012 70);
-  --muted-foreground: oklch(0.68 0.012 80);
-  --accent: oklch(0.29 0.012 75);
-  --accent-foreground: oklch(0.93 0.01 90);
-  --destructive: oklch(0.68 0.19 25);
-  --destructive-foreground: oklch(0.16 0.008 70);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.72 0.12 165);
-  --mark: oklch(0.42 0.07 90);
+  /* Trancy-style near-black canvas with lifted panels. */
+  --background: oklch(0.13 0.006 240);
+  --foreground: oklch(0.96 0.005 240);
+  --card: oklch(0.17 0.008 240);
+  --card-foreground: oklch(0.96 0.005 240);
+  --primary: oklch(0.68 0.14 160);
+  --primary-foreground: oklch(0.12 0.005 240);
+  --secondary: oklch(0.21 0.008 240);
+  --secondary-foreground: oklch(0.96 0.005 240);
+  --muted: oklch(0.21 0.008 240);
+  --muted-foreground: oklch(0.65 0.01 240);
+  --accent: oklch(0.24 0.008 240);
+  --accent-foreground: oklch(0.96 0.005 240);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.96 0.005 240);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: oklch(0.68 0.14 160);
+  --mark: oklch(0.35 0.06 90);
 
   /* Learning-state roles — lighter hues for dark contrast */
-  --state-new: oklch(0.7 0.12 235);
+  --state-new: oklch(0.7 0.12 230);
   --state-learning: oklch(0.78 0.13 80);
-  --state-known: oklch(0.72 0.14 150);
+  --state-known: oklch(0.72 0.16 150);
   --state-due: oklch(0.72 0.19 30);
 }
 

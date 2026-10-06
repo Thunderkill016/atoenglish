@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, Playfair } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import { MotionProvider } from "@/components/providers/motion-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -15,19 +15,10 @@ const sansFont = Be_Vietnam_Pro({
   display: "swap",
 });
 
-// Display serif for headlines/wordmark ("Bàn học" editorial direction).
-// Playfair is the 2023 variable family — the older Playfair Display has a
-// Vietnamese bold-diacritic defect (google/fonts#10100).
-const serifFont = Playfair({
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-playfair",
-  display: "swap",
-});
-
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f3ec" },
-    { media: "(prefers-color-scheme: dark)", color: "#1b1815" },
+    { media: "(prefers-color-scheme: light)", color: "#fdfdfb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f0f10" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -113,7 +104,7 @@ export default function RootLayout({
     <html
       lang="vi"
       suppressHydrationWarning
-      className={cn("font-sans", sansFont.variable, serifFont.variable)}
+      className={cn("font-sans", sansFont.variable)}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -138,7 +129,7 @@ export default function RootLayout({
         </a>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
           enableSystem={false}
           storageKey="ato-ui-white"
           disableTransitionOnChange

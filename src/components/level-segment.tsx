@@ -27,9 +27,9 @@ export function LevelSegment({
 }) {
   const segmentClass = (active: boolean) =>
     cn(
-      "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+      "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
       active
-        ? "bg-foreground text-background"
+        ? "bg-primary text-primary-foreground"
         : "text-muted-foreground hover:text-foreground",
     );
 
@@ -38,7 +38,7 @@ export function LevelSegment({
       role="group"
       aria-label={allLabel}
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-full border border-border p-0.5",
+        "inline-flex items-center gap-0.5 rounded-lg border border-border bg-muted p-0.5",
         className,
       )}
     >

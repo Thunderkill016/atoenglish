@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { ReactNode, Ref } from "react";
 import { useRouter } from "next/navigation";
-import { Link2 } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { parseYoutubeUrl } from "@/lib/video/youtube-url";
 import { cn } from "@/lib/utils";
@@ -47,7 +47,7 @@ export function YoutubeLinkInput({
     <div className="w-full">
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Link2
+          <Search
             className={cn(
               "absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground",
               large ? "h-5 w-5" : "h-4 w-4",
@@ -66,7 +66,7 @@ export function YoutubeLinkInput({
             inputMode="url"
             aria-label="Link YouTube"
             className={cn(
-              "w-full rounded-xl border border-input bg-card outline-none transition-colors focus:border-primary",
+              "w-full rounded-full border border-input bg-card outline-none transition-colors focus:border-primary",
               large ? "py-3.5 pl-11 text-base" : "py-2.5 pl-9 text-sm",
               trailing ? "pr-16" : "pr-3",
             )}
@@ -81,7 +81,7 @@ export function YoutubeLinkInput({
           type="button"
           onClick={open}
           className={cn(
-            "rounded-xl bg-primary font-semibold text-primary-foreground transition-opacity hover:opacity-90",
+            "rounded-full bg-primary font-semibold text-primary-foreground transition-opacity hover:opacity-90",
             large ? "px-6 py-3.5 text-base" : "px-4 py-2.5 text-sm",
           )}
         >

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarDays, Play } from "lucide-react";
+import { CalendarDays, History, MonitorPlay, Play } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getCatalog } from "@/content/catalog/videos";
@@ -43,22 +43,12 @@ function isResumable(s: SourceRow): boolean {
   return true;
 }
 
-function greeting(now = new Date()): string {
-  const h = now.getHours();
-  const part = h < 11 ? "sáng" : h < 13 ? "trưa" : h < 18 ? "chiều" : "tối";
-  const date = now.toLocaleDateString("vi-VN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-  return `Chào buổi ${part} — ${date}`;
-}
-
 async function loadViewerData(): Promise<{
   signedIn: boolean;
   continueWatching: SourceRow[];
   recentSources: SourceRow[];
   videosThisWeek: number;
+  totalSources: number;
   activityDates: string[];
 }> {
   const guest = {
@@ -66,6 +56,7 @@ async function loadViewerData(): Promise<{
     continueWatching: [],
     recentSources: [],
     videosThisWeek: 0,
+    totalSources: 0,
     activityDates: [],
   };
   try {
@@ -111,11 +102,18 @@ async function loadViewerData(): Promise<{
       .order("updated_at", { ascending: false })
       .limit(ACTIVITY_DATES_LIMIT);
 
+    const { count: totalCount } = await supabase
+      .from("content_sources")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("kind", "youtube");
+
     return {
       signedIn: true,
       continueWatching,
       recentSources: (recent ?? []) as SourceRow[],
       videosThisWeek: count ?? 0,
+      totalSources: totalCount ?? 0,
       activityDates: (weekRows ?? []).map((r) => r.updated_at as string),
     };
   } catch {
@@ -131,6 +129,7 @@ export default async function DiscoverPage() {
     continueWatching,
     recentSources,
     videosThisWeek,
+    totalSources,
     activityDates,
   } = await loadViewerData();
 
@@ -139,18 +138,11 @@ export default async function DiscoverPage() {
   const week = currentWeekActivity(activityDates);
 
   return (
-    <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_280px]">
-      <div className="flex min-w-0 flex-col gap-10">
-        {/* Desk header — date line + serif headline, then the paste field. */}
-        <section className="space-y-4">
-          {signedIn && (
-            <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
-              {greeting()}
-            </p>
-          )}
-          <h1 className="font-serif text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
-            Hôm nay học gì?
-          </h1>
+    <div className="flex flex-col gap-8 xl:flex-row">
+      <div className="flex min-w-0 flex-1 flex-col gap-8">
+        {/* Floating search row — Trancy-style: the paste field is the
+            page header (greeting/H1 removed to match Trancy home). */}
+        <section className="space-y-3">
           <DiscoverSearch />
           {!signedIn && (
             <p className="text-sm text-muted-foreground">
@@ -163,14 +155,14 @@ export default async function DiscoverPage() {
           )}
         </section>
 
-        {/* Single "next action" for returning learners — a hairline bookmark
-            card, like the open book left on the desk. */}
+        {/* Single "next action" CTA for returning learners — the resume
+            banner (Anki Study Now / Drops last-topic pattern). */}
         {hero && (
           <Link
             href={`/watch/${hero.external_id}?t=${hero.last_position_ms}`}
-            className="group flex items-center gap-5 border-y border-border py-4 transition-colors hover:border-primary/50"
+            className="group flex items-center gap-4 rounded-xl border border-border bg-card p-3 transition hover:border-primary/50"
           >
-            <div className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg bg-muted sm:w-40">
+            <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted sm:w-36">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`https://i.ytimg.com/vi/${hero.external_id}/hqdefault.jpg`}
@@ -183,13 +175,13 @@ export default async function DiscoverPage() {
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <p className="text-xs font-medium text-muted-foreground">
                 Đang xem dở
               </p>
-              <p className="mt-1 line-clamp-2 font-serif text-lg font-medium leading-snug">
+              <p className="mt-0.5 line-clamp-2 text-[15px] font-semibold leading-snug">
                 {hero.title ?? "Video YouTube"}
               </p>
-              <p className="mt-1.5 text-[13px] font-medium text-primary">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Xem tiếp từ {formatTimestamp(hero.last_position_ms)}
                 {hero.duration_ms != null &&
                   hero.duration_ms > hero.last_position_ms &&
@@ -201,7 +193,7 @@ export default async function DiscoverPage() {
 
         {strip.length > 0 && (
           <section>
-            <h2 className="mb-4 font-serif text-xl font-medium tracking-tight">
+            <h2 className="mb-3 text-lg font-bold tracking-tight">
               Đang xem dở
             </h2>
             <div className="no-scrollbar -mx-4 flex gap-5 overflow-x-auto px-4 pb-1">
@@ -222,7 +214,7 @@ export default async function DiscoverPage() {
         )}
 
         <section>
-          <h2 className="mb-4 font-serif text-xl font-medium tracking-tight">
+          <h2 className="mb-3 text-lg font-bold tracking-tight">
             Thư viện chọn sẵn
           </h2>
           <DiscoverCatalog videos={getCatalog()} />
@@ -253,6 +245,31 @@ export default async function DiscoverPage() {
               <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CalendarDays className="h-3.5 w-3.5" />
                 Ôn tập từ vựng sẽ hiện ở đây khi bạn lưu từ đầu tiên.
+              </p>
+            </WidgetCard>
+            <WidgetCard title="Bộ sưu tập">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg bg-muted p-3">
+                  <MonitorPlay className="h-4 w-4 text-primary" />
+                  <p className="mt-1.5 text-lg font-bold leading-none">
+                    {totalSources}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Video đã mở
+                  </p>
+                </div>
+                <div className="rounded-lg bg-muted p-3">
+                  <History className="h-4 w-4 text-primary" />
+                  <p className="mt-1.5 text-lg font-bold leading-none">
+                    {continueWatching.length}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Đang xem dở
+                  </p>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Từ vựng và câu đã lưu sẽ hiện ở đây khi tính năng lưu ra mắt.
               </p>
             </WidgetCard>
             {recentSources.length > 0 && (

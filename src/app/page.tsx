@@ -96,7 +96,7 @@ export default function LandingPage() {
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-border">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-4">
-          <span className="font-serif text-xl font-semibold tracking-tight">
+          <span className="text-lg font-extrabold tracking-tight">
             AtoEnglish
           </span>
           <nav className="flex items-center gap-4 text-sm">
@@ -116,7 +116,7 @@ export default function LandingPage() {
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4">
         {/* Hero — the input works: paste a link and you land in /watch. */}
         <section className="flex flex-col items-center gap-6 py-14 text-center sm:py-20">
-          <h1 className="max-w-3xl font-serif text-4xl font-medium leading-[1.15] tracking-tight sm:text-5xl">
+          <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.15] tracking-tight sm:text-5xl">
             Học tiếng Anh qua video{" "}
             <span className="text-primary">bạn tự chọn</span>
           </h1>
@@ -150,9 +150,7 @@ export default function LandingPage() {
 
         <section className="mt-14">
           <div className="mb-4 flex items-baseline justify-between">
-            <h2 className="font-serif text-xl font-medium">
-              Thử một video mẫu
-            </h2>
+            <h2 className="text-lg font-bold">Thử một video mẫu</h2>
             <Link
               href="/discover"
               className="text-sm text-primary hover:underline"
@@ -174,7 +172,7 @@ export default function LandingPage() {
         </section>
 
         <section className="mt-14 rounded-xl border bg-card p-6">
-          <h2 className="font-serif text-xl font-medium">Đang phát triển</h2>
+          <h2 className="text-lg font-bold">Đang phát triển</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Phụ đề song ngữ Anh–Việt, tra từ ngay trong câu và ôn tập từ vựng
             đang được xây — bản dùng trước ưu tiên đúng việc hơn nhiều tính
@@ -183,9 +181,7 @@ export default function LandingPage() {
         </section>
 
         <section className="mt-14">
-          <h2 className="mb-4 font-serif text-xl font-medium">
-            Câu hỏi thường gặp
-          </h2>
+          <h2 className="mb-4 text-lg font-bold">Câu hỏi thường gặp</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {FAQ.map((item) => (
               <div key={item.q} className="rounded-xl border bg-card p-5">
@@ -197,9 +193,7 @@ export default function LandingPage() {
         </section>
 
         <section className="mt-14 mb-8 flex flex-col items-center gap-4 rounded-xl bg-primary/10 px-6 py-10 text-center">
-          <h2 className="font-serif text-2xl font-medium">
-            Bắt đầu với video của bạn
-          </h2>
+          <h2 className="text-2xl font-bold">Bắt đầu với video của bạn</h2>
           <p className="max-w-md text-sm text-muted-foreground">
             Một link YouTube là đủ — không cần đăng ký.
           </p>

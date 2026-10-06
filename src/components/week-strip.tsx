@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 const WEEKDAY_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"] as const;
 
 /**
- * "Tuần này" — 7-day activity strip as dots (editorial direction): a filled
- * dot = the learner did something that day; today gets a ring. `days` holds
- * the 7 date numbers of the current week (Mon→Sun). Server-renderable.
+ * T5 "Lịch" — 7-day activity strip (Trancy home rail). `days` holds the 7
+ * dates of the current week (Mon→Sun) as "YYYY-MM-DD"; `activeDays` marks
+ * which had any activity. Today gets a ring; active days fill with primary.
+ * Server-renderable — no interactivity.
  */
 export function WeekStrip({
   days,
@@ -21,21 +22,27 @@ export function WeekStrip({
   todayIndex: number;
 }) {
   return (
-    <div className="flex items-start justify-between">
+    <div className="grid grid-cols-7 gap-1">
       {days.map((day, i) => (
-        <div key={i} className="flex flex-col items-center gap-1.5">
+        <div
+          key={i}
+          className={cn(
+            "flex flex-col items-center gap-0.5 rounded-md py-1.5",
+            activeDays[i] ? "bg-primary/15" : "bg-muted/50",
+            i === todayIndex && "ring-1 ring-primary",
+          )}
+        >
           <span className="text-[10px] font-medium uppercase leading-none text-muted-foreground">
             {WEEKDAY_LABELS[i]}
           </span>
           <span
-            title={`${day}`}
             className={cn(
-              "h-2 w-2 rounded-full",
-              activeDays[i] ? "bg-primary" : "bg-muted",
-              i === todayIndex &&
-                "ring-2 ring-primary/40 ring-offset-2 ring-offset-background",
+              "text-sm font-semibold leading-tight",
+              activeDays[i] ? "text-primary" : "text-foreground",
             )}
-          />
+          >
+            {day}
+          </span>
         </div>
       ))}
     </div>

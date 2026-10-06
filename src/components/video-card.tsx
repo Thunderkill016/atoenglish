@@ -1,6 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { Captions, Play } from "lucide-react";
+import { Captions, Check, Play } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTimestamp } from "@/lib/format";
@@ -19,10 +18,10 @@ const LEVEL_TONE = {
 export type VideoCardLevel = keyof typeof LEVEL_TONE;
 
 /**
- * Feed card — "Bàn học" editorial anatomy: only the 16:9 thumb is rounded;
- * meta is a single dot-separated line (channel · topic · level) with a
- * colored level dot and a captions glyph. Resume progress shows a bottom
- * bar; ≥95% watched collapses to a "Đã xem" marker.
+ * T6 feed card — chromeless Trancy/YouTube anatomy: only the 16:9 thumb is
+ * rounded; title sits on the page background; meta renders as discrete pills
+ * (relative-age / topic / colored level / captions). Resume progress shows a
+ * bottom bar; ≥95% watched collapses to a "Đã xem" state.
  */
 export function VideoCard({
   videoId,
@@ -44,7 +43,7 @@ export function VideoCard({
   topicLabel?: string | null;
   levelLabel?: string | null;
   level?: VideoCardLevel | null;
-  /** Caption-quality marker, e.g. "Phụ đề tay + tiếng Việt". */
+  /** Caption-quality badge, e.g. "Phụ đề tay + tiếng Việt". */
   captionLabel?: string | null;
   durationMs?: number | null;
   /** Resume position — bar + ?t= deep link; ≥95% becomes "Đã xem". */
@@ -70,14 +69,11 @@ export function VideoCard({
   const target =
     href ?? `/watch/${videoId}${resumable ? `?t=${positionMs}` : ""}`;
 
-  const meta: ReactNode[] = [];
-  if (channel) meta.push(channel);
-  if (topicLabel) meta.push(topicLabel);
-  if (ageLabel) meta.push(ageLabel);
+  const pill = "rounded-full bg-muted px-2 py-0.5 text-[11px] leading-tight";
 
   return (
     <Link href={target} className={cn("group block", className)}>
-      <div className="relative aspect-video overflow-hidden rounded-xl bg-muted">
+      <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
@@ -89,74 +85,68 @@ export function VideoCard({
           <Play className="h-8 w-8 text-white opacity-0 transition group-hover:opacity-100" />
         </span>
         {durationMs != null && durationMs > 0 && (
-          <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-medium text-white">
+          <span className="absolute bottom-2 right-2 rounded bg-black/75 px-1.5 py-0.5 text-xs font-medium text-white">
             {formatTimestamp(durationMs)}
           </span>
         )}
         {resumable && progressPct != null && (
-          <span className="absolute inset-x-0 bottom-0 h-[3px] bg-black/40">
+          <span className="absolute inset-x-0 bottom-0 h-1 bg-black/40">
             <span
               className="block h-full bg-primary"
               style={{ width: `${progressPct}%` }}
             />
           </span>
         )}
+        {channel && (
+          <span
+            aria-hidden
+            className="absolute bottom-2 left-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground ring-2 ring-black/40"
+          >
+            {channel.charAt(0).toUpperCase()}
+          </span>
+        )}
       </div>
 
-      <div className="pt-2.5">
-        <p className="line-clamp-2 text-[15px] font-semibold leading-snug">
-          {title}
-        </p>
-        {(watched || resumable) && (
-          <p
-            className={cn(
-              "mt-1 text-[13px] font-medium",
-              watched ? "text-state-known" : "text-primary",
-            )}
-          >
-            {watched
-              ? "Đã xem"
-              : `Xem tiếp ${formatTimestamp(positionMs!)}${
-                  remainingMs != null
-                    ? ` · còn ~${Math.ceil(remainingMs / 60_000)}′`
-                    : ""
-                }`}
+      <div className="flex gap-3 px-0.5 pt-2.5">
+        <div className="min-w-0 flex-1">
+          <p className="line-clamp-2 text-[15px] font-medium leading-snug">
+            {title}
           </p>
-        )}
-        {meta.length > 0 && (
-          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[13px] text-muted-foreground">
-            {meta.map((m, i) => (
-              <span key={i} className="contents">
-                {i > 0 && <span aria-hidden>·</span>}
-                <span>{m}</span>
+          {channel && (
+            <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
+              {channel}
+            </p>
+          )}
+          <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-muted-foreground">
+            {watched && (
+              <span className={cn(pill, "inline-flex items-center gap-1")}>
+                <Check className="h-3 w-3 text-state-known" />
+                Đã xem
               </span>
-            ))}
+            )}
+            {resumable && (
+              <span className={pill}>
+                Xem tiếp {formatTimestamp(positionMs!)}
+                {remainingMs != null &&
+                  ` · còn ~${Math.ceil(remainingMs / 60_000)}′`}
+              </span>
+            )}
+            {ageLabel && <span className={pill}>{ageLabel}</span>}
+            {topicLabel && <span className={pill}>{topicLabel}</span>}
             {levelLabel && (
-              <>
-                <span aria-hidden>·</span>
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1",
-                    level && LEVEL_TONE[level],
-                  )}
-                >
-                  <span
-                    aria-hidden
-                    className="h-1.5 w-1.5 rounded-full bg-current"
-                  />
-                  {levelLabel}
-                </span>
-              </>
+              <span className={cn(pill, level && LEVEL_TONE[level])}>
+                {levelLabel}
+              </span>
             )}
             <span
+              className={cn(pill, "inline-flex items-center gap-1")}
               title={captionLabel ?? "Có phụ đề"}
-              className="inline-flex items-center"
             >
-              <Captions className="h-3.5 w-3.5" />
-              <span className="sr-only">{captionLabel ?? "Có phụ đề"}</span>
+              <Captions className="h-3 w-3 shrink-0" />
+              {captionLabel && <span>{captionLabel}</span>}
             </span>
           </p>
-        )}
+        </div>
       </div>
     </Link>
   );
