@@ -136,13 +136,16 @@ export default async function DiscoverPage() {
   const hero = continueWatching[0] ?? null;
   const strip = hero ? continueWatching.slice(1) : [];
   const week = currentWeekActivity(activityDates);
+  const catalog = getCatalog();
+  const catalogSize = catalog.length;
+  const topicCount = new Set(catalog.map((v) => v.topic)).size;
 
   return (
     <div className="flex flex-col gap-8 xl:flex-row">
       <div className="flex min-w-0 flex-1 flex-col gap-8">
         {/* Floating search row — Trancy-style: the paste field is the
             page header (greeting/H1 removed to match Trancy home). */}
-        <section className="space-y-3">
+        <section className="max-w-xl space-y-3">
           <DiscoverSearch />
           {!signedIn && (
             <p className="text-sm text-muted-foreground">
@@ -298,30 +301,61 @@ export default async function DiscoverPage() {
             )}
           </>
         ) : (
-          <WidgetCard title="Bắt đầu từ đây">
-            <p className="text-xs text-muted-foreground">
-              Dán link YouTube → xem phụ đề từng câu → luyện lại ngay trên
-              video. Không cần tài khoản.
-            </p>
-            <ul className="mt-3 space-y-2">
-              {getCatalog()
-                .filter((v) => v.level === "easy")
-                .slice(0, 3)
-                .map((v) => (
-                  <li key={v.id}>
-                    <Link
-                      href={`/watch/${v.id}`}
-                      className="line-clamp-1 text-sm font-medium hover:text-primary hover:underline"
-                    >
-                      {v.title}
-                    </Link>
-                    <p className="text-xs text-muted-foreground">
-                      {v.channel} · {formatTimestamp(v.durationSec * 1000)}
-                    </p>
-                  </li>
-                ))}
-            </ul>
-          </WidgetCard>
+          <>
+            <WidgetCard title="Bắt đầu từ đây">
+              <p className="text-xs text-muted-foreground">
+                Dán link YouTube → xem phụ đề từng câu → luyện lại ngay trên
+                video. Không cần tài khoản.
+              </p>
+              <ul className="mt-3 space-y-2">
+                {getCatalog()
+                  .filter((v) => v.level === "easy")
+                  .slice(0, 3)
+                  .map((v) => (
+                    <li key={v.id}>
+                      <Link
+                        href={`/watch/${v.id}`}
+                        className="line-clamp-1 text-sm font-medium hover:text-primary hover:underline"
+                      >
+                        {v.title}
+                      </Link>
+                      <p className="text-xs text-muted-foreground">
+                        {v.channel} · {formatTimestamp(v.durationSec * 1000)}
+                      </p>
+                    </li>
+                  ))}
+              </ul>
+            </WidgetCard>
+            <WidgetCard title="Lịch">
+              <WeekStrip
+                days={week.days}
+                activeDays={week.activeDays}
+                todayIndex={week.todayIndex}
+              />
+              <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarDays className="h-3.5 w-3.5" />
+                Đăng nhập để lịch ghi lại ngày bạn học.
+              </p>
+            </WidgetCard>
+            <WidgetCard title="Thư viện">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg bg-muted p-3">
+                  <MonitorPlay className="h-4 w-4 text-primary" />
+                  <p className="mt-1.5 text-lg font-bold leading-none">
+                    {catalogSize}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">Video</p>
+                </div>
+                <div className="rounded-lg bg-muted p-3">
+                  <History className="h-4 w-4 text-primary" />
+                  <p className="mt-1.5 text-lg font-bold leading-none">
+                    {topicCount}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">Chủ đề</p>
+                </div>
+              </div>
+            </WidgetCard>
+          </>
         )}
       </RightRail>
     </div>

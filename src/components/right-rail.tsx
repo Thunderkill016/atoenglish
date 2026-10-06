@@ -17,7 +17,7 @@ export function RightRail({
   return (
     <aside
       className={cn(
-        "flex w-full flex-col gap-4 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:w-[320px] xl:shrink-0 xl:self-start xl:overflow-y-auto",
+        "flex w-full flex-col gap-4 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:w-[320px] xl:shrink-0 xl:self-start xl:overflow-y-auto xl:border-l xl:border-border xl:pl-5",
         className,
       )}
     >
