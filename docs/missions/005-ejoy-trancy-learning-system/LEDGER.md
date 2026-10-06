@@ -64,18 +64,27 @@ New AtoEnglish learning system at the Trancy standard, replacing the old curricu
 
 ## OPEN BLOCKERS
 
-- Owner go-ahead to start slice 1 implementation.
 - Open decisions in SPEC §15 (YouTube Data API key, expanded EN–VI dictionary source, `cards` migration, phase-B timing, closing PR #234).
 
 ## IMPLEMENTED CHANGES
 
-| Commit | Summary | Verified by |
-| ------ | ------- | ----------- |
+| Commit      | Summary                                                                                                                                                                                                                                                                                                                                                               | Verified by                                                                                       |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `f5125435`  | Slice 0 — strip old product surface: old routes/actions/libs/tests deleted, `UNIT_VOCABULARY` extracted to `src/lib/dict/vocabulary.ts` (501 entries), landing/login rewritten, infra + reusable libs + all DB tables kept                                                                                                                                           | verify gate: tsc / lint / 81 tests / build / source-of-truth                                      |
+| `b92b4462`  | Slice 1 — `/watch/[videoId]` + caption chain: `fetchYoutubeCaptions` (iOS→Android→watch→timedtext, ≤6 requests, retryable-only backoff), `segmentTranscript` (ASR pendingSplit + word timings; `♪` treated as decoration so lyric tracks survive — SEGMENTATION_VERSION 2), SRT/VTT/paste/plain fallback, `content_sources` + `content_transcripts` (owner RLS), CSP for IFrame API | tsc / lint 0 warn / 127 tests / build / source-of-truth / squawk 0 / migration dry-run on Neon temp branch / live smoke: transcript renders on rickroll |
 
 ## VERIFICATION
 
-| Gate | Result | Evidence |
-| ---- | ------ | -------- |
+| Gate                    | Result | Evidence                                                                                       |
+| ----------------------- | ------ | ---------------------------------------------------------------------------------------------- |
+| `tsc --noEmit`          | PASS   | slice-1 worktree, incl. hand-added `content_*` types                                           |
+| `npm run lint`          | PASS   | 0 errors, 0 warnings                                                                           |
+| `npm run test`          | PASS   | 127 tests / 16 files (45 video-lib tests incl. 5 real-video json3 fixtures + lyric regression) |
+| `npm run build`         | PASS   | `/watch/[videoId]` dynamic, `/discover` static                                                 |
+| `check:source-of-truth` | PASS   | —                                                                                              |
+| squawk `db:lint`        | PASS   | 0 issues / 59 files (pilot_events check split add-NOT-VALID + validate)                        |
+| Live smoke (localhost)  | PASS   | click "Lấy phụ đề" → iOS track → 20 lyric sentences render; IFrame API loads under new CSP     |
+| Neon migration dry-run  | PASS   | temp branch `mcp-migration-*`: 19 statements applied, 4 RLS policies per table, constraints verified, branch discarded (production untouched) |
 
 ## FINAL ACCEPTANCE
 
