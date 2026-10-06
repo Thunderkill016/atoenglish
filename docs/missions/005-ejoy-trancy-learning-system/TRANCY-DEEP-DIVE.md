@@ -250,5 +250,5 @@ New items surfaced by the live capture that should shape the MVP:
 - `www.trancy.org` — 11 product pages HTML+text + sitemap 624 URLs + changelog (5 pages exist; page 1 read) (`/tmp/trancy-research/site/`).
 - Blog: 93 posts saved (`/tmp/trancy-research/blog/`).
 - Chrome Web Store CRX `mjdbhokoopacimoekfgkcoogikbfgngb` v7.9.4 unpacked + prettified (`/tmp/trancy-research/extension/`).
-- `learn.trancy.org` — **authenticated full crawl**: ~900 logged requests (`/tmp/trancy-research/live/network.jsonl`), per-page innerText dumps, practice-player + dictionary-drawer captures.
+- `learn.trancy.org` — **authenticated full crawl**: ~1400 logged requests (`/tmp/trancy-research/live/network*.jsonl`), per-page innerText dumps (`live/pages/`), **36 screenshots** (`live/shots/`: all routes + practice player, dict drawer, AITalk session, movie detail, pack studio, premium paywall).
 - No official OSS repo exists (verified via GitHub search + org lookup). License: proprietary — we may take ideas/architecture, **not** code or assets.
