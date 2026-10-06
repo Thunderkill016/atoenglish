@@ -112,13 +112,13 @@ export function VideoCard({
       </div>
 
       <div className="px-0.5 pt-2.5">
-        <p className="line-clamp-2 text-[15px] font-medium leading-snug">
+        <p className="line-clamp-2 text-sm font-medium leading-snug">
           {title}
         </p>
         {(watched || resumable) && (
           <p
             className={cn(
-              "mt-1 text-[13px] font-medium",
+              "mt-1 text-xs font-medium",
               watched ? "text-state-known" : "text-primary",
             )}
           >
@@ -131,7 +131,7 @@ export function VideoCard({
                 }`}
           </p>
         )}
-        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[13px] text-muted-foreground">
+        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
           {meta.map((m, i) => (
             <span key={i} className="contents">
               {i > 0 && <span aria-hidden>·</span>}

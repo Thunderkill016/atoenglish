@@ -141,8 +141,8 @@ export default async function DiscoverPage() {
   const topicCount = new Set(catalog.map((v) => v.topic)).size;
 
   return (
-    <div className="flex flex-col gap-8 xl:flex-row">
-      <div className="flex min-w-0 flex-1 flex-col gap-8">
+    <div className="flex flex-col gap-6 xl:flex-row">
+      <div className="flex min-w-0 flex-1 flex-col gap-6">
         {/* Floating search row — Trancy-style: the paste field is the
             page header (greeting/H1 removed to match Trancy home). */}
         <section className="max-w-xl space-y-3">
@@ -196,10 +196,10 @@ export default async function DiscoverPage() {
 
         {strip.length > 0 && (
           <section>
-            <h2 className="mb-3 text-lg font-bold tracking-tight">
+            <h2 className="mb-3 text-base font-semibold tracking-tight">
               Đang xem dở
             </h2>
-            <div className="no-scrollbar -mx-4 flex gap-5 overflow-x-auto px-4 pb-1">
+            <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-1">
               {strip.map((v) => (
                 <VideoCard
                   key={v.external_id}
@@ -209,7 +209,7 @@ export default async function DiscoverPage() {
                   durationMs={v.duration_ms}
                   positionMs={v.last_position_ms}
                   ageLabel={formatRelativeAge(v.updated_at)}
-                  className="w-60 shrink-0 sm:w-72"
+                  className="w-56 shrink-0 sm:w-64"
                 />
               ))}
             </div>
@@ -217,7 +217,7 @@ export default async function DiscoverPage() {
         )}
 
         <section>
-          <h2 className="mb-3 text-lg font-bold tracking-tight">
+          <h2 className="mb-3 text-base font-semibold tracking-tight">
             Thư viện chọn sẵn
           </h2>
           <DiscoverCatalog videos={getCatalog()} />
