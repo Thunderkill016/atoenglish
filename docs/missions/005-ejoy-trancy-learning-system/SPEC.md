@@ -80,6 +80,7 @@ Ràng buộc kỹ thuật:
 
 - Một interface `fetchYoutubeCaptions(videoId, { fetch, delay, signal })` trong `src/lib/video/`, nhận `fetch`/`delay` tiêm vào để test bằng fixture.
 - `baseUrl` của track đã có sẵn `fmt=srv3`: phải **thay** tham số `fmt` bằng `json3`, không nối thêm (đã kiểm chứng 06/10: nối thêm vẫn trả XML).
+- URL timedtext gửi kèm tham số client cố định `xorb=2&xobt=3&xovt=3&c=WEB&cplayer=UNIPLAYER` + `cver` + device params (`cbrand/cbr/cbrver/cos/cosver/cplatform`) theo mẫu `buildSubtitleUrl` của read-frog để giảm tỉ lệ bị chặn. **PO Token (`pot`/`potc`) chỉ lấy được từ session trình duyệt thật — server-side không có → một phần video vẫn sẽ bị chặn; fallback dán/tải phụ đề là đường bắt buộc, không phải phụ.**
 - **Ngân sách 6 request** upstream cho toàn chuỗi mỗi lần gọi; backoff 300/600/1200 ms chỉ khi lỗi mạng/403/429/5xx; phản hồi rỗng chuyển bước ngay; abort dừng hẳn.
 - Lỗi trả về ổn định `invalid_url` / `no_captions` / `blocked` / `error`, không lộ nội dung upstream. Đếm thành công / thất bại / fallback trong `pilot_events` để thấy khi YouTube thay đổi.
 - Rate limit theo người học bằng `src/lib/security/rate-limit.ts` hiện có. Không tải video/âm thanh, không quét hàng loạt, không chia sẻ lại; chỉ lưu văn bản phụ đề.
@@ -89,7 +90,8 @@ Ràng buộc kỹ thuật:
 
 Một hàm thuần `segmentTranscript(track) → Sentence[]` trong `src/lib/video/`, có phiên bản (`segmentation_version`) để có thể tính lại:
 
-- **Track tự động (`asr`)**: `json3` có thời gian từng từ (`tStartMs` + `segs[].tOffsetMs`; event `aAppend` chỉ chứa `"\n"`). Dựng lại dòng từ với mốc tuyệt đối, bỏ event xuống dòng, rồi tách câu tại dấu kết câu (`.`, `?`, `!`); nếu không có dấu câu thì tách tại khoảng lặng ≥ 700 ms; luôn tách khi câu vượt 25 từ hoặc 12 giây. Giữ thời gian từng từ để tô sáng từ đang nói và để luyện chép chính tả.
+- **Lọc nhiễu trước khi ghép**: loại khỏi `segs[].utf8` các chú thích `[…]`, `(…)`, `♪…♪`, `🎵…🎵`, `🎶…🎶`; seg sau lọc rỗng thì bỏ (mẫu `noise-filter` của read-frog).
+- **Track tự động (`asr`)**: `json3` có thời gian từng từ (`tStartMs` + `segs[].tOffsetMs`). Event `aAppend=1` không mang text mới mà là **tín hiệu kết dòng** — dùng nó để tính mốc kết thúc thật (`tStartMs + dDurationMs`) và để flush câu đang chờ tách, không phải chỉ "xuống dòng bỏ qua". Gom text qua các event vào buffer; gặp dấu kết câu (`.`, `?`, `!`) → đánh dấu tách-chờ, flush khi có seg/event kế tiếp để lấy end-time chuẩn; không có dấu câu thì tách tại khoảng lặng ≥ 700 ms; luôn tách khi vượt 25 từ hoặc 12 giây. End-time seg cuối một event: `max(segStart + WORD_END_ESTIMATE_MS, tStartMs + dDurationMs)` với `WORD_END_ESTIMATE_MS = 200` (ước lượng độ dài từ cuối khi không có offset kế tiếp — hằng số đặt tên trong code). Nối seg sang event mới thêm khoảng trắng khi cả hai phía không có (tiếng Anh). Giữ thời gian từng từ để tô sáng từ đang nói và để luyện chép chính tả.
 - **Track người đăng / file người học**: gộp các cue liên tiếp chưa kết thúc bằng dấu kết câu, giới hạn 12 giây hoặc 40 từ; bỏ ký hiệu nhạc thuần (`[♪♪♪]`) khỏi danh sách câu luyện được nhưng vẫn hiển thị.
 - Ngưỡng 700 ms / 25 từ / 12 s / 40 từ là **giá trị khởi đầu** cần hiệu chỉnh bằng fixture thật ở phần 1; mọi thay đổi ngưỡng tăng `segmentation_version`.
 - Không dùng AI để thêm dấu câu ở bản đầu; chỉ cân nhắc khi fixture cho thấy track `asr` không dấu câu phổ biến.
@@ -138,20 +140,22 @@ Nút "Phân tích" trên mỗi câu → Gemini trả JSON (Zod): bản dịch t�
 
 - Lưu **từ/cụm** từ popup tra cứu, hoặc **cả câu** bằng nút trên câu. Mỗi lần lưu tạo hoặc nối vào một `study_cards` theo (người học, loại, khoá chuẩn hoá) và thêm một `card_contexts` cho lần gặp này (câu gốc EN, bản dịch VI nếu có, vị trí token, nguồn, mốc giờ). Lưu lại đúng lần gặp đã lưu không tạo dòng mới.
 - Khoá chuẩn hoá: từ → lemma (`src/lib/vocab/lemma.ts`); cụm → chữ thường, gộp khoảng trắng, bỏ dấu câu đầu/cuối; câu → chuỗi chuẩn hoá tương tự.
-- Từ/cụm đã lưu được tô sáng trong mọi transcript của người học đó.
+- Từ/cụm đã lưu được tô sáng trong mọi transcript của người học đó. Cài đặt ưu tiên **CSS Custom Highlight API** (`Highlight` + `CSS.highlights`, tô theo `Range`) — không chèn `<span>` vào DOM nên không vỡ layout/render; chỉ fallback wrap span khi trình duyệt không hỗ trợ (kỹ thuật từ word-hunter, ý tưởng).
 - `/library`: tab Video (tiến độ xem, số mục đã lưu, mở lại), tab Từ & cụm, tab Câu; lọc theo nguồn; mỗi mục có "xem lại đoạn gốc", sửa nghĩa, xoá; xoá một nguồn xoá transcript/bản dịch của nguồn đó nhưng giữ thẻ nếu còn ngữ cảnh khác.
 
 ## 7. Luyện trên video
 
 Mở từ `/watch/[videoId]` (nút "Luyện"), chạy trên chính các câu của video:
 
-| Dạng          | Cách làm                                                                                                                                           | Ghi nhận                                                                |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `dictation`   | Phát một câu (lặp được, giảm tốc được) → gõ lại → so sánh từng từ đã chuẩn hoá, hiện đúng/sai/thiếu; gợi ý mở chữ cái đầu (đếm số gợi ý); câu tiếp | Mỗi câu một `practice_attempts`: độ chính xác từ, số gợi ý, số lần nghe |
-| `shadowing`   | Phát câu → người học nói theo → Web Speech API trả transcript → hiện độ khớp từ. **Nhãn: "Độ khớp nhận dạng, không phải điểm phát âm"**            | Độ khớp; không đổi FSRS                                                 |
-| `speak_first` | (biến thể "nói lại lời nhân vật") Tắt tiếng câu, hiện phụ đề → người học nói trước → rồi nghe bản gốc để tự so                                     | Độ khớp; không đổi FSRS                                                 |
+| Dạng          | Cách làm                                                                                                                                                                                                                                                                 | Ghi nhận                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `dictation`   | Phát một câu (lặp được, giảm tốc được) → gõ lại → so sánh từng từ đã chuẩn hoá, hiện đúng/sai/thiếu; gợi ý mở chữ cái đầu (đếm số gợi ý); câu tiếp                                                                                                                       | Mỗi câu một `practice_attempts`: độ chính xác từ, số gợi ý, số lần nghe |
+| `shadowing`   | Phát câu → người học nói theo → Web Speech API trả transcript → hiện độ khớp từ = tỉ lệ từ câu gốc xuất hiện đúng thứ tự trong transcript (quét con trỏ một chiều — in-order subsequence, không cần Levenshtein). **Nhãn: "Độ khớp nhận dạng, không phải điểm phát âm"** | Độ khớp; không đổi FSRS                                                 |
+| `speak_first` | (biến thể "nói lại lời nhân vật") Tắt tiếng câu, hiện phụ đề → người học nói trước → rồi nghe bản gốc để tự so                                                                                                                                                           | Độ khớp; không đổi FSRS                                                 |
 
 Chỉ hiện `shadowing`/`speak_first` khi trình duyệt hỗ trợ nhận dạng giọng nói; có thể ghi âm cục bộ (`MediaRecorder`) để nghe lại, **không tải lên**. Câu sai trong `dictation` có nút "Lưu câu này để ôn".
+
+Chuẩn hoá token khi so sánh và render: regex từ phải nhận cả apostrophe cong `’` (U+2019) để "It's" không tách thành "It" + "s"; tách hai lớp token — token theo khoảng trắng để đánh chỉ số, token render giữ nguyên dấu câu (kỹ thuật dictation-shadowing-tool). Chỗ trống ở `listen_fill` luôn là token đã lưu (`token_start`/`token_count` trong `card_contexts`) — chọn có chủ đích, không random lúc chạy.
 
 ## 8. Ôn và dùng lại (`/review`)
 
@@ -166,7 +170,7 @@ Một thẻ có một lịch FSRS (`src/lib/srs/fsrs.ts`, `ts-fsrs`) nhưng nhi�
 | `speak_repeat`       | mọi thẻ     | Nói lại câu gốc; độ khớp nhận dạng có nhãn như mục 7                                                     | độ khớp; không đổi FSRS                  |
 | `write_reuse`        | từ/cụm      | Cuối phiên, tối đa một lượt: viết câu mới dùng cụm; Gemini phản hồi nếu có (nhãn AI)                     | câu viết + phản hồi; không đổi FSRS      |
 
-Quy tắc: thẻ `New/Learning` chỉ dùng `recall` (từ/cụm) hoặc `sentence_meaning` (câu); từ `Review` trở đi xen `listen_fill` / `sentence_dictation` khi nguồn là video. Ngưỡng 90% là giá trị khởi đầu, ghi trong code cùng lý do. Nút "xem lại đoạn gốc" mở `/watch/[videoId]?t=<start_ms>`.
+Quy tắc: thẻ `New/Learning` chỉ dùng `recall` (từ/cụm) hoặc `sentence_meaning` (câu); từ `Review` trở đi xen `listen_fill` / `sentence_dictation` khi nguồn là video. Ngưỡng 90% là giá trị khởi đầu, ghi trong code cùng lý do; thang tham khảo `accuracyToRating` của echo-type (`<50` Again / `<70` Hard / `<90` Good / `≥90` Easy) — ta giữ mapping thận trọng hơn: không tự chấm Easy, có gợi ý thì tối đa Hard. Nút "xem lại đoạn gốc" mở `/watch/[videoId]?t=<start_ms>`.
 
 ## 9. Bằng chứng tiến bộ (`/me`)
 
@@ -197,10 +201,10 @@ Tất cả bảng mới: `user_id → neon_auth.user(id) on delete cascade`, RLS
 | `transcript_translations` | transcript_id, user_id, language (`vi`), origin (`youtube_manual` \| `ai`), model (nullable), segmentation_version, lines jsonb `[{i, text}]`, created_at; unique (transcript_id, language, segmentation_version)                                                                               | Bản dịch theo câu                         |
 | `ai_results`              | user_id, kind (`context_gloss` \| `sentence_analysis` \| `write_feedback`), input_hash, model, output jsonb, created_at; unique (user_id, kind, input_hash, model)                                                                                                                              | Cache đầu ra AI                           |
 | `study_cards`             | user_id, kind (`word` \| `phrase` \| `sentence`), key, display, meaning_vi, meaning_origin (`dictionary` \| `ai` \| `youtube_vi` \| `learner`), FSRS (state, stability, difficulty, due, reps, lapses, last_review), created_at; unique (user_id, kind, key)                                    | Thẻ + lịch ôn                             |
-| `card_contexts`           | user_id, card_id, source_id, sentence_index, token_start, token_count, sentence_text, sentence_vi, start_ms, end_ms, created_at; unique (user_id, card_id, source_id, sentence_index, token_start)                                                                                              | Một dòng / lần gặp (kiểu Bookmark Zeeguu) |
+| `card_contexts`           | user_id, card_id, source_id, sentence_index, token_start, token_count, sentence_text, sentence_vi, start_ms, end_ms, context_origin (`watch_lookup` \| `read_lookup` \| `manual` \| `import`), created_at; unique (user_id, card_id, source_id, sentence_index, token_start)                    | Một dòng / lần gặp (kiểu Bookmark Zeeguu) |
 | `practice_attempts`       | user_id, card_id (nullable), source_id (nullable), sentence_index (nullable), mode, rating (nullable), correct (nullable), word_accuracy (nullable), hints_used, plays, similarity (nullable), learner_text, ai_result_id (nullable), interval_days_before, fsrs_before/after jsonb, created_at | Kết quả từng lần luyện                    |
 
-Ràng buộc: `practice_attempts` phải có `card_id` hoặc (`source_id` + `sentence_index`). Liên hệ bảng cũ: `cards` không mở rộng (dedupe theo lemma, không có nguồn); có thể nhập một lần `cards` → `study_cards` (không ngữ cảnh, giữ FSRS) nếu chủ dự án muốn (mục 13). `learner_known_words` giữ vai trò tự đánh dấu, không thành bằng chứng.
+Ràng buộc: `practice_attempts` phải có `card_id` hoặc (`source_id` + `sentence_index`). Liên hệ bảng cũ: `cards` không mở rộng (dedupe theo lemma, không có nguồn); có thể nhập một lần `cards` → `study_cards` (không ngữ cảnh, giữ FSRS) nếu chủ dự án muốn (mục 13); khi nhập, thẻ cũ thiếu stability/difficulty thì ánh xạ interval cũ → stability, `difficulty=5`, `state=Review` nếu đã có lượt ôn (mẫu `migrateToFSRS` của echo-type). `learner_known_words` giữ vai trò tự đánh dấu, không thành bằng chứng.
 
 ## 12. Tái sử dụng code hiện có
 
@@ -233,7 +237,7 @@ Ràng buộc: `practice_attempts` phải có `card_id` hoặc (`source_id` + `se
 Còn mở:
 
 1. Cấp YouTube Data API key (miễn phí, có quota) cho tìm video trong app và kiểm tra phụ đề khi chọn video? Không có key thì phần 6 chỉ có danh mục chọn sẵn.
-2. Nguồn từ điển EN–VI mở rộng ngoài curated + AI (cần kiểm tra giấy phép), hay chỉ curated + AI?
+2. Nguồn từ điển EN–VI mở rộng ngoài curated + AI, hay chỉ curated + AI? Ứng viên: **ECDICT** (~80k mục lọc theo tần suất frq/bnc, có phonetic/POS/nghĩa — bộ shadowing-english dùng) — vẫn phải kiểm tra giấy phép bộ dữ liệu trước khi quyết.
 3. Nhập `cards` cũ sang `study_cards` khi gỡ `/review` cũ, hay bỏ?
 4. Thời điểm giai đoạn B (đề xuất: sau ≥ 1 tuần Hoàng dùng vòng mới).
 5. Đóng PR #234 (spec 004 v2) vì đã được spec này thay?
