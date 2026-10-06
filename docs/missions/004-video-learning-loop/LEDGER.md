@@ -54,5 +54,5 @@ First end-to-end video learning loop — see [TASK_CONTRACT.md](./TASK_CONTRACT.
 ## FINAL ACCEPTANCE
 
 - Verdict: `PENDING`
-- Acceptance criteria met: 0/8
+- Acceptance criteria met: 0/10
 - Accepted by / date:

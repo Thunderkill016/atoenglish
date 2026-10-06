@@ -28,7 +28,7 @@ Owner decisions defining scope (2026-10-06):
 - **Primary learner:** Vietnamese self-learners who learn through videos and films they already watch.
 - **Scale:** one learner (Hoàng) validates the loop first; the architecture must stay multi-user-ready (per-user data ownership and RLS), but no public launch work until the loop is validated.
 - **Monetization:** none. No paywall, subscription, plan tiers or payment integration.
-- **Content:** learners may paste any YouTube link. Transcript acquisition must comply with YouTube terms — see the constraint below.
+- **Content:** learners may paste any YouTube link; the product fetches the video's existing captions automatically (eJOY-style) and falls back to a learner-provided transcript when fetching fails — see the constraint below.
 
 Product reference: a desk study of eJOY (content → contextual lookup → save with context → spaced review → use) informed this direction. It is a competitive reference, not evidence that the loop works for AtoEnglish learners.
 
@@ -36,13 +36,13 @@ Product reference: a desk study of eJOY (content → contextual lookup → save 
 
 - YouTube Terms of Service prohibit accessing the service "using any automated means (such as robots, botnets or scrapers)" and downloading content except as expressly authorized by the service or with prior written permission (https://www.youtube.com/t/terms).
 - YouTube Data API `captions.download` "requires the user to have permission to edit the video" (https://developers.google.com/youtube/v3/docs/captions/download) — it cannot fetch captions for arbitrary public videos.
-- Therefore: playback of any pasted link uses the official embedded player; the transcript comes from a compliant source (learner-provided text or subtitle file, the official API for videos the learner can edit, or curated content with usage rights). Scraping captions from arbitrary videos is **not** authorized unless the owner makes a separate explicit decision after reviewing these terms.
+- **Owner decision 2026-10-06, made after reviewing the two points above:** fetch the captions YouTube already publishes for the video (unofficial timed-text endpoint) server-side, store only the caption text per learner, and play the video only through the official embedded player. The owner accepts the terms-of-service and breakage risk. Mitigations are mandatory: no video/audio download, no bulk crawling (fetch only on a learner's explicit request, rate-limited), and a learner-provided transcript fallback (`.srt`/`.vtt`/paste) whenever fetching fails or is blocked.
 
 ## Minimum active product surface
 
 Only the following areas are active product scope:
 
-1. **content intake** — YouTube link → embedded playback; transcript from a compliant source; learner-pasted text;
+1. **content intake** — YouTube link → embedded playback; captions fetched automatically with learner-provided fallback; learner-pasted text;
 2. **understanding in context** — synced transcript, line loop/slow, word/phrase lookup with honest misses (no fabricated meanings; AI explanations labelled as AI);
 3. **saving with context** — per-learner saved expressions linked to source sentence, video and timestamp;
 4. **review and reuse** — FSRS-scheduled retrieval of saved expressions and production tasks that use them in new contexts;
