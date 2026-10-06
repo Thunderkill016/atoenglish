@@ -45,7 +45,7 @@
   --foreground: oklch(0.25 0.015 240);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.25 0.015 240);
-  --primary: oklch(0.52 0.14 160);
+  --primary: oklch(0.58 0.14 75);
   --primary-foreground: oklch(0.99 0.003 240);
   --secondary: oklch(0.96 0.004 240);
   --secondary-foreground: oklch(0.3 0.01 240);
@@ -57,25 +57,25 @@
   --destructive-foreground: oklch(0.99 0.003 240);
   --border: oklch(0.93 0.005 240);
   --input: oklch(0.93 0.005 240);
-  --ring: oklch(0.52 0.14 160);
-  --mark: oklch(0.88 0.1 95);
+  --ring: oklch(0.58 0.14 75);
+  --mark: oklch(0.88 0.12 90);
   --radius: 0.625rem;
 
   /* Learning-state roles: unseen content, in-progress, acquired, due-for-review */
-  --state-new: oklch(0.6 0.12 230);
-  --state-learning: oklch(0.7 0.14 80);
-  --state-known: oklch(0.62 0.17 150);
-  --state-due: oklch(0.63 0.2 30);
+  --state-new: oklch(0.58 0.02 240);
+  --state-learning: oklch(0.66 0.14 75);
+  --state-known: oklch(0.6 0.14 230);
+  --state-due: oklch(0.62 0.2 25);
 }
 
 .dark {
-  /* Trancy-style near-black canvas with lifted panels. */
+  /* Near-black canvas, lifted panels, gold accent (Trancy CTA hue). */
   --background: oklch(0.13 0.006 240);
   --foreground: oklch(0.96 0.005 240);
   --card: oklch(0.17 0.008 240);
   --card-foreground: oklch(0.96 0.005 240);
-  --primary: oklch(0.68 0.14 160);
-  --primary-foreground: oklch(0.12 0.005 240);
+  --primary: oklch(0.78 0.13 85);
+  --primary-foreground: oklch(0.16 0.02 80);
   --secondary: oklch(0.21 0.008 240);
   --secondary-foreground: oklch(0.96 0.005 240);
   --muted: oklch(0.21 0.008 240);
@@ -86,14 +86,14 @@
   --destructive-foreground: oklch(0.96 0.005 240);
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 10%);
-  --ring: oklch(0.68 0.14 160);
-  --mark: oklch(0.35 0.06 90);
+  --ring: oklch(0.78 0.13 85);
+  --mark: oklch(0.42 0.08 90);
 
   /* Learning-state roles — lighter hues for dark contrast */
-  --state-new: oklch(0.7 0.12 230);
-  --state-learning: oklch(0.78 0.13 80);
-  --state-known: oklch(0.72 0.16 150);
-  --state-due: oklch(0.72 0.19 30);
+  --state-new: oklch(0.68 0.02 240);
+  --state-learning: oklch(0.8 0.13 80);
+  --state-known: oklch(0.72 0.13 230);
+  --state-due: oklch(0.72 0.19 28);
 }
 
 /* ─── Base Styles ────────────────────────────────────────────────────────────── */

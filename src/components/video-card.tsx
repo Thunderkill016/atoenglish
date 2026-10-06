@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Captions, Check, Play } from "lucide-react";
+import type { ReactNode } from "react";
+import { Captions, Play } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTimestamp } from "@/lib/format";
@@ -69,7 +70,10 @@ export function VideoCard({
   const target =
     href ?? `/watch/${videoId}${resumable ? `?t=${positionMs}` : ""}`;
 
-  const pill = "rounded-full bg-muted px-2 py-0.5 text-[11px] leading-tight";
+  const meta: ReactNode[] = [];
+  if (channel) meta.push(channel);
+  if (topicLabel) meta.push(topicLabel);
+  if (ageLabel) meta.push(ageLabel);
 
   return (
     <Link href={target} className={cn("group block", className)}>
@@ -107,46 +111,58 @@ export function VideoCard({
         )}
       </div>
 
-      <div className="flex gap-3 px-0.5 pt-2.5">
-        <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 text-[15px] font-medium leading-snug">
-            {title}
+      <div className="px-0.5 pt-2.5">
+        <p className="line-clamp-2 text-[15px] font-medium leading-snug">
+          {title}
+        </p>
+        {(watched || resumable) && (
+          <p
+            className={cn(
+              "mt-1 text-[13px] font-medium",
+              watched ? "text-state-known" : "text-primary",
+            )}
+          >
+            {watched
+              ? "Đã xem"
+              : `Xem tiếp ${formatTimestamp(positionMs!)}${
+                  remainingMs != null
+                    ? ` · còn ~${Math.ceil(remainingMs / 60_000)}′`
+                    : ""
+                }`}
           </p>
-          {channel && (
-            <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
-              {channel}
-            </p>
-          )}
-          <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-muted-foreground">
-            {watched && (
-              <span className={cn(pill, "inline-flex items-center gap-1")}>
-                <Check className="h-3 w-3 text-state-known" />
-                Đã xem
-              </span>
-            )}
-            {resumable && (
-              <span className={pill}>
-                Xem tiếp {formatTimestamp(positionMs!)}
-                {remainingMs != null &&
-                  ` · còn ~${Math.ceil(remainingMs / 60_000)}′`}
-              </span>
-            )}
-            {ageLabel && <span className={pill}>{ageLabel}</span>}
-            {topicLabel && <span className={pill}>{topicLabel}</span>}
-            {levelLabel && (
-              <span className={cn(pill, level && LEVEL_TONE[level])}>
+        )}
+        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[13px] text-muted-foreground">
+          {meta.map((m, i) => (
+            <span key={i} className="contents">
+              {i > 0 && <span aria-hidden>·</span>}
+              <span>{m}</span>
+            </span>
+          ))}
+          {levelLabel && (
+            <>
+              <span aria-hidden>·</span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1",
+                  level && LEVEL_TONE[level],
+                )}
+              >
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 rounded-full bg-current"
+                />
                 {levelLabel}
               </span>
-            )}
-            <span
-              className={cn(pill, "inline-flex items-center gap-1")}
-              title={captionLabel ?? "Có phụ đề"}
-            >
-              <Captions className="h-3 w-3 shrink-0" />
-              {captionLabel && <span>{captionLabel}</span>}
-            </span>
-          </p>
-        </div>
+            </>
+          )}
+          <span
+            title={captionLabel ?? "Có phụ đề"}
+            className="inline-flex items-center"
+          >
+            <Captions className="h-3.5 w-3.5" />
+            <span className="sr-only">{captionLabel ?? "Có phụ đề"}</span>
+          </span>
+        </p>
       </div>
     </Link>
   );

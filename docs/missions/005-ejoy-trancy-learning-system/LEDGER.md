@@ -140,3 +140,15 @@ Owner rejected the v4 "Bàn học" editorial direction ("phải làm giống hom
 - Search input + button rounded-full per Trancy chrome.
 
 **Gate:** tsc ✓ · eslint 0/0 ✓ · 164/164 unit ✓ · 36/36 e2e ✓ · build ✓ · source-of-truth ✓
+
+## Home v5.1 — accent swap: green → gold, pattern refresh — 2026-10-06
+
+Owner: "Ko dùng màu xanh lá cây và pattern cũ nữa". Trancy structure kept (rail, feed, right rail) but:
+
+- **Primary → amber/gold** (`oklch 0.58/0.78, hue 75–85`) — matches Trancy's own CTA gold, not generic green. `--ring` follows.
+- **State colors de-greened**: new=slate, learning=amber, known=blue, due=rose (no green anywhere).
+- Card meta pills → **dot-separated meta line** (`Kênh · Chủ đề · ● Mức`); avatar stays on thumb corner.
+- Topic chips → **underline tabs**; level segment active = ink chip (bg-foreground).
+- `--mark` kept for future saved-word highlighting (gold wash).
+
+**Gate:** tsc ✓ · eslint 0/0 ✓ · 36/36 e2e ✓ · build ✓
