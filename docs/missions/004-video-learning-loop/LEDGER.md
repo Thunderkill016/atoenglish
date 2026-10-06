@@ -18,11 +18,11 @@ First end-to-end video learning loop — see [TASK_CONTRACT.md](./TASK_CONTRACT.
 
 ## DECISIONS
 
-| Date       | Decision                                                                                                             | Rationale                                              | Made by                      |
-| ---------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ---------------------------- |
-| 2026-10-06 | Replace IELTS direction with video-learning direction                                                                | eJOY desk study; owner choice                          | Owner                        |
-| 2026-10-06 | Learner = self-learners via video/film; one learner first, multi-user-ready; no monetization; paste any YouTube link | Owner answers in session                               | Owner                        |
-| 2026-10-06 | Transcript only from compliant sources in v1                                                                         | YouTube ToS + captions.download permission requirement | Devin (pending owner review) |
+| Date       | Decision                                                                                                                                                                    | Rationale                                                                   | Made by |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------- |
+| 2026-10-06 | Replace IELTS direction with video-learning direction                                                                                                                       | eJOY desk study; owner choice                                               | Owner   |
+| 2026-10-06 | Learner = self-learners via video/film; one learner first, multi-user-ready; no monetization; paste any YouTube link                                                        | Owner answers in session                                                    | Owner   |
+| 2026-10-06 | Fetch captions automatically from the pasted link (eJOY GO style); learner-provided transcript as fallback; owner accepts ToS/breakage risk after seeing the evidence below | Owner wants an eJOY-like experience; manual upload as primary path rejected | Owner   |
 
 ## EVIDENCE LOG
 
