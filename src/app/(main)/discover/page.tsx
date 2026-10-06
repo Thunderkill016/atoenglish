@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CalendarDays, History, MonitorPlay, Play } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
-import { getCatalog } from "@/content/catalog/videos";
+import { getCatalog, TOPIC_LABELS, type CatalogTopic } from "@/content/catalog/videos";
 import { VideoCard } from "@/components/video-card";
 import { RightRail, WidgetCard } from "@/components/right-rail";
 import { WeekStrip, currentWeekActivity } from "@/components/week-strip";
@@ -139,6 +139,14 @@ export default async function DiscoverPage() {
   const catalog = getCatalog();
   const catalogSize = catalog.length;
   const topicCount = new Set(catalog.map((v) => v.topic)).size;
+  const topics = [...catalog]
+    .reduce((map, v) => {
+      map.set(v.topic, (map.get(v.topic) ?? 0) + 1);
+      return map;
+    }, new Map<CatalogTopic, number>())
+    .entries()
+    .toArray()
+    .map(([topic, count]) => ({ label: TOPIC_LABELS[topic], count }));
 
   return (
     <div className="flex flex-col gap-6 xl:flex-row">
@@ -302,6 +310,17 @@ export default async function DiscoverPage() {
           </>
         ) : (
           <>
+            <WidgetCard title="Lịch">
+              <WeekStrip
+                days={week.days}
+                activeDays={week.activeDays}
+                todayIndex={week.todayIndex}
+              />
+              <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarDays className="h-3.5 w-3.5" />
+                Đăng nhập để lịch ghi lại ngày bạn học.
+              </p>
+            </WidgetCard>
             <WidgetCard title="Bắt đầu từ đây">
               <p className="text-xs text-muted-foreground">
                 Dán link YouTube → xem phụ đề từng câu → luyện lại ngay trên
@@ -326,17 +345,6 @@ export default async function DiscoverPage() {
                   ))}
               </ul>
             </WidgetCard>
-            <WidgetCard title="Lịch">
-              <WeekStrip
-                days={week.days}
-                activeDays={week.activeDays}
-                todayIndex={week.todayIndex}
-              />
-              <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CalendarDays className="h-3.5 w-3.5" />
-                Đăng nhập để lịch ghi lại ngày bạn học.
-              </p>
-            </WidgetCard>
             <WidgetCard title="Thư viện">
               <div className="grid grid-cols-2 gap-2">
                 <div className="rounded-lg bg-muted p-3">
@@ -354,6 +362,21 @@ export default async function DiscoverPage() {
                   <p className="mt-1 text-xs text-muted-foreground">Chủ đề</p>
                 </div>
               </div>
+            </WidgetCard>
+            <WidgetCard title="Chủ đề">
+              <ul className="space-y-2">
+                {topics.map((t) => (
+                  <li
+                    key={t.label}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <span>{t.label}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {t.count} video
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </WidgetCard>
           </>
         )}

@@ -37,7 +37,7 @@ export function WidgetCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-3.5">
+    <section className="rounded-xl bg-card p-3.5">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">{title}</h2>
         {action}
