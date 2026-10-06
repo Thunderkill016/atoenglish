@@ -11,7 +11,7 @@ Trancy (L2D LIMITED) is a **closed-source commercial product**. There is **no of
 Product surface:
 
 - **Browser extension** (Chrome/Edge/Firefox): content scripts inject a learning layer on YouTube, Netflix, Disney+, Udemy, Coursera, TED, edX, HBO Max, Bilibili, Vimeo (manifest `content_scripts.matches`), plus web-page translation on `<all_urls>`. **[CODE]**
-- **Learning Center** web app at `learn.trancy.org` (requires login; email/Google/Apple via `api.trancy.org/1/{google,apple}/authURL`). Sections seen in code/marketing: Video (Watch Later), Vocabulary, Sentence, AITalk, PDF, Wordbook, settings. **[LIVE][CODE]**
+- **Learning Center** web app at `learn.trancy.org` (requires login; email/Google/Apple via `api.trancy.org/1/{google,apple}/authURL`). **Fully captured live with a logged-in free account** — see §5. **[LIVE][CODE]**
 - **Marketing site** `www.trancy.org` (Next.js): public `/youtube/<id>` player pages exist in the sitemap but **currently all return HTTP 500** — the public web player is effectively dead; the real player lives behind login in the Learning Center. **[LIVE]**
 - **Mobile apps** iOS (`id6475022743`) and Android (`org.trancy.app`) — YouTube-focused, podcast on iOS. **[DOC]**
 - **Trancy Air** — new macOS/Windows system-wide translator app (v7.9.3, Sept 2026). **[DOC]**
@@ -65,12 +65,14 @@ Product surface:
 
 ### Learning Center (learn.trancy.org) **[DOC][CODE]**
 
-- Watch Later (video library w/ duration, saved-word count, share).
-- Vocabulary: "Words to learn" vs "Already known" tabs, batch manage, word import (`/wordbook-import`), audio, **Flashcard Practice — the only confirmed free LC feature**. New Wordbook + Learning Wordbook (premium).
-- Practice: `/practice/typing`, `/practice/speech`, `/evaluations` endpoints.
+- Watch Later (video library w/ duration, saved-word count, share) → live route `/saved`.
+- Vocabulary: "Words to learn" vs "Already known" tabs, batch manage, word import (`/wordbook-import`), audio, **Flashcard Practice — the only confirmed free LC feature**. New Wordbook + Learning Wordbook (premium). Live: `/vocab-mode`, `/flashcard-home`, `/word-clean`.
+- Practice: `/practice/typing`, `/practice/speech`, `/evaluations` endpoints; mistakes tracked per exercise+source: `GET /1/practice/mistakes?type=typing&sourceType=youtube&sourceId={vid}`. **[LIVE]**
 - **FSRS is real**: changelog 7.9.3 — "Saved words and sentences sync to Trancy's Learning Center with **FSRS spaced repetition**." No FSRS strings in extension code → scheduling is server-side.
-- AITalk: ChatGPT-based scenario conversations (custom "scenes"), follow-up & free-dialogue modes, voice or text input, Microsoft TTS voices, **Microsoft speech assessment** scoring, smart tips, authentic-expression suggestions. Premium.
-- AI Shadowing (LC, premium), AI Learning Assistant (premium), AI video summaries (10/day premium, 50/day adv), channel subscriptions (YouTube + podcast search/subscribe, Learning Center 2.0).
+- AITalk: ChatGPT-based scenario conversations (custom "scenes"), follow-up & free-dialogue modes, voice or text input, Microsoft TTS voices, **Microsoft speech assessment** scoring, smart tips, authentic-expression suggestions. Premium. Live routes: `/talk-home`, `/aitalk-center`, `/talk/:id`, `/talk-report/:id`.
+- AI Shadowing (LC, premium), AI Learning Assistant (premium), AI video summaries (10/day premium, 50/day adv — live button "Phiên âm AI" on practice page), channel subscriptions (YouTube + podcast search/subscribe, Learning Center 2.0 → live `/3/youtube/channels`, `/3/podcasts`).
+- Reading surface missed in docs: `/book-home`, `/library`, `/epub-reader/:id`, `/reader/:id` + `/1/shelf`, `/1/reading`, `/1/shelf/reading-stats` — a full ebook/reading wing. **[LIVE]**
+- Assessments: `/assessment-home`, `/assessment/:id`, `/assessment/new`. Sentence-pack builder: `/sentence-pack-studio`, `/word-clean`. **[LIVE]**
 - 6 devices per account; settings = UI language / mother tongue / learning language (10 learning languages)/theme.
 
 ### Web translation (out of our scope but in their product) **[DOC][CODE]**
@@ -116,16 +118,81 @@ Selection/hover translate, sentence translate w/ AI parse, part-of-speech taggin
 - Sentence `sid = vid:start:end` — cheap stable identity for saved contexts. **[CODE]**
 - Their own docs are internally inconsistent (PDF limits 50/2000/4000; shortcut table stale; manual itself flags "EDITOR TODO: verify in-product") — trust code + live behavior over marketing. **[DOC]**
 
-## 5. What we could NOT verify (requires account)
+## 5. Learning Center — authenticated live capture (2026-10-06, free account) **[LIVE]**
 
-- Learning Center internals: flashcard session UX, FSRS parameters, AITalk flow, wordbook UI, channel subscriptions.
-- Whether `/youtube/<id>` public player ever worked recently (all 500 now).
-- Exact Whisper pipeline (audio fetch method).
-- Learning-language list (only "up to 10").
-- Any pronunciation-scoring UI detail.
-- Trancy's effectiveness as a learning product — no evidence; treat as UX precedent only.
+Captured with a real logged-in free account over remote-debugging Chrome. Full request log: `/tmp/trancy-research/live/network.jsonl` (~900 requests); page texts under `/tmp/trancy-research/live/`.
 
-## 6. Proposed Trancy-MVP mapping for mission 005 update
+### 5.1 Route map (all verified reachable)
+
+```
+/home  /youtube  /youtube/recommendations  /podcast  /movie  /book-home
+/flashcard-home  /sentence-shadowing  /talk-home  /aitalk-center  /materials
+/library  /history  /topics  /saved  /assessment-home  /vocab-mode
+/advanced-ai  /word-clean  /sentence-pack-studio(/:id)  /practice/<videoId>
+/assessment/:id  /assessment/new  /book-editor  /epub-reader/:id  /reader/:id
+/talk/:id  /talk-report/:id  /shadowing/:id  /sentence-lists/:id  /topic/:topic
+/wordbook-import  /review-vocabulary  /flashcard  /share  /setup  /settings  /ai-engine
+```
+
+Global `Ctrl+K` search/discovery. The product is much wider than "subtitle extension + review": it is a full content-consumption-and-practice suite (YouTube, podcasts, movies, books/epub, AI talk, assessments, PDF, materials).
+
+### 5.2 Practice player anatomy (`/practice/<videoId>`)
+
+- Embedded YouTube player + scrollable bilingual transcript: each line = timestamp + EN sentence + vi sentence + `copy`/`save-sentence` buttons (`btn-meta-action` classes).
+- Controls: play/pause, prev/next line, **AB loop**, speed popover, caption popover, subtitle count badge ("Phụ đề 271"), "Phiên âm AI" (AI summary) button, "Bản dịch tốt / Bản dịch kém" (translation quality rating per line), 3 right-sidebar tabs (`practice-sidebar-tab`).
+- Click a word → `dict-drawer` slides in (see 5.3).
+- Nags free users: "Cài đặt/bật tiện ích trình duyệt để tải phụ đề nhanh hơn" — the LC deliberately pushes the extension (caption fetch is faster client-side).
+
+### 5.3 Word lookup = two-tier, both verified
+
+1. `GET /2/words/{word}?target=en&native=vi` → **server bilingual dictionary DB**:
+   `{"_id","stl":"en_vi","text","dict":[{"pos":"tính từ","terms":["đầu tiên",…],"entry":[{"word":"<vi>","reverse_translation":["first","early",…]}],"base_form","pos_enum":3}]}`. Fast, structured, per-POS vi terms with reverse translations — this is a real dictionary dataset, not LLM output.
+2. `POST /1/word/definition {text,target,native,useCache:true}` → **SSE stream** of a YAML-ish AI dictionary card (id `en_vi_first_260303`): etymology (localized), examples with vi translations, phrases, synonyms, related words.
+3. Drawer UI: US/GB IPA, POS sections (each: vi terms + English gloss + en/vi example), plural forms, etymology, phrase list (at first, first of all, first name…), synonyms + related words with vi gloss, **"Ví dụ từ video · N"** (other lines in this video containing the word). Paywall string present: "Nâng cấp để xem định nghĩa chính xác" — deep AI sections gated, base dict free.
+
+### 5.4 Captions API — the money payload
+
+`GET /3/youtube/captions/{vid}?target=en&source=json3` → 271 lines, each:
+`{start, end, text, sid, stared, tokens:[{text, lemma, pos, dep, meta}]}`
+**Every token is NLP-annotated server-side**: lemma ("raided"→"raid"), POS (`NOUN VERB ADP DET AUX PRON PART PUNCT`), dependency (`nsubj ROOT pobj det auxpass punct xcomp advmod`…). `stared` = saved flag inline. The vi line is NOT in this response → translation still client-side even in the LC web app. Companion calls: `/3/youtube/videos/{vid}?target=en` (metadata), `/2/videos/youtube:{vid}` (saved state), `/2/youtube/captions/{vid}/status` (cache check), `/1/practice/mistakes?type=typing&sourceType=youtube&sourceId={vid}` (per-exercise error history).
+
+### 5.5 Progress & sync model
+
+- `PUT /3/play-progress` fires ~every 3 s during playback: `{resourceId, resourceType:"youtube", language, deltaDuration:3.04, position, totalDuration, dateKey:"YYYY-MM-DD"}` → server accumulates `duration` (watch-time stats) + last `position`. Heartbeat-delta design, not absolute writes.
+- `GET /3/play-history` for history page.
+- `GET /4/words?updatedAt=0` — incremental sync by `updatedAt` watermark, polled on every page nav (16× in the capture). Same pattern for `/2/sentences?target=&native=`.
+- `PUT /1/flashcard/settings {autoMeaning, autoPronunciation, typing}`.
+
+### 5.6 Catalog/content APIs (verified shapes)
+
+| Endpoint                                                             | Shape (interesting fields)                                                                                                                                                                                                                                               |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/3/youtube/channels`                                                | curated channels `{follow, recommend, poster(via /1/ytc_avatar proxy), title, videoCount, subscriberCount, id:"UC…", genres:["vlog","tech","talk","education",…]}`                                                                                                       |
+| `/1/wordbooks`                                                       | curated book catalog `{name:"CEFR_basic", title(localized vi), description, count:1425, source:"static.trancy.org/wordbook/wordbook_en/CEFR_basic.json", target, cover}` — **wordbooks are static JSON on CDN**: BEC, CEFR A1-C1, IELTS, TOEFL, GRE, GMAT, COCA, CET, IT |
+| `/1/sentence/groups`                                                 | AI-generated sentence packs `{name(vi), category:"travel/health/career/life/education", emoji, prompt(original prompt stored verbatim), length, target, locale}`                                                                                                         |
+| `/1/shadowing/series`                                                | shadowing courses `{slug, title+description(localized), category:"school/work", course_list:[ids]}` — TOEFL speaking mock, IELTS full test, workplace small talk                                                                                                         |
+| `/1/practice/sentence-lists`                                         | **Movies as content**: `{title:"Runner", type:"movie", category:["Drama"], description, metadata:{level,tags}, visibility:"public", featured, year}` — sentence lists built from film dialogue                                                                           |
+| `/2/translator/engines`                                              | `{quota:{tokens,dayTokens,dayFreeTokens}, engines:[{type:"built-in"\|"trancy", provider, model, name, enabled, role, available}]}`. Free sees Google + SiliconFlow `available:true`; hosted DeepSeek V4 Flash / GPT-5.6 Luna / GPT-5-mini `available:false`              |
+| `/1/tts/voices`                                                      | Azure voice catalog `{provider:"azure", voiceId, displayName, locale, gender, previewUrl(static mp3), marks:"native", localeName(localized)}`                                                                                                                            |
+| `/1/pdf/quota`                                                       | `{quota:50, count:0}` — confirms free 50 pages/mo                                                                                                                                                                                                                        |
+| `/1/conversations` `/1/topicMessages` `/2/topics` `/1/vision-topics` | AITalk state + topic system                                                                                                                                                                                                                                              |
+| `/1/shelf` `/1/reading` `/1/shelf/reading-stats`                     | ebook shelf + reading stats (books wing)                                                                                                                                                                                                                                 |
+| `/1/statis` `/2/materials` `/1/materials`                            | stats + learning materials                                                                                                                                                                                                                                               |
+| `/1/meta` (76 calls)                                                 | shared config/dictionary schemes, fetched per page                                                                                                                                                                                                                       |
+
+Auth: `GET /1/google/authURL` → Google OAuth → `GET /1/google/authcallback` → `/1/google/profile` → `/1/user/profile` + `/1/user/attributes` + `/1/user/marketing-email-preferences`.
+
+## 6. What remains unverified
+
+- Inside-session UX details: flashcard drill screen, FSRS grade buttons/parameters (server-side), AITalk live conversation + speech-scoring UI, assessment flow, epub reader internals, PDF translator workflow.
+- Whisper pipeline internals (audio fetch method; only status/queue endpoints seen).
+- Whether `/youtube/<id>` public marketing player ever worked (all 500 now).
+- Premium-only behaviors (tested on a free account — paywalled surfaces render but paid internals don't run).
+- Exact word/sentence save POST payloads (save click didn't reach the network log; `/2/sentences` GET shape confirmed).
+- Learning-language list (docs say "up to 10").
+- Trancy's learning effectiveness — no evidence; treat as UX precedent only.
+
+## 7. Proposed Trancy-MVP mapping for mission 005 update
 
 Trancy's actual core loop = **watch (bilingual segmented subs) → click word/sentence → save → practice in place + review later**. Our MVP:
 
@@ -136,11 +203,20 @@ Trancy's actual core loop = **watch (bilingual segmented subs) → click word/se
 5. `/review` FSRS on saved words+sentences (ts-fsrs as planned).
 6. Deferred explicitly: AI subtitles, AITalk, pronunciation scoring, extension, other platforms, BYOK, PDF/web translate, summaries, subscriptions.
 
-## 7. Source list
+New items surfaced by the live capture that should shape the MVP:
+
+- **Two-tier word lookup**: fast static dictionary DB (per-POS vi terms + reverse translations) for instant display, AI card (SSE-streamed, cached by `en_vi_word_id`) for depth. Do the same: curated/static dict first, Gemini card second. **[LIVE]**
+- **Server-side NLP on captions**: every token carries `lemma/pos/dep` — enables word-level click, lemma-based dedup for vocabulary, POS-aware fill-in-the-blank, "other sentences with this lemma". Build into our caption pipeline rather than shipping plain-text lines. **[LIVE]**
+- **Heartbeat progress**: `deltaDuration` every ~3 s keyed by `dateKey` — cheap watch-time analytics + resume position in one call. **[LIVE]**
+- **Incremental sync**: `?updatedAt=` watermark polling for words/sentences — simple cross-device sync model to copy. **[LIVE]**
+- **Curated catalogs are flat JSON on CDN** (wordbooks) or DB lists (channels, movies, shadowing series, sentence packs) — our curated video library + starter wordbooks can ship the same way, no recommendation engine needed v1. **[LIVE]**
+- **Content beyond video**: their movie/book/podcast/assessment wings show the long-term shape, but all are "content repackaged into sentence lists + practice" — the same primitive everywhere (sentence → tokens → practice). Design our data model around that primitive. **[INFER]**
+
+## 8. Source list
 
 - `manual.trancy.org` — 24 pages fetched as markdown (`/tmp/trancy-research/manual/`).
 - `www.trancy.org` — 11 product pages HTML+text + sitemap 624 URLs + changelog (5 pages exist; page 1 read) (`/tmp/trancy-research/site/`).
 - Blog: 93 posts saved (`/tmp/trancy-research/blog/`).
 - Chrome Web Store CRX `mjdbhokoopacimoekfgkcoogikbfgngb` v7.9.4 unpacked + prettified (`/tmp/trancy-research/extension/`).
-- `learn.trancy.org` — login wall; captured auth endpoints + `/1/meta` payload (`/tmp/trancy-research/player/`).
+- `learn.trancy.org` — **authenticated full crawl**: ~900 logged requests (`/tmp/trancy-research/live/network.jsonl`), per-page innerText dumps, practice-player + dictionary-drawer captures.
 - No official OSS repo exists (verified via GitHub search + org lookup). License: proprietary — we may take ideas/architecture, **not** code or assets.
