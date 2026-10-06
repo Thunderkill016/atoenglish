@@ -76,8 +76,26 @@ export function WatchClient({
   const [autoPause, setAutoPause] = useState(false);
   const [showKeys, setShowKeys] = useState(false);
 
-  const player = useYouTubePlayer(videoId, initialPositionMs);
-  const { nowMs, playing, ready, durationMs, rate, containerRef } = player;
+  const controls = useYouTubePlayer(videoId, initialPositionMs);
+  const {
+    nowMs,
+    playing,
+    ready,
+    durationMs,
+    rate,
+    containerRef,
+    loadError,
+    play,
+    pause,
+    seekToMs,
+    setRate,
+  } = controls;
+  // The hook returns a fresh object literal every render; memoize the
+  // imperative surface so effects below don't re-subscribe every poll tick.
+  const player = useMemo(
+    () => ({ play, pause, seekToMs, setRate }),
+    [play, pause, seekToMs, setRate],
+  );
 
   const sentences = useMemo(
     () => transcript?.sentences ?? [],
@@ -95,7 +113,13 @@ export function WatchClient({
   const handledBoundary = useRef(-1);
   useEffect(() => {
     if (!activeSentence?.end_ms || !playing) return;
-    if (nowMs < activeSentence.end_ms) return;
+    if (nowMs < activeSentence.end_ms) {
+      // Back inside the sentence — re-arm so the loop can fire on the next
+      // boundary crossing. The guard only suppresses repeat fires while the
+      // clock stays past the same end (double-seek jitter protection).
+      handledBoundary.current = -1;
+      return;
+    }
     if (handledBoundary.current === activeIndex) return;
     handledBoundary.current = activeIndex;
     if (loopSentence && activeSentence.start_ms != null) {
@@ -108,7 +132,7 @@ export function WatchClient({
   const seekToSentence = useCallback(
     (index: number) => {
       const s = timedSentences[index];
-      if (!s?.start_ms) return;
+      if (s?.start_ms == null) return;
       handledBoundary.current = -1;
       player.seekToMs(s.start_ms);
       player.play();
@@ -231,7 +255,7 @@ export function WatchClient({
   }, [playing, player, goPrev, goNext, replayCurrent]);
 
   const cycleSpeed = () => {
-    const idx = SPEEDS.indexOf(player.rate as (typeof SPEEDS)[number]);
+    const idx = SPEEDS.indexOf(rate as (typeof SPEEDS)[number]);
     player.setRate(SPEEDS[(idx + 1) % SPEEDS.length]);
   };
 
@@ -248,7 +272,10 @@ export function WatchClient({
     "flex h-9 w-9 items-center justify-center rounded-md text-[#9d9da6] transition hover:bg-white/10 hover:text-[#e8e8ea] disabled:opacity-40";
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0c0c0e] text-[#e8e8ea]">
+    <div
+      id="main-content"
+      className="flex min-h-screen flex-col bg-[#0c0c0e] text-[#e8e8ea]"
+    >
       {/* Header */}
       <header className="flex items-center gap-3 border-b border-[#232327] px-4 py-2.5">
         <Link
@@ -311,8 +338,10 @@ export function WatchClient({
           <div className="relative aspect-video w-full bg-black">
             <div ref={containerRef} className="absolute inset-0 h-full w-full" />
             {!ready && (
-              <div className="absolute inset-0 flex items-center justify-center text-sm text-[#6d6d78]">
-                Đang tải trình phát…
+              <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-[#6d6d78]">
+                {loadError
+                  ? "Không tải được trình phát YouTube. Tải lại trang để thử lại."
+                  : "Đang tải trình phát…"}
               </div>
             )}
           </div>
@@ -405,6 +434,10 @@ export function WatchClient({
               <span className="font-semibold text-[#e8e8ea]">Phím tắt:</span>{" "}
               Space phát/dừng · A câu trước · D câu sau · S lặp câu · R tự dừng
               sau câu · Q nghe lại câu · ? bảng này
+              <p className="mt-1.5 text-[#6d6d78]">
+                Lưu ý: phím tắt không hoạt động khi con trỏ đang nằm trong trình
+                phát video.
+              </p>
             </div>
           )}
         </div>

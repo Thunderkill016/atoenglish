@@ -20,6 +20,9 @@ interface EmptyTranscriptProps {
 }
 
 const FILE_ACCEPT = ".srt,.vtt,.txt,text/plain";
+// Mirrors the server-side 1MB cap — rejects oversized input client-side
+// before it can stall the tab on read/parse.
+const MAX_TRANSCRIPT_BYTES = 1_000_000;
 
 /**
  * SPEC §4.2 fallback surface — three explicit options:
@@ -39,6 +42,10 @@ export function EmptyTranscript({
   const fileRef = useRef<HTMLInputElement>(null);
 
   const applyRaw = (raw: string) => {
+    if (raw.length > MAX_TRANSCRIPT_BYTES) {
+      setPasteError("Phụ đề quá lớn (tối đa 1MB).");
+      return;
+    }
     const parsed = parseSubtitleFile(raw);
     if (parsed.kind === "invalid" || parsed.sentences.length === 0) {
       setPasteError(
@@ -128,7 +135,13 @@ export function EmptyTranscript({
               className="hidden"
               onChange={async (e) => {
                 const f = e.target.files?.[0];
-                if (f) applyRaw(await f.text());
+                if (f) {
+                  if (f.size > MAX_TRANSCRIPT_BYTES) {
+                    setPasteError("Tệp quá lớn (tối đa 1MB).");
+                  } else {
+                    applyRaw(await f.text());
+                  }
+                }
                 e.target.value = "";
               }}
             />

@@ -22,16 +22,35 @@ import type {
 } from "@/lib/video/types";
 
 // SPEC §4.2: fetching captions is a per-learner, explicit-action-only,
-// rate-limited operation. 20/hour per user (or per IP for guests) is generous
-// for real use while capping upstream exposure; tune on pilot_events data.
+// rate-limited operation enforced in TWO layers — the CF binding alone does
+// NOT enforce the quota:
+//  - burst: CAPTION_RATE_LIMITER native binding (5/min distributed ceiling —
+//    its simple.period only supports 10s|60s windows; cloudflare.config.ts);
+//  - hourly: the real 20/hour per-user (per-IP for guests) quota via Upstash,
+//    falling back to per-isolate in-memory — same caveat as the auth limiter:
+//    without Upstash it's ineffective under Cloudflare isolate fan-out.
+// 20/hour is generous for real use while capping upstream exposure; tune on
+// pilot_events data.
 const CAPTION_FETCH_LIMIT = 20;
 const CAPTION_FETCH_WINDOW_MS = 60 * 60 * 1000;
+// Mirrors CAPTION_RATE_LIMITER's simple.limit/period in cloudflare.config.ts.
+const CAPTION_BURST_LIMIT = 5;
+const CAPTION_BURST_WINDOW_MS = 60 * 1000;
+/** Ceiling on the whole upstream chain — a stalled socket must not hang the
+ * action. Lib maps the timeout abort to { error: "aborted" } → "error". */
+const UPSTREAM_TIMEOUT_MS = 20_000;
 
-const captionLimiter = createRateLimiter(
+const captionBurstLimiter = createRateLimiter(
+  CAPTION_BURST_LIMIT,
+  CAPTION_BURST_WINDOW_MS,
+  "caption-burst",
+  { rateLimit: "CAPTION_RATE_LIMITER" },
+);
+const captionHourlyLimiter = createRateLimiter(
   CAPTION_FETCH_LIMIT,
   CAPTION_FETCH_WINDOW_MS,
-  "caption-fetch",
-  { rateLimit: "CAPTION_RATE_LIMITER" },
+  // Distinct key prefix — must not share Upstash/memory counters with burst.
+  "caption-hourly",
 );
 
 export type CaptionActionError =
@@ -66,8 +85,11 @@ async function currentUser() {
   return { supabase, user: data.user };
 }
 
-async function rateLimitKey(): Promise<string> {
-  const { user } = await currentUser();
+/** Neon Auth getUser() can be a network round-trip — resolve once per action
+ * and pass the context through instead of re-calling per helper. */
+type AuthContext = Awaited<ReturnType<typeof currentUser>>;
+
+async function rateLimitKey(user: AuthContext["user"]): Promise<string> {
   if (user?.id) return `user:${user.id}`;
   const h = await headers();
   return `anon:${getClientIpFromHeaders(h)}`;
@@ -75,6 +97,7 @@ async function rateLimitKey(): Promise<string> {
 
 /** Observability per SPEC §4.2 — outcome counts go to pilot_events. */
 async function logCaptionEvent(
+  { supabase, user }: AuthContext,
   eventName:
     | "caption_fetch_succeeded"
     | "caption_fetch_failed"
@@ -82,7 +105,6 @@ async function logCaptionEvent(
   videoId: string,
 ) {
   try {
-    const { supabase, user } = await currentUser();
     await supabase.from("pilot_events").insert({
       event_name: eventName,
       user_id: user?.id ?? null,
@@ -189,22 +211,32 @@ export async function fetchVideoCaptions(
     return { ok: false, error: "invalid_url" };
   }
 
-  const { success } = await captionLimiter.check(await rateLimitKey());
-  if (!success) return { ok: false, error: "rate_limited" };
+  // One auth resolution feeds the rate-limit key, the transcript cache check
+  // and telemetry — getUser() may hit Neon Auth on every call.
+  const ctx = await currentUser();
+  const key = await rateLimitKey(ctx.user);
+  // Hourly first: a user already past the quota shouldn't burn burst-binding
+  // slots on the edge.
+  const hourly = await captionHourlyLimiter.check(key);
+  if (!hourly.success) return { ok: false, error: "rate_limited" };
+  const burst = await captionBurstLimiter.check(key);
+  if (!burst.success) return { ok: false, error: "rate_limited" };
 
-  const { supabase, user } = await currentUser();
+  const { supabase, user } = ctx;
   if (user) {
     const existing = await existingTranscript(supabase, user.id, videoId);
     if (existing) return { ok: true, ...existing };
   }
 
-  const result = await fetchYoutubeCaptions(videoId);
+  const result = await fetchYoutubeCaptions(videoId, {
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+  });
   if (!result.ok) {
     const error =
       result.error === "aborted" || result.error === "error"
         ? "error"
         : result.error;
-    await logCaptionEvent("caption_fetch_failed", videoId);
+    await logCaptionEvent(ctx, "caption_fetch_failed", videoId);
     return { ok: false, error };
   }
 
@@ -213,7 +245,7 @@ export async function fetchVideoCaptions(
     events: result.events,
   });
   if (sentences.length === 0) {
-    await logCaptionEvent("caption_fetch_failed", videoId);
+    await logCaptionEvent(ctx, "caption_fetch_failed", videoId);
     return { ok: false, error: "no_captions" };
   }
 
@@ -224,14 +256,17 @@ export async function fetchVideoCaptions(
     trackKind: result.track.kind,
     title: result.video.title,
     channel: result.video.channel,
-    durationMs: result.video.durationMs,
+    // Upstream lengthSeconds can parse to NaN — never persist it.
+    durationMs: Number.isFinite(result.video.durationMs)
+      ? result.video.durationMs
+      : undefined,
     saved: false,
   };
 
   if (user) {
     loaded.saved = await persistTranscript(supabase, user.id, videoId, loaded);
   }
-  await logCaptionEvent("caption_fetch_succeeded", videoId);
+  await logCaptionEvent(ctx, "caption_fetch_succeeded", videoId);
   return { ok: true, ...loaded };
 }
 
@@ -246,7 +281,8 @@ export async function saveLearnerTranscript(
   if (!YOUTUBE_VIDEO_ID_RE.test(videoId)) {
     return { ok: false, error: "invalid_url" };
   }
-  const { supabase, user } = await currentUser();
+  const ctx = await currentUser();
+  const { supabase, user } = ctx;
   if (!user) return { ok: false, error: "unauthorized" };
   if (typeof rawText !== "string" || rawText.length > 1_000_000) {
     return { ok: false, error: "invalid_file" };
@@ -272,7 +308,7 @@ export async function saveLearnerTranscript(
     saved: false,
   };
   loaded.saved = await persistTranscript(supabase, user.id, videoId, loaded);
-  await logCaptionEvent("caption_fetch_fallback", videoId);
+  await logCaptionEvent(ctx, "caption_fetch_fallback", videoId);
   return { ok: true, ...loaded };
 }
 

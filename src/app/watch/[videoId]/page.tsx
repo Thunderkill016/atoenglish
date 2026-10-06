@@ -75,6 +75,7 @@ export default async function WatchPage({
 
   return (
     <WatchClient
+      key={videoId}
       videoId={videoId}
       loggedIn={Boolean(user)}
       initial={initial}

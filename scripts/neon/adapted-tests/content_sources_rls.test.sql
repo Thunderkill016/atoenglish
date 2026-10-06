@@ -32,11 +32,18 @@ select set_config(
 );
 set local role authenticated;
 
-insert into public.content_sources (user_id, kind, external_id, title)
-values ('66666666-6666-4666-8666-666666666666', 'youtube', 'dQw4w9WgXcQ', 't');
+-- Capture the generated id in a temp table: identity sequences survive
+-- rollback, so a hardcoded source_id only works when this suite runs first.
+create temp table _owner_source as
+  with ins as (
+    insert into public.content_sources (user_id, kind, external_id, title)
+    values ('66666666-6666-4666-8666-666666666666', 'youtube', 'dQw4w9WgXcQ', 't')
+    returning id
+  )
+  select id from ins;
 
 insert into public.content_transcripts (source_id, user_id, origin, language, segmentation_version, sentences)
-values (1, '66666666-6666-4666-8666-666666666666', 'youtube_asr', 'en', 1, '[]'::jsonb);
+values ((select id from _owner_source), '66666666-6666-4666-8666-666666666666', 'youtube_asr', 'en', 1, '[]'::jsonb);
 
 select is(
   (select count(*)::int from public.content_sources where user_id = '66666666-6666-4666-8666-666666666666'),
@@ -72,7 +79,7 @@ select is(
 
 select throws_ok(
   $$insert into public.content_transcripts (source_id, user_id, origin, language, segmentation_version, sentences)
-    values (1, '77777777-7777-4777-8777-777777777777', 'youtube_asr', 'en', 1, '[]'::jsonb)$$,
+    values ((select id from _owner_source), '77777777-7777-4777-8777-777777777777', 'youtube_asr', 'en', 1, '[]'::jsonb)$$,
   '42501',
   null,
   'other user cannot attach a transcript to the owner source'

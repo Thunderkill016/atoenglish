@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ASR_MAX_DURATION_MS,
   ASR_MAX_WORDS,
+  CUE_MAX_DURATION_MS,
+  CUE_MAX_WORDS,
   cuesFromJson3,
   segmentAsrEvents,
   segmentCues,
@@ -191,13 +193,33 @@ describe("segmentCues — manual tracks", () => {
   });
 
   it("splits when merged text would exceed the word cap", () => {
+    // Cue 1 alone is exactly at CUE_MAX_WORDS with no terminal punctuation;
+    // cue 2 would push the merge past the cap, so it must split — the old
+    // version of this test used ONE long token, which never tripped the cap.
     const cues = [
-      { start_ms: 0, end_ms: 1000, text: "a".repeat(2 * 39) + " " + "x ".repeat(19).trim() },
-      { start_ms: 1000, end_ms: 2000, text: "more words here." },
+      {
+        start_ms: 0,
+        end_ms: 1000,
+        text: Array.from({ length: CUE_MAX_WORDS }, (_, i) => `w${i}`).join(" "),
+      },
+      { start_ms: 1000, end_ms: 2000, text: "more words." },
     ];
     const s = segmentCues(cues);
-    expect(s.length).toBeGreaterThanOrEqual(1);
-    expect(s.every((x) => x.text.split(/\s+/).length <= 40)).toBe(true);
+    expect(s).toHaveLength(2);
+    expect(s[0].text.split(/\s+/)).toHaveLength(CUE_MAX_WORDS);
+    expect(s[0].end_ms).toBe(cues[0].end_ms);
+    expect(s[1].text).toBe("more words.");
+  });
+
+  it("splits when the merged span exceeds CUE_MAX_DURATION_MS", () => {
+    const cues = [
+      { start_ms: 0, end_ms: 5_000, text: "still going" },
+      { start_ms: 13_000, end_ms: 14_000, text: "and more" },
+    ];
+    const s = segmentCues(cues);
+    expect(s).toHaveLength(2);
+    expect(s[0].end_ms).toBe(cues[0].end_ms);
+    expect(s[1].end_ms! - s[0].start_ms!).toBeGreaterThan(CUE_MAX_DURATION_MS);
   });
 });
 

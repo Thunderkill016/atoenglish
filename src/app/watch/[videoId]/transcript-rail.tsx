@@ -43,10 +43,11 @@ export function TranscriptRail({
     );
     if (!el) return;
     lastScrolled.current = activeIndex;
-    container.scrollTo({
-      top: el.offsetTop - container.clientHeight / 2 + el.clientHeight / 2,
-      behavior: "smooth",
-    });
+    // scrollIntoView scrolls the real scroll parent, so it works both in
+    // theater mode (the rail scrolls) and read mode (the page scrolls — the
+    // rail has no constrained height there). block:"nearest" is a no-op when
+    // the line is already fully visible.
+    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [activeIndex]);
 
   if (sentences.length === 0) return null;
@@ -75,6 +76,7 @@ export function TranscriptRail({
             type="button"
             data-sentence={s.i}
             onClick={() => s.start_ms != null && onSeek(s.start_ms)}
+            title={s.noise ? "Âm thanh nền" : undefined}
             className={cn(
               "group flex w-full gap-3 rounded-lg px-3 py-2 text-left transition-colors",
               active
@@ -96,6 +98,7 @@ export function TranscriptRail({
                 active && "text-[#f5b50a]",
               )}
             >
+              {s.noise && <span className="sr-only">Âm thanh nền: </span>}
               {s.words
                 ? s.words.map((w, i) => (
                     <span

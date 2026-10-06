@@ -40,6 +40,10 @@ export function parseTimestamp(ts: string): number | null {
 }
 
 const SRT_ARROW_RE = /-->/;
+// VTT metadata blocks that legally precede cues: WEBVTT header remnants,
+// NOTE comments, STYLE sheets, REGION definitions. They carry no timing
+// line, so they must not invalidate the file — only truly malformed blocks do.
+const VTT_PREAMBLE_RE = /^(WEBVTT|NOTE|STYLE|REGION)\b/;
 
 function parseCueBlocks(text: string): Cue[] | null {
   // Split into blocks on blank lines; each block: optional index line,
@@ -55,7 +59,9 @@ function parseCueBlocks(text: string): Cue[] | null {
     const lines = block.split("\n").map((l) => l.trim());
     const arrowIdx = lines.findIndex((l) => SRT_ARROW_RE.test(l));
     if (arrowIdx === -1) {
-      // A block with no timing line before any arrow exists → invalid cues;
+      // Legal VTT preamble/metadata block — skip it at any position.
+      if (VTT_PREAMBLE_RE.test(lines[0])) continue;
+      // Any other block with no timing line before the first cue → invalid;
       // after cues started it's ignored (trailing notes).
       if (!sawArrow) return null;
       continue;
@@ -86,9 +92,11 @@ function parseTimedPaste(text: string): Cue[] | null {
   const cues: Cue[] = [];
   for (const line of lines) {
     const m = line.match(TIMED_LINE_RE);
-    if (!m) return null;
+    // Stray headers/separators are common in pasted transcripts — skip them.
+    // detectSubtitleKind already guaranteed ≥60% timed lines.
+    if (!m) continue;
     const start = parseTimestamp(m[1]);
-    if (start == null) return null;
+    if (start == null) continue;
     cues.push({ start_ms: start, end_ms: start, text: m[2].trim() });
   }
   if (cues.length === 0) return null;
@@ -121,17 +129,25 @@ export function detectSubtitleKind(raw: string): SubtitleInputKind {
  * Returns `kind: "invalid"` when the input looks timed but is malformed.
  */
 export function parseSubtitleFile(raw: string): ParsedSubtitle {
-  const text = raw.replace(/^﻿/, "").trim(); // strip BOM
+  // Strip BOM and normalise CRLF/CR once — the VTT header drop below and the
+  // block splitter both key on \n.
+  const text = raw.replace(/^﻿/, "").replace(/\r\n?/g, "\n").trim();
   if (!text) return { kind: "invalid", sentences: [] };
 
   const kind = detectSubtitleKind(text);
   switch (kind) {
     case "vtt":
     case "srt": {
-      // For VTT, drop the header block (everything up to the first blank line).
+      // For VTT, drop the header block (everything up to the first blank
+      // line); a malformed file with no blank line just loses its first
+      // line instead of the whole first cue.
       const body =
         kind === "vtt"
-          ? text.slice(text.indexOf("\n\n") + 2)
+          ? text.slice(
+              text.indexOf("\n\n") === -1
+                ? text.indexOf("\n") + 1
+                : text.indexOf("\n\n") + 2,
+            )
           : text;
       const cues = parseCueBlocks(body);
       if (!cues) return { kind: "invalid", sentences: [] };
