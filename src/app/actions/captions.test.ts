@@ -89,6 +89,9 @@ const h = vi.hoisted(() => {
     auth: { getUser },
     from,
   };
+  // Controllable so tests can simulate env/auth failure (preview without
+  // worker secrets) — createClient throws, action must degrade to guest.
+  const createClientImpl = vi.fn(async () => supabase);
 
   const limiterCheck = vi.fn();
   const requestHeaders = vi.fn();
@@ -100,6 +103,7 @@ const h = vi.hoisted(() => {
     from,
     getUser,
     supabase,
+    createClientImpl,
     limiterCheck,
     requestHeaders,
     fetchYoutubeCaptions,
@@ -109,7 +113,7 @@ const h = vi.hoisted(() => {
 // ─── Module-boundary mocks ───────────────────────────────────────────────────
 
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: async () => h.supabase,
+  createClient: () => h.createClientImpl(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -265,6 +269,7 @@ beforeEach(() => {
     resetTime: Date.now() + 3_600_000,
     backend: "memory",
   });
+  h.createClientImpl.mockReset().mockResolvedValue(h.supabase);
   h.requestHeaders
     .mockReset()
     .mockResolvedValue(new Headers({ "cf-connecting-ip": GUEST_IP }));
@@ -335,9 +340,9 @@ describe("fetchVideoCaptions", () => {
       origin: "youtube_manual",
       language: "en",
     });
-    expect(
-      (trUpserts[0].args[0] as { sentences: unknown }).sentences,
-    ).toEqual(res.sentences);
+    expect((trUpserts[0].args[0] as { sentences: unknown }).sentences).toEqual(
+      res.sentences,
+    );
   });
 
   it("logged-in: returns the stored transcript without an upstream call", async () => {
@@ -416,6 +421,19 @@ describe("fetchVideoCaptions", () => {
     expect(res.sentences[0].words).toHaveLength(5);
   });
 
+  it("degrades to guest when auth/env resolution fails — fetch still runs", async () => {
+    // Preview deploys don't carry worker secrets: createClient throws
+    // ("Invalid URL string"). The caption chain is env-independent and must
+    // still answer; persist/telemetry skip because supabase never existed.
+    h.createClientImpl.mockRejectedValue(new Error("Invalid URL string."));
+    const res = await fetchVideoCaptions(VIDEO_ID);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.saved).toBe(false);
+    expect(res.sentences.length).toBeGreaterThan(0);
+    expect(h.from).not.toHaveBeenCalled();
+  });
+
   it("logs caption_fetch_succeeded to pilot_events on success", async () => {
     const res = await fetchVideoCaptions(VIDEO_ID);
     expect(res.ok).toBe(true);
@@ -430,6 +448,12 @@ describe("fetchVideoCaptions", () => {
 // ─── saveLearnerTranscript ───────────────────────────────────────────────────
 
 describe("saveLearnerTranscript", () => {
+  it("treats auth/env failure as unauthorized — nothing to persist through", async () => {
+    h.createClientImpl.mockRejectedValue(new Error("env missing"));
+    const res = await saveLearnerTranscript(VIDEO_ID, SRT);
+    expect(res).toEqual({ ok: false, error: "unauthorized" });
+  });
+
   it("rejects guests as unauthorized and writes nothing", async () => {
     const res = await saveLearnerTranscript(VIDEO_ID, SRT);
     expect(res).toEqual({ ok: false, error: "unauthorized" });
@@ -455,9 +479,7 @@ describe("saveLearnerTranscript", () => {
     expect(res.trackKind).toBe("learner");
     expect(res.saved).toBe(true);
     expect(res.sentences.length).toBeGreaterThan(0);
-    expect(res.sentences.map((s) => s.text).join(" ")).toContain(
-      "Hello world",
-    );
+    expect(res.sentences.map((s) => s.text).join(" ")).toContain("Hello world");
 
     const trUpserts = callsFor("content_transcripts", "upsert");
     expect(trUpserts).toHaveLength(1);
@@ -503,9 +525,7 @@ describe("saveLearnerTranscript", () => {
 
 describe("saveWatchPosition", () => {
   it("resolves without touching the DB for guests", async () => {
-    await expect(
-      saveWatchPosition(VIDEO_ID, 5_000),
-    ).resolves.toBeUndefined();
+    await expect(saveWatchPosition(VIDEO_ID, 5_000)).resolves.toBeUndefined();
     expect(h.from).not.toHaveBeenCalled();
   });
 
@@ -526,9 +546,7 @@ describe("saveWatchPosition", () => {
   it("updates content_sources.last_position_ms for a logged-in learner", async () => {
     asLoggedIn();
 
-    await expect(
-      saveWatchPosition(VIDEO_ID, 5_000),
-    ).resolves.toBeUndefined();
+    await expect(saveWatchPosition(VIDEO_ID, 5_000)).resolves.toBeUndefined();
 
     const updates = callsFor("content_sources", "update");
     expect(updates).toHaveLength(1);

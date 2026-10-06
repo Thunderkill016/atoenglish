@@ -12,8 +12,7 @@ result. Never claim a step passed without running it.
 1. `npx tsc --noEmit`
 2. `npx eslint <changed files>` (or `npm run lint` for wide changes)
 3. `npm run test` (vitest)
-4. `npm run test:content-standard` (when `src/lib/constants/`, units, lessons,
-   or curriculum content changed)
+4. `npm run e2e` (Playwright — Chromium + Mobile Chrome; needs `.env.local`)
 5. `npm run build:vinext` (before deploy or when touching routes/Worker code;
    `npm run build` is NOT the production build path)
 

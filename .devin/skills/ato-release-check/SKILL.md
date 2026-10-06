@@ -23,8 +23,9 @@ Post-deploy:
 5. `curl -sS https://atoenglish.thunderkill016.workers.dev/api/health` —
    expect `status: ok`, `db: connected`, and a `version` matching the
    deployed Version ID.
-6. `SMOKE_URL=https://atoenglish.thunderkill016.workers.dev npm run smoke:learn`.
+6. `CF_HEALTH_URL=https://atoenglish.thunderkill016.workers.dev/api/health npm run check-deploy`
+   (polls `/api/health` until 200 — see `CLOUDFLARE_DEPLOY.md` §deploy flow).
 
 Report: commit hash, Neon migration state, Worker version ID, health JSON,
-smoke result. If any step fails STOP and report — do not retry deploys or
+check-deploy result. If any step fails STOP and report — do not retry deploys or
 mutate the DB to force a pass.

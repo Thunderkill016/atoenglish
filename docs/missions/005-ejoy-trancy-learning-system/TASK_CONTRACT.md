@@ -115,7 +115,7 @@ Slice 7
 
 All slices
 
-- [ ] `npx tsc --noEmit`, `npm run lint`, `npm run test`, `npm run test:content-standard`, `npm run build` pass on the exact PR head; migrations replay with pgTAP/RLS in Verify; independent QA review (ato-qa) per slice.
+- [ ] `npx tsc --noEmit`, `npm run lint`, `npm run test`, `npm run e2e`, `npm run build` (+ `npm run build:vinext` when touching routes/Worker) pass on the exact PR head; migrations replay with pgTAP/RLS in Verify; independent QA review (ato-qa) per slice. (`test:content-standard` was removed in slice 0 — the curriculum corpus it guarded no longer exists.)
 
 ## VERIFICATION METHOD
 

@@ -21,7 +21,7 @@ is broken you report it, you never patch it.
 
 AtoEnglish: Next.js/React/TS on Cloudflare Workers + Neon Postgres, deployed
 via vinext. Verify commands: `npx tsc --noEmit`, `npm run lint`, `npm run test`,
-`npm run test:content-standard`, `npm run build:vinext`. Governance:
+`npm run e2e`, `npm run build:vinext`. Governance:
 `docs/project/PROJECT_STATE.md` — closed surfaces (XP gamification, leagues,
 badges, streak celebration, social competition, speculative AI tutors) must
 not be expanded.

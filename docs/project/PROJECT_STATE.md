@@ -144,7 +144,7 @@ The production release path is Cloudflare Workers + Neon (Vercel and Supabase we
 - data and auth run on Neon project `weathered-haze-10487148`, branch `production`, through the Neon Data API and Managed Better Auth (`neon_auth`);
 - Worker secrets are managed through `cf workers secrets` (see `CLOUDFLARE_DEPLOY.md`); no Vercel or Supabase runtime dependency remains.
 
-Issue #152's release invariant is unchanged: **production must be traceable to an exact reviewed `main` commit, the required Neon production-branch state must exist, and the resulting Worker deployment must be verified after promotion** (`/api/health`, `npm run smoke:learn`, Worker logs).
+Issue #152's release invariant is unchanged: **production must be traceable to an exact reviewed `main` commit, the required Neon production-branch state must exist, and the resulting Worker deployment must be verified after promotion** (`/api/health`, `npm run check-deploy`, Worker logs).
 
 ## Governance
 

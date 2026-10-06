@@ -135,9 +135,7 @@ test.describe("/watch/[videoId]", () => {
     page,
   }) => {
     await page.goto(`/watch/${VIDEO_ID}`);
-    await page
-      .getByRole("button", { name: "Lấy phụ đề từ YouTube" })
-      .click();
+    await page.getByRole("button", { name: "Lấy phụ đề từ YouTube" }).click();
     // The dev server makes a real upstream call here — either outcome is a
     // valid, non-destructive result. The regex covers every error mapped in
     // watch-client.tsx ERROR_MESSAGES except "unauthorized" (guests may
@@ -230,6 +228,44 @@ test.describe("/watch/[videoId]", () => {
     // "?" toggles the shortcut help panel.
     await page.keyboard.press("?");
     await expect(page.getByText("Phím tắt:")).toBeVisible();
+  });
+
+  test("read mode hides timestamps and toggles back", async ({ page }) => {
+    await page.goto(`/watch/${VIDEO_ID}`);
+    await pasteTranscript(page, SRT);
+    const rail = page.getByTestId("transcript-rail");
+    await expect(rail.locator("[data-sentence]")).toHaveCount(2);
+
+    // Theater mode: timestamp column visible (0:01 / 0:03).
+    await expect(rail.getByText("0:01")).toBeVisible();
+
+    await page.getByRole("button", { name: "Chế độ đọc" }).click();
+    // Label flips, per-line timestamps disappear (prose hides the column).
+    await expect(
+      page.getByRole("button", { name: "Chế độ rạp" }),
+    ).toBeVisible();
+    await expect(rail.getByText("0:01")).toBeHidden();
+    await expect(rail.getByText("0:03")).toBeHidden();
+    // Sentences still render and remain clickable.
+    await expect(rail.locator("[data-sentence]")).toHaveCount(2);
+    await rail.locator('[data-sentence="1"]').click();
+    await expect
+      .poll(async () => (await getSeeks(page)).map((s) => s.seconds))
+      .toEqual([3.5]);
+
+    // Toggle back to theater.
+    await page.getByRole("button", { name: "Chế độ rạp" }).click();
+    await expect(rail.getByText("0:01")).toBeVisible();
+  });
+
+  test("?t= deep link seeks the player once it is ready", async ({ page }) => {
+    await page.goto(`/watch/${VIDEO_ID}?t=65000`);
+    await expect(page.getByText("Đang tải trình phát")).toBeHidden();
+    // page.tsx treats ?t as milliseconds → seekTo(65s) on onReady.
+    await expect
+      .poll(async () => (await getSeeks(page)).map((s) => s.seconds))
+      .toEqual([65]);
+    await expect(page.getByText("1:05 / 3:32")).toBeVisible();
   });
 
   test("invalid video id renders the 404 page", async ({ page }) => {

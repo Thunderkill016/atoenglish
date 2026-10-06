@@ -9,17 +9,11 @@ import {
   getClientIpFromHeaders,
 } from "@/lib/security/rate-limit";
 import { fetchYoutubeCaptions } from "@/lib/video/captions";
-import {
-  SEGMENTATION_VERSION,
-  segmentTranscript,
-} from "@/lib/video/segment";
+import { SEGMENTATION_VERSION, segmentTranscript } from "@/lib/video/segment";
 import { parseSubtitleFile } from "@/lib/video/subtitle-file";
 import { YOUTUBE_VIDEO_ID_RE } from "@/lib/video/youtube-url";
 import type { Json } from "@/types/supabase";
-import type {
-  Sentence,
-  TranscriptOrigin,
-} from "@/lib/video/types";
+import type { Sentence, TranscriptOrigin } from "@/lib/video/types";
 
 // SPEC §4.2: fetching captions is a per-learner, explicit-action-only,
 // rate-limited operation enforced in TWO layers — the CF binding alone does
@@ -80,9 +74,16 @@ export type CaptionActionResult =
   | { ok: false; error: CaptionActionError };
 
 async function currentUser() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  return { supabase, user: data.user };
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    return { supabase, user: data.user };
+  } catch {
+    // Auth/env failure (e.g. preview deploy without worker secrets) must not
+    // kill caption fetching — degrade to guest: the YouTube chain still runs,
+    // persist/telemetry simply skip (they need supabase anyway).
+    return { supabase: null, user: null };
+  }
 }
 
 /** Neon Auth getUser() can be a network round-trip — resolve once per action
@@ -104,6 +105,7 @@ async function logCaptionEvent(
     | "caption_fetch_fallback",
   videoId: string,
 ) {
+  if (!supabase) return;
   try {
     await supabase.from("pilot_events").insert({
       event_name: eventName,
@@ -223,7 +225,7 @@ export async function fetchVideoCaptions(
   if (!burst.success) return { ok: false, error: "rate_limited" };
 
   const { supabase, user } = ctx;
-  if (user) {
+  if (user && supabase) {
     const existing = await existingTranscript(supabase, user.id, videoId);
     if (existing) return { ok: true, ...existing };
   }
@@ -263,7 +265,7 @@ export async function fetchVideoCaptions(
     saved: false,
   };
 
-  if (user) {
+  if (user && supabase) {
     loaded.saved = await persistTranscript(supabase, user.id, videoId, loaded);
   }
   await logCaptionEvent(ctx, "caption_fetch_succeeded", videoId);
@@ -283,7 +285,7 @@ export async function saveLearnerTranscript(
   }
   const ctx = await currentUser();
   const { supabase, user } = ctx;
-  if (!user) return { ok: false, error: "unauthorized" };
+  if (!user || !supabase) return { ok: false, error: "unauthorized" };
   if (typeof rawText !== "string" || rawText.length > 1_000_000) {
     return { ok: false, error: "invalid_file" };
   }
@@ -325,7 +327,7 @@ export async function saveWatchPosition(
     return;
   }
   const { supabase, user } = await currentUser();
-  if (!user) return;
+  if (!user || !supabase) return;
   await supabase
     .from("content_sources")
     .update({

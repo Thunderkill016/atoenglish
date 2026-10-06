@@ -59,11 +59,9 @@ npm run dev
 npx tsc --noEmit
 npm run lint
 npm run test
-npm run test:content-standard
 npm run test:integration
 npm run e2e
 npm run build
-npm run audit
 npm run inventory
 ```
 
