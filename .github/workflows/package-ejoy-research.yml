@@ -1,0 +1,26 @@
+name: Package requested eJOY research archive
+on:
+  push:
+    branches:
+      - research/ejoy-archive-2026-10-06
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: package-ejoy-research-2026-10-06
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout research support files
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Restore pinned sources, verify, package and publish the archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_TERMINAL_PROMPT: '0'
+          GIT_LFS_SKIP_SMUDGE: '1'
+        run: python3 research/ejoy-2026-10-06/package-on-github.py
