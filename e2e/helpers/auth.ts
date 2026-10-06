@@ -121,6 +121,27 @@ export async function forceConfirmE2EUserEmail(userId: string): Promise<void> {
   `;
 }
 
+/** Seed a youtube content_sources row with a resume position (idempotent). */
+export async function seedWatchedSource(
+  userId: string,
+  externalId: string,
+  title: string,
+): Promise<void> {
+  await db()`
+    insert into public.content_sources
+      (user_id, kind, external_id, title, channel, duration_ms, last_position_ms)
+    values
+      (${userId}, 'youtube', ${externalId}, ${title}, 'E2E Channel', 600000, 65000)
+    on conflict (user_id, kind, external_id)
+    do update set
+      last_position_ms = 65000,
+      title = excluded.title,
+      channel = excluded.channel,
+      duration_ms = excluded.duration_ms,
+      updated_at = now()
+  `;
+}
+
 /** Delete a temp E2E signup user (cascades to neon_auth session/account rows). */
 export async function deleteE2EUserByEmail(email: string): Promise<void> {
   const user = await findUserByEmail(email);

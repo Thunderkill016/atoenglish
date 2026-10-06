@@ -2,14 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { formatTimestamp } from "@/lib/format";
 import type { Sentence } from "@/lib/video/types";
 
-export function formatTimestamp(ms: number): string {
-  const total = Math.floor(ms / 1000);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+export { formatTimestamp };
 
 interface TranscriptRailProps {
   sentences: Sentence[];
@@ -55,20 +51,14 @@ export function TranscriptRail({
   return (
     <div
       ref={containerRef}
-      className={cn(
-        "min-h-0 overflow-y-auto",
-        prose ? "px-2" : "h-full pr-1",
-      )}
+      className={cn("min-h-0 overflow-y-auto", prose ? "px-2" : "h-full pr-1")}
       data-testid="transcript-rail"
     >
       {sentences.map((s) => {
         const active = s.i === activeIndex;
         const activeWordIdx =
           active && s.words
-            ? s.words.reduce(
-                (acc, w, i) => (w.start_ms <= nowMs ? i : acc),
-                -1,
-              )
+            ? s.words.reduce((acc, w, i) => (w.start_ms <= nowMs ? i : acc), -1)
             : -1;
         return (
           <button
@@ -104,8 +94,7 @@ export function TranscriptRail({
                     <span
                       key={i}
                       className={cn(
-                        i === activeWordIdx &&
-                          "rounded bg-[#f5b50a]/25 px-0.5",
+                        i === activeWordIdx && "rounded bg-[#f5b50a]/25 px-0.5",
                       )}
                     >
                       {w.w}
