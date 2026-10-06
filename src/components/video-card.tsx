@@ -71,7 +71,6 @@ export function VideoCard({
     href ?? `/watch/${videoId}${resumable ? `?t=${positionMs}` : ""}`;
 
   const meta: ReactNode[] = [];
-  if (channel) meta.push(channel);
   if (topicLabel) meta.push(topicLabel);
   if (ageLabel) meta.push(ageLabel);
 
@@ -131,7 +130,12 @@ export function VideoCard({
                 }`}
           </p>
         )}
-        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
+        {channel && (
+          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+            {channel}
+          </p>
+        )}
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
           {meta.map((m, i) => (
             <span key={i} className="contents">
               {i > 0 && <span aria-hidden>·</span>}

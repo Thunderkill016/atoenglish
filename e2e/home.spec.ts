@@ -85,9 +85,9 @@ test.describe("/discover", () => {
       `/watch/${VIDEO_ID}?t=65000`,
     );
     await expect(page.getByText(/Xem tiếp từ 1:05/)).toBeVisible();
-    await expect(page.getByText("Tuần này")).toBeVisible();
+    await expect(page.getByText("Lịch")).toBeVisible();
     // 7-day activity strip renders weekday labels.
     await expect(page.getByText("T2", { exact: true })).toBeVisible();
-    await expect(page.getByText(/video$/)).toBeVisible();
+    await expect(page.getByText(/video tuần này/)).toBeVisible();
   });
 });

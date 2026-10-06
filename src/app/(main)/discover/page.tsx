@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarDays, History, MonitorPlay, Play } from "lucide-react";
+import {
+  BookMarked,
+  CalendarDays,
+  History,
+  MonitorPlay,
+  Play,
+  TextQuote,
+} from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getCatalog, TOPIC_LABELS, type CatalogTopic } from "@/content/catalog/videos";
 import { VideoCard } from "@/components/video-card";
 import { RightRail, WidgetCard } from "@/components/right-rail";
 import { WeekStrip, currentWeekActivity } from "@/components/week-strip";
+import { ActivityGrid, monthActivity } from "@/components/activity-grid";
 import { formatRelativeAge, formatTimestamp } from "@/lib/format";
 
 import { DiscoverCatalog } from "./discover-catalog";
@@ -28,9 +36,10 @@ interface SourceRow {
 }
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+/** Month-grid window — covers the current month plus a few overflow days. */
+const ACTIVITY_WINDOW_MS = 40 * 24 * 60 * 60 * 1000;
 const CONTINUE_LIMIT = 7; // banner takes slot 1, strip shows the rest
-const RECENT_LIMIT = 3;
-const ACTIVITY_DATES_LIMIT = 50;
+const ACTIVITY_DATES_LIMIT = 200;
 /** A stray <30 s touch doesn't earn a "Đang xem dở" slot (YouTube pattern). */
 const RESUME_MIN_MS = 30_000;
 /** Past this share the video counts as watched, not resumable. */
@@ -46,7 +55,6 @@ function isResumable(s: SourceRow): boolean {
 async function loadViewerData(): Promise<{
   signedIn: boolean;
   continueWatching: SourceRow[];
-  recentSources: SourceRow[];
   videosThisWeek: number;
   totalSources: number;
   activityDates: string[];
@@ -54,7 +62,6 @@ async function loadViewerData(): Promise<{
   const guest = {
     signedIn: false,
     continueWatching: [],
-    recentSources: [],
     videosThisWeek: 0,
     totalSources: 0,
     activityDates: [],
@@ -82,23 +89,20 @@ async function loadViewerData(): Promise<{
       isResumable,
     );
 
-    const { data: recent } = await supabase
-      .from("content_sources")
-      .select(
-        "external_id, title, channel, duration_ms, last_position_ms, updated_at",
-      )
-      .eq("user_id", user.id)
-      .eq("kind", "youtube")
-      .order("updated_at", { ascending: false })
-      .limit(RECENT_LIMIT);
-
     const weekAgo = new Date(Date.now() - WEEK_MS).toISOString();
-    const { data: weekRows, count } = await supabase
+    const activityAgo = new Date(Date.now() - ACTIVITY_WINDOW_MS).toISOString();
+    const { count } = await supabase
       .from("content_sources")
-      .select("updated_at", { count: "exact" })
+      .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("kind", "youtube")
-      .gte("updated_at", weekAgo)
+      .gte("updated_at", weekAgo);
+    const { data: weekRows } = await supabase
+      .from("content_sources")
+      .select("updated_at")
+      .eq("user_id", user.id)
+      .eq("kind", "youtube")
+      .gte("updated_at", activityAgo)
       .order("updated_at", { ascending: false })
       .limit(ACTIVITY_DATES_LIMIT);
 
@@ -111,7 +115,6 @@ async function loadViewerData(): Promise<{
     return {
       signedIn: true,
       continueWatching,
-      recentSources: (recent ?? []) as SourceRow[],
       videosThisWeek: count ?? 0,
       totalSources: totalCount ?? 0,
       activityDates: (weekRows ?? []).map((r) => r.updated_at as string),
@@ -127,7 +130,6 @@ export default async function DiscoverPage() {
   const {
     signedIn,
     continueWatching,
-    recentSources,
     videosThisWeek,
     totalSources,
     activityDates,
@@ -136,6 +138,7 @@ export default async function DiscoverPage() {
   const hero = continueWatching[0] ?? null;
   const strip = hero ? continueWatching.slice(1) : [];
   const week = currentWeekActivity(activityDates);
+  const month = monthActivity(activityDates);
   const catalog = getCatalog();
   const catalogSize = catalog.length;
   const topicCount = new Set(catalog.map((v) => v.topic)).size;
@@ -147,6 +150,10 @@ export default async function DiscoverPage() {
     .entries()
     .toArray()
     .map(([topic, count]) => ({ label: TOPIC_LABELS[topic], count }));
+  const easyCount = catalog.filter((v) => v.level === "easy").length;
+  const totalMin = Math.round(
+    catalog.reduce((s, v) => s + v.durationSec, 0) / 60,
+  );
 
   return (
     <div className="flex flex-col gap-6 xl:flex-row">
@@ -237,96 +244,109 @@ export default async function DiscoverPage() {
         </p>
       </div>
 
-      <RightRail>
-        {signedIn ? (
-          <>
-            <WidgetCard
-              title="Tuần này"
-              action={
-                <span className="text-xs text-muted-foreground">
-                  {videosThisWeek} video
-                </span>
-              }
-            >
-              <WeekStrip
-                days={week.days}
-                activeDays={week.activeDays}
-                todayIndex={week.todayIndex}
-              />
-              <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CalendarDays className="h-3.5 w-3.5" />
-                Ôn tập từ vựng sẽ hiện ở đây khi bạn lưu từ đầu tiên.
+      <RightRail className="xl:-mr-4 xl:top-0 xl:max-h-dvh xl:py-5 xl:pl-2 xl:pr-4">
+        {/* Trancy rail order: Calendar → Flashcard-ish → tiles → Activity. */}
+        <WidgetCard
+          title="Lịch"
+          action={
+            signedIn ? (
+              <span className="text-xs text-muted-foreground">
+                {videosThisWeek} video tuần này
+              </span>
+            ) : undefined
+          }
+        >
+          <WeekStrip
+            days={week.days}
+            activeDays={week.activeDays}
+            todayIndex={week.todayIndex}
+          />
+          {!signedIn && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <CalendarDays className="h-3.5 w-3.5" />
+              Đăng nhập để lịch ghi lại ngày bạn học.
+            </p>
+          )}
+        </WidgetCard>
+
+        <WidgetCard title="Ôn tập">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg bg-muted p-3">
+              <BookMarked className="h-4 w-4 text-state-learning" />
+              <p className="mt-1.5 text-lg font-bold leading-none">0</p>
+              <p className="mt-1 text-xs text-muted-foreground">Từ vựng</p>
+            </div>
+            <div className="rounded-lg bg-muted p-3">
+              <TextQuote className="h-4 w-4 text-state-known" />
+              <p className="mt-1.5 text-lg font-bold leading-none">0</p>
+              <p className="mt-1 text-xs text-muted-foreground">Câu đã lưu</p>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Lưu từ và câu ngay trong transcript — tính năng sắp ra mắt.
+          </p>
+        </WidgetCard>
+
+        <WidgetCard title={signedIn ? "Bộ sưu tập" : "Thư viện"}>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg bg-muted p-3">
+              <MonitorPlay className="h-4 w-4 text-primary" />
+              <p className="mt-1.5 text-lg font-bold leading-none">
+                {signedIn ? totalSources : catalogSize}
               </p>
-            </WidgetCard>
-            <WidgetCard title="Bộ sưu tập">
-              <div className="grid grid-cols-2 gap-2">
+              <p className="mt-1 text-xs text-muted-foreground">
+                {signedIn ? "Video đã mở" : "Video"}
+              </p>
+            </div>
+            <div className="rounded-lg bg-muted p-3">
+              <History className="h-4 w-4 text-state-due" />
+              <p className="mt-1.5 text-lg font-bold leading-none">
+                {signedIn ? continueWatching.length : topicCount}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {signedIn ? "Đang xem dở" : "Chủ đề"}
+              </p>
+            </div>
+            {!signedIn && (
+              <>
                 <div className="rounded-lg bg-muted p-3">
-                  <MonitorPlay className="h-4 w-4 text-primary" />
+                  <BookMarked className="h-4 w-4 text-state-known" />
                   <p className="mt-1.5 text-lg font-bold leading-none">
-                    {totalSources}
+                    {easyCount}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Video đã mở
-                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">Mức dễ</p>
                 </div>
                 <div className="rounded-lg bg-muted p-3">
-                  <History className="h-4 w-4 text-primary" />
+                  <Play className="h-4 w-4 text-state-learning" />
                   <p className="mt-1.5 text-lg font-bold leading-none">
-                    {continueWatching.length}
+                    {totalMin}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Đang xem dở
+                    Phút nội dung
                   </p>
                 </div>
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Từ vựng và câu đã lưu sẽ hiện ở đây khi tính năng lưu ra mắt.
-              </p>
-            </WidgetCard>
-            {recentSources.length > 0 && (
-              <WidgetCard title="Hoạt động">
-                <ul className="space-y-2.5">
-                  {recentSources.map((s) => (
-                    <li key={s.external_id}>
-                      <Link
-                        href={`/watch/${s.external_id}${
-                          isResumable(s) ? `?t=${s.last_position_ms}` : ""
-                        }`}
-                        className="line-clamp-1 text-sm font-medium hover:text-primary hover:underline"
-                      >
-                        {s.title ?? "Video YouTube"}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">
-                        {isResumable(s)
-                          ? `Xem đến ${formatTimestamp(s.last_position_ms)} · `
-                          : ""}
-                        {formatRelativeAge(s.updated_at)}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </WidgetCard>
+              </>
             )}
-          </>
-        ) : (
+          </div>
+        </WidgetCard>
+
+        <WidgetCard title="Hoạt động" action={
+          <span className="text-xs capitalize text-muted-foreground">
+            {month.monthLabel}
+          </span>
+        }>
+          <ActivityGrid cells={month.cells} />
+          {!signedIn && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Đăng nhập để ngày học được tô màu ở đây.
+            </p>
+          )}
+        </WidgetCard>
+
+        {!signedIn && (
           <>
-            <WidgetCard title="Lịch">
-              <WeekStrip
-                days={week.days}
-                activeDays={week.activeDays}
-                todayIndex={week.todayIndex}
-              />
-              <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CalendarDays className="h-3.5 w-3.5" />
-                Đăng nhập để lịch ghi lại ngày bạn học.
-              </p>
-            </WidgetCard>
             <WidgetCard title="Bắt đầu từ đây">
-              <p className="text-xs text-muted-foreground">
-                Dán link YouTube → xem phụ đề từng câu → luyện lại ngay trên
-                video. Không cần tài khoản.
-              </p>
-              <ul className="mt-3 space-y-2">
+              <ul className="space-y-2">
                 {getCatalog()
                   .filter((v) => v.level === "easy")
                   .slice(0, 3)
@@ -344,24 +364,6 @@ export default async function DiscoverPage() {
                     </li>
                   ))}
               </ul>
-            </WidgetCard>
-            <WidgetCard title="Thư viện">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-lg bg-muted p-3">
-                  <MonitorPlay className="h-4 w-4 text-primary" />
-                  <p className="mt-1.5 text-lg font-bold leading-none">
-                    {catalogSize}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">Video</p>
-                </div>
-                <div className="rounded-lg bg-muted p-3">
-                  <History className="h-4 w-4 text-primary" />
-                  <p className="mt-1.5 text-lg font-bold leading-none">
-                    {topicCount}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">Chủ đề</p>
-                </div>
-              </div>
             </WidgetCard>
             <WidgetCard title="Chủ đề">
               <ul className="space-y-2">
