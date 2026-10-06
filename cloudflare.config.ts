@@ -46,6 +46,14 @@ export default defineConfig({
               exportName: "AuthRateLimiterDO",
             }),
           }),
+      // YouTube caption fetching — the 20/hour per-learner quota is enforced
+      // by createRateLimiter in src/app/actions/captions.ts; this binding is
+      // only a coarse distributed burst ceiling (simple.period supports 10|60s
+      // windows only). 5/minute still allows the full hourly quota in bursts.
+      CAPTION_RATE_LIMITER: bindings.rateLimit({
+        namespace: "1002",
+        simple: { limit: 5, period: 60 },
+      }),
       // Worker version metadata ({id, tag, timestamp}) for /api/health.
       CF_VERSION_METADATA: bindings.versionMetadata(),
       // Route Gemini calls through the `atoenglish` AI Gateway: request logs,

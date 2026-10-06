@@ -252,6 +252,101 @@ export type Database = {
           },
         ];
       };
+      content_sources: {
+        Row: {
+          id: number;
+          user_id: string;
+          kind: string;
+          external_id: string;
+          title: string | null;
+          channel: string | null;
+          duration_ms: number | null;
+          last_position_ms: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          user_id: string;
+          kind: string;
+          external_id: string;
+          title?: string | null;
+          channel?: string | null;
+          duration_ms?: number | null;
+          last_position_ms?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          user_id?: string;
+          kind?: string;
+          external_id?: string;
+          title?: string | null;
+          channel?: string | null;
+          duration_ms?: number | null;
+          last_position_ms?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "content_sources_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      content_transcripts: {
+        Row: {
+          id: number;
+          source_id: number;
+          user_id: string;
+          origin: string;
+          language: string;
+          segmentation_version: number;
+          sentences: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          source_id: number;
+          user_id: string;
+          origin: string;
+          language: string;
+          segmentation_version: number;
+          sentences: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          source_id?: number;
+          user_id?: string;
+          origin?: string;
+          language?: string;
+          segmentation_version?: number;
+          sentences?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "content_transcripts_source_id_fkey";
+            columns: ["source_id"];
+            isOneToOne: false;
+            referencedRelation: "content_sources";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_transcripts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       league_memberships: {
         Row: {
           user_id: string;
