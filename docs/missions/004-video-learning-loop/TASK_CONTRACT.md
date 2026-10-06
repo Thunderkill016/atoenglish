@@ -1,5 +1,7 @@
 # Task Contract — 004-video-learning-loop
 
+> **Superseded 2026-10-06** by `docs/missions/005-ejoy-trancy-learning-system/` (owner: eJOY + Trancy as the product standard, new spec instead of amending 004). This document is historical reference only and does not authorize work.
+
 ## MISSION
 
 Hoàng pastes a YouTube link, gets its captions automatically, and turns the video into saved expressions that he reviews on schedule and reuses in writing — end to end, on production-grade storage.

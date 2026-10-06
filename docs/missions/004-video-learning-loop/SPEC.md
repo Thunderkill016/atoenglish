@@ -1,5 +1,7 @@
 # Spec 004 — Video learning loop v1
 
+> **Superseded 2026-10-06** by `docs/missions/005-ejoy-trancy-learning-system/` (owner: eJOY + Trancy as the product standard, new spec instead of amending 004). This document is historical reference only and does not authorize work.
+
 Ngày 2026-10-06. Ngôn ngữ spec: tiếng Việt; code/schema: tiếng Anh. Hướng sản phẩm: `docs/project/PROJECT_STATE.md`. Hợp đồng: [TASK_CONTRACT.md](./TASK_CONTRACT.md).
 
 ## 1. Hành trình người học (lát cắt đầu tiên)
