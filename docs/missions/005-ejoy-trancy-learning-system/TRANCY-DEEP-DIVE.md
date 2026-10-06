@@ -182,14 +182,46 @@ Global `Ctrl+K` search/discovery. The product is much wider than "subtitle exten
 
 Auth: `GET /1/google/authURL` → Google OAuth → `GET /1/google/authcallback` → `/1/google/profile` → `/1/user/profile` + `/1/user/attributes` + `/1/user/marketing-email-preferences`.
 
+### 5.7 Save flows — payloads verified
+
+- Word: `POST /1/words {"text":"steal","target":"en","native":"vi"}` → `{pk:"{uid}#en", language, text, star:true, starAt, master:false, stl:"en_vi"}`. Mark known: `PATCH /1/words/{word} {master:true}`. **Word state = `star` (saved) + `master` (known)** — two flags, not one enum.
+- Saved word syncs via `/4/words?updatedAt=` with embedded full dict payload + `ev:"v2-260427"` (dictionary dataset version) + `explains`.
+- Sentence: `POST /2/sentences {text,start,end,vid,url}` → `{sid:"<sha256>", uid, type:"user", created_at, target}`.
+- **`sid` = SHA-256 of the sentence text** — in the movie pack, "Oh you better run" repeats at orders 0,1,4 with the _same_ sid. Identity = normalized text, not position → the same sentence dedupes across all videos/contexts.
+- Lookup is bidirectional: clicking a Vietnamese word in the translated line looked up the English lemma ("ăn cắp" → "steal") and opened the same drawer.
+
+### 5.8 AITalk / shadowing — verified structure
+
+- `/shadowing/{courseId}?role={A|B}` is the session route. Course = **scripted dialogue** (`/1/shadowing/courses/{id}?target=en`): 22 lines, roles `[{id:"A",label:"Giám khảo",description},{id:"B",label:"Thí sinh"}]`, `goals_hint` (5 mission items, localized), `scene_description`, `level`, `estimated_minutes`, `total_sentences`.
+- Two modes on the card: "Bắt đầu quan sát" (walkthrough) and "Đóng vai AI" (roleplay chat); difficulty segmented control basic/medium/advanced; role-swap button.
+- Progress: `/1/shadowing/progress/{courseId}` → `{status:"not_started", total_practiced, total_sentences, avg_score, three_star_count, sentences:{"s_xxxxxxxx":score|null}}` — per-sentence scoring with 3-star ratings.
+- TTS proxied: `GET /1/tts/audio?text=…&id=azure:en-…` → base64 MP3 (Azure voices through their API).
+- Batch translation: `POST /4/translations {texts:[22 lines], from:"en", to:"vi", model:"gpt-4.1-mini"}` — shadowing translations go through **their AI proxy, not free Google** → free account gets `403 "AI cao cấp đã hết hạn"`.
+- `/1/conversations` (list) + `/1/conversations/{convId}/messages`; stats: `{talkDuration, convTotal, userTurns, streak, todaySentences}`.
+- Catalog: `/talk-home` = ~35+ scenario series across work/travel/school/life categories, each "N khóa học" (courses); series → `course_list` ids.
+
+### 5.9 Content & practice surfaces — verified
+
+- `/vocabulary`: 21 curated wordbooks (CEFR A1–C2, beginner, BEC, CET-4/6, COCA 20k, GMAT, GRE, IELTS + IELTS Core, IT, Oxford 5000, PTE, SAT, TOEFL, TOEIC). Words via `/3/wordbook/words?name=…` (dict + translation + `ev` version + `book`) — static CDN JSON also listed as `source`.
+- `/movie`: ~30 films = `type:"movie"` sentence-lists; card detail shows CEFR level (A2) + sentence count (1455) + localized description; genre + A1–C1 filters. `/sentence-lists/{id}` redirects to `/sentence-pack-studio/{id}` = **pack editor** (cover/name/description/chapters/numbered sentences) — users can build & share their own packs. Untranslated Chinese `更改封面` leaks → product originated in Chinese; several AI-pack `prompt` fields are zh.
+- `/1/sentence/groups` + `/assessment-home`: community/user AI sentence packs by category — **premium-gated** (click → upgrade modal listing: unlimited AITalk + AI shadowing feedback, AI subs 40/day, unlimited word/sentence, PDF 2000 p/mo, AI summaries, realistic AI voices).
+- `/sentence-shadowing`: shadowing pack library (Daily 2000 sentences, famous quotes by level, idioms, travel phrases, business letters, slang) + tabs YouTube/Podcast/Collections/Movies.
+- `/review-vocabulary` (= `/flashcard` redirect): review queue filters Đang học/Tất cả/Gần đây/Đánh giá hôm nay/Theo ngày + "Chọn sổ học" (pick wordbook as study window). Mastered words leave the learn queue.
+- `/wordbook-import`: create wordbook from .txt/.csv or paste — words only, sentences auto-filtered.
+- `/podcast`: subscription manager (add/favorites/history/manage). `/saved`: Watch-Later videos. `/history`: watch history (worked live). `/book-home`: bookshelf + 20-min daily reading goal + weekly stats. `/topics`: AI Tutor topics. `/youtube/recommendations`: channel discovery — **11 learning languages confirmed** (en, ja, ko, es, fr, de, it, pt, ru, zh-Hans, zh-Hant) + vocab-level + interest filters.
+- `/1/user/profile`: `{id, token(JWT), name, avatar, email, premium:false, AIEngineActive:false, stripePremiumActive, target, native, lastLogin/lastActive}` (fields only; values omitted for privacy).
+- `/1/meta` dictionary schemes: Oxford, Collins, Longman/LDOCE with URL templates + per-language `to` filters + popup sizes.
+- Their app has live bugs: clicking a wordbook crashed the SPA (`insertBefore` in `word-context-sentences` chunk); assessment click opened the paywall correctly.
+
 ## 6. What remains unverified
 
-- Inside-session UX details: flashcard drill screen, FSRS grade buttons/parameters (server-side), AITalk live conversation + speech-scoring UI, assessment flow, epub reader internals, PDF translator workflow.
+- Flashcard drill screen and FSRS grade buttons/parameters (scheduling is server-side; we saw only queue empty/non-empty states).
+- Free-dialogue AITalk turn exchange (needs mic/voice; the scripted "quan sát" mode was captured, the "đóng vai AI" chat mode not run).
+- Speech-assessment scoring UI and Microsoft-eval payload.
+- Assessment flow, epub reader internals, PDF translator workflow (premium-gated or needs upload).
 - Whisper pipeline internals (audio fetch method; only status/queue endpoints seen).
 - Whether `/youtube/<id>` public marketing player ever worked (all 500 now).
-- Premium-only behaviors (tested on a free account — paywalled surfaces render but paid internals don't run).
-- Exact word/sentence save POST payloads (save click didn't reach the network log; `/2/sentences` GET shape confirmed).
-- Learning-language list (docs say "up to 10").
+- Premium behaviors beyond the paywall copy (tested on a free account).
 - Trancy's learning effectiveness — no evidence; treat as UX precedent only.
 
 ## 7. Proposed Trancy-MVP mapping for mission 005 update
