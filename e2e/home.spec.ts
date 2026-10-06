@@ -39,13 +39,13 @@ test.describe("landing /", () => {
 });
 
 test.describe("/discover", () => {
-  test("guest sees paste input + starter grid, no personal sections", async ({
+  test("guest sees paste input + catalog grid, no personal sections", async ({
     page,
   }) => {
     await page.goto("/discover");
     await expect(page.getByPlaceholder(/link YouTube/i)).toBeVisible();
     await expect(page.getByText("Đang xem dở")).toHaveCount(0);
-    await expect(page.getByText("Thử ngay")).toBeVisible();
+    await expect(page.getByText("Thư viện chọn sẵn")).toBeVisible();
     await expect(
       page.getByRole("link", { name: /Never Gonna Give You Up/ }),
     ).toHaveAttribute("href", `/watch/${VIDEO_ID}`);

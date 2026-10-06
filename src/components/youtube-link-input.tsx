@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { ReactNode, Ref } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 
@@ -18,10 +19,16 @@ export function YoutubeLinkInput({
   large = false,
   autoFocus = false,
   placeholder = "Dán link YouTube để học ngay…",
+  inputRef,
+  trailing,
 }: {
   large?: boolean;
   autoFocus?: boolean;
   placeholder?: string;
+  /** Access to the <input>, e.g. for a Ctrl+K focus shortcut. */
+  inputRef?: Ref<HTMLInputElement>;
+  /** Decorative element pinned inside the input's right edge (e.g. kbd hint). */
+  trailing?: ReactNode;
 }) {
   const router = useRouter();
   const [url, setUrl] = useState("");
@@ -47,6 +54,7 @@ export function YoutubeLinkInput({
             )}
           />
           <input
+            ref={inputRef}
             value={url}
             onChange={(e) => {
               setUrl(e.target.value);
@@ -58,10 +66,16 @@ export function YoutubeLinkInput({
             inputMode="url"
             aria-label="Link YouTube"
             className={cn(
-              "w-full rounded-lg border border-input bg-card pr-3 outline-none focus:border-primary",
+              "w-full rounded-lg border border-input bg-card outline-none focus:border-primary",
               large ? "py-3.5 pl-11 text-base" : "py-2.5 pl-9 text-sm",
+              trailing ? "pr-16" : "pr-3",
             )}
           />
+          {trailing && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              {trailing}
+            </div>
+          )}
         </div>
         <button
           type="button"
