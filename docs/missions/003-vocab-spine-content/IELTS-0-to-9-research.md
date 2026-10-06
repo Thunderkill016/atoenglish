@@ -1,5 +1,7 @@
 # IELTS từ 0 đến 9.0 — Tổng hợp toàn diện để xây web luyện thi
 
+> **Superseded 2026-10-06.** The owner replaced the IELTS 0→9.0 direction with the video-learning direction in `docs/project/PROJECT_STATE.md`. This document is historical reference only and does not authorize work. The vocabulary spine (Part A) may be reused as a gloss/difficulty asset; see `docs/missions/004-video-learning-loop/SPEC.md`.
+
 Ngày 2026-10-05. Bao gồm: format đề thi đầy đủ (Academic + General Training), band descriptors, cách tính điểm, lộ trình 0→9.0, toàn bộ nguồn tài liệu, và cách xây web luyện IELTS. Báo cáo nghiên cứu chi tiết (tiếng Anh, kèm nguồn): `research_notes/ielts-complete-research-2026-20261005-1355/report.md`.
 
 ---

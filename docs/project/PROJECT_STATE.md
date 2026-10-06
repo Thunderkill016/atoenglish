@@ -1,61 +1,81 @@
 # AtoEnglish — Current Project State
 
-**Effective:** 2026-10-05 (direction pivot: IELTS 0→9.0)  
+**Effective:** 2026-10-06 (direction replaced: IELTS 0→9.0 → học tiếng Anh qua video)  
 **Project:** AtoEnglish
 
 ## Current state
 
 AtoEnglish has exactly **one active product direction**. All previous, parallel, experimental, inherited or alternative product directions are closed as sources of authority.
 
+**Owner decision 2026-10-06:** the IELTS 0→9.0 direction (effective 2026-10-05) is **replaced** by the direction below. `docs/missions/003-vocab-spine-content/IELTS-0-to-9-research.md` and the IELTS stage map are no longer authority.
+
 Existing features, curriculum, branches, historical plans, experiments and R&D remain evidence of what exists or what was tried. They do **not** authorize continuing those directions.
 
 ## Single active direction
 
-Build **AtoEnglish as a personal IELTS-preparation web product for one learner (Hoàng), covering the full 0→9.0 journey** — owner decision 2026-10-05, replacing the previous generic CEFR-standards direction.
+Build **AtoEnglish as a web product that helps Vietnamese self-learners turn English videos and films they choose into language they can understand, remember and reuse.**
 
-The curriculum follows the four-stage map in `docs/missions/003-vocab-spine-content/IELTS-0-to-9-research.md`:
+The core loop:
 
-1. **Foundation (A0–A2, band 0–3.5)** — no IELTS format yet. Core vocabulary via the gated spine, foundation grammar, slow→natural listening, graded reading, sentence→paragraph writing, pronunciation (final consonants, word stress — the documented Vietnamese-learner profile). *This is the current active stage; the M0/M1 vocab-spine + real-material content pipeline serves it directly.*
-2. **IELTS Bridge (B1, band 4.0–5.0)** — teach each IELTS question type with worked examples; Listening Part 1–2, Reading Section 1; Task 1 vocab (trends/comparison) + letter structures; Speaking Part 1–2.
-3. **IELTS Core (B2, band 5.5–6.5)** — timed full sections; Listening Part 3–4, Academic Passage 2–3; all Task 1 types + 5 Task 2 types; Speaking Part 3; error journal per question type; fight the 5.5–6.0 plateau (error-free sentences, flexible cohesion, developed ideas).
-4. **IELTS Mastery (C1, band 7.0–8.0+)** — timed full mocks; band-descriptor feedback; less-common vocabulary + collocation; paraphrase drills; AI scoring shown **as a range, never a single number** (AI scoring MAE ≈ 0.66 band per research).
+1. **Choose** — the learner brings a video (YouTube link) or text they want to understand;
+2. **Understand** — transcript synced to playback, loop/slow a line, tap a word or phrase for a contextual Vietnamese gloss;
+3. **Save** — keep the expression together with its source sentence, video and timestamp;
+4. **Review** — retrieval practice scheduled by FSRS, with a way back to the original clip;
+5. **Reuse** — produce the expression in a new context (write first; speak where the product can honestly support it).
 
-The current reference foundation is:
+Owner decisions defining scope (2026-10-06):
 
-- IELTS official sources — ielts.org format/scoring, public band descriptors, Cambridge practice materials;
-- Council of Europe — CEFR Companion Volume and action-oriented language education guidance;
-- Council of Europe / ALTE — language test development and examining guidance;
-- British Council — lesson planning and course-planning guidance;
-- official technical standards only where implementation requires them, such as W3C accessibility guidance and browser/platform documentation.
+- **Primary learner:** Vietnamese self-learners who learn through videos and films they already watch.
+- **Scale:** one learner (Hoàng) validates the loop first; the architecture must stay multi-user-ready (per-user data ownership and RLS), but no public launch work until the loop is validated.
+- **Monetization:** none. No paywall, subscription, plan tiers or payment integration.
+- **Content:** learners may paste any YouTube link; the product fetches the video's existing captions automatically (eJOY-style) and falls back to a learner-provided transcript when fetching fails — see the constraint below.
 
-Honest-measurement rules baked into the direction (from the IELTS research):
+Product reference: a desk study of eJOY (content → contextual lookup → save with context → spaced review → use) informed this direction. It is a competitive reference, not evidence that the loop works for AtoEnglish learners.
 
-- Listening/Reading scores use official raw→band conversion tables; Writing/Speaking AI scores always display as a **range with confidence**, never a single number;
-- pronunciation targets intelligibility, not accent elimination (Band 8 descriptor: "L1 accent has minimal effect");
-- most study time goes to real proficiency, not test tricks — the "IELTS trap" (templates without ability) is a documented failure mode;
-- no score claims the system cannot measure.
+### YouTube content constraint (verified 2026-10-06)
+
+- YouTube Terms of Service prohibit accessing the service "using any automated means (such as robots, botnets or scrapers)" and downloading content except as expressly authorized by the service or with prior written permission (https://www.youtube.com/t/terms).
+- YouTube Data API `captions.download` "requires the user to have permission to edit the video" (https://developers.google.com/youtube/v3/docs/captions/download) — it cannot fetch captions for arbitrary public videos.
+- **Owner decision 2026-10-06, made after reviewing the two points above:** fetch the captions YouTube already publishes for the video (unofficial timed-text endpoint) server-side, store only the caption text per learner, and play the video only through the official embedded player. The owner accepts the terms-of-service and breakage risk. Mitigations are mandatory: no video/audio download, no bulk crawling (fetch only on a learner's explicit request, rate-limited), and a learner-provided transcript fallback (`.srt`/`.vtt`/paste) whenever fetching fails or is blocked.
 
 ## Minimum active product surface
 
 Only the following areas are active product scope:
 
-1. curriculum and learning outcomes mapped to the four-stage IELTS map (CEFR bands as the scale);
-2. lesson delivery for reading, listening, speaking, writing and interaction — the gated 5-phase flow (goal_setting → observe_learn → guided_practice → prove → lock_in) built from real source materials, with IELTS-format tasks entering from the Bridge stage;
-3. practice and assessment that produce honest evidence of learner performance;
-4. progression/review needed to retain and reuse learned language, including SRS where it directly serves retention;
-5. authentication, learner-data integrity, accessibility, security and release reliability required to operate the learning product.
+1. **content intake** — YouTube link → embedded playback; captions fetched automatically with learner-provided fallback; learner-pasted text;
+2. **understanding in context** — synced transcript, line loop/slow, word/phrase lookup with honest misses (no fabricated meanings; AI explanations labelled as AI);
+3. **saving with context** — per-learner saved expressions linked to source sentence, video and timestamp;
+4. **review and reuse** — FSRS-scheduled retrieval of saved expressions and production tasks that use them in new contexts;
+5. authentication, learner-data integrity, privacy, accessibility, security and release reliability required to operate the above.
 
 Everything else must justify itself against one of these five areas. Existing code is not sufficient justification.
+
+## Measurement rules
+
+- Saved-word counts, time-on-app and streaks are not learning evidence.
+- Track separately: loop completion (watch → save → review → reuse), reviews done when due (denominator = items actually due), delayed recall with/without hints, and reuse in a new context.
+- Self-marked word status ("known/learning") is self-report and never becomes assessed evidence.
+- No CEFR, band or proficiency claims the system cannot measure.
+
+## Status of pre-existing surfaces
+
+- **Reader (`/read`), FSRS (`ts-fsrs`, `cards`, review queue), writing/speaking practice, Gemini gateway:** reusable building blocks for the loop; extend only where the loop needs them.
+- **A0–B2 unit curriculum, 5-phase lesson player, placement, checkpoints, IELTS stage map:** not active scope. Frozen compatibility surface — keep working, do not extend.
+- **`atoenglish-content` vocabulary spine:** may be reused as a gloss/difficulty asset for transcripts. The unit-authoring pipeline (mission 003 M1) is paused.
+- **Landing page / metadata (`src/app/page.tsx`, `layout.tsx`, `manifest.ts`):** still advertise IELTS; must be corrected before any public promotion.
 
 ## Explicitly closed / non-core scope
 
 The following are **not active product directions and must not create maintenance obligations or roadmap work** unless the owner explicitly reactivates them:
 
+- IELTS exam preparation, band scoring and IELTS-format tasks;
 - XP optimization, live XP effects and XP milestone systems;
 - streak celebrations, streak milestone overlays and streak-focused engagement work;
 - leagues, leaderboards, social competition and competitive ranking;
 - badges, achievement collections, confetti and decorative reward systems;
 - mandatory Job/Career lesson overlays or a separate career-English track;
+- payments, subscriptions and plan tiers;
+- browser extension and native mobile apps (until the web loop is validated);
 - feature work whose main purpose is engagement, retention mechanics or visual novelty rather than language learning;
 - speculative AI tutors/coaches, community/social systems or parallel learning modes not required by a validated learning outcome.
 
