@@ -28,7 +28,7 @@ select set_config(
 set local role authenticated;
 
 insert into public.subtitle_translations (user_id, video_id, profile, line_i, text_hash, vi)
-values ('66666666-6666-4666-8666-666666666666', 'vid1', 'p1', 0, 'hash0', 'xin chào');
+values ('66666666-6666-4666-8666-666666666666', 'vid1', 'p1', 0, repeat('a', 64), 'xin chào');
 
 select is(
   (select count(*)::int from public.subtitle_translations where video_id = 'vid1'),
@@ -38,7 +38,7 @@ select is(
 
 -- Write-through upsert on the natural PK refreshes the cached line in place
 insert into public.subtitle_translations (user_id, video_id, profile, line_i, text_hash, vi)
-values ('66666666-6666-4666-8666-666666666666', 'vid1', 'p1', 0, 'hash0b', 'xin chào mới')
+values ('66666666-6666-4666-8666-666666666666', 'vid1', 'p1', 0, repeat('b', 64), 'xin chào mới')
 on conflict (user_id, video_id, profile, line_i)
 do update set vi = excluded.vi, text_hash = excluded.text_hash, updated_at = now();
 
@@ -63,7 +63,7 @@ select is(
 select throws_ok(
   $$
     insert into public.subtitle_translations (user_id, video_id, profile, line_i, text_hash, vi)
-    values ('66666666-6666-4666-8666-666666666666', 'vid1', 'p1', 1, 'h', 'x')
+    values ('66666666-6666-4666-8666-666666666666', 'vid1', 'p1', 1, repeat('c', 64), 'x')
   $$,
   '42501',
   null,
