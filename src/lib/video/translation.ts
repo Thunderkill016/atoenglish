@@ -12,7 +12,7 @@ export const TRANSLATION_MAX_CHARS = 6000; // Bounded provider input/output for 
 export const TRANSLATION_TIMEOUT_MS = 20_000;
 export const TRANSLATION_CONTEXT_LINES = 2; // Resolve pronouns without submitting the entire video.
 export type ServerTranslationEngine = {
-  kind: "local" | "gemini";
+  kind: "local" | "workers-ai" | "gemini";
   model: string;
   profile: string;
   label: string;

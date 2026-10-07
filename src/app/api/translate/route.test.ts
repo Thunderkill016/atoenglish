@@ -3,8 +3,14 @@ import { NextRequest } from "next/server";
 import { NEON_AUTH_SESSION_COOKIE_NAME } from "@neondatabase/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { POST } from "./route";
-const { check } = vi.hoisted(() => ({ check: vi.fn() }));
+const { check, binding } = vi.hoisted(() => ({
+  check: vi.fn(),
+  binding: vi.fn(),
+}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+vi.mock("@/lib/video/workers-ai-binding", () => ({
+  workersAiBinding: binding,
+}));
 vi.mock("@/lib/security/rate-limit", () => ({
   createRateLimiter: () => ({ check }),
 }));
@@ -202,6 +208,64 @@ describe("optional cloud subtitles", () => {
     );
     expect((await POST(request())).status).toBe(502);
   });
+  describe("Workers AI engine", () => {
+    beforeEach(() => vi.stubEnv("SUBTITLE_WORKERS_AI_ENABLED", "true"));
+    const one = { ...input, lines: [input.lines[0]] };
+    function aiReply(content: string) {
+      return {
+        run: vi.fn().mockResolvedValue({
+          choices: [{ finish_reason: "stop", message: { content } }],
+        }),
+      };
+    }
+
+    it("translates through the AI binding with pinned provenance and no Gemini call", async () => {
+      const ai = aiReply('[{"i": 2, "vi": "Tôi không bán nó."}]');
+      binding.mockResolvedValue(ai);
+      const fetcher = vi.fn();
+      vi.stubGlobal("fetch", fetcher);
+      const response = await POST(request(one));
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({
+        ok: true,
+        model: "@cf/google/gemma-4-26b-a4b-it",
+        profile: "gemma-4-26b-a4b-it@workers-ai/nothink-t0.2/p1",
+        lines: [{ i: 2, vi: "Tôi không bán nó." }],
+      });
+      expect(ai.run).toHaveBeenCalledTimes(1);
+      expect(fetcher).not.toHaveBeenCalled();
+    });
+
+    it("rejects multi-cue batches before auth or model work", async () => {
+      expect((await POST(request())).status).toBe(400);
+      expect(createClient).not.toHaveBeenCalled();
+      expect(binding).not.toHaveBeenCalled();
+    });
+
+    it("reports unavailable when the binding is missing, without falling back to Gemini", async () => {
+      binding.mockResolvedValue(null);
+      const fetcher = vi.fn();
+      vi.stubGlobal("fetch", fetcher);
+      const response = await POST(request(one));
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({ error: "ai_unavailable" });
+      expect(fetcher).not.toHaveBeenCalled();
+    });
+
+    it("maps unusable output to invalid_output and model errors to ai_failed", async () => {
+      binding.mockResolvedValue(aiReply('[{"i": 99, "vi": "Sai"}]'));
+      const bad = await POST(request(one));
+      expect(bad.status).toBe(502);
+      expect(await bad.json()).toMatchObject({ error: "invalid_output" });
+      binding.mockResolvedValue({
+        run: vi.fn().mockRejectedValue(new Error("3040: out of capacity")),
+      });
+      const failed = await POST(request(one));
+      expect(failed.status).toBe(502);
+      expect(await failed.json()).toMatchObject({ error: "ai_failed" });
+    });
+  });
+
   it("does not contact a provider after the user rate limit", async () => {
     check.mockResolvedValue({ success: false });
     const fetcher = vi.fn();

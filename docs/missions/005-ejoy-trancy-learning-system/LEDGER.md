@@ -280,3 +280,25 @@ First authenticated live run of the local engine through the real app path:
 **Full gate on the whole WIP increment: tsc ✓ · eslint 0/0 ✓ · 233 unit ✓ · 80/80 e2e ✓ · build ✓**
 
 Remaining (still open): DB-backed translation cache, permitted-library semantic review of real captions, authored-VI ingestion, 7B-vs-1.8B quality comparison, deployed-backend story for Cloudflare (loopback is dev-only).
+
+## Cross-platform translation — Workers AI engine + 3-way eval — 2026-10-07
+
+Owner: "làm sao để sử dụng được trên đa nền tảng" → "làm đi". Chrome Translator API is Chrome-desktop-only; Firefox/Safari/iOS/Android need server-side translation. Hy-MT2 loopback cannot be reached from the Worker.
+
+**Eval** (same 30 frozen authored cases as Hy-MT2, run via Cloudflare REST `/ai/run` on account `6b09…26b2`; production `TRANSLATION_SYSTEM_PROMPT`, one cue per call, context in `before`):
+
+| Engine | Meaning errors (my reading vs authored criteria) | Latency | Cost |
+|---|---|---|---|
+| `@cf/google/gemma-4-26b-a4b-it`, thinking off, t=0.2 | 1 weak: #6 "Thầy ấy là thầy của tôi" lost father context (Hy-MT2: "Ông ấy"). Others correct incl. break-even/profit, must-not vs don't-have-to, idioms, Tiny Desk name kept, injection translated as text | p50 ≈1.3 s; outliers 7.6 s, 37 s | ≈2.2–3.2 Neurons/cue (≈ 3,800 cues/day inside 10k free Neurons; $0.011/1k Neurons after) |
+| `@cf/meta/m2m100-1.2b` | ≥8 critical: "dưới thời tiết", accordion→"cờ vua", break-even→"phá vỡ" (×2), must-not→"không nên", "piece of cake"/"call it a day"/"on her plate" literal | ≈0.7 s | cheapest |
+| Hy-MT2-1.8B Q4 local (earlier run) | 0 critical, 3 wording concerns | p50 4.4 s CPU | own host |
+
+Decision recorded: **m2m100 rejected**. Gemma 4 implemented as opt-in engine. Not blind/independent review; authored corpus only.
+
+Gotchas found: thinking mode on by default burns all `max_tokens` with empty `content` → `chat_template_kwargs.enable_thinking=false`; model wraps JSON in ```json fences → stripped before strict ID validation.
+
+**Code:** `src/lib/video/workers-ai-translation.ts` (single-cue, shared prompt, fence strip, `WorkersAiOutputError`, abortable) + `workers-ai-binding.ts` (`cloudflare:workers` env.AI, isolated so Vitest/Node never resolve it); `serverTranslationConfig` order local → workers-ai → gemini, each behind its own flag (`SUBTITLE_WORKERS_AI_ENABLED`, default false); route pre-checks batch/char budget before auth, missing binding → 503 `ai_unavailable`, never falls through to Gemini; `cloudflare.config.ts` adds `AI: bindings.ai()` (verified in vinext `worker.config.json`). Same signed-in boundary + rate limit.
+
+**Gate:** tsc ✓ · eslint 0/0 ✓ · 246 unit ✓ (+11) · 80/80 e2e (2 skipped live smoke) ✓ · next build ✓ · vinext/Cloudflare build ✓
+
+**Not yet verified:** binding call inside the deployed Worker (REST shape verified; Node dev has no binding; previews lack auth secrets so signed-in translate cannot be smoked there). Still open: DB cache `transcript_translations`, guest read of cached translations, enabling the flag in production, deploy.

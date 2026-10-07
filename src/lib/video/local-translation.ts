@@ -8,6 +8,13 @@ import {
   type ServerTranslationEngine,
   type TranslationInput,
 } from "./translation";
+import {
+  WORKERS_AI_TRANSLATION_MODEL,
+  WORKERS_AI_TRANSLATION_PROFILE,
+  WORKERS_AI_TRANSLATION_BATCH_SIZE,
+  WORKERS_AI_TRANSLATION_MAX_CHARS,
+  WORKERS_AI_TRANSLATION_TIMEOUT_MS,
+} from "./workers-ai-translation";
 
 // Pinned official Tencent Q4_K_M weights; do not reuse cache for a different model/build/prompt.
 export const LOCAL_TRANSLATION_MODEL = "hymt2-1.8b-q4";
@@ -121,6 +128,20 @@ export function serverTranslationConfig(): {
       },
     };
   }
+  // Cloudflare-hosted; no key — the Worker `AI` binding is resolved per request.
+  if (process.env.SUBTITLE_WORKERS_AI_ENABLED === "true")
+    return {
+      key: "",
+      engine: {
+        kind: "workers-ai",
+        model: WORKERS_AI_TRANSLATION_MODEL,
+        profile: WORKERS_AI_TRANSLATION_PROFILE,
+        label: "Gemma 4 · Cloudflare",
+        batchSize: WORKERS_AI_TRANSLATION_BATCH_SIZE,
+        maxChars: WORKERS_AI_TRANSLATION_MAX_CHARS,
+        timeoutMs: WORKERS_AI_TRANSLATION_TIMEOUT_MS,
+      },
+    };
   if (
     process.env.SUBTITLE_GEMINI_ENABLED === "true" &&
     process.env.GEMINI_API_KEY

@@ -15,6 +15,11 @@ import {
   translateLocally,
   localTranslationPrompt,
 } from "@/lib/video/local-translation";
+import {
+  translateWithWorkersAi,
+  WorkersAiOutputError,
+} from "@/lib/video/workers-ai-translation";
+import { workersAiBinding } from "@/lib/video/workers-ai-binding";
 const MAX_BODY_BYTES = 32_768; // UTF-8 Vietnamese/English plus JSON IDs/context; char budget is checked separately.
 const REQUESTS_PER_MINUTE = 30; // Up to 360 short sentences per minute; serial client stops on 429.
 const limiter = createRateLimiter(
@@ -62,6 +67,15 @@ export async function POST(request: NextRequest) {
       return error("invalid_input", 400);
     }
   }
+  if (
+    config.engine.kind === "workers-ai" &&
+    (input.data.lines.length > config.engine.batchSize ||
+      [...input.data.before, ...input.data.lines, ...input.data.after].reduce(
+        (total, line) => total + line.text.length,
+        0,
+      ) > config.engine.maxChars)
+  )
+    return error("invalid_input", 400);
   try {
     const client = await createClient();
     const {
@@ -81,13 +95,35 @@ export async function POST(request: NextRequest) {
       request.signal,
       AbortSignal.timeout(config.engine.timeoutMs),
     ]);
-    if (config.engine.kind === "local") {
-      const lines = await translateLocally(
-        input.data,
-        config.endpoint!,
-        config.key,
-        signal,
-      );
+    if (config.engine.kind === "local" || config.engine.kind === "workers-ai") {
+      let lines;
+      if (config.engine.kind === "local")
+        lines = await translateLocally(
+          input.data,
+          config.endpoint!,
+          config.key,
+          signal,
+        );
+      else {
+        const ai = await workersAiBinding();
+        // Flag on but no binding (e.g. Node dev) — never fall through to Gemini.
+        if (!ai) return error("ai_unavailable", 503);
+        try {
+          lines = await translateWithWorkersAi(input.data, ai, signal);
+        } catch (cause) {
+          if (
+            cause instanceof Error &&
+            (cause.name === "TimeoutError" || cause.name === "AbortError")
+          )
+            throw cause;
+          return error(
+            cause instanceof WorkersAiOutputError
+              ? "invalid_output"
+              : "ai_failed",
+            502,
+          );
+        }
+      }
       return NextResponse.json(
         {
           ok: true,

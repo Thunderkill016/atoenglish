@@ -54,6 +54,9 @@ export default defineConfig({
         namespace: "1002",
         simple: { limit: 5, period: 60 },
       }),
+      // Workers AI — cross-platform subtitle translation (Gemma 4) for
+      // /api/translate. Used only when SUBTITLE_WORKERS_AI_ENABLED=true.
+      AI: bindings.ai(),
       // Worker version metadata ({id, tag, timestamp}) for /api/health.
       CF_VERSION_METADATA: bindings.versionMetadata(),
       // Route Gemini calls through the `atoenglish` AI Gateway: request logs,
