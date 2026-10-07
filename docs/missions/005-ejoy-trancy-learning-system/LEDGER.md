@@ -559,3 +559,101 @@ legitimately untokenized.
 Validation: prettier, eslint, tsc (stale `.next/types` from the concurrent
 deploy regenerated clean), 321/321 unit tests, production build. Deployed
 in the same push as the `?t=` deep-link change.
+
+## ATO-WATCH-01 — sentence playback controller — 07/10/2026
+
+Owner approved the ATO-WATCH-01 contract in TASK_CONTRACT.md. This is a stacked
+change from draft #235 (`docs/005-ejoy-trancy-system`), initially verified at
+`8b0b88079d460a63b69ee309342a900497146781` and rebased onto its verified
+`394d802818f16b8bb6f79d01ff86c5dc9683e001` head. The intervening base commits
+only changed Android. The original checkout and its uncommitted work were
+preserved. Only this slice belongs in the next draft PR; no merge or deploy.
+
+### Implementation
+
+- One sentence controller supplies the active segment ID to Focus Sentence,
+  transcript, existing dictionary/vocabulary and translation. Normalization
+  orders playable cues and resolves overlaps while preserving original Sentence
+  references, text, Vietnamese, provenance and word timings. Untimed text remains
+  readable without invented replay controls.
+- Repeat locks the cue boundary before playback. One bounded replay, three total
+  turns or continuous repeat use 400ms gaps. Manual/native pause and dictionary
+  cancel the next turn; free seek exits repeat. Buffering/rate changes recheck the
+  actual clock. Auto-pause holds the cue and Play continues to the next one.
+- Official YouTube IFrame stays mounted across watch/Read. Transport/clock calls
+  wait for onReady, which a real-video test exposed as necessary: the constructor
+  initially returns a partial object. Speed displays the confirmed native value.
+- Focus controls sit below the complete bilingual text, keeping English near the
+  picture. Transcript search/read position is separate from playback/follow.
+- More than 200 watch cues use TanStack Virtual 3.14.13, dynamic measurement,
+  overscan eight, stable cue keys and pinned dictionary/focus rows. Desktop uses
+  the rail; mobile uses document scrolling. Read keeps all 3,000 fixture rows for
+  copy and browser Find. Late translations compensate row/stage height changes.
+- Translation prioritizes active, next five and previous two cues. Device tasks
+  serialize and background work yields to a new selection; server requests stay
+  near playback. Existing Vietnamese/cache/provenance win. Background rendering
+  is throttled and the last completed cache update is flushed.
+- Account position writes every 15 seconds of listening and on a deliberate
+  pause/completed finite session, never each repeat gap. Server acknowledgments
+  distinguish missing records and errors. Deep-link time still wins restoration;
+  guests gain no database writes or new sync/schema.
+
+### Verification and evidence boundary
+
+- Formatter: cached Prettier 3.6.2; diff whitespace and source-of-truth checks pass.
+- Unit: 36 files, 389 tests pass; typecheck (`tsc --noEmit`) passes.
+- Lint: zero errors, one disclosed React Compiler/TanStack Virtual warning. The
+  rail opts out of compiler memoization because its virtualizer instance is mutable.
+- Browser: the complete 150-case guest fixture matrix yielded 149 passes and one
+  mobile geometry-measurement failure. The failing assertion sampled caption and
+  slider at separate scrolling frames, comparing coordinates from different times.
+  An atomic DOM snapshot preserves all overlap/readability/spacing constraints;
+  the corrected caption test passes at all five viewports (5/5). Together, every
+  one of the 150 case/viewport combinations has passing coverage on the final
+  production source. No overlap/readability or timing threshold was relaxed.
+- Viewports: desktop 1854×950, short desktop 1440×640, tablet 1024×768, mobile
+  393×851 and 320×720. The five new ATO-WATCH-01 cases each pass at all five sizes.
+  Real-media runs used an isolated Chrome profile; fixture runs used the same
+  browser executable, local test servers with loopback stub data/auth and no auth global setup.
+- Next production build and vinext/Cloudflare bundle build both pass on the
+  final production source. vinext reports its existing bundle-splitting and
+  static route-classification limitations; neither build deployed anything.
+
+Real YouTube media was tested through the official API using synthetic two-second
+boundary cues, **not** the video's authentic caption timing. Vietnamese in the
+comparison images is deliberately labelled fixture output. These tests establish
+transport/clock behavior, not provider translation quality or learning outcomes.
+
+| Video                          | Start / locked end | Observed paused endpoints | Final             |
+| ------------------------------ | ------------------ | ------------------------- | ----------------- |
+| Steve Jobs `UF8uR6Z6KLc`       | 24 / 26 s          | 26.163–26.256 s           | third turn paused |
+| Short video `dQw4w9WgXcQ`      | 4 / 6 s            | 6.093–6.133 s             | third turn paused |
+| Trancy reference `oyRxhiAC9u8` | 64 / 66 s          | 66.077–66.111 s           | third turn paused |
+
+Sampling was every 200ms on a loaded local machine; paused observations can miss
+a short gap. Maximum measured overshoot was approximately 256ms in these runs.
+The trace contains buffering and confirms three turns end paused. It does not
+prove sample-accurate audio cuts. **Human listening at authentic cue boundaries
+remains an external review gate**, including keyframe/seek behavior and low-power
+or background-tab devices. Native iframe scrubs below the controller's 1,000ms
+clock-discontinuity threshold cannot be distinguished reliably without a seek
+notification; the app slider and five-second keys always use explicit seek.
+
+Paired screenshots are at the same paused timestamps, 1854 × 950, before the
+slice at `8b0b8807` and after its implementation. They use real media with synthetic
+caption/translation fixtures, not an authenticated Trancy inspection:
+
+- Steve Jobs: [before](evidence/ato-watch-01/UF8uR6Z6KLc-before.png),
+  [after](evidence/ato-watch-01/UF8uR6Z6KLc-after.png), 0:24.
+- Short video: [before](evidence/ato-watch-01/dQw4w9WgXcQ-before.png),
+  [after](evidence/ato-watch-01/dQw4w9WgXcQ-after.png), 0:04.
+- Reference video: [before](evidence/ato-watch-01/oyRxhiAC9u8-before.png),
+  [after](evidence/ato-watch-01/oyRxhiAC9u8-after.png), 1:04.
+- [Real-clock trace](evidence/ato-watch-01/real-clock-and-fixture-labels.json)
+  and [paired-image clock/provenance](evidence/ato-watch-01/paired-layout-clocks.json).
+
+Fixture/browser servers use loopback stub data/auth, disable provider credentials
+and block caption server-action POSTs during real-media comparisons. No production
+DB was written. Browser/provider fixtures are not production extension validation;
+the owner's earlier report that automatic English/Vietnamese appeared is separate.
+No dictation, shadowing, tutor, new dictionary, scoring or whole-page redesign.

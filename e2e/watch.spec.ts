@@ -878,26 +878,28 @@ test.describe("free subtitle translation", () => {
     );
     // One DOM snapshot: mobile scroll anchoring can move the page between
     // separate boundingBox calls when asynchronous Vietnamese text arrives.
-    const { bounds, content, controls } = await strip.evaluate((el) => {
-      const rect = (node: Element) => {
-        const box = node.getBoundingClientRect();
-        return { y: box.y, height: box.height };
-      };
-      return {
-        bounds: rect(el),
-        content: rect(el.querySelector(":scope > div")!),
-        controls: rect(
-          document.querySelector('[aria-label="Vị trí phát video"]')!,
-        ),
-      };
-    });
+    const { bounds, content, controls, frame, english } = await strip.evaluate(
+      (el) => {
+        const rect = (node: Element) => {
+          const box = node.getBoundingClientRect();
+          return { y: box.y, height: box.height };
+        };
+        return {
+          bounds: rect(el),
+          content: rect(el.querySelector(":scope > div")!),
+          frame: rect(document.querySelector('[data-testid="video-frame"]')!),
+          english: rect(el.querySelector("[lang=en]")!),
+          controls: rect(
+            document.querySelector('[aria-label="Vị trí phát video"]')!,
+          ),
+        };
+      },
+    );
     expect(content!.y).toBeGreaterThanOrEqual(bounds!.y);
     expect(content!.y + content!.height).toBeLessThanOrEqual(
       bounds!.y + bounds!.height,
     );
     expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(controls!.y);
-    const frame = await page.getByTestId("video-frame").boundingBox();
-    const english = await strip.locator("[lang=en]").boundingBox();
     // Keep the active text near the picture; do not leave a large empty band
     // between the grid's vertically centered video and the caption below it.
     expect(english!.y - frame!.y - frame!.height).toBeLessThanOrEqual(56);
@@ -925,18 +927,19 @@ test.describe("free subtitle translation", () => {
           horizontalOverflow:
             document.documentElement.scrollWidth > window.innerWidth,
           captionScroll: el.scrollHeight > el.clientHeight,
+          captionBottom: box.bottom,
+          sliderTop: document
+            .querySelector('[aria-label="Vị trí phát video"]')!
+            .getBoundingClientRect().top,
         };
       });
-      expect(layout).toEqual({
+      expect(layout).toMatchObject({
         inside: true,
         horizontalOverflow: false,
         captionScroll: false,
       });
-      const caption = await strip.boundingBox();
-      const slider = await page
-        .getByRole("slider", { name: "Vị trí phát video" })
-        .boundingBox();
-      expect(caption!.y + caption!.height).toBeLessThanOrEqual(slider!.y);
+      // One snapshot also covers mobile smooth-scroll/anchor movement.
+      expect(layout.captionBottom).toBeLessThanOrEqual(layout.sliderTop);
       if (page.viewportSize()!.width >= 1024) {
         expect(
           await page.evaluate(
