@@ -19,6 +19,7 @@ import {
   Pause,
   Play,
   Repeat,
+  Settings2,
   Timer,
 } from "lucide-react";
 
@@ -27,6 +28,7 @@ import {
   DictionaryContent,
 } from "@/components/dictionary-panel";
 import { CATALOG_VIDEOS } from "@/content/catalog/videos";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Sentence } from "@/lib/video/types";
 import {
@@ -127,6 +129,8 @@ export function WatchClient({
   const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>("bilingual");
   // Sentence whose caption-strip Vietnamese the learner revealed (reveal mode).
   const [captionRevealed, setCaptionRevealed] = useState<number | null>(null);
+  // Read mode on phones: transport cluster collapses behind this toggle.
+  const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
 
   const controls = useYouTubePlayer(videoId, initialPositionMs);
   const {
@@ -210,15 +214,27 @@ export function WatchClient({
     player,
   ]);
 
+  // Every deliberate seek makes the URL shareable: ?t=ms lands on the same
+  // sentence for whoever opens it (the Vertex search→timestamp pattern).
+  const seekWithDeepLink = useCallback(
+    (ms: number) => {
+      handledBoundary.current = -1;
+      player.seekToMs(ms);
+      player.play();
+      const url = new URL(window.location.href);
+      url.searchParams.set("t", String(Math.floor(ms)));
+      window.history.replaceState(null, "", url);
+    },
+    [player],
+  );
+
   const seekToSentence = useCallback(
     (index: number) => {
       const s = timedSentences[index];
       if (s?.start_ms == null) return;
-      handledBoundary.current = -1;
-      player.seekToMs(s.start_ms);
-      player.play();
+      seekWithDeepLink(s.start_ms);
     },
-    [timedSentences, player],
+    [timedSentences, seekWithDeepLink],
   );
 
   const timedIdxOfActive = timedSentences.findIndex((s) => s.i === activeIndex);
@@ -551,8 +567,12 @@ export function WatchClient({
           ? "Phụ đề của bạn"
           : null;
 
-  const controlBtn =
-    "flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-[#9d9da6] transition hover:bg-white/10 hover:text-[#e8e8ea] focus-visible:outline-2 focus-visible:outline-[#f5b50a] disabled:opacity-40";
+  const controlBtn = cn(
+    buttonVariants({ variant: "control", size: "icon-xl" }),
+    // Native <button disabled> cannot fire clicks anyway; keep pointer events
+    // so the title tooltip still explains why a transport key is disabled.
+    "disabled:pointer-events-auto disabled:opacity-40",
+  );
   const hasTimedSentences = timedSentences.length > 0;
 
   return (
@@ -581,27 +601,23 @@ export function WatchClient({
                 replay:
                   sentence.start_ms == null
                     ? undefined
-                    : () => {
-                        handledBoundary.current = -1;
-                        player.seekToMs(sentence.start_ms!);
-                        player.play();
-                      },
+                    : () => seekWithDeepLink(sentence.start_ms!),
               },
             });
           return (
             <div
               id="main-content"
               className={cn(
-                "flex min-h-dvh flex-col bg-[#0c0c0e] text-[#e8e8ea]",
+                "dark flex min-h-dvh flex-col bg-background text-foreground",
                 viewMode === "theater" && "lg:h-dvh lg:overflow-hidden",
               )}
             >
-              <header className="flex shrink-0 items-center gap-3 border-b border-[#232327] px-3 py-3 sm:px-5">
+              <header className="flex shrink-0 items-center gap-3 border-b border-border px-3 py-3 sm:px-5">
                 <Link
                   href="/discover"
                   aria-label="Quay lại khám phá"
                   title="Khám phá"
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#232327] text-[#9d9da6] hover:bg-white/5 hover:text-[#e8e8ea]"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Link>
@@ -615,7 +631,7 @@ export function WatchClient({
                       `Video ${videoId}`}
                   </h1>
                   {(transcript?.channel ?? catalogVideo?.channel) && (
-                    <p className="mt-1 truncate text-xs text-[#9d9da6]">
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
                       {transcript?.channel ?? catalogVideo?.channel}
                     </p>
                   )}
@@ -627,8 +643,8 @@ export function WatchClient({
                   }
                   aria-pressed={viewMode === "read"}
                   className={cn(
-                    "flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-[#232327] px-3 text-xs text-[#9d9da6] hover:text-[#e8e8ea]",
-                    viewMode === "read" && "border-[#f5b50a]/40 text-[#f5b50a]",
+                    "flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-border px-3 text-xs text-muted-foreground hover:text-foreground",
+                    viewMode === "read" && "border-primary/40 text-primary",
                   )}
                 >
                   <BookOpen className="h-4 w-4" />
@@ -652,7 +668,7 @@ export function WatchClient({
                   aria-label="Trình phát video"
                   data-testid="player-stage"
                   className={cn(
-                    "flex min-h-0 min-w-0 flex-col rounded-2xl border border-[#232327] bg-[#111114] p-2 sm:p-4",
+                    "flex min-h-0 min-w-0 flex-col rounded-2xl border border-border bg-card p-2 sm:p-4",
                     viewMode === "theater"
                       ? "lg:flex-1"
                       : "mx-auto w-full max-w-3xl",
@@ -688,7 +704,7 @@ export function WatchClient({
                         />
                         {!ready && (
                           <div
-                            className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-[#9d9da6]"
+                            className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-muted-foreground"
                             role="status"
                           >
                             {loadError
@@ -700,7 +716,7 @@ export function WatchClient({
                     </div>
                     <div
                       data-testid="active-caption"
-                      className="flex min-h-32 w-full shrink-0 items-center justify-center px-2 py-4 text-center text-base font-medium leading-normal text-[#f5b50a] sm:px-4 sm:text-lg"
+                      className="flex min-h-32 w-full shrink-0 items-center justify-center px-2 py-4 text-center text-base font-medium leading-normal text-primary sm:px-4 sm:text-lg"
                     >
                       {/* A 60ch measure is a reading-layout choice, not a timed-caption
                           character limit. Keep the entire source and translation visible. */}
@@ -731,11 +747,11 @@ export function WatchClient({
                                 setCaptionRevealed(activeSentence.i)
                               }
                               aria-label="Hiện nghĩa tiếng Việt (V)"
-                              className="mx-auto block rounded-md focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+                              className="mx-auto block rounded-md focus-visible:outline-2 focus-visible:outline-ring"
                             >
                               <span
                                 aria-hidden
-                                className="block select-none text-balance text-[15px] font-normal leading-normal text-[#c5c5ce] blur-[5px] sm:text-base"
+                                className="block select-none text-balance text-[15px] font-normal leading-normal text-foreground/75 blur-[5px] sm:text-base"
                               >
                                 {captionVi}
                               </span>
@@ -743,7 +759,7 @@ export function WatchClient({
                           ) : (
                             <p
                               lang="vi"
-                              className="text-balance text-[15px] font-normal leading-normal text-[#c5c5ce] sm:text-base"
+                              className="text-balance text-[15px] font-normal leading-normal text-foreground/75 sm:text-base"
                             >
                               {captionVi ?? "Chưa có bản dịch cho câu này."}
                             </p>
@@ -752,7 +768,25 @@ export function WatchClient({
                     </div>
                   </div>
 
-                  <div className="shrink-0 border-t border-[#232327] pt-2">
+                  {viewMode === "read" && (
+                    <button
+                      type="button"
+                      aria-expanded={mobileControlsOpen}
+                      onClick={() => setMobileControlsOpen((v) => !v)}
+                      className="flex min-h-10 w-fit items-center gap-2 rounded-full border border-border px-3 text-xs text-muted-foreground hover:text-foreground sm:hidden"
+                    >
+                      <Settings2 aria-hidden className="h-4 w-4" />
+                      Điều khiển
+                    </button>
+                  )}
+                  <div
+                    className={cn(
+                      "shrink-0 border-t border-border pt-2",
+                      viewMode === "read" &&
+                        !mobileControlsOpen &&
+                        "max-sm:hidden",
+                    )}
+                  >
                     <input
                       type="range"
                       aria-label="Vị trí phát video"
@@ -766,7 +800,7 @@ export function WatchClient({
                         handledBoundary.current = -1;
                         player.seekToMs(Number(e.target.value));
                       }}
-                      className="h-6 w-full cursor-pointer accent-[#f5b50a] disabled:cursor-default"
+                      className="h-6 w-full cursor-pointer accent-primary disabled:cursor-default"
                     />
                     <div className="flex flex-wrap items-center gap-1">
                       <button
@@ -781,10 +815,10 @@ export function WatchClient({
                       </button>
                       <button
                         type="button"
-                        className={cn(
-                          controlBtn,
-                          "bg-[#f5b50a] text-[#0c0c0e] hover:bg-[#ffca3a] hover:text-[#0c0c0e]",
-                        )}
+                        className={buttonVariants({
+                          variant: "default",
+                          size: "icon-xl",
+                        })}
                         disabled={!ready}
                         onClick={() =>
                           playing ? player.pause() : player.play()
@@ -814,10 +848,7 @@ export function WatchClient({
                       </button>
                       <button
                         type="button"
-                        className={cn(
-                          controlBtn,
-                          loopSentence && "bg-[#f5b50a]/15 text-[#f5b50a]",
-                        )}
+                        className={controlBtn}
                         disabled={!ready || !hasTimedSentences}
                         onClick={() => setLoopSentence((v) => !v)}
                         aria-pressed={loopSentence}
@@ -828,10 +859,7 @@ export function WatchClient({
                       </button>
                       <button
                         type="button"
-                        className={cn(
-                          controlBtn,
-                          autoPause && "bg-[#f5b50a]/15 text-[#f5b50a]",
-                        )}
+                        className={controlBtn}
                         disabled={!ready || !hasTimedSentences}
                         onClick={() => setAutoPause((v) => !v)}
                         aria-pressed={autoPause}
@@ -854,7 +882,7 @@ export function WatchClient({
                         <FastForward className="h-4 w-4" />
                         {rate}×
                       </button>
-                      <span className="ml-auto whitespace-nowrap px-2 font-mono text-xs tabular-nums text-[#9d9da6]">
+                      <span className="ml-auto whitespace-nowrap px-2 font-mono text-xs tabular-nums text-muted-foreground">
                         {formatTimestamp(nowMs)}
                         {durationMs > 0 && ` / ${formatTimestamp(durationMs)}`}
                       </span>
@@ -871,8 +899,8 @@ export function WatchClient({
                     </div>
                   </div>
                   {showKeys && (
-                    <div className="mt-2 shrink-0 rounded-lg border border-[#232327] bg-[#151518] p-3 text-xs leading-relaxed text-[#9d9da6]">
-                      <span className="font-semibold text-[#e8e8ea]">
+                    <div className="mt-2 shrink-0 rounded-lg border border-border bg-elevated p-3 text-xs leading-relaxed text-muted-foreground">
+                      <span className="font-semibold text-foreground">
                         Phím tắt:
                       </span>{" "}
                       Space phát/dừng · A câu trước · D câu sau · S lặp câu · R
@@ -889,28 +917,28 @@ export function WatchClient({
                 <section
                   aria-label="Phụ đề video"
                   className={cn(
-                    "flex min-h-0 min-w-0 flex-col rounded-2xl border border-[#232327] bg-[#111114]",
+                    "flex min-h-0 min-w-0 flex-col rounded-2xl border border-border bg-card",
                     viewMode === "theater"
                       ? "lg:w-[34%] lg:max-w-[380px] lg:shrink-0"
                       : "mx-auto w-full max-w-3xl",
                   )}
                 >
-                  <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#232327] px-4 py-3">
+                  <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-3">
                     <h2 className="text-sm font-semibold">Phụ đề</h2>
                     {transcript && (
-                      <span className="rounded-full bg-[#f5b50a]/10 px-2 py-0.5 text-xs text-[#f5b50a]">
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
                         {sentences.length} câu
                       </span>
                     )}
                     {trackLabel && (
-                      <span className="ml-auto text-[11px] text-[#9d9da6]">
+                      <span className="ml-auto text-[11px] text-muted-foreground">
                         {trackLabel}
                       </span>
                     )}
                     {transcript && !transcript.saved && !loggedIn && (
                       <Link
                         href={`/login?next=${encodeURIComponent(`/watch/${videoId}`)}`}
-                        className="w-full text-xs text-[#f5b50a] hover:underline"
+                        className="w-full text-xs text-primary hover:underline"
                       >
                         Đăng nhập để lưu
                       </Link>
@@ -919,12 +947,12 @@ export function WatchClient({
                   {phase === "ready" && transcript ? (
                     <>
                       {transcript.origin === "plain_text" && (
-                        <p className="shrink-0 px-4 py-3 text-xs text-[#9d9da6]">
+                        <p className="shrink-0 px-4 py-3 text-xs text-muted-foreground">
                           Văn bản không đồng bộ — chỉ để đọc.
                         </p>
                       )}
-                      <div className="shrink-0 space-y-2 border-b border-[#232327] px-4 py-3">
-                        <label className="flex items-center justify-between gap-2 text-xs text-[#9d9da6]">
+                      <div className="shrink-0 space-y-2 border-b border-border px-4 py-3">
+                        <label className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                           Hiển thị phụ đề
                           <select
                             aria-label="Hiển thị phụ đề"
@@ -934,7 +962,7 @@ export function WatchClient({
                                 event.target.value as SubtitleMode,
                               )
                             }
-                            className="min-h-11 rounded-lg border border-[#232327] bg-[#19191c] px-2 text-[#e8e8ea]"
+                            className="min-h-11 rounded-lg border border-border bg-elevated px-2 text-foreground"
                           >
                             <option value="reveal">Anh · Việt khi chạm</option>
                             <option value="bilingual">Anh + Việt</option>
@@ -950,7 +978,7 @@ export function WatchClient({
                                 {translation.humanCount > 0 && (
                                   <p
                                     role="status"
-                                    className="text-xs text-[#9d9da6]"
+                                    className="text-xs text-muted-foreground"
                                   >
                                     Phụ đề tiếng Việt của kênh ·{" "}
                                     {translation.humanCount}/{sentences.length}{" "}
@@ -962,7 +990,7 @@ export function WatchClient({
                                   translation.provider === "device" &&
                                   (translation.availability ===
                                   "unavailable" ? (
-                                    <p className="text-xs text-[#9d9da6]">
+                                    <p className="text-xs text-muted-foreground">
                                       Trình duyệt này chưa hỗ trợ dịch miễn phí
                                       trên thiết bị. Dùng Chrome trên máy tính
                                       để bật dịch Anh–Việt.
@@ -970,7 +998,7 @@ export function WatchClient({
                                   ) : (
                                     <p
                                       role="status"
-                                      className="text-xs text-[#9d9da6]"
+                                      className="text-xs text-muted-foreground"
                                     >
                                       {translation.downloading
                                         ? `Đang chuẩn bị dịch miễn phí${translation.progress == null ? "…" : ` · ${translation.progress}%`}`
@@ -983,7 +1011,7 @@ export function WatchClient({
                                   translation.provider === "server") && (
                                   <p
                                     role="status"
-                                    className="text-xs text-[#9d9da6]"
+                                    className="text-xs text-muted-foreground"
                                   >
                                     {translation.provider === "device"
                                       ? "Dịch máy trên thiết bị"
@@ -1000,7 +1028,7 @@ export function WatchClient({
                                     <button
                                       type="button"
                                       onClick={translation.useServer}
-                                      className="min-h-11 text-xs text-[#f5b50a]"
+                                      className="min-h-11 text-xs text-primary"
                                     >
                                       Dùng {serverTranslation.label}
                                     </button>
@@ -1010,7 +1038,7 @@ export function WatchClient({
                                   <div>
                                     <p
                                       role="alert"
-                                      className="text-xs text-[#f5b50a]"
+                                      className="text-xs text-primary"
                                     >
                                       {translation.error ??
                                         translation.setupError}
@@ -1023,7 +1051,7 @@ export function WatchClient({
                                               void translation.enableDevice()
                                           : translation.retry
                                       }
-                                      className="min-h-11 text-xs text-[#f5b50a]"
+                                      className="min-h-11 text-xs text-primary"
                                     >
                                       Thử dịch lại
                                     </button>
@@ -1035,19 +1063,19 @@ export function WatchClient({
                                     <button
                                       type="button"
                                       onClick={translation.retry}
-                                      className="min-h-11 text-xs text-[#f5b50a]"
+                                      className="min-h-11 text-xs text-primary"
                                     >
                                       Dịch lại câu còn thiếu
                                     </button>
                                   )}
                                 {translation.cacheNotice && (
-                                  <p className="text-xs text-[#9d9da6]">
+                                  <p className="text-xs text-muted-foreground">
                                     {translation.cacheNotice}
                                   </p>
                                 )}
                               </>
                             ) : (
-                              <p className="text-xs text-[#9d9da6]">
+                              <p className="text-xs text-muted-foreground">
                                 Hiện hỗ trợ dịch phụ đề tiếng Anh sang tiếng
                                 Việt.
                               </p>
@@ -1061,11 +1089,7 @@ export function WatchClient({
                         subtitleMode={subtitleMode}
                         activeIndex={activeIndex}
                         nowMs={nowMs}
-                        onSeek={(ms) => {
-                          handledBoundary.current = -1;
-                          player.seekToMs(ms);
-                          player.play();
-                        }}
+                        onSeek={seekWithDeepLink}
                         prose={viewMode === "read"}
                         onLookup={lookupWord}
                       />

@@ -170,7 +170,7 @@ export function SentenceText({
           return (
             <span
               key={index}
-              className={cn(highlighted && "rounded bg-[#f5b50a]/25")}
+              className={cn(highlighted && "rounded bg-primary/25")}
             >
               {token.text}
             </span>
@@ -183,11 +183,11 @@ export function SentenceText({
             onClick={(event) => selectWord(index, event.currentTarget)}
             className={cn(
               // Source whitespace sets word spacing; lookup highlights must not widen every word.
-              "inline max-w-full rounded p-0 align-baseline text-inherit [overflow-wrap:anywhere] hover:bg-[#f5b50a]/15 focus-visible:outline-2 focus-visible:outline-[#f5b50a]",
-              highlighted && "bg-[#f5b50a]/25",
+              "inline max-w-full rounded p-0 align-baseline text-inherit [overflow-wrap:anywhere] hover:bg-primary/15 focus-visible:outline-2 focus-visible:outline-ring",
+              highlighted && "bg-primary/25",
               phraseStart?.sentenceI === sentence.i &&
                 phraseStart.tokenIndex === index &&
-                "bg-[#f5b50a]/25 underline",
+                "bg-primary/25 underline",
             )}
           >
             {token.text}
@@ -289,7 +289,7 @@ export function TranscriptRail({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#232327] px-3 py-1.5">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-1.5">
         {!prose && hasTimedSentences && (
           <button
             type="button"
@@ -308,7 +308,7 @@ export function TranscriptRail({
               }
               setFollowing((value) => !value);
             }}
-            className="min-h-11 min-w-0 flex-1 rounded-lg px-2 text-left text-xs text-[#f5b50a] hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+            className="min-h-11 min-w-0 flex-1 rounded-lg px-2 text-left text-xs text-primary hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring"
           >
             {following ? "Đang theo câu phát · Tắt" : "Theo câu đang phát"}
           </button>
@@ -322,7 +322,7 @@ export function TranscriptRail({
               setPhraseStart(null);
               setPhraseError(null);
             }}
-            className="min-h-11 shrink-0 rounded-lg px-2 text-xs text-[#f5b50a] hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+            className="min-h-11 shrink-0 rounded-lg px-2 text-xs text-primary hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring"
           >
             Chọn cụm
           </button>
@@ -335,19 +335,22 @@ export function TranscriptRail({
           aria-controls={searchId}
           title="Tìm câu trong phụ đề"
           onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
-          className="ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-[#9d9da6] hover:bg-white/5 aria-expanded:text-[#f5b50a] focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+          className="ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-foreground/5 aria-expanded:text-primary focus-visible:outline-2 focus-visible:outline-ring"
         >
           <Search aria-hidden className="size-4" />
         </button>
         {phraseMode && showsEnglish(subtitleMode) && (
-          <p role="status" className="w-full pb-1 text-xs text-[#9d9da6]">
+          <p
+            role="status"
+            className="w-full pb-1 text-xs text-muted-foreground"
+          >
             {phraseStart
               ? "Chọn từ cuối trong cùng câu; chọn câu khác để bắt đầu lại."
               : "Chọn từ đầu rồi từ cuối trong cùng một câu."}
           </p>
         )}
         {phraseError && (
-          <p role="alert" className="w-full pb-1 text-xs text-[#f5b50a]">
+          <p role="alert" className="w-full pb-1 text-xs text-primary">
             {phraseError}
           </p>
         )}
@@ -355,7 +358,7 @@ export function TranscriptRail({
       {searchOpen && (
         <div
           id={searchId}
-          className="shrink-0 space-y-1 border-b border-[#232327] px-3 py-2"
+          className="shrink-0 space-y-1 border-b border-border px-3 py-2"
         >
           <div className="flex items-center gap-1">
             <input
@@ -389,14 +392,14 @@ export function TranscriptRail({
                   );
                 }
               }}
-              className="min-h-11 min-w-0 flex-1 rounded-lg border border-[#34343a] bg-[#19191c] px-3 text-sm text-[#e8e8ea] outline-none placeholder:text-[#9d9da6] focus-visible:border-[#f5b50a]"
+              className="min-h-11 min-w-0 flex-1 rounded-lg border border-border bg-elevated px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring"
             />
             <button
               type="button"
               aria-label="Câu phù hợp trước"
               disabled={!matches.length}
               onClick={() => chooseMatch(matchPosition - 1)}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#c5c5ce] hover:bg-white/5 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-foreground/75 hover:bg-foreground/5 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-ring"
             >
               <ChevronUp aria-hidden className="size-4" />
             </button>
@@ -405,7 +408,7 @@ export function TranscriptRail({
               aria-label="Câu phù hợp tiếp"
               disabled={!matches.length}
               onClick={() => chooseMatch(matchPosition + 1)}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#c5c5ce] hover:bg-white/5 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-foreground/75 hover:bg-foreground/5 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-ring"
             >
               <ChevronDown aria-hidden className="size-4" />
             </button>
@@ -413,7 +416,7 @@ export function TranscriptRail({
               type="button"
               aria-label="Đóng tìm phụ đề"
               onClick={closeSearch}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#9d9da6] hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring"
             >
               <X aria-hidden className="size-4" />
             </button>
@@ -421,7 +424,7 @@ export function TranscriptRail({
           <p
             id={searchId + "-status"}
             role="status"
-            className="text-xs leading-relaxed text-[#9d9da6]"
+            className="text-xs leading-relaxed text-muted-foreground"
           >
             {!query.trim()
               ? "Tìm trong ngôn ngữ đang hiển thị · Enter để đến câu."
@@ -473,8 +476,10 @@ export function TranscriptRail({
               aria-current={active ? "true" : undefined}
               className={cn(
                 "group mb-2 space-y-2 rounded-xl px-3 py-3 text-left transition-colors",
-                active ? "bg-[#f5b50a]/10 text-[#e8e8ea]" : "text-[#9d9da6]",
-                s.i === currentMatch && "ring-1 ring-inset ring-[#f5b50a]/50",
+                active
+                  ? "bg-primary/10 text-foreground"
+                  : "text-muted-foreground",
+                s.i === currentMatch && "ring-1 ring-inset ring-primary/50",
                 s.noise && "opacity-50",
                 prose && "mb-4 py-3",
               )}
@@ -484,14 +489,16 @@ export function TranscriptRail({
                   type="button"
                   onClick={() => onSeek(s.start_ms!)}
                   aria-label={`Nghe câu ${formatTimestamp(s.start_ms)}`}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white/5 px-3 text-xs tabular-nums text-[#9d9da6] hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full bg-foreground/5 px-3 text-xs tabular-nums text-muted-foreground hover:bg-foreground/10 focus-visible:outline-2 focus-visible:outline-ring"
                 >
                   <Play aria-hidden className="h-3.5 w-3.5" />
                   {prose ? "Nghe lại" : formatTimestamp(s.start_ms)}
                 </button>
               ) : (
                 !prose && (
-                  <span className="text-[11px] text-[#9d9da6]">Văn bản</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    Văn bản
+                  </span>
                 )
               )}
               {showsEnglish(subtitleMode) && (
@@ -500,7 +507,7 @@ export function TranscriptRail({
                   className={cn(
                     "text-base leading-[1.65] [overflow-wrap:anywhere]",
                     prose && "sm:text-lg",
-                    active && "text-[#f5b50a]",
+                    active && "text-primary",
                   )}
                 >
                   {s.noise && <span className="sr-only">Âm thanh nền: </span>}
@@ -527,11 +534,11 @@ export function TranscriptRail({
                       setRevealed((prev) => new Set(prev).add(s.i))
                     }
                     aria-label="Hiện nghĩa tiếng Việt của câu này"
-                    className="block w-full rounded-md text-left focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+                    className="block w-full rounded-md text-left focus-visible:outline-2 focus-visible:outline-ring"
                   >
                     <span
                       aria-hidden
-                      className="block select-none text-[15px] leading-[1.65] text-[#c5c5ce] blur-[5px] [overflow-wrap:anywhere]"
+                      className="block select-none text-[15px] leading-[1.65] text-foreground/75 blur-[5px] [overflow-wrap:anywhere]"
                     >
                       {translations[s.i]}
                     </span>
@@ -541,13 +548,13 @@ export function TranscriptRail({
                     lang="vi"
                     data-testid="translated-sentence"
                     className={cn(
-                      "text-[15px] leading-[1.65] text-[#c5c5ce] [overflow-wrap:anywhere]",
+                      "text-[15px] leading-[1.65] text-foreground/75 [overflow-wrap:anywhere]",
                       prose && "sm:text-base",
                     )}
                   >
                     {translations[s.i] ?? "Chưa có bản dịch cho câu này."}
                     {mixedSources && translations[s.i] && !s.vi && (
-                      <span className="ml-2 text-[11px] text-[#9d9da6]">
+                      <span className="ml-2 text-[11px] text-muted-foreground">
                         · dịch máy
                       </span>
                     )}
@@ -558,9 +565,9 @@ export function TranscriptRail({
                 activeGlosses.length > 0 && (
                   <div
                     data-testid="automatic-vocabulary"
-                    className="border-t border-[#f5b50a]/15 pt-2"
+                    className="border-t border-primary/15 pt-2"
                   >
-                    <p className="mb-1 text-[11px] text-[#9d9da6]">
+                    <p className="mb-1 text-[11px] text-muted-foreground">
                       Từ trong câu · nghĩa từ điển
                     </p>
                     <dl className="space-y-1 text-sm leading-relaxed">
@@ -569,10 +576,10 @@ export function TranscriptRail({
                           key={entry.word}
                           className="[overflow-wrap:anywhere]"
                         >
-                          <dt className="inline font-medium text-[#e8e8ea]">
+                          <dt className="inline font-medium text-foreground">
                             {entry.surface}
                           </dt>{" "}
-                          <dd className="inline text-[#c5c5ce]">
+                          <dd className="inline text-foreground/75">
                             · {entry.meaning_vn}
                           </dd>
                         </div>

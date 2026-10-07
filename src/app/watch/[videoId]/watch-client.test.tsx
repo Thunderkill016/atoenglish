@@ -133,6 +133,17 @@ describe("opening a video automatically", () => {
       container.querySelector('[data-testid="translated-sentence"]'),
     ).toHaveTextContent("Tôi làm việc ở đây.");
   });
+  it("writes a shareable ?t= deep link on sentence seek", async () => {
+    await act(async () => render(transcript));
+    const chip = [...container.querySelectorAll("button")].find(
+      (el) => el.textContent?.trim() === "0:00",
+    )!;
+    await act(async () => chip.click());
+    expect(player.seekToMs).toHaveBeenCalledWith(0);
+    expect(player.play).toHaveBeenCalled();
+    expect(new URL(window.location.href).searchParams.get("t")).toBe("0");
+    window.history.replaceState(null, "", "/");
+  });
   it.each([true, false])(
     "keeps a pasted transcript when the opening request finishes later (success=%s)",
     async (success) => {

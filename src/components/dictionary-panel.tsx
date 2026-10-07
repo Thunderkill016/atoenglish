@@ -240,7 +240,7 @@ export function DictionaryPanel({
               onClick={() => speakEnglish(result.entry!.word)}
               aria-label="Nghe cách đọc từ"
               title="Giọng đọc trên thiết bị"
-              className="flex size-10 items-center justify-center rounded-full bg-muted text-primary focus-visible:outline-2 focus-visible:outline-ring"
+              className="flex size-11 items-center justify-center rounded-full bg-muted text-primary focus-visible:outline-2 focus-visible:outline-ring"
             >
               <Volume2 aria-hidden className="size-4" />
             </button>
@@ -333,7 +333,7 @@ export function DictionaryPanel({
             onClick={() => dialog.current?.close()}
             ref={closeButton}
             aria-label="Đóng tra từ"
-            className="flex size-10 items-center justify-center rounded-full hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
+            className="flex size-11 items-center justify-center rounded-full hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
           >
             <X aria-hidden className="size-4" />
           </button>
