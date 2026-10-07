@@ -10,9 +10,14 @@ import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.TextView;
+import android.widget.Toast;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.regex.Matcher;
@@ -64,7 +69,17 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        appView = new WebView(this);
+        try {
+            appView = new WebView(this);
+        } catch (Throwable t) {
+            // Device lacks a usable WebView provider (missing/disabled/
+            // mid-update Android System WebView) — surface it, don't crash.
+            TextView tv = new TextView(this);
+            tv.setText("Thiết bị thiếu Android System WebView.\n" + t);
+            setContentView(tv);
+            return;
+        }
+        WebView.setWebContentsDebuggingEnabled(true);
         WebSettings s = appView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -85,6 +100,24 @@ public class MainActivity extends Activity {
                     // SPA (pushState) navigation lands here, not onPageFinished.
                     maybeCollect(url);
                 }
+
+                @Override
+                public void onReceivedError(
+                    WebView view,
+                    WebResourceRequest request,
+                    WebResourceError error) {
+                    if (request.isForMainFrame())
+                        toast("Lỗi tải trang: " + error.getDescription());
+                }
+
+                @Override
+                public void onReceivedHttpError(
+                    WebView view,
+                    WebResourceRequest request,
+                    WebResourceResponse response) {
+                    if (request.isForMainFrame())
+                        toast("HTTP " + response.getStatusCode());
+                }
             });
         setContentView(appView);
         if (!handleIntent(getIntent())) appView.loadUrl(APP_ORIGIN);
@@ -98,7 +131,7 @@ public class MainActivity extends Activity {
 
     /** Share/open intake → the web app's /share route canonicalizes the URL. */
     private boolean handleIntent(Intent intent) {
-        if (intent == null) return false;
+        if (intent == null || appView == null) return false;
         String shared = null;
         if (Intent.ACTION_SEND.equals(intent.getAction())) {
             shared = intent.getStringExtra(Intent.EXTRA_TEXT);
@@ -176,6 +209,10 @@ public class MainActivity extends Activity {
                         + "), location.origin)",
                     null);
             });
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 
     private String bridgeScript() {
