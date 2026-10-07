@@ -35,7 +35,7 @@ export class WidgetErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         this.props.fallback ?? (
-          <div className="bg-foreground/50 border border-white/5 rounded-2xl p-4 text-center">
+          <div className="bg-card border border-border rounded-2xl p-4 text-center">
             <p className="text-muted-foreground text-sm">
               Không thể tải widget{this.props.name ? ` ${this.props.name}` : ""}
               .

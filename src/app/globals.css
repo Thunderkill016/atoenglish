@@ -23,6 +23,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  /* Elevated inputs/overlays above card surfaces (watch search field, selects). */
+  --color-elevated: var(--elevated);
 
   /* Highlighter wash — identity color for saved words (slice 3+). */
   --color-mark: var(--mark);
@@ -62,6 +64,7 @@
   --ring: oklch(0.58 0.14 75);
   --mark: oklch(0.88 0.12 90);
   --review: oklch(0.5 0.2 295);
+  --elevated: oklch(0.96 0.004 240);
   --radius: 0.625rem;
 
   /* Learning-state roles: unseen content, in-progress, acquired, due-for-review */
@@ -92,22 +95,13 @@
   --ring: oklch(0.78 0.13 85);
   --mark: oklch(0.42 0.08 90);
   --review: oklch(0.8 0.12 295);
+  --elevated: oklch(0.18 0.008 240);
 
   /* Learning-state roles — lighter hues for dark contrast */
   --state-new: oklch(0.68 0.02 240);
   --state-learning: oklch(0.8 0.13 80);
   --state-known: oklch(0.72 0.13 230);
   --state-due: oklch(0.72 0.19 28);
-}
-
-/* Home reference: charcoal feed, brighter widgets, independent desktop panes.
-   These surface overrides stay inside discovery; light theme uses the tokens above. */
-.dark .discover-home {
-  --background: #191919;
-  --card: #242424;
-  --muted: #252525;
-  --accent: #303030;
-  --muted-foreground: #a3a3a3;
 }
 
 .discover-home {

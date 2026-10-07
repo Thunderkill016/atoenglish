@@ -18,7 +18,7 @@ export default function GlobalError({
 
   return (
     <html lang="vi">
-      <body className="flex min-h-screen items-center justify-center bg-foreground text-white">
+      <body className="flex min-h-screen items-center justify-center bg-background text-foreground">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -40,7 +40,7 @@ export default function GlobalError({
           </div>
           <button
             onClick={reset}
-            className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-sm transition-all"
+            className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm transition-all"
           >
             <RefreshCcw className="size-4" />
             Tải lại
