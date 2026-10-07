@@ -181,7 +181,7 @@ export function WatchClient({
     transcript?.language ?? "en",
     serverTranslation,
     transcript?.title ?? catalogVideo?.title,
-    { automatic: true },
+    { automatic: true, videoId },
   );
   const showEnglish = showsEnglish(subtitleMode);
   const showVietnamese = showsVietnamese(subtitleMode);
@@ -771,7 +771,10 @@ export function WatchClient({
                               lang="vi"
                               className="text-balance text-[15px] font-normal leading-normal text-foreground/75 sm:text-base"
                             >
-                              {captionVi ?? "Chưa có bản dịch cho câu này."}
+                              {captionVi ??
+                                (translation.pending
+                                  ? "Đang dịch…"
+                                  : "Chưa có bản dịch cho câu này.")}
                             </p>
                           ))}
                       </div>
@@ -1097,6 +1100,7 @@ export function WatchClient({
                       <TranscriptRail
                         sentences={sentences}
                         translations={translation.lines}
+                        translationPending={translation.pending}
                         subtitleMode={subtitleMode}
                         activeIndex={activeIndex}
                         nowMs={nowMs}

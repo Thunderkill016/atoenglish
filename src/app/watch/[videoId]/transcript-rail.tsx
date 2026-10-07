@@ -22,6 +22,8 @@ export { formatTimestamp };
 interface TranscriptRailProps {
   sentences: Sentence[];
   translations?: Record<number, string>;
+  /** Queued/in-flight machine translation — pending cues say so, not "none". */
+  translationPending?: boolean;
   subtitleMode?: SubtitleMode;
   activeIndex: number;
   nowMs: number;
@@ -205,6 +207,7 @@ export function SentenceText({
 export function TranscriptRail({
   sentences,
   translations = {},
+  translationPending = false,
   subtitleMode = "en",
   activeIndex,
   nowMs,
@@ -552,7 +555,10 @@ export function TranscriptRail({
                       prose && "sm:text-base",
                     )}
                   >
-                    {translations[s.i] ?? "Chưa có bản dịch cho câu này."}
+                    {translations[s.i] ??
+                      (translationPending
+                        ? "Đang dịch…"
+                        : "Chưa có bản dịch cho câu này.")}
                     {mixedSources && translations[s.i] && !s.vi && (
                       <span className="ml-2 text-[11px] text-muted-foreground">
                         · dịch máy

@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { NEON_AUTH_SESSION_COOKIE_NAME } from "@neondatabase/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
 import { createRateLimiter } from "@/lib/security/rate-limit";
@@ -20,13 +19,24 @@ import {
   translateWithWorkersAi,
   WorkersAiOutputError,
 } from "@/lib/video/workers-ai-translation";
+import { translateWithM2m100 } from "@/lib/video/m2m100-translation";
 import { workersAiBinding } from "@/lib/video/workers-ai-binding";
+import {
+  readTranslationCache,
+  writeTranslationCache,
+} from "@/lib/video/translation-cache";
 const MAX_BODY_BYTES = 32_768; // UTF-8 Vietnamese/English plus JSON IDs/context; char budget is checked separately.
 const REQUESTS_PER_MINUTE = 30; // Up to 360 short sentences per minute; serial client stops on 429.
+const GUEST_REQUESTS_PER_MINUTE = 10; // Unauthenticated fallback (mission 008): mobile browsers have no Translator API — keep the door open but narrow.
 const limiter = createRateLimiter(
   REQUESTS_PER_MINUTE,
   60_000,
   "subtitle-translation",
+);
+const guestLimiter = createRateLimiter(
+  GUEST_REQUESTS_PER_MINUTE,
+  60_000,
+  "subtitle-translation-guest",
 );
 function error(code: string, status: number) {
   return NextResponse.json(
@@ -56,9 +66,6 @@ export async function POST(request: NextRequest) {
   }
   const input = translationInput.safeParse(raw);
   if (!input.success) return error("invalid_input", 400);
-  // Reuse the current authenticated AI boundary. No DB queries/writes, no new provider configuration.
-  if (!request.cookies.has(NEON_AUTH_SESSION_COOKIE_NAME))
-    return error("unauthorized", 401);
   const config = serverTranslationConfig();
   if (!config) return error("ai_unavailable", 503);
   if (config.engine.kind === "local") {
@@ -69,7 +76,8 @@ export async function POST(request: NextRequest) {
     }
   }
   if (
-    config.engine.kind === "workers-ai" &&
+    (config.engine.kind === "workers-ai" ||
+      config.engine.kind === "workers-ai-mt") &&
     (input.data.lines.length > config.engine.batchSize ||
       contextChars(input.data) > config.engine.maxChars)
   )
@@ -80,34 +88,63 @@ export async function POST(request: NextRequest) {
       data: { user },
       error: authError,
     } = await client.auth.getUser();
-    if (!user)
-      return error(
-        authError && authError.status !== 401
-          ? "auth_unavailable"
-          : "unauthorized",
-        authError && authError.status !== 401 ? 503 : 401,
-      );
-    if (!(await limiter.check(`translate:${user.id}`)).success)
-      return error("rate_limited", 429);
+    // Guest fallback (mission 008): no Translator API exists on mobile, so
+    // the server path must not require a session. Guests get a narrower
+    // per-IP budget; a missing/invalid session is still distinguishable
+    // from an auth outage.
+    if (!user && authError && ![400, 401].includes(authError.status ?? 0))
+      return error("auth_unavailable", 503);
+    if (user) {
+      if (!(await limiter.check(`translate:${user.id}`)).success)
+        return error("rate_limited", 429);
+    } else {
+      const ip =
+        request.headers.get("cf-connecting-ip") ??
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+        "unknown";
+      if (!(await guestLimiter.check(`translate:guest:${ip}`)).success)
+        return error("rate_limited", 429);
+    }
     const signal = AbortSignal.any([
       request.signal,
       AbortSignal.timeout(config.engine.timeoutMs),
     ]);
-    if (config.engine.kind === "local" || config.engine.kind === "workers-ai") {
-      let lines;
-      if (config.engine.kind === "local")
-        lines = await translateLocally(
-          input.data,
+    // Per-account persisted cache (mission 008): read-through before any AI
+    // spend, write-through after. Guests have no DB row space — localStorage
+    // remains their cache.
+    const videoId = input.data.videoId;
+    const cached =
+      user && videoId
+        ? await readTranslationCache(
+            client,
+            videoId,
+            config.engine.profile,
+            input.data.lines,
+          )
+        : new Map<number, string>();
+    const missing = input.data.lines.filter((line) => !cached.has(line.i));
+    let fresh: { i: number; vi: string | null }[] = [];
+    if (missing.length) {
+      const work = { ...input.data, lines: missing };
+      if (config.engine.kind === "local") {
+        fresh = await translateLocally(
+          work,
           config.endpoint!,
           config.key,
           signal,
         );
-      else {
+      } else if (
+        config.engine.kind === "workers-ai" ||
+        config.engine.kind === "workers-ai-mt"
+      ) {
         const ai = await workersAiBinding();
         // Flag on but no binding (e.g. Node dev) — never fall through to Gemini.
         if (!ai) return error("ai_unavailable", 503);
         try {
-          lines = await translateWithWorkersAi(input.data, ai, signal);
+          fresh =
+            config.engine.kind === "workers-ai-mt"
+              ? await translateWithM2m100(work, ai, signal)
+              : await translateWithWorkersAi(work, ai, signal);
         } catch (cause) {
           if (
             cause instanceof Error &&
@@ -121,70 +158,78 @@ export async function POST(request: NextRequest) {
             502,
           );
         }
-      }
-      return NextResponse.json(
-        {
-          ok: true,
-          source: "ai",
-          model: config.engine.model,
-          profile: config.engine.profile,
-          version: TRANSLATION_VERSION,
-          lines,
-        },
-        { headers: { "Cache-Control": "no-store" } },
-      );
-    }
-    const response = await fetch(geminiGenerateUrl(GEMINI_MODEL, config.key), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal,
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: TRANSLATION_SYSTEM_PROMPT }] },
-        contents: [
-          { role: "user", parts: [{ text: JSON.stringify(input.data) }] },
-        ],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "ARRAY",
-            maxItems: TRANSLATION_BATCH_SIZE,
-            items: {
-              type: "OBJECT",
-              properties: {
-                i: { type: "INTEGER" },
-                vi: { type: "STRING", nullable: true },
+      } else {
+        const response = await fetch(
+          geminiGenerateUrl(GEMINI_MODEL, config.key),
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal,
+            body: JSON.stringify({
+              systemInstruction: {
+                parts: [{ text: TRANSLATION_SYSTEM_PROMPT }],
               },
-              required: ["i", "vi"],
-            },
+              contents: [
+                { role: "user", parts: [{ text: JSON.stringify(work) }] },
+              ],
+              generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                  type: "ARRAY",
+                  maxItems: TRANSLATION_BATCH_SIZE,
+                  items: {
+                    type: "OBJECT",
+                    properties: {
+                      i: { type: "INTEGER" },
+                      vi: { type: "STRING", nullable: true },
+                    },
+                    required: ["i", "vi"],
+                  },
+                },
+              },
+            }),
           },
-        },
-      }),
-    });
-    if (!response.ok)
-      return error(
-        response.status === 429 ? "rate_limited" : "ai_failed",
-        response.status === 429 ? 429 : 502,
-      );
-    const payload = await response.json();
-    const candidate = payload.candidates?.[0];
-    if (candidate?.finishReason && candidate.finishReason !== "STOP")
-      return error("ai_failed", 502);
-    const text = candidate?.content?.parts
-      ?.filter((part: { thought?: boolean }) => !part.thought)
-      .map((part: { text?: string }) => part.text ?? "")
-      .join("");
-    if (!text) return error("ai_failed", 502);
-    let lines;
-    try {
-      lines = validateTranslations(JSON.parse(text), input.data.lines);
-    } catch {
-      return error("invalid_output", 502);
+        );
+        if (!response.ok)
+          return error(
+            response.status === 429 ? "rate_limited" : "ai_failed",
+            response.status === 429 ? 429 : 502,
+          );
+        const payload = await response.json();
+        const candidate = payload.candidates?.[0];
+        if (candidate?.finishReason && candidate.finishReason !== "STOP")
+          return error("ai_failed", 502);
+        const text = candidate?.content?.parts
+          ?.filter((part: { thought?: boolean }) => !part.thought)
+          .map((part: { text?: string }) => part.text ?? "")
+          .join("");
+        if (!text) return error("ai_failed", 502);
+        try {
+          fresh = validateTranslations(JSON.parse(text), work.lines);
+        } catch {
+          return error("invalid_output", 502);
+        }
+      }
+      // Best-effort write-through — a cache failure never fails the request.
+      if (user && videoId)
+        await writeTranslationCache(
+          client,
+          user.id,
+          videoId,
+          config.engine.profile,
+          missing,
+          fresh,
+        ).catch(() => {});
     }
+    const lines = validateTranslations(
+      [...[...cached.entries()].map(([i, vi]) => ({ i, vi })), ...fresh],
+      input.data.lines,
+    );
     return NextResponse.json(
       {
         ok: true,
         source: "ai",
-        model: GEMINI_MODEL,
+        model: config.engine.model,
         profile: config.engine.profile,
         version: TRANSLATION_VERSION,
         lines,

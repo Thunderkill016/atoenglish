@@ -32,6 +32,7 @@ function Harness({
   activeIndex = 0,
   automatic = false,
   title,
+  videoId,
 }: {
   mode?: SubtitleMode;
   model?: ServerTranslationEngine;
@@ -39,6 +40,7 @@ function Harness({
   activeIndex?: number;
   automatic?: boolean;
   title?: string;
+  videoId?: string;
 }) {
   const value = useTranslations(
     source,
@@ -49,7 +51,7 @@ function Harness({
     "en",
     model,
     title,
-    { automatic },
+    { automatic, videoId },
   );
   useEffect(() => {
     current = value;
@@ -216,6 +218,9 @@ describe("server subtitle scheduling and cache", () => {
 });
 
 describe("device translation scheduling", () => {
+  // No server engine configured → a mid-run failure keeps the device provider
+  // and an explicit retry resumes it (the auto-stepdown case is covered in the
+  // cross-device suite below).
   it("rechecks playback after each cue, persists partial success and resumes from it after failure", async () => {
     const source = Array.from({ length: 16 }, (_, i) => ({
       i,
@@ -240,11 +245,15 @@ describe("device translation scheduling", () => {
     });
     const cloud = vi.fn();
     vi.stubGlobal("fetch", cloud);
-    await act(async () => root.render(<Harness source={source} />));
+    await act(async () =>
+      root.render(<Harness source={source} model={null as never} />),
+    );
     await act(async () => current.enableDevice());
     await check(() => expect(translate).toHaveBeenCalledTimes(1));
     await act(async () =>
-      root.render(<Harness source={source} activeIndex={14} />),
+      root.render(
+        <Harness source={source} activeIndex={14} model={null as never} />,
+      ),
     );
     await act(async () => finishFirst("Câu số không."));
     await check(() => expect(current.error).not.toBeNull());
@@ -272,7 +281,9 @@ describe("device translation scheduling", () => {
     expect(current.finished).toBe(false);
     expect(current.busy).toBe(false);
     await act(async () =>
-      root.render(<Harness source={source} activeIndex={0} />),
+      root.render(
+        <Harness source={source} activeIndex={0} model={null as never} />,
+      ),
     );
     await check(() => expect(current.finished).toBe(true));
     expect(
@@ -498,5 +509,125 @@ describe("native shell translation bridge (mission 007)", () => {
     await check(() => expect(current.finished).toBe(true));
     expect(current.lines).toEqual({});
     expect(current.error).toBeNull();
+  });
+});
+
+describe("cross-device server fallback (ATO-TRANSLATE-MOBILE-01)", () => {
+  const serverReply = (_url: string, init: RequestInit) => {
+    const input = JSON.parse(init.body as string);
+    return Promise.resolve(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          source: "ai",
+          model: engine.model,
+          profile: engine.profile,
+          version: TRANSLATION_VERSION,
+          lines: input.lines.map((line: { i: number }) => ({
+            i: line.i,
+            vi: `SV:${line.i}`,
+          })),
+        }),
+      ),
+    );
+  };
+
+  it("mobile browser without Translator API falls back to the server engine and sends videoId", async () => {
+    const fetcher = vi.fn(serverReply);
+    vi.stubGlobal("fetch", fetcher);
+    await act(async () =>
+      root.render(<Harness automatic videoId="a1b2c3d4e5f" />),
+    );
+    await check(() => expect(current.finished).toBe(true));
+    expect(current.availability).toBe("unavailable");
+    expect(current.provider).toBe("server");
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    const body = JSON.parse(fetcher.mock.calls[0][1].body as string);
+    expect(body.videoId).toBe("a1b2c3d4e5f");
+    expect(current.lines).toEqual({ 0: "SV:0", 2: "SV:2" });
+  });
+
+  it("steps down to the server once when the device translator fails mid-run", async () => {
+    const translate = vi
+      .fn()
+      .mockRejectedValue(new Error("on-device model crashed"));
+    vi.stubGlobal("Translator", {
+      availability: async () => "available",
+      create: async () => ({ translate, destroy: vi.fn() }),
+    });
+    const fetcher = vi.fn(serverReply);
+    vi.stubGlobal("fetch", fetcher);
+    await act(async () => root.render(<Harness automatic />));
+    await check(() => expect(current.finished).toBe(true));
+    expect(current.provider).toBe("server");
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(current.lines).toEqual({ 0: "SV:0", 2: "SV:2" });
+    expect(current.error).toBeNull();
+  });
+
+  it("reports pending while cues are queued and clears it when finished", async () => {
+    let release!: (response: Response) => void;
+    const gate = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    const fetcher = vi.fn((_url: string, init: RequestInit) =>
+      gate.then(() => serverReply(_url, init)),
+    );
+    vi.stubGlobal("fetch", fetcher);
+    await act(async () => root.render(<Harness automatic />));
+    await check(() => expect(current.pending).toBe(true));
+    expect(current.finished).toBe(false);
+    await act(async () => release(new Response("{}")));
+    await check(() => expect(current.finished).toBe(true));
+    expect(current.pending).toBe(false);
+  });
+
+  it("does not spend server budget without activation when translation is not automatic", async () => {
+    const fetcher = vi.fn(serverReply);
+    vi.stubGlobal("fetch", fetcher);
+    await act(async () => root.render(<Harness />)); // automatic: false
+    await check(() => expect(current.availability).toBe("unavailable"));
+    expect(current.provider).toBe("device");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(current.lines).toEqual({});
+  });
+
+  it("does not report pending when nothing can deliver a translation", async () => {
+    // No Translator, no shell, no server engine — terminal "unavailable".
+    await act(async () =>
+      root.render(<Harness automatic model={null as never} />),
+    );
+    await check(() => expect(current.availability).toBe("unavailable"));
+    expect(current.provider).toBe("device");
+    expect(current.pending).toBe(false);
+    expect(current.finished).toBe(false);
+  });
+
+  it("translates a 300+ cue video only around the playhead, then jumps on seek", async () => {
+    const source = Array.from({ length: 320 }, (_, i) => ({
+      i,
+      text: `Cue ${i}.`,
+      start_ms: i * 2000,
+      end_ms: i * 2000 + 1500,
+    }));
+    const fetcher = vi.fn(serverReply);
+    vi.stubGlobal("fetch", fetcher);
+    await act(async () => root.render(<Harness automatic source={source} />));
+    // Wait for work to actually start before watching it idle — `busy` is
+    // false at mount too.
+    await check(() => expect(fetcher.mock.calls.length).toBeGreaterThan(0));
+    await check(() => expect(current.busy).toBe(false));
+    const firstWindowCount = fetcher.mock.calls.length;
+    // Bounded around the active window — never the whole transcript at once.
+    expect(firstWindowCount).toBeGreaterThan(0);
+    expect(firstWindowCount).toBeLessThan(30);
+    expect(current.finished).toBe(false);
+    await act(async () =>
+      root.render(<Harness automatic source={source} activeIndex={200} />),
+    );
+    await check(() =>
+      expect(fetcher.mock.calls.length).toBeGreaterThan(firstWindowCount),
+    );
+    expect(Object.keys(current.lines).map(Number)).toContain(200);
   });
 });

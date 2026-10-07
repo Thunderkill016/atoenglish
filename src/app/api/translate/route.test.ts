@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { NEON_AUTH_SESSION_COOKIE_NAME } from "@neondatabase/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { POST } from "./route";
+import { translationTextHash } from "@/lib/video/translation-cache";
 const { check, binding } = vi.hoisted(() => ({
   check: vi.fn(),
   binding: vi.fn(),
@@ -107,22 +108,36 @@ describe("optional cloud subtitles", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher.mock.calls[0][0].toString()).toContain("127.0.0.1:8089");
   });
-  it("keeps the guest boundary and rejects oversized local batches before auth or provider work", async () => {
+  it("lets guests reach the engine with the narrower limit and rejects oversized local batches before auth or provider work", async () => {
     vi.stubEnv("SUBTITLE_LOCAL_ENABLED", "true");
     vi.stubEnv(
       "SUBTITLE_LOCAL_URL",
       "http://127.0.0.1:8089/v1/chat/completions",
     );
     vi.stubEnv("SUBTITLE_LOCAL_KEY", "local-test-key");
-    const fetcher = vi.fn();
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          model: "hymt2-1.8b-q4",
+          choices: [
+            {
+              finish_reason: "stop",
+              message: { content: "Khách vẫn dịch được." },
+            },
+          ],
+        }),
+      ),
+    );
     vi.stubGlobal("fetch", fetcher);
+    // Guest (no session cookie) now falls through to the engine — mission 008.
     expect(
       (await POST(request({ ...input, lines: [input.lines[0]] }, false)))
         .status,
-    ).toBe(401);
+    ).toBe(200);
     expect((await POST(request())).status).toBe(400);
-    expect(createClient).not.toHaveBeenCalled();
-    expect(fetcher).not.toHaveBeenCalled();
+    // createClient ran once — for the guest request; the 400 never reaches auth.
+    expect(createClient).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
   it("does not call Gemini when the selected local backend fails", async () => {
     vi.stubEnv("SUBTITLE_LOCAL_ENABLED", "true");
@@ -148,7 +163,7 @@ describe("optional cloud subtitles", () => {
     expect(fetcher).not.toHaveBeenCalled();
     expect(createClient).not.toHaveBeenCalled();
   });
-  it("rejects invalid IDs, cross-origin and guests before auth/provider work", async () => {
+  it("rejects invalid IDs and cross-origin before auth/provider work, guests reach the engine", async () => {
     expect(
       (
         await POST(
@@ -159,8 +174,21 @@ describe("optional cloud subtitles", () => {
     expect(
       (await POST(request(input, true, "https://other.example"))).status,
     ).toBe(403);
-    expect((await POST(request(input, false))).status).toBe(401);
     expect(createClient).not.toHaveBeenCalled();
+    // Guest path: rate-limited per IP but not blocked — mobile browsers have
+    // no Translator API and no shell bridge (mission 008).
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(model([{ i: 2, vi: "Khách." }])),
+    );
+    const guest = await POST(
+      request({ ...input, lines: [input.lines[0]] }, false),
+    );
+    expect(guest.status).toBe(200);
+    expect(await guest.json()).toMatchObject({
+      ok: true,
+      lines: [{ i: 2, vi: "Khách." }],
+    });
   });
   it("validates returned IDs without inventing missing translations", async () => {
     const fetcher = vi
@@ -266,11 +294,192 @@ describe("optional cloud subtitles", () => {
     });
   });
 
+  describe("m2m100 engine (mobile fallback, mission 008)", () => {
+    beforeEach(() => {
+      vi.stubEnv("SUBTITLE_M2M100_ENABLED", "true");
+      vi.stubEnv("SUBTITLE_GEMINI_ENABLED", "");
+      vi.stubEnv("SUBTITLE_WORKERS_AI_ENABLED", "");
+      vi.stubEnv("SUBTITLE_LOCAL_ENABLED", "");
+    });
+    const one = { ...input, lines: [input.lines[0]] };
+
+    it("translates with the dedicated MT model and source/target language params", async () => {
+      const ai = {
+        run: vi
+          .fn()
+          .mockResolvedValue({ translated_text: "Tôi không bán nó." }),
+      };
+      binding.mockResolvedValue(ai);
+      const fetcher = vi.fn();
+      vi.stubGlobal("fetch", fetcher);
+      const response = await POST(request(one));
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({
+        ok: true,
+        model: "@cf/meta/m2m100-1.2b",
+        profile: "m2m100-1.2b@workers-ai/en-vi-v1",
+        lines: [{ i: 2, vi: "Tôi không bán nó." }],
+      });
+      expect(ai.run).toHaveBeenCalledWith("@cf/meta/m2m100-1.2b", {
+        text: input.lines[0].text,
+        source_lang: "en",
+        target_lang: "vi",
+      });
+      expect(fetcher).not.toHaveBeenCalled();
+    });
+
+    it("translates a small batch in one request with per-line degradation", async () => {
+      const ai = {
+        run: vi
+          .fn()
+          .mockResolvedValueOnce({ translated_text: "A" })
+          .mockRejectedValueOnce(new Error("one bad cue")),
+      };
+      binding.mockResolvedValue(ai);
+      const response = await POST(request());
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      // One failed cue degrades to a null line; it never sinks the batch.
+      expect(body.lines).toEqual([
+        { i: 2, vi: "A" },
+        { i: 4, vi: null },
+      ]);
+      expect(ai.run).toHaveBeenCalledTimes(2);
+    });
+
+    it("rejects batches larger than the engine's bounded batch size", async () => {
+      const ai = { run: vi.fn() };
+      binding.mockResolvedValue(ai);
+      const lines = Array.from({ length: 9 }, (_, n) => ({
+        i: n * 2,
+        text: `Cue ${n}.`,
+      }));
+      expect((await POST(request({ ...input, lines }))).status).toBe(400);
+      expect(ai.run).not.toHaveBeenCalled();
+    });
+
+    it("maps binding errors to ai_failed and missing binding to ai_unavailable", async () => {
+      binding.mockResolvedValue({
+        run: vi.fn().mockRejectedValue(new Error("capacity")),
+      });
+      expect((await POST(request(one))).status).toBe(502);
+      binding.mockResolvedValue(null);
+      const missing = await POST(request(one));
+      expect(missing.status).toBe(503);
+      expect(await missing.json()).toMatchObject({ error: "ai_unavailable" });
+    });
+  });
+
+  describe("persisted subtitle cache", () => {
+    const videoId = "a1b2c3d4e5f";
+    const cachedBody = { ...input, videoId };
+    function table(rows: object[]) {
+      const upsert = vi.fn().mockResolvedValue({ error: null });
+      // select().eq().eq().eq().in() chain — every filter returns the same chain.
+      const chain: Record<string, unknown> = {};
+      chain.eq = vi.fn().mockReturnValue(chain);
+      chain.in = vi.fn().mockResolvedValue({ data: rows, error: null });
+      chain.select = vi.fn().mockReturnValue(chain);
+      chain.upsert = upsert;
+      const tableMock = vi.fn().mockImplementation((name: string) => {
+        expect(name).toBe("subtitle_translations");
+        return chain;
+      });
+      vi.mocked(createClient).mockResolvedValueOnce({
+        auth: {
+          getUser: vi
+            .fn()
+            .mockResolvedValue({ data: { user: { id: "user-1" } } }),
+        },
+        from: tableMock,
+      } as never);
+      return { tableMock, upsert };
+    }
+
+    it("serves cache hits without provider calls and stores only the miss", async () => {
+      const hash = await translationTextHash(input.lines[0].text);
+      const { upsert } = table([
+        { line_i: 2, text_hash: hash, vi: "Đã cache." },
+      ]);
+      const fetcher = vi
+        .fn()
+        .mockResolvedValue(model([{ i: 4, vi: "Đáp lại." }]));
+      vi.stubGlobal("fetch", fetcher);
+      const response = await POST(request(cachedBody));
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.lines).toEqual([
+        { i: 2, vi: "Đã cache." },
+        { i: 4, vi: "Đáp lại." },
+      ]);
+      const envelope = JSON.parse(fetcher.mock.calls[0][1].body);
+      const sent = JSON.parse(envelope.contents[0].parts[0].text);
+      expect(sent.lines).toEqual([{ i: 4, text: input.lines[1].text }]);
+      // Persisted the fresh miss under the user+video+profile+hash key.
+      expect(upsert).toHaveBeenCalledTimes(1);
+      const [rows] = upsert.mock.calls[0];
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        user_id: "user-1",
+        video_id: videoId,
+        line_i: 4,
+        vi: "Đáp lại.",
+      });
+      expect(rows[0].text_hash).toBe(
+        await translationTextHash(input.lines[1].text),
+      );
+    });
+
+    it("re-translates when the source text changed under the same line id", async () => {
+      const stale = await translationTextHash("an older caption text");
+      const { upsert } = table([
+        { line_i: 2, text_hash: stale, vi: "Bản cũ." },
+      ]);
+      const fetcher = vi
+        .fn()
+        .mockResolvedValue(model([{ i: 2, vi: "Bản mới." }]));
+      vi.stubGlobal("fetch", fetcher);
+      const response = await POST(
+        request({ ...cachedBody, lines: [input.lines[0]] }),
+      );
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.lines).toEqual([{ i: 2, vi: "Bản mới." }]);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(upsert).toHaveBeenCalledTimes(1);
+    });
+
+    it("guests skip the persisted cache entirely", async () => {
+      const guestFrom = vi.fn();
+      vi.mocked(createClient).mockResolvedValueOnce({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+        },
+        from: guestFrom,
+      } as never);
+      const fetcher = vi
+        .fn()
+        .mockResolvedValue(model([{ i: 2, vi: "Khách." }]));
+      vi.stubGlobal("fetch", fetcher);
+      const response = await POST(request(cachedBody, false));
+      expect(response.status).toBe(200);
+      expect(guestFrom).not.toHaveBeenCalled();
+    });
+  });
+
   it("does not contact a provider after the user rate limit", async () => {
     check.mockResolvedValue({ success: false });
     const fetcher = vi.fn();
     vi.stubGlobal("fetch", fetcher);
     expect((await POST(request())).status).toBe(429);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("rate-limits guests per IP on the narrower guest limiter", async () => {
+    check.mockResolvedValue({ success: false });
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    expect((await POST(request(input, false))).status).toBe(429);
     expect(fetcher).not.toHaveBeenCalled();
   });
 });

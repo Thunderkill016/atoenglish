@@ -15,6 +15,13 @@ import {
   WORKERS_AI_TRANSLATION_MAX_CHARS,
   WORKERS_AI_TRANSLATION_TIMEOUT_MS,
 } from "./workers-ai-translation";
+import {
+  M2M100_TRANSLATION_MODEL,
+  M2M100_TRANSLATION_PROFILE,
+  M2M100_TRANSLATION_BATCH_SIZE,
+  M2M100_TRANSLATION_MAX_CHARS,
+  M2M100_TRANSLATION_TIMEOUT_MS,
+} from "./m2m100-translation";
 
 // Pinned official Tencent Q4_K_M weights; do not reuse cache for a different model/build/prompt.
 export const LOCAL_TRANSLATION_MODEL = "hymt2-1.8b-q4";
@@ -128,6 +135,21 @@ export function serverTranslationConfig(): {
       },
     };
   }
+  // Dedicated MT model on Workers AI — the mobile/no-Translator fallback
+  // (mission 008). Cloudflare-hosted; the `AI` binding resolves per request.
+  if (process.env.SUBTITLE_M2M100_ENABLED === "true")
+    return {
+      key: "",
+      engine: {
+        kind: "workers-ai-mt",
+        model: M2M100_TRANSLATION_MODEL,
+        profile: M2M100_TRANSLATION_PROFILE,
+        label: "M2M-100 · Cloudflare",
+        batchSize: M2M100_TRANSLATION_BATCH_SIZE,
+        maxChars: M2M100_TRANSLATION_MAX_CHARS,
+        timeoutMs: M2M100_TRANSLATION_TIMEOUT_MS,
+      },
+    };
   // Cloudflare-hosted; no key — the Worker `AI` binding is resolved per request.
   if (process.env.SUBTITLE_WORKERS_AI_ENABLED === "true")
     return {

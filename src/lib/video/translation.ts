@@ -21,7 +21,7 @@ export const TRANSLATION_WINDOW_BACK = 1;
 export const TRANSLATION_WINDOW_AHEAD = 12;
 export const TRANSLATION_TITLE_MAX_CHARS = 200;
 export type ServerTranslationEngine = {
-  kind: "local" | "workers-ai" | "gemini";
+  kind: "local" | "workers-ai" | "workers-ai-mt" | "gemini";
   model: string;
   profile: string;
   label: string;
@@ -57,6 +57,8 @@ const contextLine = sourceLine
 export const translationInput = z
   .object({
     language: z.literal("vi"),
+    // Server-side per-account cache key (mission 008); absent ⇒ no DB cache.
+    videoId: z.string().trim().min(1).max(64).optional(),
     title: z.string().trim().min(1).max(TRANSLATION_TITLE_MAX_CHARS).optional(),
     lines: z.array(sourceLine).min(1).max(TRANSLATION_BATCH_SIZE),
     before: z.array(contextLine).max(TRANSLATION_CONTEXT_LINES).default([]),
@@ -136,7 +138,11 @@ export function translationPayload(
   sentences: Sentence[],
   selected: Sentence[],
   maxChars = TRANSLATION_MAX_CHARS,
-  context: { title?: string; known?: Record<number, string> } = {},
+  context: {
+    title?: string;
+    known?: Record<number, string>;
+    videoId?: string;
+  } = {},
 ): TranslationInput {
   const offsets = selected.map((line) =>
     sentences.findIndex((s) => s.i === line.i),
@@ -189,6 +195,7 @@ export function translationPayload(
   const keepTitle = Boolean(title) && title!.length <= remaining;
   return translationInput.parse({
     language: "vi",
+    ...(context.videoId ? { videoId: context.videoId } : {}),
     ...(keepTitle ? { title } : {}),
     lines: selected.map(({ i, text }) => ({ i, text })),
     before,

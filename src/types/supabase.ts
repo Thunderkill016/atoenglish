@@ -927,8 +927,8 @@ export type Database = {
           title: string | null;
           channel: string | null;
           duration_ms: number | null;
-          imported_via: string;
           fetched_at: string;
+          imported_via: string;
         };
         Insert: {
           video_id: string;
@@ -939,8 +939,8 @@ export type Database = {
           title?: string | null;
           channel?: string | null;
           duration_ms?: number | null;
-          imported_via?: string;
           fetched_at?: string;
+          imported_via?: string;
         };
         Update: {
           video_id?: string;
@@ -951,8 +951,8 @@ export type Database = {
           title?: string | null;
           channel?: string | null;
           duration_ms?: number | null;
-          imported_via?: string;
           fetched_at?: string;
+          imported_via?: string;
         };
         Relationships: [];
       };
@@ -990,6 +990,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "speaking_sessions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      subtitle_translations: {
+        Row: {
+          user_id: string;
+          video_id: string;
+          profile: string;
+          line_i: number;
+          text_hash: string;
+          vi: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          video_id: string;
+          profile: string;
+          line_i: number;
+          text_hash: string;
+          vi: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          video_id?: string;
+          profile?: string;
+          line_i?: number;
+          text_hash?: string;
+          vi?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "subtitle_translations_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "user";

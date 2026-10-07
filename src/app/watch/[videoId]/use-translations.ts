@@ -130,7 +130,10 @@ export function useTranslations(
   serverTranslation: ServerTranslationEngine | null,
   /** Video title — whole-video context for the server model. */
   title?: string,
-  { automatic = false }: { automatic?: boolean } = {},
+  {
+    automatic = false,
+    videoId,
+  }: { automatic?: boolean; videoId?: string } = {},
 ) {
   // Uploader-authored Vietnamese wins over any machine output and is never
   // re-translated; it also anchors pronouns for neighbouring machine cues.
@@ -144,18 +147,13 @@ export function useTranslations(
   const [device, setDevice] = useState<DeviceTranslator | null>(null);
   // The shell bridge needs no setup — it either exists or it doesn't.
   const [shell] = useState<DeviceTranslator | null>(() => shellAPI() ?? null);
-  // Only an operator-configured free engine may start without a separate choice.
-  // Gemini remains explicit; guest server requests are not authorized by this API.
-  // Inside the native shell, the on-device bridge always wins: free + offline.
+  // Resolver order (ATO-TRANSLATE-MOBILE-01): persisted cache → shell bridge →
+  // Chrome Translator (feature-detected) → server fallback → retry/error.
+  // Inside the native shell the on-device bridge always wins; the server is
+  // reached only as a fallback, never for its own sake. Gemini stays explicit
+  // (operator-billed) and is never auto-selected.
   const [provider, setProvider] = useState<"device" | "server" | "shell">(() =>
-    shell
-      ? "shell"
-      : automatic &&
-          scope !== "guest" &&
-          serverTranslation &&
-          serverTranslation.kind !== "gemini"
-        ? "server"
-        : "device",
+    shell ? "shell" : "device",
   );
   const [availability, setAvailability] = useState("checking");
   const [downloading, setDownloading] = useState(false);
@@ -177,6 +175,12 @@ export function useTranslations(
   const active = useRef(activeIndex);
   const setup = useRef<AbortController | null>(null);
   const alive = useRef(true);
+  // Lines already produced by the device path survive a mid-run step-down to
+  // the server instead of vanishing while the new profile re-translates them.
+  const carryOver = useRef<{
+    sentences: Sentence[];
+    lines: Record<number, string>;
+  } | null>(null);
   useEffect(() => {
     active.current = activeIndex;
     wake.current?.();
@@ -203,6 +207,22 @@ export function useTranslations(
       setup.current?.abort();
     };
   }, []);
+  // Automatic server fallback: no usable device path (mobile browser, WebView
+  // without the shell bridge, unsupported Chrome) or a failed device setup
+  // steps down to the configured server engine — billed Gemini never does.
+  const serverAvailable = Boolean(
+    serverTranslation && serverTranslation.kind !== "gemini",
+  );
+  // Derived, not stored: a preferred-device provider with no usable path
+  // reads as "server" — but only after the learner (or `automatic`) has
+  // asked for translation. Without that gate every watch-page load would
+  // spend server budget uninvited on mobile.
+  const resolvedProvider: "device" | "server" | "shell" =
+    provider === "device" &&
+    serverAvailable &&
+    (Boolean(setupError) || (automatic && availability === "unavailable"))
+      ? "server"
+      : provider;
   useEffect(() => () => device?.destroy(), [device]);
   // Available models prepare automatically. Downloads resume from a normal
   // player/page gesture because Chrome requires transient user activation.
@@ -263,7 +283,7 @@ export function useTranslations(
       !automatic ||
       !enabled ||
       !needsMachine ||
-      provider !== "device" ||
+      resolvedProvider !== "device" ||
       device ||
       setupError
     )
@@ -298,7 +318,7 @@ export function useTranslations(
     automatic,
     enabled,
     needsMachine,
-    provider,
+    resolvedProvider,
     device,
     setupError,
     availability,
@@ -306,19 +326,21 @@ export function useTranslations(
     enableDevice,
   ]);
   const profile =
-    provider === "device"
+    resolvedProvider === "device"
       ? DEVICE_TRANSLATION_PROFILE
-      : provider === "shell"
+      : resolvedProvider === "shell"
         ? SHELL_TRANSLATION_PROFILE
         : (serverTranslation?.profile ?? TRANSLATION_MODEL);
   const batchSize =
-    provider === "server"
+    resolvedProvider === "server"
       ? (serverTranslation?.batchSize ?? TRANSLATION_BATCH_SIZE)
       : DEVICE_TRANSLATION_BATCH_SIZE;
   const maxChars =
-    provider === "server" ? (serverTranslation?.maxChars ?? 0) : undefined;
+    resolvedProvider === "server"
+      ? (serverTranslation?.maxChars ?? 0)
+      : undefined;
   const timeoutMs =
-    provider === "server"
+    resolvedProvider === "server"
       ? (serverTranslation?.timeoutMs ?? TRANSLATION_TIMEOUT_MS)
       : TRANSLATION_TIMEOUT_MS;
   const serverModel = serverTranslation?.model;
@@ -326,9 +348,9 @@ export function useTranslations(
     if (
       !enabled ||
       !sentences.length ||
-      (provider === "device" && !device) ||
-      (provider === "shell" && !shell) ||
-      (provider === "server" && !serverModel)
+      (resolvedProvider === "device" && !device) ||
+      (resolvedProvider === "shell" && !shell) ||
+      (resolvedProvider === "server" && !serverModel)
     )
       return;
     const controller = new AbortController();
@@ -360,6 +382,11 @@ export function useTranslations(
             )
             .slice(-CACHE_MAX_ITEMS);
         }
+        if (carryOver.current && carryOver.current.sentences === sentences) {
+          // Server-profile cache still wins any overlapping cue.
+          translated = { ...carryOver.current.lines, ...translated };
+        }
+        carryOver.current = null;
         const hit = cached.find((item) => item.key === fingerprint);
         // Cached transcripts can exceed one request batch; validate in bounded chunks.
         if (hit)
@@ -416,10 +443,14 @@ export function useTranslations(
           const input = translationPayload(sentences, selected, maxChars, {
             title,
             known: { ...translated, ...human },
+            videoId,
           });
           let lines;
-          const local = provider === "shell" ? shell : device;
-          if ((provider === "device" || provider === "shell") && local) {
+          const local = resolvedProvider === "shell" ? shell : device;
+          if (
+            (resolvedProvider === "device" || resolvedProvider === "shell") &&
+            local
+          ) {
             // Expert translator has no context parameter. One sentence per call preserves IDs without separator heuristics.
             lines = [];
             for (const line of selected) {
@@ -515,6 +546,14 @@ export function useTranslations(
           });
         } catch (cause) {
           if (disposed || controller.signal.aborted) return;
+          // A failed on-device path (Translator or the native bridge) steps
+          // down to the server once — the provider change re-enters this
+          // effect and retries there.
+          if (resolvedProvider !== "server" && serverAvailable) {
+            carryOver.current = { sentences, lines: translated };
+            setProvider("server");
+            return;
+          }
           setState({
             ...result,
             lines: translated,
@@ -560,7 +599,7 @@ export function useTranslations(
     scope,
     segmentationVersion,
     retry,
-    provider,
+    resolvedProvider,
     device,
     profile,
     batchSize,
@@ -568,6 +607,8 @@ export function useTranslations(
     timeoutMs,
     serverModel,
     shell,
+    serverAvailable,
+    videoId,
   ]);
   // Reject the previous transcript/account/provider immediately, including the SHA preparation window.
   const current =
@@ -575,6 +616,14 @@ export function useTranslations(
     state.scope === scope &&
     state.provider === profile &&
     state.title === title;
+  // A cue is "pending" while some provider can still deliver it — the UI
+  // must not say "no translation" for a cue that's merely queued.
+  const providerViable =
+    resolvedProvider === "shell"
+      ? Boolean(shell)
+      : resolvedProvider === "server"
+        ? Boolean(serverModel)
+        : availability !== "unavailable";
   return {
     // Human lines show even before any translator is activated.
     lines: { ...(current ? state.lines : {}), ...human },
@@ -583,13 +632,24 @@ export function useTranslations(
     error: current ? state.error : null,
     finished: current && state.finished,
     cacheNotice,
+    // True while an untranslated cue can still be delivered — queued,
+    // fingerprinting, or in flight — so the UI shows "Đang dịch…" instead of
+    // "Chưa có bản dịch". `current` is deliberately absent: the gap between
+    // mount and the first resolved state is itself a queued cue.
+    pending:
+      enabled &&
+      needsMachine &&
+      !(current && state.finished) &&
+      !(current && state.error) &&
+      !setupError &&
+      (state.busy || providerViable),
     availability,
     downloading,
     progress,
     setupError,
     needsActivation: needsActivation || availability === "downloadable",
-    deviceReady: Boolean(device) || provider === "shell",
-    provider,
+    deviceReady: Boolean(device) || resolvedProvider === "shell",
+    provider: resolvedProvider,
     enableDevice,
     useServer: () => {
       if (!serverModel) return;
