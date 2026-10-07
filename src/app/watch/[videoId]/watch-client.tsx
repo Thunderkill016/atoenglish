@@ -132,6 +132,16 @@ export function WatchClient({
   // Read mode on phones: transport cluster collapses behind this toggle.
   const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
 
+  // Marker for the mobile shell (mission 007): the native bridge relays
+  // collected captions only while this stays false — a settled transcript
+  // (cache hit or learner paste) must never be overwritten by a late
+  // collector result.
+  useEffect(() => {
+    (
+      window as unknown as { __atoTranscriptReady?: boolean }
+    ).__atoTranscriptReady = Boolean(transcript);
+  }, [transcript]);
+
   const controls = useYouTubePlayer(videoId, initialPositionMs);
   const {
     nowMs,

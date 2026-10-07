@@ -19,6 +19,7 @@ const eslintConfig = [
       "dist/**",
       "out/**",
       "research/**",
+      "mobile/**",
     ],
   },
   ...nextConfig,

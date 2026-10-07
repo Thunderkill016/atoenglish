@@ -34,7 +34,7 @@ Owner decisions defining scope (2026-10-06):
 - **Primary learner:** Vietnamese self-learners who learn through videos and films they already watch.
 - **Scale:** one learner (Hoàng) validates the loop first; the architecture must stay multi-user-ready (per-user data ownership and RLS), but no public launch work until the loop is validated.
 - **Monetization:** none. No paywall, subscription, plan tiers, quotas or payment integration — Trancy's pricing tiers and upsell UX are explicitly not copied (REDESIGN §2).
-- **Platform:** the existing web product. The owner's later “làm extension đi” decision (recorded in mission 005 LEDGER) allows the bounded YouTube caption companion needed by `/watch`; a general browser-extension platform and native mobile apps remain closed. This source checkpoint does not establish deployment or real-session caption availability.
+- **Platform:** the existing web product. The owner's later “làm extension đi” decision (recorded in mission 005 LEDGER) allows the bounded YouTube caption companion needed by `/watch`; a general browser-extension platform remains closed. **Owner decision 2026-10-07 (“làm webview đi”)**: a minimal Android WebView shell (`mobile/android`, mission 007) is authorized as a bounded caption-companion surface — it loads the production web app and runs a hidden collector WebView to obtain captions in the device's own YouTube session; it adds no learning features, no media download, no Play distribution. A general native mobile app remains closed; iOS is deferred (no build capacity).
 - **Content:** a curated video library plus any pasted YouTube link; the product fetches the video's existing captions automatically (Trancy-style) and falls back to a learner-provided transcript when fetching fails — see the constraint below.
 
 Product references: an authenticated deep-dive of Trancy (extension code, Learning Center, live API traffic, 36 screenshots — `docs/missions/005-ejoy-trancy-learning-system/TRANCY-DEEP-DIVE.md`), a desk study of eJOY, and a static review of 39 open-source learning repositories (owner research package, branch `research/ejoy-archive-2026-10-06`; summarised in `docs/missions/005-ejoy-trancy-learning-system/RESEARCH-NOTES.md`). The UI/UX adaptation of Trancy is specified in `docs/missions/005-ejoy-trancy-learning-system/REDESIGN.md` — take the verified layout/interaction patterns, drop what does not fit (dark-only, paywall nags, machine-translated Vietnamese, 40-route sprawl). Trancy's design defines the standard; it is not evidence the loop works for AtoEnglish learners.
@@ -93,7 +93,7 @@ The following are **not active product directions and must not create maintenanc
 - badges, achievement collections, confetti and decorative reward systems;
 - mandatory Job/Career lesson overlays or a separate career-English track;
 - payments, subscriptions, plan tiers and usage quotas;
-- general browser-extension products and native mobile apps (the owner-authorized YouTube caption companion is the bounded exception above);
+- general browser-extension products and native mobile apps beyond the owner-authorized companions (browser caption extension; the mission-007 Android WebView shell);
 - non-YouTube video platforms (Netflix, HBO, Coursera…), web-page translation and PDF translation;
 - generating subtitles from video audio (e.g. Whisper) — it requires downloading audio;
 - AI voice conversation partners (eJOY AI Speaking World, Trancy AITalk) and pronunciation scoring;
