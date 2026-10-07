@@ -13,4 +13,16 @@ android {
         versionCode 1
         versionName '0.1.0'
     }
+
+    // Pinned debug key so every CI/local build shares one signature —
+    // Android refuses install-over when the key changes between builds.
+    // PKCS12 store (JDK default); standard debug credentials, not a secret.
+    signingConfigs {
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
 }
