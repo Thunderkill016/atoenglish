@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FileUp, Languages, Loader2, BookOpenText } from "lucide-react";
+import { FileUp, Languages, Loader2, BookOpenText, Puzzle } from "lucide-react";
 
 import { SEGMENTATION_VERSION } from "@/lib/video/segment";
 import { parseSubtitleFile } from "@/lib/video/subtitle-file";
@@ -16,7 +16,11 @@ interface EmptyTranscriptProps {
   busy: boolean;
   errorMessage: string | null;
   loggedIn: boolean;
+  /** True when the AtoEnglish extension marked this page (dataset flag). */
+  extensionReady?: boolean;
   onFetchYoutube: () => void;
+  /** Opens the video on YouTube so the extension can stream captions back. */
+  onExtensionFetch?: () => void;
   onParsed: (parsed: LoadedTranscript, raw: string) => void;
 }
 
@@ -34,7 +38,9 @@ export function EmptyTranscript({
   busy,
   errorMessage,
   loggedIn,
+  extensionReady = false,
   onFetchYoutube,
+  onExtensionFetch,
   onParsed,
 }: EmptyTranscriptProps) {
   const [pasteOpen, setPasteOpen] = useState(false);
@@ -106,6 +112,17 @@ export function EmptyTranscript({
           )}
           Lấy phụ đề từ YouTube
         </button>
+        {extensionReady && onExtensionFetch && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onExtensionFetch}
+            className="flex items-center gap-2 rounded-lg border border-[#f5b50a]/40 bg-[#151518] min-h-11 px-4 py-2 text-sm text-[#f5b50a] transition hover:bg-[#f5b50a]/10 disabled:opacity-60"
+          >
+            <Puzzle className="h-4 w-4" />
+            Lấy qua extension
+          </button>
+        )}
         <button
           type="button"
           disabled={busy}

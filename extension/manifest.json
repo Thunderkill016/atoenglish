@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "AtoEnglish Captions",
+  "version": "0.1.0",
+  "description": "Lấy phụ đề YouTube trong phiên trình duyệt của bạn và gửi sang AtoEnglish để học từng câu.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/watch*"],
+      "js": ["content-youtube-main.js"],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.youtube.com/watch*"],
+      "js": ["content-youtube-relay.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["http://localhost:3000/*", "https://*.workers.dev/*"],
+      "js": ["content-app.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

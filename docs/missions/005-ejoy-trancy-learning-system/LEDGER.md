@@ -317,3 +317,18 @@ Owner: "web này là học tiếng Anh" + "phải nghiên cứu tất cả thư 
 **Gate:** tsc (src) ✓ · eslint ✓ · 257 unit ✓ (+11) · 82/82 e2e ✓ (+2: reveal default; bilingual tests now select their mode) · next build ✓ · vinext/Cloudflare build ✓ · live YouTube alignment check ✓ (above).
 
 **Not done / open:** per-line 👍/👎 rating (Trancy) → `pilot_events`; word lookup → saved item (Zeeguu bookmark model) is Slice 3; DB translation cache; Workers AI flag + deploy; Hy-MT2 local prompt still ignores title/known VI (pinned p1 profile).
+
+## Extension caption import (Trancy/easysubs mechanism) — 2026-10-08
+
+Owner: "Vậy làm theo họ đi" → "làm extension đi". Investigated all fallback paths first: public Invidious API is effectively dead (1 instance up, its upstream blocked); `youtubei/v1/get_transcript` returns 400 "Precondition check failed" without full session; yt-dlp on the throttled IP gets the same 429. The only mechanism that reliably works is fetching inside the learner's own YouTube session — what every caption extension does.
+
+**Shipped:**
+1. `extension/` — MV3, no build step. `content-youtube-main.js` (`world: MAIN`) reads `getPlayerResponse()` + fetches each needed track's json3 same-origin (EN manual/ASR + uploader-authored VI only); `content-youtube-relay.js` writes the payload to `chrome.storage.local` and closes the import tab; `content-app.js` marks `documentElement.dataset.atoenglishExt` and relays `storage.onChanged` → `window.postMessage` into the page. `window.opener` is unusable — YouTube's COOP severs it — hence the storage relay.
+2. `src/lib/video/extension-bridge.ts` — `validateCaptionsPayload` (untrusted postMessage shape check) + `payloadToTranscript` (same pick-EN → segment → align-VI pipeline as the server fetch). `importYoutubeCaptions` server action re-validates + persists for signed-in users; guests get the identical client-side path.
+3. Watch page: "Lấy qua extension" opens `youtube.com/watch?v=…#atoenglish-import`; listener accepts the payload from youtube.com or same-origin relay; 45 s timeout with an honest error. `blocked` now also maps HTTP 429 (was 403-only) so throttling surfaces as "YouTube đang chặn…" instead of a generic error.
+
+**Verified:** loaded unpacked in Chromium persistent context — flag set, button rendered, click opened the import tab, storage relay delivered, transcript rendered, tab auto-closed. Real timedtext fetch unverifiable right now (this IP is throttled — which is the problem the extension bypasses on a normal residential session); in-page fetch plumbing verified end-to-end with a routed fixture.
+
+**Gate:** tsc ✓ · eslint ✓ · 274 unit ✓ (+8 bridge) · prettier ✓ · live browser extension loop ✓ (fixture-routed timedtext).
+
+**Not done:** real-session timedtext re-check once this IP cools down; Chrome Web Store packaging; Firefox `world:"MAIN"` fallback.

@@ -286,7 +286,10 @@ export async function fetchYoutubeCaptions(
         await delay(RETRY_DELAYS_MS[attempt++]);
         continue;
       }
-      if (res.status === 403) sawBlocked = true;
+      // 403 and an exhausted 429 both mean YouTube is refusing this server —
+      // surface "blocked" so the UI points at the manual-paste fallback,
+      // not a generic "try again" that cannot succeed right now.
+      if (res.status === 403 || res.status === 429) sawBlocked = true;
       return null;
     }
   };

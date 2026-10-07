@@ -11,6 +11,11 @@ import {
 import { fetchYoutubeCaptions } from "@/lib/video/captions";
 import { SEGMENTATION_VERSION, segmentTranscript } from "@/lib/video/segment";
 import { alignHumanTranslation } from "@/lib/video/align-translation";
+import {
+  payloadToTranscript,
+  validateCaptionsPayload,
+  type CaptionsPayload,
+} from "@/lib/video/extension-bridge";
 import { parseSubtitleFile } from "@/lib/video/subtitle-file";
 import { YOUTUBE_VIDEO_ID_RE } from "@/lib/video/youtube-url";
 import type { Json } from "@/types/supabase";
@@ -275,6 +280,52 @@ export async function fetchVideoCaptions(
     loaded.saved = await persistTranscript(supabase, user.id, videoId, loaded);
   }
   await logCaptionEvent(ctx, "caption_fetch_succeeded", videoId);
+  return { ok: true, ...loaded };
+}
+
+/**
+ * Persist a transcript imported by the browser extension (SPEC §4.2 fallback —
+ * the fetch ran inside the user's own YouTube session, so this path never
+ * hits the server-side timedtext rate limit). The payload is untrusted:
+ * re-validated and re-segmented here before anything is stored.
+ */
+export async function importYoutubeCaptions(
+  videoId: string,
+  rawPayload: unknown,
+): Promise<CaptionActionResult> {
+  if (!YOUTUBE_VIDEO_ID_RE.test(videoId)) {
+    return { ok: false, error: "invalid_url" };
+  }
+  const ctx = await currentUser();
+  const { supabase, user } = ctx;
+  if (!user || !supabase) return { ok: false, error: "unauthorized" };
+
+  const key = await rateLimitKey(user);
+  const hourly = await captionHourlyLimiter.check(key);
+  if (!hourly.success) return { ok: false, error: "rate_limited" };
+
+  const payload: CaptionsPayload | null = validateCaptionsPayload(rawPayload);
+  if (!payload || payload.videoId !== videoId) {
+    return { ok: false, error: "invalid_file" };
+  }
+  const parsed = payloadToTranscript(payload);
+  if (!parsed) return { ok: false, error: "no_captions" };
+
+  const loaded: LoadedTranscript = {
+    sentences: parsed.sentences,
+    origin: originForTrack(parsed.trackKind),
+    language: parsed.language,
+    segmentationVersion: SEGMENTATION_VERSION,
+    trackKind: parsed.trackKind,
+    title: payload.title,
+    channel: payload.channel,
+    durationMs: Number.isFinite(payload.durationMs)
+      ? payload.durationMs
+      : undefined,
+    saved: false,
+  };
+  loaded.saved = await persistTranscript(supabase, user.id, videoId, loaded);
+  await logCaptionEvent(ctx, "caption_fetch_fallback", videoId);
   return { ok: true, ...loaded };
 }
 

@@ -234,6 +234,18 @@ describe("fetchYoutubeCaptions — error mapping", () => {
     const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
     expect(result).toEqual({ ok: false, error: "blocked" });
   });
+
+  it("maps an IP rate-limit (429 after retries) to blocked", async () => {
+    // Live failure mode 06/10: timedtext returned 429 "Sorry" for every
+    // request after heavy testing — generic "error" wrongly suggested retry.
+    const { fetch } = router([
+      [PLAYER_RE, jsonRes({}, 429)],
+      [WATCH_RE, textRes("Sorry", 429)],
+      [TIMEDTEXT_RE, textRes("Sorry", 429)],
+    ]);
+    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    expect(result).toEqual({ ok: false, error: "blocked" });
+  });
 });
 
 describe("parseTimedTextList", () => {

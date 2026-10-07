@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -24,11 +31,20 @@ import { cn } from "@/lib/utils";
 import type { Sentence } from "@/lib/video/types";
 import {
   fetchVideoCaptions,
+  importYoutubeCaptions,
   saveLearnerTranscript,
   saveWatchPosition,
   type CaptionActionError,
   type LoadedTranscript,
 } from "@/app/actions/captions";
+import {
+  CAPTIONS_ACK_TYPE,
+  CAPTIONS_MESSAGE_TYPE,
+  YOUTUBE_ORIGIN,
+  payloadToTranscript,
+  validateCaptionsPayload,
+  type CaptionsPayload,
+} from "@/lib/video/extension-bridge";
 import { EmptyTranscript } from "./empty-transcript";
 import {
   TranscriptRail,
@@ -60,6 +76,9 @@ const SPEEDS = [1, 0.75, 0.5] as const;
 const POSITION_SAVE_INTERVAL_MS = 15_000;
 // Tenth-second steps make the native slider useful for fine keyboard seeking.
 const SEEK_STEP_MS = 100;
+// YouTube tab load + in-page caption collection typically lands in seconds;
+// 45s covers slow connections without locking the fallback UI forever.
+const EXTENSION_WAIT_MS = 45_000;
 
 type Phase = "idle" | "fetching" | "ready" | "error";
 type ViewMode = "theater" | "read";
@@ -242,6 +261,108 @@ export function WatchClient({
     },
     [videoId, loggedIn],
   );
+
+  // ── Extension import (SPEC §4.2 — captions fetched in the learner's own
+  // YouTube session, bypassing server-side timedtext rate limits) ───────────
+  const extensionWaitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The extension's app-side content script marks documentElement before the
+  // page hydrates; a no-subscribe external store reads that DOM flag without
+  // an SSR/client mismatch or a setState-in-effect lint hit.
+  const hasExtension = useSyncExternalStore(
+    () => () => {},
+    () => Boolean(document.documentElement.dataset.atoenglishExt),
+    () => false,
+  );
+
+  const handleExtensionPayload = useCallback(
+    async (
+      payload: CaptionsPayload,
+      source: MessageEventSource | null,
+      origin: string,
+    ) => {
+      if (extensionWaitRef.current) {
+        clearTimeout(extensionWaitRef.current);
+        extensionWaitRef.current = null;
+      }
+      const ack = () => {
+        (source as Window | null)?.postMessage(
+          { type: CAPTIONS_ACK_TYPE },
+          origin,
+        );
+      };
+      setErrorMessage(null);
+      if (loggedIn) {
+        const result = await importYoutubeCaptions(videoId, payload);
+        if (!result.ok) {
+          setErrorMessage(ERROR_MESSAGES[result.error]);
+          setPhase("error");
+          ack();
+          return;
+        }
+        setTranscript(result);
+      } else {
+        const parsed = payloadToTranscript(payload);
+        if (!parsed) {
+          setErrorMessage(ERROR_MESSAGES.no_captions);
+          setPhase("error");
+          ack();
+          return;
+        }
+        setTranscript({
+          sentences: parsed.sentences,
+          origin: parsed.trackKind === "asr" ? "youtube_asr" : "youtube_manual",
+          language: parsed.language,
+          segmentationVersion: SEGMENTATION_VERSION,
+          trackKind: parsed.trackKind,
+          title: parsed.title,
+          channel: parsed.channel,
+          durationMs: parsed.durationMs,
+          saved: false,
+        });
+      }
+      setPhase("ready");
+      ack();
+    },
+    [videoId, loggedIn],
+  );
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      // The payload arrives either straight from a youtube.com document or
+      // relayed through the extension's app-side content script (same-origin).
+      if (event.origin !== YOUTUBE_ORIGIN && event.origin !== location.origin)
+        return;
+      const raw = event.data as { type?: unknown } | null;
+      if (!raw || raw.type !== CAPTIONS_MESSAGE_TYPE) return;
+      const payload = validateCaptionsPayload(raw);
+      if (!payload || payload.videoId !== videoId) return;
+      void handleExtensionPayload(payload, event.source, event.origin);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [videoId, handleExtensionPayload]);
+
+  const handleExtensionFetch = useCallback(() => {
+    setPhase("fetching");
+    setErrorMessage(null);
+    // Keep the opener link: the YouTube tab postMessages the tracks back here.
+    // The #atoenglish-import hash tells the extension's YouTube collector that
+    // this tab exists to hand captions back; it self-closes once stored.
+    window.open(
+      `https://www.youtube.com/watch?v=${videoId}#atoenglish-import`,
+      "_blank",
+    );
+    if (extensionWaitRef.current) clearTimeout(extensionWaitRef.current);
+    // The tab has to load YouTube and collect tracks — give up politely
+    // instead of leaving the buttons spinner-locked forever.
+    extensionWaitRef.current = setTimeout(() => {
+      extensionWaitRef.current = null;
+      setErrorMessage(
+        "Chưa nhận được phụ đề từ YouTube. Kiểm tra extension AtoEnglish đã bật trên youtube.com chưa rồi thử lại.",
+      );
+      setPhase("error");
+    }, EXTENSION_WAIT_MS);
+  }, [videoId]);
 
   // ── Persist playback position (logged-in only, SPEC §4.4) ────────────────
   const positionRef = useRef(nowMs);
@@ -664,8 +785,8 @@ export function WatchClient({
                         Phím tắt:
                       </span>{" "}
                       Space phát/dừng · A câu trước · D câu sau · S lặp câu · R
-                      tự dừng sau câu · Q nghe lại câu · V hiện nghĩa câu ·
-                      ? bảng này
+                      tự dừng sau câu · Q nghe lại câu · V hiện nghĩa câu · ?
+                      bảng này
                       <p className="mt-1.5">
                         Phím tắt không hoạt động khi đang nhập văn bản hoặc con
                         trỏ nằm trong trình phát video.
@@ -724,9 +845,7 @@ export function WatchClient({
                             }
                             className="min-h-11 rounded-lg border border-[#232327] bg-[#19191c] px-2 text-[#e8e8ea]"
                           >
-                            <option value="reveal">
-                              Anh · Việt khi chạm
-                            </option>
+                            <option value="reveal">Anh · Việt khi chạm</option>
                             <option value="bilingual">Anh + Việt</option>
                             <option value="en">Tiếng Anh</option>
                             <option value="vi">Tiếng Việt</option>
@@ -885,7 +1004,9 @@ export function WatchClient({
                         busy={phase === "fetching"}
                         errorMessage={phase === "error" ? errorMessage : null}
                         loggedIn={loggedIn}
+                        extensionReady={hasExtension}
                         onFetchYoutube={handleFetchYoutube}
+                        onExtensionFetch={handleExtensionFetch}
                         onParsed={handleParsed}
                       />
                     </div>
