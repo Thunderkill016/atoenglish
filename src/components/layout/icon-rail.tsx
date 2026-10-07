@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { cn } from "@/lib/utils";
 
 /**
- * T-shell — desktop left icon rail, 56px, icon-only (REDESIGN §4.3).
+ * T-shell — desktop left icon rail, 80px, icon-only (REDESIGN §4.3).
  * Replaces the old top header: logo mark on top, main nav in the middle,
  * theme toggle pinned at the bottom. Hidden below md — mobile uses
  * `BottomNav` instead.
@@ -19,7 +19,7 @@ export function IconRail() {
   return (
     <nav
       aria-label="Điều hướng chính"
-      className="fixed inset-y-0 left-0 z-40 hidden w-14 flex-col items-center border-r border-border bg-background py-4 md:flex"
+      className="fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-center bg-background py-6 md:flex"
     >
       <Link
         href="/"
@@ -30,9 +30,24 @@ export function IconRail() {
         A
       </Link>
 
-      <div className="mt-6 flex flex-1 flex-col items-center gap-1">
+      <div className="mt-8 flex flex-1 flex-col items-center gap-3">
         {MAIN_NAV_ITEMS.map((item) => {
           const active = isNavActive(pathname, item.href);
+          if (item.available === false)
+            return (
+              <span
+                key={item.href}
+                role="link"
+                aria-disabled="true"
+                tabIndex={0}
+                aria-label={`${item.label} — sắp ra mắt`}
+                title={`${item.label} — sắp ra mắt`}
+                className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground/50 focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <item.icon aria-hidden className="h-5 w-5" />
+              </span>
+            );
+
           return (
             <Link
               key={item.href}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { ReactNode, Ref } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
@@ -31,6 +31,7 @@ export function YoutubeLinkInput({
   trailing?: ReactNode;
 }) {
   const router = useRouter();
+  const errorId = useId();
   const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +47,7 @@ export function YoutubeLinkInput({
   return (
     <div className="w-full">
       <div className="flex gap-2">
-        <div className="relative flex-1">
+        <div className="relative min-w-0 flex-1">
           <Search
             className={cn(
               "absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground",
@@ -65,10 +66,12 @@ export function YoutubeLinkInput({
             placeholder={placeholder}
             inputMode="url"
             aria-label="Link YouTube"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? errorId : undefined}
             className={cn(
-              "w-full rounded-full border border-input bg-card outline-none transition-colors focus:border-primary",
+              "w-full rounded-full border border-input bg-card outline-none transition-colors focus:border-primary focus-visible:ring-2 focus-visible:ring-ring/30",
               large ? "py-3.5 pl-11 text-base" : "py-2.5 pl-9 text-sm",
-              trailing ? "pr-16" : "pr-3",
+              trailing ? "pr-3 sm:pr-16" : "pr-3",
             )}
           />
           {trailing && (
@@ -81,14 +84,18 @@ export function YoutubeLinkInput({
           type="button"
           onClick={open}
           className={cn(
-            "rounded-full bg-primary font-semibold text-primary-foreground transition-opacity hover:opacity-90",
+            "rounded-full bg-primary font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
             large ? "px-6 py-3.5 text-base" : "px-4 py-2.5 text-sm",
           )}
         >
           Xem
         </button>
       </div>
-      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      {error && (
+        <p id={errorId} role="alert" className="mt-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

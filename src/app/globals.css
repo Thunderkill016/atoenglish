@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ─── Theme Tokens (replaces tailwind.config.ts extend) ─────────────────────── */
-@theme {
+@theme inline {
   /* Font */
   --font-sans: var(--font-be-vietnam, ui-sans-serif), system-ui, sans-serif;
 
@@ -26,6 +26,8 @@
 
   /* Highlighter wash — identity color for saved words (slice 3+). */
   --color-mark: var(--mark);
+  /* Secondary review action, distinct from the gold practice action. */
+  --color-review: var(--review);
 
   /* Learning-state roles — one scale for all progress surfaces */
   --color-state-new: var(--state-new);
@@ -59,6 +61,7 @@
   --input: oklch(0.93 0.005 240);
   --ring: oklch(0.58 0.14 75);
   --mark: oklch(0.88 0.12 90);
+  --review: oklch(0.5 0.2 295);
   --radius: 0.625rem;
 
   /* Learning-state roles: unseen content, in-progress, acquired, due-for-review */
@@ -69,8 +72,8 @@
 }
 
 .dark {
-  /* Near-black canvas, lifted panels, gold accent (Trancy CTA hue). */
-  --background: oklch(0.13 0.006 240);
+  /* Neutral rail canvas; discovery panels lift the feed above it. */
+  --background: #0d0d0d;
   --foreground: oklch(0.96 0.005 240);
   --card: oklch(0.17 0.008 240);
   --card-foreground: oklch(0.96 0.005 240);
@@ -88,12 +91,28 @@
   --input: oklch(1 0 0 / 10%);
   --ring: oklch(0.78 0.13 85);
   --mark: oklch(0.42 0.08 90);
+  --review: oklch(0.8 0.12 295);
 
   /* Learning-state roles — lighter hues for dark contrast */
   --state-new: oklch(0.68 0.02 240);
   --state-learning: oklch(0.8 0.13 80);
   --state-known: oklch(0.72 0.13 230);
   --state-due: oklch(0.72 0.19 28);
+}
+
+/* Home reference: charcoal feed, brighter widgets, independent desktop panes.
+   These surface overrides stay inside discovery; light theme uses the tokens above. */
+.dark .discover-home {
+  --background: #191919;
+  --card: #242424;
+  --muted: #252525;
+  --accent: #303030;
+  --muted-foreground: #a3a3a3;
+}
+
+.discover-home {
+  scrollbar-color: var(--muted-foreground) var(--background);
+  scrollbar-width: thin;
 }
 
 /* ─── Base Styles ────────────────────────────────────────────────────────────── */

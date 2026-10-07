@@ -15,6 +15,11 @@ import {
   Timer,
 } from "lucide-react";
 
+import {
+  DictionaryPanel,
+  DictionaryContent,
+} from "@/components/dictionary-panel";
+import { CATALOG_VIDEOS } from "@/content/catalog/videos";
 import { cn } from "@/lib/utils";
 import type { Sentence } from "@/lib/video/types";
 import {
@@ -25,8 +30,18 @@ import {
   type LoadedTranscript,
 } from "@/app/actions/captions";
 import { EmptyTranscript } from "./empty-transcript";
-import { TranscriptRail, formatTimestamp } from "./transcript-rail";
+import {
+  TranscriptRail,
+  SentenceText,
+  formatTimestamp,
+} from "./transcript-rail";
 import { useYouTubePlayer } from "./use-youtube-player";
+import { useTranslations } from "./use-translations";
+import { SEGMENTATION_VERSION } from "@/lib/video/segment";
+import type {
+  SubtitleMode,
+  ServerTranslationEngine,
+} from "@/lib/video/translation";
 
 const ERROR_MESSAGES: Record<CaptionActionError, string> = {
   invalid_url: "Link video không hợp lệ.",
@@ -41,6 +56,8 @@ const ERROR_MESSAGES: Record<CaptionActionError, string> = {
 
 const SPEEDS = [1, 0.75, 0.5] as const;
 const POSITION_SAVE_INTERVAL_MS = 15_000;
+// Tenth-second steps make the native slider useful for fine keyboard seeking.
+const SEEK_STEP_MS = 100;
 
 type Phase = "idle" | "fetching" | "ready" | "error";
 type ViewMode = "theater" | "read";
@@ -48,6 +65,8 @@ type ViewMode = "theater" | "read";
 interface WatchClientProps {
   videoId: string;
   loggedIn: boolean;
+  translationScope?: string;
+  serverTranslation?: ServerTranslationEngine | null;
   initial: LoadedTranscript | null;
   initialPositionMs: number | null;
 }
@@ -65,16 +84,22 @@ function activeSentenceIndex(sentences: Sentence[], ms: number): number {
 export function WatchClient({
   videoId,
   loggedIn,
+  translationScope = "guest",
+  serverTranslation = null,
   initial,
   initialPositionMs,
 }: WatchClientProps) {
-  const [transcript, setTranscript] = useState<LoadedTranscript | null>(initial);
+  const catalogVideo = CATALOG_VIDEOS.find((video) => video.id === videoId);
+  const [transcript, setTranscript] = useState<LoadedTranscript | null>(
+    initial,
+  );
   const [phase, setPhase] = useState<Phase>(initial ? "ready" : "idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("theater");
   const [loopSentence, setLoopSentence] = useState(false);
   const [autoPause, setAutoPause] = useState(false);
   const [showKeys, setShowKeys] = useState(false);
+  const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>("bilingual");
 
   const controls = useYouTubePlayer(videoId, initialPositionMs);
   const {
@@ -97,10 +122,7 @@ export function WatchClient({
     [play, pause, seekToMs, setRate],
   );
 
-  const sentences = useMemo(
-    () => transcript?.sentences ?? [],
-    [transcript],
-  );
+  const sentences = useMemo(() => transcript?.sentences ?? [], [transcript]);
   const timedSentences = useMemo(
     () => sentences.filter((s) => s.start_ms != null),
     [sentences],
@@ -108,6 +130,18 @@ export function WatchClient({
   const activeIndex = activeSentenceIndex(sentences, nowMs);
   const activeSentence =
     activeIndex >= 0 ? sentences.find((s) => s.i === activeIndex) : undefined;
+
+  const translation = useTranslations(
+    sentences,
+    translationScope,
+    transcript?.segmentationVersion ?? SEGMENTATION_VERSION,
+    subtitleMode,
+    activeIndex,
+    transcript?.language ?? "en",
+    serverTranslation,
+  );
+  const showEnglish = subtitleMode === "bilingual" || subtitleMode === "en";
+  const showVietnamese = subtitleMode === "bilingual" || subtitleMode === "vi";
 
   // ── Sentence-boundary behaviours (loop / auto-pause) ──────────────────────
   const handledBoundary = useRef(-1);
@@ -127,7 +161,15 @@ export function WatchClient({
     } else if (autoPause) {
       player.pause();
     }
-  }, [nowMs, activeSentence, activeIndex, loopSentence, autoPause, playing, player]);
+  }, [
+    nowMs,
+    activeSentence,
+    activeIndex,
+    loopSentence,
+    autoPause,
+    playing,
+    player,
+  ]);
 
   const seekToSentence = useCallback(
     (index: number) => {
@@ -140,18 +182,13 @@ export function WatchClient({
     [timedSentences, player],
   );
 
-  const timedIdxOfActive = timedSentences.findIndex(
-    (s) => s.i === activeIndex,
-  );
+  const timedIdxOfActive = timedSentences.findIndex((s) => s.i === activeIndex);
   const goPrev = useCallback(() => {
     const idx = timedIdxOfActive > 0 ? timedIdxOfActive - 1 : 0;
     seekToSentence(idx);
   }, [timedIdxOfActive, seekToSentence]);
   const goNext = useCallback(() => {
-    const idx =
-      timedIdxOfActive >= 0 && timedIdxOfActive < timedSentences.length - 1
-        ? timedIdxOfActive + 1
-        : timedSentences.length - 1;
+    const idx = Math.min(timedIdxOfActive + 1, timedSentences.length - 1);
     seekToSentence(idx);
   }, [timedIdxOfActive, timedSentences.length, seekToSentence]);
   const replayCurrent = useCallback(() => {
@@ -216,14 +253,20 @@ export function WatchClient({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
+      if (document.querySelector("dialog[open]")) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (
         target &&
         (target.tagName === "INPUT" ||
           target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
           target.isContentEditable)
       ) {
         return;
       }
+      // Preserve native Space/Enter activation on buttons and links.
+      if (e.key === " " && target?.closest("button, a")) return;
+      if (!ready && e.key !== "?") return;
       switch (e.key.toLowerCase()) {
         case " ":
           e.preventDefault();
@@ -237,10 +280,10 @@ export function WatchClient({
           goNext();
           break;
         case "s":
-          setLoopSentence((v) => !v);
+          if (timedSentences.length > 0) setLoopSentence((v) => !v);
           break;
         case "r":
-          setAutoPause((v) => !v);
+          if (timedSentences.length > 0) setAutoPause((v) => !v);
           break;
         case "q":
           replayCurrent();
@@ -252,7 +295,15 @@ export function WatchClient({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [playing, player, goPrev, goNext, replayCurrent]);
+  }, [
+    ready,
+    playing,
+    player,
+    goPrev,
+    goNext,
+    replayCurrent,
+    timedSentences.length,
+  ]);
 
   const cycleSpeed = () => {
     const idx = SPEEDS.indexOf(rate as (typeof SPEEDS)[number]);
@@ -269,220 +320,528 @@ export function WatchClient({
           : null;
 
   const controlBtn =
-    "flex h-9 w-9 items-center justify-center rounded-md text-[#9d9da6] transition hover:bg-white/10 hover:text-[#e8e8ea] disabled:opacity-40";
+    "flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-[#9d9da6] transition hover:bg-white/10 hover:text-[#e8e8ea] focus-visible:outline-2 focus-visible:outline-[#f5b50a] disabled:opacity-40";
+  const hasTimedSentences = timedSentences.length > 0;
 
   return (
-    <div
-      id="main-content"
-      className="flex min-h-screen flex-col bg-[#0c0c0e] text-[#e8e8ea]"
-    >
-      {/* Header */}
-      <header className="flex items-center gap-3 border-b border-[#232327] px-4 py-2.5">
-        <Link
-          href="/discover"
-          className="flex items-center gap-1.5 text-sm text-[#9d9da6] transition hover:text-[#e8e8ea]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Khám phá
-        </Link>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-sm font-medium">
-            {transcript?.title ?? `Video ${videoId}`}
-          </h1>
-          {transcript?.channel && (
-            <p className="truncate text-xs text-[#6d6d78]">{transcript.channel}</p>
-          )}
-        </div>
-        {trackLabel && (
-          <span className="rounded-full border border-[#232327] px-2 py-0.5 text-[11px] text-[#9d9da6]">
-            {trackLabel}
-          </span>
-        )}
-        {transcript && !transcript.saved && loggedIn === false && (
-          <Link
-            href="/login"
-            className="text-xs text-[#f5b50a] hover:underline"
-          >
-            Đăng nhập để lưu
-          </Link>
-        )}
-        <button
-          type="button"
-          onClick={() => setViewMode((m) => (m === "theater" ? "read" : "theater"))}
-          className={cn(
-            "flex items-center gap-1.5 rounded-md border border-[#232327] px-2.5 py-1 text-xs text-[#9d9da6] transition hover:text-[#e8e8ea]",
-            viewMode === "read" && "border-[#f5b50a]/40 text-[#f5b50a]",
-          )}
-        >
-          <BookOpen className="h-3.5 w-3.5" />
-          {viewMode === "theater" ? "Chế độ đọc" : "Chế độ rạp"}
-        </button>
-      </header>
-
-      {/* Body — video + transcript rail (same DOM across modes; only styles change) */}
-      <div
-        className={cn(
-          "flex min-h-0 flex-1 flex-col",
-          viewMode === "theater" ? "lg:flex-row" : "",
-        )}
-      >
-        {/* Video column */}
-        <div
-          className={cn(
-            "flex min-w-0 flex-col",
-            viewMode === "theater"
-              ? "lg:w-[62%] lg:border-r lg:border-[#232327]"
-              : "sticky top-0 z-10 mx-auto w-full max-w-2xl bg-[#0c0c0e]",
-          )}
-        >
-          <div className="relative aspect-video w-full bg-black">
-            <div ref={containerRef} className="absolute inset-0 h-full w-full" />
-            {!ready && (
-              <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-[#6d6d78]">
-                {loadError
-                  ? "Không tải được trình phát YouTube. Tải lại trang để thử lại."
-                  : "Đang tải trình phát…"}
-              </div>
-            )}
-          </div>
-
-          {/* Caption strip under the player (REDESIGN: strip riêng, không đè video) */}
-          {activeSentence && (
-            <div className="border-b border-[#232327] px-4 py-2.5 text-center text-[15px] font-medium leading-snug text-[#f5b50a]">
-              {activeSentence.text}
-            </div>
-          )}
-
-          {/* Controls */}
-          <div className="flex items-center justify-center gap-1 px-4 py-2">
-            <button
-              type="button"
-              className={controlBtn}
-              onClick={goPrev}
-              disabled={timedIdxOfActive <= 0}
-              title="Câu trước (A)"
-            >
-              <ChevronFirst className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              className={cn(controlBtn, "h-11 w-11 rounded-full bg-[#f5b50a] text-[#0c0c0e] hover:bg-[#ffca3a] hover:text-[#0c0c0e]")}
-              onClick={() => (playing ? player.pause() : player.play())}
-              title="Phát / dừng (Space)"
-            >
-              {playing ? (
-                <Pause className="h-5 w-5" />
-              ) : (
-                <Play className="h-5 w-5 pl-0.5" />
+    <DictionaryPanel onOpen={player.pause}>
+      <DictionaryContent>
+        {(openLookup) => {
+          const lookupWord = (
+            term: string,
+            sentence: Sentence,
+            trigger: HTMLButtonElement,
+          ) =>
+            openLookup({
+              term,
+              context: sentence.text,
+              returnFocus: trigger,
+              source: {
+                title:
+                  transcript?.title ??
+                  catalogVideo?.title ??
+                  `Video ${videoId}`,
+                sentence: sentence.text,
+                timestamp:
+                  sentence.start_ms == null
+                    ? null
+                    : formatTimestamp(sentence.start_ms),
+                replay:
+                  sentence.start_ms == null
+                    ? undefined
+                    : () => {
+                        handledBoundary.current = -1;
+                        player.seekToMs(sentence.start_ms!);
+                        player.play();
+                      },
+              },
+            });
+          return (
+            <div
+              id="main-content"
+              className={cn(
+                "flex min-h-dvh flex-col bg-[#0c0c0e] text-[#e8e8ea]",
+                viewMode === "theater" && "lg:h-dvh lg:overflow-hidden",
               )}
-            </button>
-            <button
-              type="button"
-              className={controlBtn}
-              onClick={goNext}
-              disabled={
-                timedIdxOfActive < 0 ||
-                timedIdxOfActive >= timedSentences.length - 1
-              }
-              title="Câu sau (D)"
             >
-              <ChevronLast className="h-5 w-5" />
-            </button>
-            <span className="mx-2 h-5 w-px bg-[#232327]" />
-            <button
-              type="button"
-              className={cn(controlBtn, loopSentence && "bg-[#f5b50a]/15 text-[#f5b50a]")}
-              onClick={() => setLoopSentence((v) => !v)}
-              title="Lặp câu hiện tại (S)"
-            >
-              <Repeat className="h-4.5 w-4.5" />
-            </button>
-            <button
-              type="button"
-              className={cn(controlBtn, autoPause && "bg-[#f5b50a]/15 text-[#f5b50a]")}
-              onClick={() => setAutoPause((v) => !v)}
-              title="Tự dừng sau mỗi câu (R)"
-            >
-              <Timer className="h-4.5 w-4.5" />
-            </button>
-            <button
-              type="button"
-              className={cn(controlBtn, "w-auto px-2 font-mono text-xs")}
-              onClick={cycleSpeed}
-              title="Tốc độ phát"
-            >
-              <FastForward className="mr-1 h-4 w-4" />
-              {rate}×
-            </button>
-            <span className="mx-2 h-5 w-px bg-[#232327]" />
-            <span className="font-mono text-xs tabular-nums text-[#6d6d78]">
-              {formatTimestamp(nowMs)}
-              {durationMs > 0 && ` / ${formatTimestamp(durationMs)}`}
-            </span>
-            <button
-              type="button"
-              className={cn(controlBtn, "ml-auto")}
-              onClick={() => setShowKeys((v) => !v)}
-              title="Phím tắt (?)"
-            >
-              <Keyboard className="h-4.5 w-4.5" />
-            </button>
-          </div>
+              <header className="flex shrink-0 items-center gap-3 border-b border-[#232327] px-3 py-3 sm:px-5">
+                <Link
+                  href="/discover"
+                  aria-label="Quay lại khám phá"
+                  title="Khám phá"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#232327] text-[#9d9da6] hover:bg-white/5 hover:text-[#e8e8ea]"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <h1
+                    className="truncate text-sm font-medium"
+                    title={transcript?.title ?? catalogVideo?.title}
+                  >
+                    {transcript?.title ??
+                      catalogVideo?.title ??
+                      `Video ${videoId}`}
+                  </h1>
+                  {(transcript?.channel ?? catalogVideo?.channel) && (
+                    <p className="mt-1 truncate text-xs text-[#9d9da6]">
+                      {transcript?.channel ?? catalogVideo?.channel}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setViewMode((m) => (m === "theater" ? "read" : "theater"))
+                  }
+                  aria-pressed={viewMode === "read"}
+                  className={cn(
+                    "flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-[#232327] px-3 text-xs text-[#9d9da6] hover:text-[#e8e8ea]",
+                    viewMode === "read" && "border-[#f5b50a]/40 text-[#f5b50a]",
+                  )}
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {viewMode === "theater" ? "Chế độ đọc" : "Chế độ rạp"}
+                  </span>
+                  <span className="sr-only sm:hidden">
+                    {viewMode === "theater" ? "Chế độ đọc" : "Chế độ rạp"}
+                  </span>
+                </button>
+              </header>
 
-          {showKeys && (
-            <div className="mx-4 mb-2 rounded-lg border border-[#232327] bg-[#151518] p-3 text-xs leading-relaxed text-[#9d9da6]">
-              <span className="font-semibold text-[#e8e8ea]">Phím tắt:</span>{" "}
-              Space phát/dừng · A câu trước · D câu sau · S lặp câu · R tự dừng
-              sau câu · Q nghe lại câu · ? bảng này
-              <p className="mt-1.5 text-[#6d6d78]">
-                Lưu ý: phím tắt không hoạt động khi con trỏ đang nằm trong trình
-                phát video.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Transcript rail / paste fallback */}
-        <div
-          className={cn(
-            "flex min-h-0 flex-1 flex-col",
-            viewMode === "theater"
-              ? "h-[50vh] lg:h-auto"
-              : "mx-auto w-full max-w-2xl px-4 py-4",
-          )}
-        >
-          {phase === "ready" && transcript ? (
-            <>
-              {transcript.trackKind === "learner" &&
-                transcript.origin === "plain_text" && (
-                  <p className="border-b border-[#232327] px-4 py-2 text-xs text-[#6d6d78]">
-                    Văn bản không đồng bộ — chỉ để đọc.
-                  </p>
+              {/* Keep the same player DOM when switching modes: no restart or lost time. */}
+              <div
+                className={cn(
+                  "flex min-h-0 flex-1 flex-col gap-4 p-3 sm:p-4",
+                  viewMode === "theater" && "lg:flex-row",
                 )}
-              <TranscriptRail
-                sentences={sentences}
-                activeIndex={activeIndex}
-                nowMs={nowMs}
-                onSeek={(ms) => {
-                  player.seekToMs(ms);
-                  player.play();
-                }}
-                prose={viewMode === "read"}
-              />
-            </>
-          ) : (
-            <EmptyTranscript
-              busy={phase === "fetching"}
-              errorMessage={
-                phase === "error" ? errorMessage : null
-              }
-              loggedIn={loggedIn}
-              onFetchYoutube={handleFetchYoutube}
-              onParsed={handleParsed}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+              >
+                <section
+                  aria-label="Trình phát video"
+                  data-testid="player-stage"
+                  className={cn(
+                    "flex min-h-0 min-w-0 flex-col rounded-2xl border border-[#232327] bg-[#111114] p-2 sm:p-4",
+                    viewMode === "theater"
+                      ? "lg:flex-1"
+                      : "mx-auto w-full max-w-3xl",
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex flex-col",
+                      viewMode === "theater" &&
+                        "lg:grid lg:min-h-0 lg:flex-1 lg:grid-rows-[minmax(0,1fr)_auto]",
+                    )}
+                  >
+                    {/* Caption text owns its natural height. The video fits the remaining
+                        desktop row; mobile keeps YouTube's 200px minimum viewport. */}
+                    <div
+                      className={cn(
+                        "flex min-h-0 items-center justify-center",
+                        viewMode === "theater" &&
+                          "lg:items-end lg:[container-type:size]",
+                      )}
+                    >
+                      <div
+                        data-testid="video-frame"
+                        className={cn(
+                          "relative aspect-video min-h-[200px] w-full overflow-hidden rounded-xl bg-black",
+                          viewMode === "theater" &&
+                            "lg:min-h-0 lg:max-w-[calc(100cqh*16/9)]",
+                        )}
+                      >
+                        <div
+                          ref={containerRef}
+                          className="absolute inset-0 h-full w-full [&>iframe]:block [&>iframe]:h-full [&>iframe]:w-full"
+                        />
+                        {!ready && (
+                          <div
+                            className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-[#9d9da6]"
+                            role="status"
+                          >
+                            {loadError
+                              ? "Không tải được trình phát YouTube. Tải lại trang để thử lại."
+                              : "Đang tải trình phát…"}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div
+                      data-testid="active-caption"
+                      className="flex min-h-32 w-full shrink-0 items-center justify-center px-2 py-4 text-center text-base font-medium leading-normal text-[#f5b50a] sm:px-4 sm:text-lg"
+                    >
+                      {/* A 60ch measure is a reading-layout choice, not a timed-caption
+                          character limit. Keep the entire source and translation visible. */}
+                      <div className="w-full max-w-[60ch] space-y-2 [overflow-wrap:anywhere]">
+                        <p lang="en" className="text-balance">
+                          {activeSentence && showEnglish ? (
+                            <SentenceText
+                              sentence={activeSentence}
+                              nowMs={nowMs}
+                              active
+                              onLookup={lookupWord}
+                            />
+                          ) : transcript &&
+                            !activeSentence &&
+                            subtitleMode !== "hidden" ? (
+                            "Chọn một câu để nghe lại."
+                          ) : (
+                            ""
+                          )}
+                        </p>
+                        {activeSentence && showVietnamese && (
+                          <p
+                            lang="vi"
+                            className="text-balance text-[15px] font-normal leading-normal text-[#c5c5ce] sm:text-base"
+                          >
+                            {translation.lines[activeSentence.i] ??
+                              "Chưa có bản dịch cho câu này."}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 border-t border-[#232327] pt-2">
+                    <input
+                      type="range"
+                      aria-label="Vị trí phát video"
+                      min={0}
+                      max={durationMs}
+                      step={SEEK_STEP_MS}
+                      value={Math.min(nowMs, durationMs)}
+                      disabled={!ready || durationMs <= 0}
+                      aria-valuetext={`${formatTimestamp(nowMs)} / ${formatTimestamp(durationMs)}`}
+                      onChange={(e) => {
+                        handledBoundary.current = -1;
+                        player.seekToMs(Number(e.target.value));
+                      }}
+                      className="h-6 w-full cursor-pointer accent-[#f5b50a] disabled:cursor-default"
+                    />
+                    <div className="flex flex-wrap items-center gap-1">
+                      <button
+                        type="button"
+                        className={controlBtn}
+                        onClick={goPrev}
+                        disabled={!ready || timedIdxOfActive <= 0}
+                        title="Câu trước (A)"
+                        aria-label="Câu trước (A)"
+                      >
+                        <ChevronFirst className="h-5 w-5" />
+                      </button>
+                      <button
+                        type="button"
+                        className={cn(
+                          controlBtn,
+                          "bg-[#f5b50a] text-[#0c0c0e] hover:bg-[#ffca3a] hover:text-[#0c0c0e]",
+                        )}
+                        disabled={!ready}
+                        onClick={() =>
+                          playing ? player.pause() : player.play()
+                        }
+                        title="Phát / dừng (Space)"
+                        aria-label={playing ? "Dừng video" : "Phát video"}
+                      >
+                        {playing ? (
+                          <Pause className="h-5 w-5" />
+                        ) : (
+                          <Play className="h-5 w-5 pl-0.5" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className={controlBtn}
+                        onClick={goNext}
+                        disabled={
+                          !ready ||
+                          !hasTimedSentences ||
+                          timedIdxOfActive >= timedSentences.length - 1
+                        }
+                        title="Câu sau (D)"
+                        aria-label="Câu sau (D)"
+                      >
+                        <ChevronLast className="h-5 w-5" />
+                      </button>
+                      <button
+                        type="button"
+                        className={cn(
+                          controlBtn,
+                          loopSentence && "bg-[#f5b50a]/15 text-[#f5b50a]",
+                        )}
+                        disabled={!ready || !hasTimedSentences}
+                        onClick={() => setLoopSentence((v) => !v)}
+                        aria-pressed={loopSentence}
+                        title="Lặp câu hiện tại (S)"
+                        aria-label="Lặp câu hiện tại (S)"
+                      >
+                        <Repeat className="h-4.5 w-4.5" />
+                      </button>
+                      <button
+                        type="button"
+                        className={cn(
+                          controlBtn,
+                          autoPause && "bg-[#f5b50a]/15 text-[#f5b50a]",
+                        )}
+                        disabled={!ready || !hasTimedSentences}
+                        onClick={() => setAutoPause((v) => !v)}
+                        aria-pressed={autoPause}
+                        title="Tự dừng sau mỗi câu (R)"
+                        aria-label="Tự dừng sau mỗi câu (R)"
+                      >
+                        <Timer className="h-4.5 w-4.5" />
+                      </button>
+                      <button
+                        type="button"
+                        className={cn(
+                          controlBtn,
+                          "gap-1 px-2 font-mono text-xs",
+                        )}
+                        disabled={!ready}
+                        onClick={cycleSpeed}
+                        title="Tốc độ phát"
+                        aria-label={`Tốc độ phát ${rate}×`}
+                      >
+                        <FastForward className="h-4 w-4" />
+                        {rate}×
+                      </button>
+                      <span className="ml-auto whitespace-nowrap px-2 font-mono text-xs tabular-nums text-[#9d9da6]">
+                        {formatTimestamp(nowMs)}
+                        {durationMs > 0 && ` / ${formatTimestamp(durationMs)}`}
+                      </span>
+                      <button
+                        type="button"
+                        className={controlBtn}
+                        onClick={() => setShowKeys((v) => !v)}
+                        aria-expanded={showKeys}
+                        title="Phím tắt (?)"
+                        aria-label="Phím tắt (?)"
+                      >
+                        <Keyboard className="h-4.5 w-4.5" />
+                      </button>
+                    </div>
+                  </div>
+                  {showKeys && (
+                    <div className="mt-2 shrink-0 rounded-lg border border-[#232327] bg-[#151518] p-3 text-xs leading-relaxed text-[#9d9da6]">
+                      <span className="font-semibold text-[#e8e8ea]">
+                        Phím tắt:
+                      </span>{" "}
+                      Space phát/dừng · A câu trước · D câu sau · S lặp câu · R
+                      tự dừng sau câu · Q nghe lại câu · ? bảng này
+                      <p className="mt-1.5">
+                        Phím tắt không hoạt động khi đang nhập văn bản hoặc con
+                        trỏ nằm trong trình phát video.
+                      </p>
+                    </div>
+                  )}
+                </section>
+
+                <section
+                  aria-label="Phụ đề video"
+                  className={cn(
+                    "flex min-h-0 min-w-0 flex-col rounded-2xl border border-[#232327] bg-[#111114]",
+                    viewMode === "theater"
+                      ? "lg:w-[34%] lg:max-w-[380px] lg:shrink-0"
+                      : "mx-auto w-full max-w-3xl",
+                  )}
+                >
+                  <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#232327] px-4 py-3">
+                    <h2 className="text-sm font-semibold">Phụ đề</h2>
+                    {transcript && (
+                      <span className="rounded-full bg-[#f5b50a]/10 px-2 py-0.5 text-xs text-[#f5b50a]">
+                        {sentences.length} câu
+                      </span>
+                    )}
+                    {trackLabel && (
+                      <span className="ml-auto text-[11px] text-[#9d9da6]">
+                        {trackLabel}
+                      </span>
+                    )}
+                    {transcript && !transcript.saved && !loggedIn && (
+                      <Link
+                        href="/login"
+                        className="w-full text-xs text-[#f5b50a] hover:underline"
+                      >
+                        Đăng nhập để lưu
+                      </Link>
+                    )}
+                  </div>
+                  {phase === "ready" && transcript ? (
+                    <>
+                      {transcript.origin === "plain_text" && (
+                        <p className="shrink-0 px-4 py-3 text-xs text-[#9d9da6]">
+                          Văn bản không đồng bộ — chỉ để đọc.
+                        </p>
+                      )}
+                      <div className="shrink-0 space-y-2 border-b border-[#232327] px-4 py-3">
+                        <label className="flex items-center justify-between gap-2 text-xs text-[#9d9da6]">
+                          Hiển thị phụ đề
+                          <select
+                            aria-label="Hiển thị phụ đề"
+                            value={subtitleMode}
+                            onChange={(event) =>
+                              setSubtitleMode(
+                                event.target.value as SubtitleMode,
+                              )
+                            }
+                            className="min-h-11 rounded-lg border border-[#232327] bg-[#19191c] px-2 text-[#e8e8ea]"
+                          >
+                            <option value="bilingual">Anh + Việt</option>
+                            <option value="en">Tiếng Anh</option>
+                            <option value="vi">Tiếng Việt</option>
+                            <option value="hidden">Ẩn phụ đề</option>
+                          </select>
+                        </label>
+                        {showVietnamese && (
+                          <>
+                            {/^en(?:-|$)/i.test(transcript.language) ? (
+                              <>
+                                {!translation.deviceReady &&
+                                  translation.provider === "device" &&
+                                  (translation.availability ===
+                                  "unavailable" ? (
+                                    <p className="text-xs text-[#9d9da6]">
+                                      Trình duyệt này chưa hỗ trợ dịch miễn phí
+                                      trên thiết bị. Dùng Chrome trên máy tính
+                                      để bật dịch Anh–Việt.
+                                    </p>
+                                  ) : (
+                                    <>
+                                      <button
+                                        type="button"
+                                        disabled={
+                                          translation.downloading ||
+                                          translation.availability ===
+                                            "checking"
+                                        }
+                                        onClick={() =>
+                                          void translation.enableDevice()
+                                        }
+                                        className="min-h-11 rounded-full bg-[#f5b50a] px-4 text-xs font-medium text-[#0c0c0e] disabled:opacity-50"
+                                      >
+                                        {translation.downloading
+                                          ? `Đang tải bộ dịch${translation.progress == null ? "…" : ` · ${translation.progress}%`}`
+                                          : "Thử dịch nhanh miễn phí"}
+                                      </button>
+                                      <p className="text-xs text-[#9d9da6]">
+                                        Dịch nhanh trên thiết bị; có thể dịch
+                                        sát chữ với thành ngữ và tên riêng. Lần
+                                        đầu cần tải bộ ngôn ngữ; sau đó phụ đề
+                                        được dịch tự động.
+                                      </p>
+                                    </>
+                                  ))}
+                                {(translation.deviceReady ||
+                                  translation.provider === "server") && (
+                                  <p
+                                    role="status"
+                                    className="text-xs text-[#9d9da6]"
+                                  >
+                                    {translation.provider === "device"
+                                      ? "Dịch máy trên thiết bị"
+                                      : `Dịch AI · ${serverTranslation?.label ?? "máy chủ"}`}{" "}
+                                    · {Object.keys(translation.lines).length}/
+                                    {sentences.length} câu
+                                    {translation.busy ? " · đang dịch…" : ""}
+                                  </p>
+                                )}
+                                {serverTranslation &&
+                                  loggedIn &&
+                                  translation.provider !== "server" && (
+                                    <button
+                                      type="button"
+                                      onClick={translation.useServer}
+                                      className="min-h-11 text-xs text-[#f5b50a]"
+                                    >
+                                      Dùng {serverTranslation.label}
+                                    </button>
+                                  )}
+                                {(translation.error ||
+                                  translation.setupError) && (
+                                  <div>
+                                    <p
+                                      role="alert"
+                                      className="text-xs text-[#f5b50a]"
+                                    >
+                                      {translation.error ??
+                                        translation.setupError}
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={
+                                        translation.setupError
+                                          ? () =>
+                                              void translation.enableDevice()
+                                          : translation.retry
+                                      }
+                                      className="min-h-11 text-xs text-[#f5b50a]"
+                                    >
+                                      Thử dịch lại
+                                    </button>
+                                  </div>
+                                )}
+                                {translation.finished &&
+                                  Object.keys(translation.lines).length <
+                                    sentences.length && (
+                                    <button
+                                      type="button"
+                                      onClick={translation.retry}
+                                      className="min-h-11 text-xs text-[#f5b50a]"
+                                    >
+                                      Dịch lại câu còn thiếu
+                                    </button>
+                                  )}
+                                {translation.cacheNotice && (
+                                  <p className="text-xs text-[#9d9da6]">
+                                    {translation.cacheNotice}
+                                  </p>
+                                )}
+                              </>
+                            ) : (
+                              <p className="text-xs text-[#9d9da6]">
+                                Hiện hỗ trợ dịch phụ đề tiếng Anh sang tiếng
+                                Việt.
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      <TranscriptRail
+                        sentences={sentences}
+                        translations={translation.lines}
+                        subtitleMode={subtitleMode}
+                        activeIndex={activeIndex}
+                        nowMs={nowMs}
+                        onSeek={(ms) => {
+                          handledBoundary.current = -1;
+                          player.seekToMs(ms);
+                          player.play();
+                        }}
+                        prose={viewMode === "read"}
+                        onLookup={lookupWord}
+                      />
+                    </>
+                  ) : (
+                    <div
+                      className={cn(
+                        "min-h-0",
+                        viewMode === "theater" && "lg:overflow-y-auto",
+                      )}
+                    >
+                      <EmptyTranscript
+                        busy={phase === "fetching"}
+                        errorMessage={phase === "error" ? errorMessage : null}
+                        loggedIn={loggedIn}
+                        onFetchYoutube={handleFetchYoutube}
+                        onParsed={handleParsed}
+                      />
+                    </div>
+                  )}
+                </section>
+              </div>
+            </div>
+          );
+        }}
+      </DictionaryContent>
+    </DictionaryPanel>
   );
 }

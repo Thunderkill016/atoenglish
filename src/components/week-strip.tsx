@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { activityCalendarDate, activityDayKey } from "./activity-grid";
 
 /** Hand-written Vietnamese weekday labels, Monday-first. */
 const WEEKDAY_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"] as const;
@@ -22,13 +23,15 @@ export function WeekStrip({
   todayIndex: number;
 }) {
   return (
-    <div className="grid grid-cols-7 gap-1">
+    <div className="grid grid-cols-7 gap-1 rounded-xl bg-card px-3 py-3">
       {days.map((day, i) => (
         <div
           key={i}
+          aria-current={i === todayIndex ? "date" : undefined}
+          aria-label={`${WEEKDAY_LABELS[i]}, ngày ${day}${i === todayIndex ? ", hôm nay" : ""}`}
           className={cn(
             "flex flex-col items-center gap-1 rounded-md py-2",
-            activeDays[i] ? "bg-primary/15" : "bg-muted/50",
+            activeDays[i] && "bg-primary/15",
             i === todayIndex && "ring-1 ring-primary",
           )}
         >
@@ -54,27 +57,20 @@ export function currentWeekActivity(
   activityDates: string[],
   now = new Date(),
 ): { days: number[]; activeDays: boolean[]; todayIndex: number } {
-  const day = (now.getDay() + 6) % 7; // JS Sun=0 → Mon-first index
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - day);
-  monday.setHours(0, 0, 0, 0);
+  const today = activityCalendarDate(now);
+  const day = (today.getUTCDay() + 6) % 7; // JS Sun=0 → Mon-first index
+  const monday = new Date(today);
+  monday.setUTCDate(today.getUTCDate() - day);
 
-  const activeSet = new Set(
-    activityDates.map((iso) => {
-      const d = new Date(iso);
-      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    }),
-  );
+  const activeSet = new Set(activityDates.map(activityDayKey));
 
   const days: number[] = [];
   const activeDays: boolean[] = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    days.push(d.getDate());
-    activeDays.push(
-      activeSet.has(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`),
-    );
+    d.setUTCDate(monday.getUTCDate() + i);
+    days.push(d.getUTCDate());
+    activeDays.push(activeSet.has(d.toISOString().slice(0, 10)));
   }
   return { days, activeDays, todayIndex: day };
 }

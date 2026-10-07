@@ -20,13 +20,14 @@ export type VideoCardLevel = keyof typeof LEVEL_TONE;
 
 /**
  * T6 feed card — chromeless Trancy/YouTube anatomy: only the 16:9 thumb is
- * rounded; title sits on the page background; meta renders as discrete pills
- * (relative-age / topic / colored level / captions). Resume progress shows a
+ * rounded; title sits on the page background; meta uses compact text
+ * (relative-age / topic / labeled level / captions), with one channel mark. Resume progress shows a
  * bottom bar; ≥95% watched collapses to a "Đã xem" state.
  */
 export function VideoCard({
   videoId,
   title,
+  titleVi,
   channel,
   topicLabel,
   levelLabel,
@@ -40,6 +41,8 @@ export function VideoCard({
 }: {
   videoId: string;
   title: string;
+  /** Optional secondary meaning; preserve the original English title. */
+  titleVi?: string;
   channel?: string | null;
   topicLabel?: string | null;
   levelLabel?: string | null;
@@ -75,12 +78,18 @@ export function VideoCard({
   if (ageLabel) meta.push(ageLabel);
 
   return (
-    <Link href={target} className={cn("group block", className)}>
-      <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
+    <Link
+      href={target}
+      className={cn(
+        "group relative block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
+        className,
+      )}
+    >
+      <div className="relative aspect-video overflow-hidden rounded-xl bg-muted">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
-          alt={title}
+          alt=""
           loading="lazy"
           className="h-full w-full object-cover transition group-hover:scale-[1.02]"
         />
@@ -88,7 +97,7 @@ export function VideoCard({
           <Play className="h-8 w-8 text-white opacity-0 transition group-hover:opacity-100" />
         </span>
         {durationMs != null && durationMs > 0 && (
-          <span className="absolute bottom-2 right-2 rounded bg-black/75 px-1.5 py-0.5 text-xs font-medium text-white">
+          <span className="absolute bottom-2 right-2 rounded-full bg-black/80 px-1.5 py-0.5 text-xs font-medium text-white">
             {formatTimestamp(durationMs)}
           </span>
         )}
@@ -103,17 +112,30 @@ export function VideoCard({
         {channel && (
           <span
             aria-hidden
-            className="absolute bottom-2 left-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground ring-2 ring-black/40"
+            className={cn(
+              "absolute bottom-3 left-3 flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold",
+              channel === "TED"
+                ? "bg-[#eb003b] text-white"
+                : "bg-primary text-primary-foreground",
+            )}
           >
-            {channel.charAt(0).toUpperCase()}
+            {channel === "TED" ? "TED" : channel.charAt(0).toUpperCase()}
           </span>
         )}
       </div>
 
-      <div className="px-0.5 pt-2.5">
-        <p className="line-clamp-2 text-sm font-medium leading-snug">
+      <div className="pt-3">
+        <p className="line-clamp-2 min-h-11 text-[15px] font-medium leading-[1.4]">
           {title}
         </p>
+        {titleVi && (
+          <p
+            lang="vi"
+            className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground"
+          >
+            {titleVi}
+          </p>
+        )}
         {(watched || resumable) && (
           <p
             className={cn(
@@ -131,20 +153,19 @@ export function VideoCard({
           </p>
         )}
         {channel && (
-          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+          <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">
             {channel}
           </p>
         )}
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           {meta.map((m, i) => (
-            <span key={i} className="contents">
+            <span key={i} className="inline-flex items-center gap-2">
               {i > 0 && <span aria-hidden>·</span>}
-              <span>{m}</span>
+              {m}
             </span>
           ))}
           {levelLabel && (
             <>
-              <span aria-hidden>·</span>
               <span
                 className={cn(
                   "inline-flex items-center gap-1",
@@ -159,13 +180,12 @@ export function VideoCard({
               </span>
             </>
           )}
-          <span
-            title={captionLabel ?? "Có phụ đề"}
-            className="inline-flex items-center"
-          >
-            <Captions className="h-3.5 w-3.5" />
-            <span className="sr-only">{captionLabel ?? "Có phụ đề"}</span>
-          </span>
+          {captionLabel && (
+            <span title={captionLabel} className="inline-flex items-center">
+              <Captions className="h-3.5 w-3.5" />
+              <span className="sr-only">{captionLabel}</span>
+            </span>
+          )}
         </p>
       </div>
     </Link>

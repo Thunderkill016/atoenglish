@@ -21,6 +21,22 @@ export function BottomNav() {
       <div className="grid grid-cols-5 pb-[env(safe-area-inset-bottom)]">
         {MAIN_NAV_ITEMS.map((item) => {
           const active = isNavActive(pathname, item.href);
+          if (item.available === false)
+            return (
+              <span
+                key={item.href}
+                role="link"
+                aria-disabled="true"
+                tabIndex={0}
+                aria-label={`${item.label} — sắp ra mắt`}
+                className="flex flex-col items-center gap-1 py-2 text-[11px] font-medium text-muted-foreground/60 focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <item.icon aria-hidden className="h-5 w-5" />
+                {item.label}
+                <span className="text-[9px]">Sắp ra mắt</span>
+              </span>
+            );
+
           return (
             <Link
               key={item.href}

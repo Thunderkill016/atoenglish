@@ -1,29 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  BookMarked,
-  CalendarDays,
-  History,
-  MonitorPlay,
+  ArrowRight,
   Play,
+  Headphones,
+  Repeat2,
+  Captions,
+  BookMarked,
   TextQuote,
+  MonitorPlay,
+  Library,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
-import { getCatalog, TOPIC_LABELS, type CatalogTopic } from "@/content/catalog/videos";
+import { getCatalog } from "@/content/catalog/videos";
 import { VideoCard } from "@/components/video-card";
-import { RightRail, WidgetCard } from "@/components/right-rail";
+import { RightRail, WidgetCard, ProgressChart } from "@/components/right-rail";
 import { WeekStrip, currentWeekActivity } from "@/components/week-strip";
-import { ActivityGrid, monthActivity } from "@/components/activity-grid";
+import { ActivityGrid, activityHistory } from "@/components/activity-grid";
 import { formatRelativeAge, formatTimestamp } from "@/lib/format";
-
 import { DiscoverCatalog } from "./discover-catalog";
-import { DiscoverSearch } from "./discover-search";
+import { DiscoverSearch, DiscoverSearchProvider } from "./discover-search";
 
 export const metadata: Metadata = {
   title: "Khám phá",
   description:
-    "Dán link YouTube để học tiếng Anh với phụ đề từng câu, hoặc chọn video từ thư viện chọn sẵn.",
+    "Dán link YouTube hoặc chọn video để học tiếng Anh với phụ đề từng câu.",
 };
 
 interface SourceRow {
@@ -35,354 +37,374 @@ interface SourceRow {
   updated_at: string;
 }
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-/** Month-grid window — covers the current month plus a few overflow days. */
-const ACTIVITY_WINDOW_MS = 40 * 24 * 60 * 60 * 1000;
-const CONTINUE_LIMIT = 7; // banner takes slot 1, strip shows the rest
-const ACTIVITY_DATES_LIMIT = 200;
-/** A stray <30 s touch doesn't earn a "Đang xem dở" slot (YouTube pattern). */
+type ViewerData =
+  | { status: "guest" }
+  | { status: "unavailable" }
+  | { status: "ready"; continueWatching: SourceRow[]; totalSources: number };
+
+// Fetch a small recent-source window so completed videos do not crowd out resume slots.
+const RECENT_SOURCE_LIMIT = 30;
+const CONTINUE_LIMIT = 7;
+// Skip incidental touches; these thresholds describe resume eligibility, not mastery.
 const RESUME_MIN_MS = 30_000;
-/** Past this share the video counts as watched, not resumable. */
 const WATCHED_PCT = 0.95;
+const NO_SESSION_STATUS = 401;
 
 function isResumable(s: SourceRow): boolean {
-  if (s.last_position_ms < RESUME_MIN_MS) return false;
-  if (s.duration_ms && s.last_position_ms / s.duration_ms >= WATCHED_PCT)
-    return false;
-  return true;
+  return (
+    s.last_position_ms >= RESUME_MIN_MS &&
+    (!s.duration_ms || s.last_position_ms / s.duration_ms < WATCHED_PCT)
+  );
 }
 
-async function loadViewerData(): Promise<{
-  signedIn: boolean;
-  continueWatching: SourceRow[];
-  videosThisWeek: number;
-  totalSources: number;
-  activityDates: string[];
-}> {
-  const guest = {
-    signedIn: false,
-    continueWatching: [],
-    videosThisWeek: 0,
-    totalSources: 0,
-    activityDates: [],
-  };
+async function loadViewerData(): Promise<ViewerData> {
   try {
     const supabase = await createClient();
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
     if (!user) {
-      return guest;
+      return {
+        status:
+          !authError || authError.status === NO_SESSION_STATUS
+            ? "guest"
+            : "unavailable",
+      };
     }
-
-    const { data: sources } = await supabase
-      .from("content_sources")
-      .select(
-        "external_id, title, channel, duration_ms, last_position_ms, updated_at",
-      )
-      .eq("user_id", user.id)
-      .eq("kind", "youtube")
-      .gt("last_position_ms", 0)
-      .order("updated_at", { ascending: false })
-      .limit(CONTINUE_LIMIT);
-    const continueWatching = ((sources ?? []) as SourceRow[]).filter(
-      isResumable,
-    );
-
-    const weekAgo = new Date(Date.now() - WEEK_MS).toISOString();
-    const activityAgo = new Date(Date.now() - ACTIVITY_WINDOW_MS).toISOString();
-    const { count } = await supabase
-      .from("content_sources")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("kind", "youtube")
-      .gte("updated_at", weekAgo);
-    const { data: weekRows } = await supabase
-      .from("content_sources")
-      .select("updated_at")
-      .eq("user_id", user.id)
-      .eq("kind", "youtube")
-      .gte("updated_at", activityAgo)
-      .order("updated_at", { ascending: false })
-      .limit(ACTIVITY_DATES_LIMIT);
-
-    const { count: totalCount } = await supabase
-      .from("content_sources")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("kind", "youtube");
-
+    const [sourcesResult, countResult] = await Promise.all([
+      supabase
+        .from("content_sources")
+        .select(
+          "external_id, title, channel, duration_ms, last_position_ms, updated_at",
+        )
+        .eq("user_id", user.id)
+        .eq("kind", "youtube")
+        .gte("last_position_ms", RESUME_MIN_MS)
+        .order("updated_at", { ascending: false })
+        .limit(RECENT_SOURCE_LIMIT),
+      supabase
+        .from("content_sources")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("kind", "youtube"),
+    ]);
+    // A failed read is not an empty library. Keep the public catalog usable.
+    if (sourcesResult.error || countResult.error || countResult.count == null) {
+      console.error("[discover] Could not load viewer sources");
+      return { status: "unavailable" };
+    }
     return {
-      signedIn: true,
-      continueWatching,
-      videosThisWeek: count ?? 0,
-      totalSources: totalCount ?? 0,
-      activityDates: (weekRows ?? []).map((r) => r.updated_at as string),
+      status: "ready",
+      continueWatching: ((sourcesResult.data ?? []) as SourceRow[])
+        .filter(isResumable)
+        .slice(0, CONTINUE_LIMIT),
+      totalSources: countResult.count,
     };
   } catch {
-    // Missing Neon config (e.g. preview deploys without worker secrets) →
-    // render the guest variant instead of failing the page.
-    return guest;
+    // Isolate auth/Data API failures to the personal panel, without logging credentials.
+    console.error("[discover] Viewer data unavailable");
+    return { status: "unavailable" };
   }
 }
 
 export default async function DiscoverPage() {
-  const {
-    signedIn,
-    continueWatching,
-    videosThisWeek,
-    totalSources,
-    activityDates,
-  } = await loadViewerData();
-
+  const viewer = await loadViewerData();
+  const continueWatching =
+    viewer.status === "ready" ? viewer.continueWatching : [];
   const hero = continueWatching[0] ?? null;
-  const strip = hero ? continueWatching.slice(1) : [];
-  const week = currentWeekActivity(activityDates);
-  const month = monthActivity(activityDates);
+  const strip = continueWatching.slice(1);
+  // Resume snapshots are not a learning-event history. Show a neutral week with today only.
+  const week = currentWeekActivity([]);
+  const activity = activityHistory([]);
   const catalog = getCatalog();
-  const catalogSize = catalog.length;
-  const topicCount = new Set(catalog.map((v) => v.topic)).size;
-  const topics = [...catalog]
-    .reduce((map, v) => {
-      map.set(v.topic, (map.get(v.topic) ?? 0) + 1);
-      return map;
-    }, new Map<CatalogTopic, number>())
-    .entries()
-    .toArray()
-    .map(([topic, count]) => ({ label: TOPIC_LABELS[topic], count }));
-  const easyCount = catalog.filter((v) => v.level === "easy").length;
-  const totalMin = Math.round(
-    catalog.reduce((s, v) => s + v.durationSec, 0) / 60,
-  );
+  const topicCount = new Set(catalog.map((video) => video.topic)).size;
 
   return (
-    <div className="flex flex-col gap-6 xl:flex-row">
-      <div className="flex min-w-0 flex-1 flex-col gap-6">
-        {/* Floating search row — Trancy-style: the paste field is the
-            page header (greeting/H1 removed to match Trancy home). */}
-        <section className="max-w-xl space-y-3">
-          <DiscoverSearch />
-          {!signedIn && (
-            <p className="text-sm text-muted-foreground">
-              Xem được ngay, không cần tài khoản —{" "}
-              <Link href="/login" className="text-primary hover:underline">
-                Đăng nhập
-              </Link>{" "}
-              để lưu tiến trình xem.
-            </p>
-          )}
-        </section>
+    <DiscoverSearchProvider>
+      <div className="discover-home grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="flex min-w-0 flex-col gap-6 rounded-xl bg-background p-2 md:px-6 md:py-5">
+          <header>
+            <h1 className="sr-only">Khám phá</h1>
+            <DiscoverSearch />
+          </header>
 
-        {/* Single "next action" CTA for returning learners — the resume
-            banner (Anki Study Now / Drops last-topic pattern). */}
-        {hero && (
-          <Link
-            href={`/watch/${hero.external_id}?t=${hero.last_position_ms}`}
-            className="group flex items-center gap-4 rounded-xl border border-border bg-card p-3 transition hover:border-primary/50"
-          >
-            <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted sm:w-36">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`https://i.ytimg.com/vi/${hero.external_id}/hqdefault.jpg`}
-                alt={hero.title ?? "Video YouTube"}
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
-              <span className="absolute inset-0 flex items-center justify-center bg-black/25">
-                <Play className="h-6 w-6 text-white" />
-              </span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-muted-foreground">
-                Đang xem dở
-              </p>
-              <p className="mt-0.5 line-clamp-2 text-[15px] font-semibold leading-snug">
-                {hero.title ?? "Video YouTube"}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Xem tiếp từ {formatTimestamp(hero.last_position_ms)}
-                {hero.duration_ms != null &&
-                  hero.duration_ms > hero.last_position_ms &&
-                  ` · còn ~${Math.ceil((hero.duration_ms - hero.last_position_ms) / 60_000)}′`}
-              </p>
-            </div>
-          </Link>
-        )}
-
-        {strip.length > 0 && (
-          <section>
-            <h2 className="mb-3 text-base font-semibold tracking-tight">
-              Đang xem dở
-            </h2>
-            <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-1">
-              {strip.map((v) => (
-                <VideoCard
-                  key={v.external_id}
-                  videoId={v.external_id}
-                  title={v.title ?? "Video YouTube"}
-                  channel={v.channel}
-                  durationMs={v.duration_ms}
-                  positionMs={v.last_position_ms}
-                  ageLabel={formatRelativeAge(v.updated_at)}
-                  className="w-56 shrink-0 sm:w-64"
+          {hero && (
+            <section aria-label="Tiếp tục xem">
+              <h2 className="mb-3 text-lg font-semibold">Tiếp tục xem</h2>
+              <Link
+                href={`/watch/${hero.external_id}?t=${hero.last_position_ms}`}
+                className="group flex items-center gap-4 rounded-xl border border-border bg-card p-3 transition hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+              >
+                <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:w-40">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://i.ytimg.com/vi/${hero.external_id}/hqdefault.jpg`}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/25">
+                    <Play aria-hidden className="h-6 w-6 text-white" />
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 text-[15px] font-semibold leading-snug">
+                    {hero.title ?? "Video YouTube"}
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {hero.channel ?? "YouTube"}
+                  </p>
+                  <p className="mt-2 text-xs font-medium text-primary">
+                    Xem tiếp từ {formatTimestamp(hero.last_position_ms)}
+                  </p>
+                </div>
+                <ArrowRight
+                  aria-hidden
+                  className="hidden size-5 shrink-0 text-primary sm:block"
                 />
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section>
-          <h2 className="mb-3 text-base font-semibold tracking-tight">
-            Thư viện chọn sẵn
-          </h2>
-          <DiscoverCatalog videos={getCatalog()} />
-        </section>
-
-        <p className="text-xs text-muted-foreground">
-          Thư viện được chọn tay và sẽ tiếp tục lớn dần — mọi video YouTube có
-          phụ đề tiếng Anh đều học được, chỉ cần dán link vào ô phía trên.
-        </p>
-      </div>
-
-      <RightRail className="xl:-mr-4 xl:top-0 xl:max-h-dvh xl:py-5 xl:pl-2 xl:pr-4">
-        {/* Trancy rail order: Calendar → Flashcard-ish → tiles → Activity. */}
-        <WidgetCard
-          title="Lịch"
-          action={
-            signedIn ? (
-              <span className="text-xs text-muted-foreground">
-                {videosThisWeek} video tuần này
-              </span>
-            ) : undefined
-          }
-        >
-          <WeekStrip
-            days={week.days}
-            activeDays={week.activeDays}
-            todayIndex={week.todayIndex}
-          />
-          {!signedIn && (
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <CalendarDays className="h-3.5 w-3.5" />
-              Đăng nhập để lịch ghi lại ngày bạn học.
-            </p>
+              </Link>
+              {strip.length > 0 && (
+                <details className="mt-4">
+                  <summary className="w-fit cursor-pointer text-sm text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring">
+                    {strip.length} video khác đang xem dở
+                  </summary>
+                  <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {strip.map((v) => (
+                      <VideoCard
+                        key={v.external_id}
+                        videoId={v.external_id}
+                        title={v.title ?? "Video YouTube"}
+                        channel={v.channel}
+                        durationMs={v.duration_ms}
+                        positionMs={v.last_position_ms}
+                        ageLabel={formatRelativeAge(v.updated_at)}
+                        href={`/watch/${v.external_id}?t=${v.last_position_ms}`}
+                      />
+                    ))}
+                  </div>
+                </details>
+              )}
+            </section>
           )}
-        </WidgetCard>
 
-        <WidgetCard title="Ôn tập">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-lg bg-muted p-3">
-              <BookMarked className="h-4 w-4 text-state-learning" />
-              <p className="mt-1.5 text-lg font-bold leading-none">0</p>
-              <p className="mt-1 text-xs text-muted-foreground">Từ vựng</p>
-            </div>
-            <div className="rounded-lg bg-muted p-3">
-              <TextQuote className="h-4 w-4 text-state-known" />
-              <p className="mt-1.5 text-lg font-bold leading-none">0</p>
-              <p className="mt-1 text-xs text-muted-foreground">Câu đã lưu</p>
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Lưu từ và câu ngay trong transcript — tính năng sắp ra mắt.
+          <section
+            id="video-library"
+            aria-label="Thư viện chọn sẵn"
+            className="scroll-mt-6"
+          >
+            <DiscoverCatalog videos={getCatalog()} />
+          </section>
+          <p className="text-xs leading-5 text-muted-foreground">
+            Không tìm thấy video bạn muốn? Dán link phía trên. Nếu chưa lấy được
+            phụ đề, bạn có thể thêm bản chép lời trong player.
           </p>
-        </WidgetCard>
+        </div>
 
-        <WidgetCard title={signedIn ? "Bộ sưu tập" : "Thư viện"}>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-lg bg-muted p-3">
-              <MonitorPlay className="h-4 w-4 text-primary" />
-              <p className="mt-1.5 text-lg font-bold leading-none">
-                {signedIn ? totalSources : catalogSize}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {signedIn ? "Video đã mở" : "Video"}
-              </p>
-            </div>
-            <div className="rounded-lg bg-muted p-3">
-              <History className="h-4 w-4 text-state-due" />
-              <p className="mt-1.5 text-lg font-bold leading-none">
-                {signedIn ? continueWatching.length : topicCount}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {signedIn ? "Đang xem dở" : "Chủ đề"}
-              </p>
-            </div>
-            {!signedIn && (
+        <RightRail>
+          <WidgetCard
+            title="Lịch tuần"
+            className="bg-transparent p-0"
+            action={
+              <span className="text-xs text-muted-foreground">Hôm nay</span>
+            }
+          >
+            <WeekStrip
+              days={week.days}
+              activeDays={week.activeDays}
+              todayIndex={week.todayIndex}
+            />
+          </WidgetCard>
+          <WidgetCard
+            title="Flashcard"
+            info="Thống kê thẻ và lượt ôn sẽ xuất hiện khi dữ liệu ôn tập được kết nối."
+          >
+            <dl className="grid grid-cols-2 gap-4">
+              <div>
+                <dt className="text-xs text-muted-foreground">Cần ôn</dt>
+                <dd
+                  className="mt-2 text-xl font-semibold"
+                  aria-label="Cần ôn: chưa có dữ liệu"
+                >
+                  —
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Đang học</dt>
+                <dd
+                  className="mt-2 text-xl font-semibold"
+                  aria-label="Đang học: chưa có dữ liệu"
+                >
+                  —
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              Dữ liệu ôn tập chưa kết nối.
+            </p>
+          </WidgetCard>
+          <WidgetCard title="Thống kê" className="bg-transparent p-0">
+            <dl className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-card p-3">
+                <MonitorPlay
+                  aria-hidden
+                  className="float-right size-5 text-primary"
+                />
+                <dt className="text-xs text-muted-foreground">
+                  Video chọn sẵn
+                </dt>
+                <dd className="mt-2 text-xl font-semibold">{catalog.length}</dd>
+              </div>
+              <div className="rounded-xl bg-card p-3">
+                <Library
+                  aria-hidden
+                  className="float-right size-5 text-state-learning"
+                />
+                <dt className="text-xs text-muted-foreground">Chủ đề</dt>
+                <dd className="mt-2 text-xl font-semibold">{topicCount}</dd>
+              </div>
+              <div className="rounded-xl bg-card p-3">
+                <BookMarked
+                  aria-hidden
+                  className="float-right size-5 text-state-due"
+                />
+                <dt className="text-xs text-muted-foreground">
+                  Từ vựng đã lưu
+                </dt>
+                <dd
+                  className="mt-2 text-xl font-semibold"
+                  aria-label="Từ vựng đã lưu: chưa có dữ liệu"
+                >
+                  —
+                </dd>
+              </div>
+              <div className="rounded-xl bg-card p-3">
+                <TextQuote
+                  aria-hidden
+                  className="float-right size-5 text-state-known"
+                />
+                <dt className="text-xs text-muted-foreground">Câu đã lưu</dt>
+                <dd
+                  className="mt-2 text-xl font-semibold"
+                  aria-label="Câu đã lưu: chưa có dữ liệu"
+                >
+                  —
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-3 text-xs leading-5 text-muted-foreground">
+              Dấu —: chưa có dữ liệu cá nhân được kết nối.
+            </p>
+          </WidgetCard>
+          <WidgetCard title="Tiến trình xem">
+            {viewer.status === "guest" ? (
               <>
-                <div className="rounded-lg bg-muted p-3">
-                  <BookMarked className="h-4 w-4 text-state-known" />
-                  <p className="mt-1.5 text-lg font-bold leading-none">
-                    {easyCount}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">Mức dễ</p>
-                </div>
-                <div className="rounded-lg bg-muted p-3">
-                  <Play className="h-4 w-4 text-state-learning" />
-                  <p className="mt-1.5 text-lg font-bold leading-none">
-                    {totalMin}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Phút nội dung
-                  </p>
-                </div>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Đăng nhập để lưu vị trí và xem tiếp lần sau.
+                </p>
+                <Link
+                  href="/login"
+                  className="mt-2 inline-flex min-h-10 items-center gap-2 text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                >
+                  Đăng nhập
+                  <ArrowRight aria-hidden className="size-4" />
+                </Link>
+              </>
+            ) : viewer.status === "unavailable" ? (
+              <div role="status">
+                <p className="text-sm font-medium">
+                  Chưa tải được tiến trình xem
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Bạn vẫn có thể chọn video hoặc dán link để xem.
+                </p>
+                <a
+                  href="/discover"
+                  className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4"
+                >
+                  Thử tải lại
+                </a>
+              </div>
+            ) : (
+              <>
+                <p className="flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tabular-nums">
+                    {viewer.totalSources}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    video đã mở
+                  </span>
+                </p>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  {hero
+                    ? "Video đang xem dở nằm ngay phía trên thư viện. Bạn có thể tiếp tục từ vị trí đã lưu."
+                    : "Chọn một video để bắt đầu. Vị trí xem sẽ được lưu khi bạn quay lại."}
+                </p>
               </>
             )}
-          </div>
-        </WidgetCard>
-
-        <WidgetCard title="Hoạt động" action={
-          <span className="text-xs capitalize text-muted-foreground">
-            {month.monthLabel}
-          </span>
-        }>
-          <ActivityGrid cells={month.cells} />
-          {!signedIn && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Đăng nhập để ngày học được tô màu ở đây.
+          </WidgetCard>
+          <WidgetCard
+            title="Activity"
+            info="Lịch hoạt động học tập; vị trí xem gần nhất không thay thế lịch sử học."
+            className="bg-transparent p-0"
+          >
+            <ActivityGrid activity={activity} />
+            <p className="mt-3 text-xs leading-5 text-muted-foreground">
+              {viewer.status === "guest"
+                ? "Đăng nhập để lưu hoạt động cá nhân. "
+                : ""}
+              Chưa có dữ liệu lịch sử học được kết nối.
             </p>
-          )}
-        </WidgetCard>
-
-        {!signedIn && (
-          <>
-            <WidgetCard title="Bắt đầu từ đây">
-              <ul className="space-y-2">
-                {getCatalog()
-                  .filter((v) => v.level === "easy")
-                  .slice(0, 3)
-                  .map((v) => (
-                    <li key={v.id}>
-                      <Link
-                        href={`/watch/${v.id}`}
-                        className="line-clamp-1 text-sm font-medium hover:text-primary hover:underline"
-                      >
-                        {v.title}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">
-                        {v.channel} · {formatTimestamp(v.durationSec * 1000)}
-                      </p>
-                    </li>
-                  ))}
-              </ul>
-            </WidgetCard>
-            <WidgetCard title="Chủ đề">
-              <ul className="space-y-2">
-                {topics.map((t) => (
-                  <li
-                    key={t.label}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span>{t.label}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {t.count} video
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </WidgetCard>
-          </>
-        )}
-      </RightRail>
-    </div>
+          </WidgetCard>
+          <WidgetCard
+            title="Progress"
+            info="Tiến độ dựa trên kết quả ôn tập, không suy từ số video đã mở."
+            className="bg-transparent p-0"
+          >
+            <ProgressChart />
+          </WidgetCard>
+          <WidgetCard title="Học với video" className="bg-transparent p-0">
+            <ol className="space-y-5">
+              <li className="flex gap-3">
+                <Headphones
+                  aria-hidden
+                  className="mt-0.5 size-5 shrink-0 text-primary"
+                />
+                <div>
+                  <p className="text-sm font-medium">Nghe từng câu</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Bật tự dừng để có thời gian đọc phụ đề.
+                  </p>
+                </div>
+              </li>
+              <li className="flex gap-3">
+                <Repeat2
+                  aria-hidden
+                  className="mt-0.5 size-5 shrink-0 text-primary"
+                />
+                <div>
+                  <p className="text-sm font-medium">Nghe lại đoạn khó</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Lặp câu hoặc giảm tốc độ ngay trong player.
+                  </p>
+                </div>
+              </li>
+              <li className="flex gap-3">
+                <Captions
+                  aria-hidden
+                  className="mt-0.5 size-5 shrink-0 text-primary"
+                />
+                <div>
+                  <p className="text-sm font-medium">Đọc theo nhịp của bạn</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Chuyển sang chế độ đọc để xem phụ đề liền mạch.
+                  </p>
+                </div>
+              </li>
+            </ol>
+          </WidgetCard>
+        </RightRail>
+      </div>
+    </DiscoverSearchProvider>
   );
 }

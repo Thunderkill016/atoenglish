@@ -60,6 +60,7 @@ export interface LoadedTranscript {
   sentences: Sentence[];
   origin: TranscriptOrigin;
   language: string;
+  segmentationVersion?: number;
   /** Chain step / track kind — surfaced in the UI as "Phụ đề tự động" etc. */
   trackKind: "manual" | "asr" | "learner";
   title?: string;
@@ -140,7 +141,7 @@ async function existingTranscript(
   if (!source) return null;
   const { data: transcript } = await supabase
     .from("content_transcripts")
-    .select("origin, language, sentences")
+    .select("origin, language, sentences, segmentation_version")
     .eq("source_id", source.id)
     .maybeSingle();
   if (!transcript) return null;
@@ -150,6 +151,7 @@ async function existingTranscript(
     sentences,
     origin: transcript.origin as TranscriptOrigin,
     language: transcript.language,
+    segmentationVersion: transcript.segmentation_version,
     trackKind:
       transcript.origin === "youtube_asr"
         ? "asr"
@@ -255,6 +257,7 @@ export async function fetchVideoCaptions(
     sentences,
     origin: originForTrack(result.track.kind),
     language: result.track.languageCode,
+    segmentationVersion: SEGMENTATION_VERSION,
     trackKind: result.track.kind,
     title: result.video.title,
     channel: result.video.channel,
@@ -306,6 +309,7 @@ export async function saveLearnerTranscript(
     sentences: parsed.sentences,
     origin,
     language: "en",
+    segmentationVersion: SEGMENTATION_VERSION,
     trackKind: "learner",
     saved: false,
   };

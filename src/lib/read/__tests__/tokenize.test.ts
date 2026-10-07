@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   distinctWords,
+  phraseFromTokens,
   normalizeWord,
   tokenizeText,
 } from "@/lib/read/tokenize";
@@ -50,5 +51,36 @@ describe("normalizeWord / distinctWords", () => {
   it("normalizes case so surface forms share one state", () => {
     expect(normalizeWord("Work")).toBe("work");
     expect(distinctWords("Work. work! WORK")).toEqual(["work"]);
+  });
+});
+
+describe("subtitle lookup spans", () => {
+  it("keeps typographic contractions readable with the same lookup key", () => {
+    const tokens = tokenizeText("I’m here; don’t worry.");
+    expect(
+      tokens.filter((t) => t.type === "word").map((t) => t.normalized),
+    ).toEqual(["i'm", "here", "don't", "worry"]);
+    expect(tokens.map((t) => t.text).join("")).toBe("I’m here; don’t worry.");
+  });
+  it("extracts forward and reverse endpoints with punctuation preserved", () => {
+    const tokens = tokenizeText("take a break, then work");
+    expect(phraseFromTokens(tokens, 0, 4)).toBe("take a break");
+    expect(phraseFromTokens(tokens, 4, 0)).toBe("take a break");
+    expect(phraseFromTokens(tokens, 4, 9)).toBe("break, then work");
+  });
+  it("does not accept punctuation, missing, fractional or out-of-bounds endpoints", () => {
+    const tokens = tokenizeText("Hello, world!");
+    for (const [first, last] of [
+      [-1, 0],
+      [0, 50],
+      [1, 3],
+      [0.5, 3],
+      [0, NaN],
+    ])
+      expect(phraseFromTokens(tokens, first, last)).toBeNull();
+  });
+  it("normalizes source whitespace without changing word case", () => {
+    const tokens = tokenizeText("Take   a\nBreak");
+    expect(phraseFromTokens(tokens, 0, 4)).toBe("Take a Break");
   });
 });

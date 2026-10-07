@@ -6,7 +6,7 @@ Replace the current AtoEnglish learning system with a free web learning system t
 
 ## PROBLEM
 
-Owner statements 2026-10-06: Trancy is the product standard; eJOY and the 39 open-source repositories in the research package are the design/technical reference; the current learning system (A0–B2 units, 5-phase lesson player, placement/checkpoints, roadmap, quiz) is to be **replaced**. Today no part of the app accepts a video, shows bilingual subtitles, saves sentences or offers dictation/shadowing on real clips; `cards` de-duplicates by lemma and has no source context; the curated gloss dictionary is seeded from curriculum constants that are scheduled for removal.
+Owner statements 2026-10-06: Trancy is the product standard; eJOY and the 39 open-source repositories in the research package are the design/technical reference; the current learning system (A0–B2 units, 5-phase lesson player, placement/checkpoints, roadmap, quiz) is to be **replaced**. At contract creation the app had no video input/player. As of the 2026-10-06 research checkpoint, this checkout has discover and an EN sentence player with repeat/theater/read; bilingual VI, contextual word lookup, sentence saving and dictation/shadowing are still pending (see RESEARCH-NOTES). `cards` de-duplicates by lemma and has no source context; the curated gloss dictionary now reads `src/lib/dict/vocabulary.ts` through `src/lib/read/gloss.ts`; preserve this existing primitive.
 
 ## WHY IT MATTERS
 
@@ -18,7 +18,7 @@ Without one working loop at the Trancy standard there is nothing for the learner
 - Research package on branch `research/ejoy-archive-2026-10-06` (eJOY report, Trancy official pages, 39 repos) — static desk/code research, nothing run; conclusions and repo-to-slice map in [RESEARCH-NOTES.md](./RESEARCH-NOTES.md).
 - Probe 2026-10-06 (one public video, residential IP, see LEDGER evidence): Android `youtubei/v1/player` returned manual + `asr` English tracks with `vi` in `translationLanguages`; `json3` requires replacing the `fmt=srv3` already in `baseUrl`; `asr` `json3` carries word offsets (`segs[].tOffsetMs`) with events that split mid-sentence; `tlang=vi` returned HTTP 429 on the first request.
 - Authenticated Trancy deep-dive 2026-10-06 ([TRANCY-DEEP-DIVE.md](./TRANCY-DEEP-DIVE.md), corpus at `/tmp/trancy-research/`): extension code, Learning Center route map, live API payloads (word/sentence saves, caption tokens with lemma/POS, progress heartbeat, incremental sync), 36 screenshots. Sentence identity = SHA-256 of normalised text; word state = separate `star`/`master` flags.
-- Owner-approved UI/UX adaptation ([REDESIGN.md](./REDESIGN.md)): take Trancy's verified layouts (video-left + transcript-rail + dict drawer, icon rail, right-rail widgets, card grids, practice session shell); drop dark-only, paywall/upsell, machine-translated Vietnamese, mascot gamification and the 40-route sprawl.
+- Owner-approved UI/UX adaptation ([REDESIGN.md](./REDESIGN.md)): adapt Trancy's observed layouts (video-left + transcript-rail + dict drawer, icon rail, right-rail widgets, card grids, practice session shell); drop dark-only, paywall/upsell, machine-translated Vietnamese, mascot gamification and the 40-route sprawl.
 - Existing code: `src/lib/read/{tokenize,gloss}.ts` (gloss seeded from `UNIT_VOCABULARY`), `src/lib/vocab/lemma.ts`, `src/lib/srs/fsrs.ts` (`ts-fsrs`), `src/lib/ai/gemini.ts` (`gemini-2.5-flash` via AI Gateway), `src/lib/speech.ts`, `src/lib/security/rate-limit.ts`, `src/app/actions/cards.ts`.
 
 ## SCOPE
@@ -133,4 +133,16 @@ One merged PR per slice, plus a short validation note after Hoàng uses the loop
 
 ## STATUS
 
-`READY` — owner approved the Trancy-based redesign (REDESIGN.md) on 2026-10-06; SPEC.md and this contract updated to the Trancy-only standard. Slice 1 may start on owner go-ahead.
+`IN_PROGRESS` — discover/player implementation and home WIP exist in this checkout as of 2026-10-06. The current owner research request is completed in RESEARCH-NOTES; the learning loop and required Worker/production evidence remain incomplete.
+
+
+## Research checkpoint — 2026-10-06
+
+Owner requested repository-first research, authenticated Trancy inspection and comparisons with other products/repos to improve AtoEnglish rather than copy the reference. This updates the method of design selection, not the six-surface scope. REDESIGN §9 and RESEARCH-NOTES contain the bounded implementation packet. Current checkout and upstream/main differ; Plate THU-8/THU-9 still describe the prior direction. No production, migration, learning efficacy or completion claim is implied by this research checkpoint.
+
+### User refinement — 07/10/2026: translation core and free preference
+
+Automatic EN→VI translation is the current focus. Free engines are evaluated by meaning quality, not a marketing score. Preserve original sentences/IDs/timing, expose missing/failed outputs, separate provider-specific caches, and never fall back to a billed provider implicitly. Chrome quick translation is opt-in and cannot satisfy the quality engine acceptance after four critical failures in six authored smoke cases. A real provider/corpus evaluation and the existing persistence/RLS acceptance remain required; mocked UI/route checks establish alignment and failure handling only.
+
+
+07/10 bounded local-engine outcome: optional self-hosted contextual subtitle adapter integrated into existing route/client and tested with actual pinned Hy-MT2 Q4 on 30 authored cases. Preserve login boundary, source clocks/IDs, provider-scoped cache, cancellation and no automatic Gemini fallback. Config disabled by default; no production enablement or full Slice 2 acceptance. Codex reading and synthetic UI tests are not independent human/real-library evidence. See RESEARCH-NOTES update for measurements and remaining gates.

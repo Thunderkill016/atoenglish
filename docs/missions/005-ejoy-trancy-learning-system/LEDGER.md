@@ -8,7 +8,7 @@ New AtoEnglish learning system at the Trancy standard, replacing the old curricu
 
 ## STATE
 
-`READY` — 2026-10-06 (owner approved REDESIGN.md; awaiting go-ahead for slice 1)
+`IN_PROGRESS` — 2026-10-06 (discover/player exist with home WIP; comparative research complete, full learning loop pending)
 
 ## ACTIVE WORKSTREAMS
 
@@ -152,3 +152,131 @@ Owner: "Ko dùng màu xanh lá cây và pattern cũ nữa". Trancy structure kep
 - `--mark` kept for future saved-word highlighting (gold wash).
 
 **Gate:** tsc ✓ · eslint 0/0 ✓ · 36/36 e2e ✓ · build ✓
+
+
+## Repository-first product research and selective design — 2026-10-06
+
+**Owner request:** continue after Trancy login; understand current docs/code, inspect Trancy, compare multiple products and public repositories to develop AtoEnglish intelligently rather than copy it.
+
+**Observed:** checkout HEAD `938a6908` plus preserved home/sidebar WIP; upstream main `a0043069`, PR #235 open. Discover/EN player exist; VI lookup/save/practice/review loop pending. Plate THU-8/THU-9 stale (curriculum/004), Active Work/Next do not reflect 005. Production not checked.
+
+**Research:** authenticated Trancy home/player/word lookup/video examples/empty vocabulary; official docs for Language Reactor, eJOY, Migaku, LingQ and Lingopie; 33 source/test/doc/LICENSE files retrieved at pinned SHAs across 8 repos, selectively read, no repo build/execution. No writes to Trancy saved learning data, no extension installation. Source access and lookup are not evidence of playback correctness or learning gains.
+
+**Changes:** RESEARCH-NOTES comparison and current-code map; TECH-KNOWLEDGE pinned source/license references and corrections to auto-rating/migration assumptions; REDESIGN §9 action-driven sidebar, single scroll and accessible contextual lookup packet; TASK_CONTRACT corrects stale statement that video input/player are absent. Existing UI WIP preserved; no production code changes in this research checkpoint, commit/push/merge/deploy or DB changes.
+
+**Execution packet:** finish caption/Worker boundary; contextual understanding (slice 2); idempotent save and source return (slice 3); dictation → due review (slices 4/5). Acceptance UX-1…LEARN-2 in RESEARCH-NOTES. State: RESEARCH COMPLETE; product loop still IN PROGRESS.
+
+**Validation of this documentation checkpoint:** `npm run check:source-of-truth` PASS; `git diff --check` PASS; local `tsc --noEmit --incremental false` PASS against the preserved checkout. These checks do not run reference repositories, exercise the new learning loop or verify a release.
+
+
+## Home v6 — selective design implemented — 2026-10-06
+
+Owner: “Tiếp tục nghiên cứu và phát triển trang home”. Bounded scope: improve /discover and its shared navigation/cards; preserve the existing 005 checkout and prior WIP. No new product direction, DB change or release.
+
+- Header states the task and retains the working YouTube input. Catalog topics are visible; title/channel/topic search normalizes diacritics; ≤10-minute sessions combine with topic/curator-level filters; result count/reset/empty recovery stay together.
+- Home/sidebar share one document scroll. Compact sidebar contains a neutral current-week calendar, guest sign-in or verified video-source summary, and guidance for controls that already work in the player. Flashcard/PDF/statistic placeholders and the empty progress plot no longer consume home space. Resume snapshots are not treated as learning-day history.
+- Viewer reads distinguish guest, verified-empty/ready and unavailable data. Failed auth/source/count reads no longer silently become a zero count; public catalog stays usable with recovery. Resume reads a bounded recent window, excludes incidental/completed positions and preserves millisecond links.
+- Shared nav marks unimplemented /read,/review,/library,/me as unavailable, with accessible labels, instead of navigating to missing routes. Cards retain one channel mark with compact metadata; link errors have accessible feedback; today's date has aria-current.
+- Added mocked server-render tests for guest, eligible resume, real zero, auth/read/client failure and per-user query filters. Guest e2e covers search/filter/reset, responsive reflow, link feedback and one vertical scroll. No extra testing dependency introduced.
+
+**Evidence:** local tsc --noEmit --incremental false PASS; ESLint changed source/tests PASS; 21 unit tests PASS; full home/landing guest suite 45/45 PASS across desktop 1854px, short desktop 1440px, tablet 1024px, mobile 393px and narrow mobile 320px. After the final calendar accessibility attribute, sidebar regressions 5/5 PASS. Browser desktop/mobile inspected; screenshots saved as atoenglish-home-desktop-v2.jpg and atoenglish-home-mobile-v2.jpg in the calling chat outputs. Guest config omitted global auth/DB setup and signed-in seeding. Real signed-in browser/runtime remains unverified; mocked query filtering is not an RLS proof.
+
+**Work state:** HEAD remains 938a6908 with uncommitted WIP; no commit/push/merge/deploy. Plate Product Truth THU-8 and Current State THU-9 reconciled with mission 005 and current local evidence, replacing stale curriculum/004 descriptions. Remaining lookup/save/practice/review work follows the existing PLAN.
+
+- Final search regression: `VLOG DOI SONG` initially returned 0 instead of 2 because Unicode NFD does not decompose `đ`. Explicit `đ → d` normalization fixed the root cause; all 5 viewport search regressions PASS after the fix. Final typecheck and changed-file ESLint PASS.
+
+## Home correction, discovery picker and dictionary — 2026-10-07
+
+Owner explicitly required restoring statistics, replacing duplicate search inputs, and adapting the Trancy discovery/AI dictionary screenshots. Preserved prior WIP. Restored Flashcard, statistics, Activity and Progress at home; no PDF revival, fake counts or invented events. One compact launcher opens search in a modal; Video/Channels/topics use the 18-video curated catalog, shared query/topic filters, reset, direct links and keyboard shortcuts. Dictionary drawer uses the 501-entry curated gloss plus explicit authenticated AI via existing Gemini helper, with source labels, examples, honest errors and no data writes.
+
+Regression findings fixed: removed lucide brand icon import; native search Escape cleared text instead of closing; native first/last focus could escape to browser chrome; origin validation wrongly compared localhost to internal 0.0.0.0; body-only locking left a second root scrollbar. Both dialogs now lock root/body and use shared focus boundaries. Verification results follow below; no commit/push/merge/deploy or real Gemini/DB writes.
+
+
+**Final local evidence:** TypeScript `tsc --noEmit --incremental false` PASS; changed-file ESLint PASS; 37 unit tests PASS (home 9, dictionary route 15, catalog 8, activity 5). Full guest home/landing E2E 55/55 PASS across 5 viewports (1854px, 1440px, 1024px, 393px, 320px), including modal scroll locks, first/last focus, Esc, link/filter/channel discovery, curated lookup/miss and guest AI recovery. Source-of-truth and diff whitespace checks PASS. Browser desktop/320px screenshots saved in the calling chat outputs. Tests skip real auth/DB seeding; successful authenticated Gemini runtime, RLS, audio quality and production remain unverified. No commit/push/merge/deploy.
+
+
+## Home/search visual refinement — 2026-10-07
+
+Owner compared Trancy and local screenshots, then authorized fixing the identified density/hierarchy problems. Removed visible modal/home title layers and redundant submit button; default picker explores 12 actual catalog channels. Typing switches to videos; clearing restores discovery. Thumbnail previews and representative video covers replace repeated monitor icons. Desktop topics use a side column; 320px uses compact wrapping rows, with one dialog scroller. Existing curated/dictionary/AI/data-state behavior preserved.
+
+Channel selection now filters exact channel in the shared context: TED has 5 catalog videos; Stanford shares the TED topic but must not appear in TED's channel results. Free text/topic search remains broader. Home shows video sooner; compact widgets and Flashcard/statistics preceding the guest sign-in panel expose all four metric tiles on 1440x640. Activity and Progress remain on the document.
+
+Evidence: final clean TypeScript and changed-file ESLint; 37 unit tests PASS. Full guest home/landing E2E 55/55 PASS across 5 viewports, including new channel/focus/thumbnail assertions and first-screen desktop statistics. After the final mobile chip spacing and clear-query regression, focused picker/reflow E2E 10/10 PASS. Browser screenshots inspected desktop 1440x640 and mobile 320x720; saved as v4 outputs. Formatter run on changed TSX/tests; source-of-truth and whitespace checks PASS. No commit/push/merge/deploy, DB writes or authenticated live AI validation.
+
+
+## Curated Vietnamese title meanings — 2026-10-07
+
+Owner authorized title translation following the recommendation: optional secondary Vietnamese meanings for discovery, original English/channel retained. Added `titleVi` to all 18 curated entries. One shared `Hiện nghĩa Việt` toggle (off by default, compact icon on mobile/search) controls catalog and search previews. Search indexes original/Vietnamese titles independently of visibility, with the existing diacritic/đ normalization. Reset preserves display choice; choice is page-session state, not persisted. Existing VideoCard takes an optional secondary meaning, so non-catalog resume cards remain unchanged. No official YouTube translation claim, runtime AI calls, migrations or DB/cache writes; titles outside catalog still original.
+
+Validation: final TypeScript PASS, changed-file ESLint PASS, 38 unit tests PASS (catalog translation coverage included), full guest home/landing E2E 60/60 PASS across five viewports. New browser regression checks defaults, original link/title preservation, shared toggles, hidden Vietnamese search, reset behavior and zero dictionary/translation requests. Browser desktop and 320px inspected; screenshots saved in calling chat outputs. Source-of-truth/diff checks PASS. No commit/push/merge/deploy.
+
+
+## Watch player layout and transcript follow — 2026-10-07
+
+Owner continued with Trancy practice versus local watch screenshots. Bounded change to existing `/watch/[videoId]`: fix the iframe-size root cause and adapt theater/read layout and caption navigation. Preserved home/search/dictionary/title-meaning WIP. Same branch/HEAD `938a6908`; uncommitted local work.
+
+- YouTube's default 640×390 iframe was smaller than the surrounding responsive frame. The constructor now sets width/height to 100%, and the wrapper styles the replaced iframe. Centered 16:9 desktop stage fits available height, with a separate caption strip; narrow phones preserve the documented 200px minimum player height. Official primary reference: https://developers.google.com/youtube/iframe_api_reference .
+- Desktop theater uses one constrained transcript/empty-panel scroller and no document scrollbar. Mobile/read use document flow. Header falls back to catalog title/channel without a metadata request; player DOM/time survive mode changes. Timed rows carry timestamp pills and source labels; untimed text remains explicitly read-only.
+- Progress slider seeks without forcing playback. Controls have accessible names, state and readiness/availability gates. Native button Space activation is preserved; typing/modifier shortcuts do not commandeer playback. Next before the first cue now seeks the first cue instead of the last.
+- Manual wheel/touch/scrollbar/keyboard input pauses follow; explicit resume makes the current line visible by scrolling only the rail. Read/mobile never auto-scroll the document. Empty state explains the English-caption action, busy/error status and paste/upload fallback; no auto-fetch, synthetic translation or pretend saved state.
+
+**Evidence on final local WIP:** TypeScript `tsc --noEmit --incremental false` PASS; changed-file ESLint PASS; 72 existing caption/parse/segment/action unit tests PASS. Deterministic guest watch E2E **55/55 PASS** over desktop 1854×950, short desktop 1440×640, tablet 1024×768, mobile 393×851 and narrow mobile 320×720. Stub now models actual DOM replacement/iframe dimensions. Regressions cover frame geometry, one scroller, seek/deep link, manual follow, native Space, typing, next-first and single player mount across mode changes. Browser inspected the real YouTube iframe: default viewport wrapper and iframe both 611.328×343.859px. Desktop/320px screenshots saved in calling chat outputs.
+
+**Limits:** caption fixtures test UI/navigation only; browser fixture text explicitly says UI fixture and was cleared before handoff. Real upstream-caption E2E excluded because server telemetry may write DB; signed-in persistence, caption availability, VI alignment/contextual lookup and production remain unverified/unimplemented as applicable. No DB/provider changes, commit/push/merge/deploy. This finishes this layout/navigation increment, not the full mission 005 learning loop.
+
+## Contextual watch lookup after live Trancy research — 07/10/2026
+
+**Authority/outcome:** owner requested opening Trancy videos, learning their interaction and applying suitable internet/repo knowledge to the existing website. Same branch `docs/005-ejoy-trancy-system`, HEAD `938a69081ffd009a6ee2d67fcf5f29df0fc77061`, uncommitted WIP preserved. Live authenticated practice inspection covered video pause/seek, word definition, source examples and Settings; no Trancy settings/saves changed. Sources and decisions are in RESEARCH-NOTES/TECH-KNOWLEDGE/REDESIGN; no upstream code copied/dependency added.
+
+**Implementation:** shared SentenceText separates word lookup from timestamp seek; existing DictionaryPanel reused via React context. Opening pauses, retains original sentence/title/time, shows labelled general gloss immediately and returns focus to the selected word on close without autoplay. Explicit replay returns to source. Two-endpoint phrase mode handles reverse order and same-sentence boundary; too-long selection rejected. Typographic contractions normalize while preserving source text. Untimed text has no fake replay. Contextual result precedes edit/AI form; focusing close rather than edit input keeps answer visible on mobile. A long-token regression found horizontal overflow; tokens/source now wrap without cutting original text. No save/VI-alignment or scheduler implementation claimed.
+
+**Checks on local WIP:** final TypeScript `tsc --noEmit --incremental false` PASS; changed-file ESLint PASS; 102 tokenizer/gloss/dictionary/caption/action unit tests PASS. Isolated guest Home/Watch E2E **130/130 PASS** on five viewports before final long-token wrapping; after that change **5/5** new untimed/overlong-selection cases and **30/30** affected lookup/phrase/AI-mock/home-drawer/reflow/frame regressions PASS on all five viewports. Source-of-truth and diff whitespace PASS. Browser real iframe remained identical to wrapper (721.765625×405.984375px) before/after opening lookup. Desktop/mobile screenshots use explicitly labelled UI fixture captions, cleared before handoff; viewport override reset.
+
+**Test-boundary incident:** initial 135-case attempt ran from repo cwd. Although the temporary config omitted dotenv/global setup, `e2e/helpers/auth.ts` independently loads `.env.local`. The signed-in Home test consequently ran and called `seedWatchedSource` for the existing E2E account at desktop, short-desktop and tablet: upserted YouTube source `dQw4w9WgXcQ`, title `Never Gonna Give You Up`, channel `E2E Channel`, duration 600000ms, resume 65000ms and refreshed updated_at. This was unintended configured-Neon-DB test state, not a schema migration or a claim of non-production isolation. Attempt interrupted (99 passed, 2 interrupted, 34 not run); not counted as successful validation. No deletion/rollback attempted because previous row values and environment classification are unverified. Corrected run starts from the calling workspace without `.env.local`, removes DB/Auth variables and explicitly excludes both signed-in viewer and real caption-fetch cases in its config. Subsequent checks used guest/UI fixtures and mocked AI. This corrects any inference that merely omitting global setup makes the earlier Home runs DB-free.
+
+**Limits/handoff:** authenticated AI success, translation quality, aligned VI cache, source/card persistence/RLS, production and learner outcomes remain unverified or unfinished. No commit/push/merge/deploy. Plate THU-9 was read fresh, but the connector was removed from available tools before update; this checkpoint is not yet mirrored there. Continue the existing PLAN slice-2 alignment/understanding work, then the separately governed save/library/review slices.
+
+
+## Free-first automatic subtitle translation research and foundation — 07/10/2026
+
+**Authority:** owner prioritized automatic translation, free use and meaning quality, and requested live Trancy, GitHub translation repos and Google Translate research. Same existing AtoEnglish checkout/branch/HEAD; prior home/dictionary/player WIP preserved.
+
+**Live research:** authenticated Trancy practice Settings showed Google selected under Free, SiliconFlow also Free, Advanced AI separate. Settings only inspected, no changes/saves. Tested six self-authored EN→VI cases in real Google Translate Advanced (menu says built with Gemini) and real Chrome Translator API inside the app. Google retained all six tested meanings in manual review; Chrome failed idiom, named program, father pronoun and funding metaphor. Interfaces differ and exact backend/downloaded model revisions are opaque: this is a small smoke comparison, not a global ranking or controlled same-model benchmark. Raw cases/reviews and screenshots are in the calling workspace outputs. Read pinned source/licenses for Hy-MT2 (Apache-2.0), VinAI Translate (AGPL-3.0), Argos (MIT) and Read Frog (GPL-3.0), plus MADLAD model card and official Google/Gemini/Chrome documentation; no upstream code incorporated. Hy-MT2 is a candidate, not installed/run/integrated.
+
+**Implemented bounded increment:** existing watch supports bilingual/EN/VI/hidden modes; explicit quick native activation/download, progress/partial output, original source-ID/timing integrity, current-cue-first scheduling, cancellation and bounded account/provider/source/segmentation/prompt-version cache. Native output labelled machine translation with pre-activation quality limitations. Optional authenticated Gemini route uses bounded contextual batches, structured ID validation, source-origin checks and quota/timeout errors; server key plus explicit SUBTITLE_GEMINI_ENABLED required. Default remains false, including .env.example. No automatic cloud/paid fallback or implicit retries. Actual loaded segmentation version included in cache identity. Caption strip reserves 128px for bilingual text; explicit two-line-height cap handles inline lookup buttons defeating line-clamp on small screens.
+
+**Verification:** TypeScript tsc --noEmit --incremental false and changed-file ESLint PASS after the final production change. Relevant unit run 97 PASS; after prompt-version/cached-gap refinement the affected five translation tests rerun PASS. Focused watch E2E run 32/35 PASS, identifying three real long-bilingual layout failures; after the cap fix, all 10 affected long-caption/frame cases PASS across five viewports. Other activation/cache/cancellation/partial-failure/unsupported/timing cases passed in that 35-case run. Initial attempted browser launch was blocked by the process sandbox, then rerun with approved execution permissions; not counted as app validation. Tests ran from the projectless cwd with DB/Auth vars removed and signed-in/real caption-fetch cases excluded, using mocked player/translator only. Source-of-truth and whitespace checks PASS. Real native translation quality evidence is separate from mocked UI tests. Real browser screenshot inspected; synthetic captions explicitly labelled and cleared by reload before handoff. Trancy, Google Translate and local watch tabs retained for comparison.
+
+**Open gates:** six samples do not meet the documented 30-case semantic release gate. No real authenticated Gemini/API quality run, no broadly supported free provider chosen, no self-hosted model run, no authored-VI ingestion priority or persistent DB translation cache. Therefore this is a research-backed translation foundation, not completion of the core quality engine or mission 005. No DB/schema/billing changes, commit/push/merge/deploy. Plate connector unavailable; no mirrored checkpoint claimed.
+
+
+## Actual free local model evaluation and watch adapter — 07/10/2026
+
+Owner continued “Bây giờ nghiên cứu để phát triển đi”. Same branch `docs/005-ejoy-trancy-system`/HEAD `938a69081ffd009a6ee2d67fcf5f29df0fc77061`; uncommitted prior WIP preserved. Downloaded official pinned Tencent Hy-MT2-1.8B Q4_K_M and llama.cpp b11457 CPU archive, verified both SHA-256 against official metadata; no system runtime install. Baseline six-case model run caught a break-even/profit meaning error. Official contextual prompt shape plus general data/meaning/name constraints evaluated against 30 frozen authored cases through the actual new adapter: all completed, Codex reading detected no critical meaning error and three wording/name concerns. Not independent blinded review, not real-library release corpus. p50 4.3885s, empirical p95 11.041s, max 13.17s per cue on CPU two threads. Original Google/device outputs retained separately; no global ranking.
+
+Integrated optional local model into existing `/api/translate`/`/watch`: source-bound single-cue outputs, adjacent context, provider-specific batch/character/timeout, private backend key, checked response model/profile, cache pinned to model/quantization/runtime/prompt, cancellation and no Gemini fallback. Auth cookie + user verification and rate limiter unchanged. Config sample disabled; no .env.local edits or default enablement. Temporary loopback evaluator stopped after use to return RAM; about 1.13GB model remains in calling workspace. No DB writes/schema/provider billing/production/auth configuration changes, commit/push/merge/deploy.
+
+Local WIP verification: typecheck clean; changed-file lint clean. Focused unit 31 PASS (adapter/route/budget/hook), then three hook tests rerun PASS after correcting test-harness side effects without disabling lint. Guest translation E2E 25/25 PASS across five viewports, run from projectless cwd with DB/Auth env removed and integration cases excluded; player/translator mocks verify UI only. vinext/Cloudflare build PASS (existing route-classification warnings). Current real browser watch remains usable with the original embedded video and no synthetic subtitles. Source-of-truth/whitespace checks run after documentation update. Remaining: signed-in model/browser smoke, independent permitted-library semantic review, authored VI priority and DB cache. This is an experimental engine increment, not full core-quality or mission-005 completion. Plate connector unavailable, no mirror claimed.
+
+
+## Subtitle spacing and reading presentation — 07/10/2026
+
+**Owner outcome:** improve caption spacing/presentation for listening and reading, using the supplied screenshot. Existing watch route/WIP preserved. Removed per-token horizontal padding and silent two-line clipping; caption now has a 60ch measure, balanced wrapping, legible EN/VI sizes/leading/gap and natural height. Desktop grid fits video in the remaining space close to caption; mobile keeps the YouTube minimum viewport. Read/rail pairs have larger type, left alignment, comfortable leading and a bounded read measure. Source text/timestamps, lookup/replay, translation engine/config/cache unchanged.
+
+**Evidence:** 40/40 guest E2E across five viewports (mocked player/translator), including full painted-line visibility under text-spacing overrides, no caption/control overlap, no horizontal/nested scroll, lookup/phrase/focus, player continuity and follow/manual-scroll checks. 9 tokenizer unit tests, changed-file lint and full TypeScript check PASS. Earlier typecheck failure came from incompatible Next validator + vinext-generated route declarations; regenerated via next typegen then checked cleanly, without suppressions. Actual browser desktop/mobile-width/read presentation inspected with authored layout sample, not real video captions or learner evidence. Source-of-truth/whitespace checks recorded at completion. Primary references/decisions in RESEARCH-NOTES and REDESIGN.
+
+**Limits:** typography choices remain a learner-validation hypothesis; arbitrary huge transcripts, learner outcomes, model quality, signed-in persistence and production not certified. Fixture cleared, viewport reset before handoff. No DB/auth/provider configuration, commit/push/merge/deploy.
+
+## Live smoke — Hy-MT2 local engine end-to-end (signed-in) — 2026-10-07
+
+First authenticated live run of the local engine through the real app path:
+
+- llama.cpp b11457 serving Hy-MT2-1.8B-Q4_K_M on `127.0.0.1:8321`, `--alias hymt2-1.8b-q4` (required — llama.cpp otherwise returns the .gguf filename in `model`, which the pinned-profile zod schema correctly rejects).
+- `.env.local`: `SUBTITLE_LOCAL_ENABLED=true` + loopback URL/key (dev only, gitignored; production unchanged).
+- Playwright live spec (`e2e/live-translate.smoke.spec.ts`, `LIVE_TRANSLATE_SMOKE=1`): login → paste 4-cue SRT → "Dùng Hy-MT2 · thử nghiệm" → real `/api/translate` → llama.cpp → validated → bilingual rail. PASS: cue 0 "Cha tôi đã dạy tôi mọi thứ mà tôi biết." in ~21s total; progressive "1/4 câu · đang dịch…" status verified.
+- Two test-harness bugs fixed: revision-2 gate promise was never released (hook test hung), strict-mode/locator issues in the smoke spec.
+- Earlier discovered constraint now proven live: model `model` field must echo the pinned identifier; deployment docs must note `--alias`.
+
+**Full gate on the whole WIP increment: tsc ✓ · eslint 0/0 ✓ · 233 unit ✓ · 80/80 e2e ✓ · build ✓**
+
+Remaining (still open): DB-backed translation cache, permitted-library semantic review of real captions, authored-VI ingestion, 7B-vs-1.8B quality comparison, deployed-backend story for Cloudflare (loopback is dev-only).

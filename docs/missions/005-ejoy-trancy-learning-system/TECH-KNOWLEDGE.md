@@ -95,10 +95,10 @@ Mô hình một-thẻ-nhiều-ngữ-cảnh chính xác là `study_cards` + `card
 
 ### `Talljack/echo-type` (MIT) — `src/lib/fsrs.ts`
 
-- `accuracyToRating`: `<50` Again, `<70` Hard, `<90` Good, `≥90` Easy — ngưỡng auto-rating cho dictation/listen_fill (SPEC dùng 90% cho Good: khớp).
+- `accuracyToRating`: `<50` Again, `<70` Hard, `<90` Good, `≥90` Easy — ngưỡng của repo; **không khớp** SPEC: ta dùng ≥90% không gợi ý → Good và không tự Easy.
 - Serialize `FSRSCardData` phẳng (due/stability/difficulty/elapsed/scheduled/reps/lapses/state/last_review) — khớp cột `study_cards` của ta; `dataToCard`/`cardToData` hai chiều.
 - `previewRatings` → `{nextReview, interval}` mỗi nút — hiện "3d"/"1mo" trên nút rating (UX hay, copy).
-- `enable_fuzz: true`, `migrateToFSRS` cho card cũ: stability ≈ interval cũ, difficulty=5, state=Review nếu có attempts — đúng cho bước nhập `cards` cũ (SPEC §15 mục 3).
+- `enable_fuzz: true`, `migrateToFSRS` cho card cũ: stability ≈ interval cũ, difficulty=5, state=Review nếu có attempts — chỉ là mẫu migration; nhập `cards` cũ chưa được chốt (SPEC §15.3).
 - `formatInterval` hiển thị ngắn.
 
 ### `google/bespoke` (Apache-2.0) — `bespoke/urgency.py`
@@ -147,8 +147,50 @@ Mô hình một-thẻ-nhiều-ngữ-cảnh chính xác là `study_cards` + `card
 3. `card_contexts`: thêm `context_origin` enum (`watch_lookup|read_lookup|manual`) — học từ zeeguu `translation_source`.
 4. Tô sáng từ đã lưu: ưu tiên **CSS Custom Highlight API** (không đụng DOM) thay vì wrap span — kỹ thuật word-hunter.
 5. Dictation: blank index dùng cặp `spaceTokens`/`renderTokens`, regex token phải chứa `\u2019` (curly apostrophe); blank chọn có chủ đích, không random.
-6. `migrateToFSRS` khi nhập `cards` cũ: stability = interval cũ, difficulty=5, state=Review nếu có attempts.
-7. Auto-rating: `<50/70/90` → Again/Hard/Good/Easy (khớp ngưỡng 90% trong SPEC).
+6. `migrateToFSRS` chỉ là mẫu nếu owner chọn nhập `cards` cũ; chưa có quyết định migration. Không suy state từ interval khi dữ liệu FSRS đầy đủ đã tồn tại.
+7. Auto-rating của repo: `<50/70/90` → Again/Hard/Good/Easy; không áp nguyên mapping này, theo SPEC §7.
 8. Shadowing similarity: in-order subsequence match (không cần Levenshtein).
-9. Dictionary mở rộng: ECDICT (80k entry lọc theo tần suất, có phonetic/POS/translation) là ứng viên cho curated dict — **kiểm tra giấy phép trước**.
+9. Dictionary mở rộng: ECDICT là nguồn EN→ZH, có thể tham khảo phonetic/POS sau khi kiểm tra giấy phép; không dùng trường translation làm nghĩa tiếng Việt và không coi 80k mục là dictionary EN→VI sẵn có.
 10. Testability: inject `fetch`/`delay`/`storage` theo typedef như echo-type & shadowing-english — khớp SPEC đã có.
+
+
+## 10. Kiểm chứng repo bổ sung 06/10/2026
+
+Đọc tĩnh chọn lọc mã/test/LICENSE ở SHA bên dưới; đã lấy 33 file gồm tài liệu và giấy phép. Không cài dependency, không chạy repo, không nhập mã vào sản phẩm. 7 repo đã có trong gói 39; thêm nguồn upstream `ts-fsrs` để đối chiếu adapter đang dùng. Repo thử tìm `gsantiago/subtitle` trả 404, bị loại, không dùng làm nguồn.
+
+| Repo @ commit | Mã/test đã đối chiếu | License đọc tại commit | Bài học và giới hạn |
+| --- | --- | --- | --- |
+| `zeeguu/api@3cfe269b2bb2` | [zeeguu/core/model/bookmark.py:31](https://github.com/zeeguu/api/blob/3cfe269b2bb2b098e5262640ba1e1aecdd4e1878/zeeguu/core/model/bookmark.py#L31) | [MIT](https://github.com/zeeguu/api/blob/3cfe269b2bb2b098e5262640ba1e1aecdd4e1878/LICENSE) | UserWord giữ trạng thái học; Bookmark giữ lần gặp và token span; UserWord kiểm tra preferred bookmark thuộc thẻ và không có thẻ mồ côi. Áp dụng invariant lúc ghi, không tự sửa dữ liệu khi đọc; cần test riêng vì file test_user_word đọc trong đợt này chủ yếu kiểm tra Phrase. |
+| `LuteOrg/lute-v3@933d0840aede` | [tests/unit/term/test_Term_status_follow.py:110](https://github.com/LuteOrg/lute-v3/blob/933d0840aede93b3999e6017ba7f5eba5e41206d/tests/unit/term/test_Term_status_follow.py#L110) | [MIT](https://github.com/LuteOrg/lute-v3/blob/933d0840aede93b3999e6017ba7f5eba5e41206d/LICENSE.txt) | Test trạng thái lan lên/xuống theo liên kết và cả vòng tham chiếu. Bài học: quyết định rõ lemma/form nào dùng chung trạng thái; không nhập thang trạng thái hoặc tự lan “đã thuộc” sang mọi nghĩa. |
+| `Talljack/echo-type@deccdf5e644d` | [src/lib/youtube-transcript.ts:150](https://github.com/Talljack/echo-type/blob/deccdf5e644d5f0b5e2b010f0ac81ee17f66e065/src/lib/youtube-transcript.ts#L150) | [MIT](https://github.com/Talljack/echo-type/blob/deccdf5e644d5f0b5e2b010f0ac81ee17f66e065/LICENSE) | Ngân sách dùng chung 6 request, deadline và dừng 401/403/429; test kiểm tra số call và timeout. Áp dụng ý tưởng budget/error taxonomy; không sao chép catch rộng hoặc con số vào Worker mà không test theo môi trường. |
+| `lexweave-hq/lexweave@2b31f8683c5e` | [packages/compile/src/compiler.ts:44](https://github.com/lexweave-hq/lexweave/blob/2b31f8683c5e14cc0f2b8a9ab21de15fe6eb490e/packages/compile/src/compiler.ts#L44) | [Apache-2.0](https://github.com/lexweave-hq/lexweave/blob/2b31f8683c5e14cc0f2b8a9ab21de15fe6eb490e/LICENSE) | Cache/checkpoint phân biệt producer, prompt, glossary, model; compile trước rồi render xác định. AtoEnglish cần key chứa phiên bản transcript, segmentation, ngôn ngữ, prompt/model; output map theo ID, không để LLM sửa thời gian. |
+| `mengxi-ream/read-frog@001e0b2984fb` | [src/utils/subtitles/fetchers/youtube/parser/scrolling-asr-parser.ts:37](https://github.com/mengxi-ream/read-frog/blob/001e0b2984fbdb267e7dd68dd1b1b32e170d7310/src/utils/subtitles/fetchers/youtube/parser/scrolling-asr-parser.ts#L37) | [GPL-3.0](https://github.com/mengxi-ream/read-frog/blob/001e0b2984fbdb267e7dd68dd1b1b32e170d7310/LICENSE) | Buffer qua ASR events, pending split, separator kết thúc, sửa overlap; test thiếu duration, newline, tags, empty segs. Chỉ học ý tưởng; viết fixture độc lập. Không dùng duration 200ms ước lượng làm timing gốc cho shadowing. |
+| `asbplayer/asbplayer@4a1843293b2e` | [common/anki/anki.ts:186](https://github.com/asbplayer/asbplayer/blob/4a1843293b2e1aa9d01d500f455ebac1fdbf9652/common/anki/anki.ts#L186) | [AGPL-3.0](https://github.com/asbplayer/asbplayer/blob/4a1843293b2e1aa9d01d500f455ebac1fdbf9652/LICENSE) | Thẻ giữ câu, các track, nguồn, URL và đoạn gốc; test escape query và duplicate handling. Chỉ học cách giữ nguồn/ngữ cảnh và phân loại trùng; không mượn mã, không thêm export/download media vào MVP. |
+| `Nitrino/easysubs@c81dada27a9d` | [src/streamings/youtube.ts:49](https://github.com/Nitrino/easysubs/blob/c81dada27a9d1fcd8da3fd9f620b6e76e86e6486/src/streamings/youtube.ts#L49) | [MIT](https://github.com/Nitrino/easysubs/blob/c81dada27a9d1fcd8da3fd9f620b6e76e86e6486/LICENSE) | JSON3 dùng event start + word offset; đoạn cuối fallback duration. Điểm cần thận trọng: offset từ cuối không tự chứng minh end audio đúng; invariant end>start, gap/overlap và duration phải kiểm tra bằng fixture/video. |
+| `open-spaced-repetition/ts-fsrs@c8ca282edc3f` | [packages/fsrs/__tests__/rollback.test.ts:17](https://github.com/open-spaced-repetition/ts-fsrs/blob/c8ca282edc3fe1cdfa1c24912437938b63a25cb3/packages/fsrs/__tests__/rollback.test.ts#L17) | [MIT](https://github.com/open-spaced-repetition/ts-fsrs/blob/c8ca282edc3fe1cdfa1c24912437938b63a25cb3/LICENSE) | repeat preview, next chọn rating và rollback từ log được test qua các rating. Giữ adapter src/lib/srs/fsrs.ts, không nâng dependency chỉ để giống upstream; test ngày/serialization, schedule+attempt atomic và replay chống lặp. |
+
+### Hiệu chỉnh các kết luận cũ
+
+- Mapping `<50/70/90` của echo-type **không khớp** mapping thận trọng trong SPEC §7. ≥90% không gợi ý của ta → Good; có gợi ý tối đa Hard; không tự Easy. Đây là quyết định sản phẩm, không phải ngưỡng được paper xác nhận.
+- `migrateToFSRS` là tham khảo migration legacy có mất thông tin, không phải phần việc đã duyệt. SPEC §15.3 còn quyết định nhập/bỏ dữ liệu cũ; không suy stability/difficulty từ interval nếu đang có state đầy đủ.
+- Cache `lang_word` chỉ phù hợp lookup từ điển tổng quát. AI nghĩa theo câu phải khóa theo ngữ cảnh và version; không trả nghĩa ở cữ cho câu biệt giam chỉ vì chung lemma.
+- Text hash giúp nhận diện nội dung nhưng không thay ID lần gặp: hai câu giống nhau ở hai timestamp/nguồn vẫn có hai contexts. Dùng nguồn + transcript version + sentence index/token span để xác định lần gặp; không dedupe chỉ bằng text.
+- CSS Highlight phục vụ trang trí, không thay semantics/focus/hit target cho tra từ/lưu; phải có fallback trình duyệt. Token span phải bảo toàn apostrophe, contraction và cụm nhiều từ.
+- Không chuyển các heuristic/điểm tự chấm thành mastery khách quan, không nhập auto-repair của repo vào hot read path.
+
+### 07/10 targeted watch-lookup source inspection
+
+| Source @ pinned SHA | Inspected contract | Applied choice |
+| --- | --- | --- |
+| `LuteOrg/lute-v3@933d0840aede93b3999e6017ba7f5eba5e41206d` | `lute/static/js/lute.js`: first/last selection endpoints; MIT LICENSE.txt read | Independent two-endpoint phrase selection, including reverse order, same-sentence boundary. No jQuery, UA detection or long-press dependency. |
+| `mengxi-ream/read-frog@001e0b2984fbdb267e7dd68dd1b1b32e170d7310` | `src/components/ui/selection-popover/__tests__/selection-source-content.test.tsx`: source expansion sizing; GPL-3.0 | Keep source readable, no fixed empty region; one native-dialog scroller. Concept only, no copied implementation/test. |
+| `zeeguu/api@3cfe269b2bb2b098e5262640ba1e1aecdd4e1878` | `zeeguu/core/model/bookmark_context.py`: source coords separate from fragments; MIT | Keep sentence/video/timestamp beside meaning. Persistence coordinates remain governed by SPEC, not text-only dedupe. |
+
+Raw files/licenses were cached in the calling chat's `work/product-research/repos`. Static selective reading only; upstream repos were not installed or run. SHA identifies the inspected revision, not a promise that it is latest. No additional dependencies introduced. Existing tokenizer now recognizes typographic apostrophes and supports bounded phrase endpoints; original rendered text is retained.
+
+### Translation invariants and candidate audit — 07/10/2026
+
+See RESEARCH-NOTES for pinned Hy-MT2/VinAI/Argos source and licenses, Google/Chrome/Gemini primary docs and the live six-case comparison. `src/lib/video/translation.ts` owns source-ID validation, budgets, adjacent context and versioned provider/source fingerprint. `src/app/watch/[videoId]/use-translations.ts` manages activation, sequential progressive device results, cancellation and account-scoped bounded local cache. `/api/translate` reuses authenticated Gemini/gateway/rate-limit infrastructure and requires explicit subtitle enablement. Original timestamps stay client/source-owned. Cache is localStorage, not the planned DB cache; Chromium expert translation has no contextual prompt and its exact downloaded model revision is opaque. Native browser failure and unsupported/device states are distinct from server AI/quota errors. Cloud-disabled and mocked tests do not establish provider quality or distributed quota persistence.
+
+
+Hy-MT2 local engine refinement (07/10): provider descriptors carry model/profile/batch/character/timeout budgets only; credentials/endpoint remain server-side. Local source IDs are assigned from the selected single cue, never generated/parsed by a model. Contextual prompt uses actual adjacent source cues; one response cannot move clocks or merge lines. Native/Gemini/Hy-MT cache identities stay distinct, and pinned quantization/runtime/prompt changes invalidate local answers. Stop on local errors, cancellation or mismatched model/profile; never fall through to Gemini. Tested CPU deployment uses 2048 context, 2000-character source+context cap, 512 output tokens and 45s request timeout; oversize/truncation is an honest failure, not clipped source/success. Loopback is a local-Next capability, not a Cloudflare-hosted provider. Same auth boundary; production/model semantics remain separately gated.

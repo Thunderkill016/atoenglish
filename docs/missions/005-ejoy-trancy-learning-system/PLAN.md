@@ -211,3 +211,15 @@ _Đồng thời sửa `scripts/verification-plan.mjs` (hiện chỉ typecheck/li
 ## Hành động kế tiếp (đã duyệt)
 
 Đóng slice-1 tail: dựng `.env.local` → `db:migrate` + `db:test` trên production branch → deploy Worker preview + live caption check → e2e theater/read → sửa doc drift → commit, rồi mở Slice 2.
+
+
+## Research execution packet — 2026-10-06
+
+Owner requested selective learning from Trancy, other products and repositories. Current-code gaps, source references and UX-1…LEARN-2 acceptance criteria are in [RESEARCH-NOTES.md](./RESEARCH-NOTES.md); layout decisions superseding literal copies are in [REDESIGN.md §9](./REDESIGN.md); pinned code/license evidence is in [TECH-KNOWLEDGE.md §10](./TECH-KNOWLEDGE.md). Keep this PLAN as the only slice sequence: finish slice 1 caption/Worker checks → slice 2 contextual understanding → slice 3 idempotent saves/source return → slices 4/5 dictation and due review. This checkpoint adds no PDF/extension/media download work or database/production authorization. Existing discover/player/home WIP is preserved.
+
+### Slice-2 execution update — 07/10/2026: free-first, quality-gated
+
+User prioritizes free translation and Vietnamese quality. See RESEARCH-NOTES “Free-first subtitle translation research”. Current increment implements aligned translation scheduling/cache/display and an explicit device option plus disabled-by-default Gemini route. Device smoke quality failed idiom/name/pronoun/metaphor gates: it cannot be the primary quality engine. Evaluate Hy-MT2-1.8B (Apache-2.0) and the verified Gemini free tier against the frozen corpus before choosing; an official Google monthly credit is not unlimited free API access. Do not provision billing or silently select a paid provider. Planned authored-VI ingestion, database cache/RLS, and real multi-user/provider evidence remain incomplete; this is not slice-2 completion.
+
+
+07/10 execution refinement: Hy-MT2 Q4 now has a verified local runtime/model artifact and real 30-authored-case contextual run, plus an optional disabled experimental adapter through the existing authenticated watch translation route. Next quality gate is permitted real subtitle windows + independent human review; the all-authored Codex-reviewed run does not replace that gate. Keep runtime configuration unchanged until a bounded signed-in end-to-end model check; no automatic paid fallback. Cloudflare deployment needs a reachable validated backend, never a localhost assumption. Database cache/VI source-priority work remains separately open.

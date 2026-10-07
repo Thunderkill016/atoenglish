@@ -1,3 +1,4 @@
+import { serverTranslationConfig } from "@/lib/video/local-translation";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -43,7 +44,7 @@ export default async function WatchPage({
       savedPositionMs = source.last_position_ms || null;
       const { data: transcript } = await supabase
         .from("content_transcripts")
-        .select("origin, language, sentences")
+        .select("origin, language, sentences, segmentation_version")
         .eq("source_id", source.id)
         .maybeSingle();
       const sentences = transcript?.sentences as unknown as
@@ -54,6 +55,7 @@ export default async function WatchPage({
           sentences,
           origin: transcript.origin as TranscriptOrigin,
           language: transcript.language,
+          segmentationVersion: transcript.segmentation_version,
           trackKind:
             transcript.origin === "youtube_asr"
               ? "asr"
@@ -78,6 +80,8 @@ export default async function WatchPage({
       key={videoId}
       videoId={videoId}
       loggedIn={Boolean(user)}
+      translationScope={user?.id ?? "guest"}
+      serverTranslation={serverTranslationConfig()?.engine ?? null}
       initial={initial}
       initialPositionMs={initialPositionMs}
     />

@@ -16,6 +16,8 @@ export interface CatalogVideo {
   /** YouTube video id, 11 chars. */
   id: string;
   title: string;
+  /** Vietnamese discovery gloss, authored in the catalog; not official YouTube metadata. */
+  titleVi: string;
   channel: string;
   topic: CatalogTopic;
   /** Curator judgement only — never a CEFR label. */
@@ -30,6 +32,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "UF8uR6Z6KLc",
     title: "Steve Jobs' 2005 Stanford Commencement Address",
+    titleVi: "Bài phát biểu của Steve Jobs tại lễ tốt nghiệp Stanford năm 2005",
     channel: "Stanford",
     topic: "ted",
     level: "medium",
@@ -39,6 +42,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "8jPQjjsBbIc",
     title: "How to Stay Calm When You Know You'll Be Stressed",
+    titleVi: "Cách giữ bình tĩnh khi biết mình sắp căng thẳng",
     channel: "TED",
     topic: "ted",
     level: "medium",
@@ -48,6 +52,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "iG9CE55wbtY",
     title: "Do Schools Kill Creativity?",
+    titleVi: "Trường học có giết chết sự sáng tạo?",
     channel: "TED",
     topic: "ted",
     level: "medium",
@@ -57,6 +62,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "qp0HIF3SfI4",
     title: "How Great Leaders Inspire Action",
+    titleVi: "Cách những nhà lãnh đạo tài ba truyền cảm hứng hành động",
     channel: "TED",
     topic: "ted",
     level: "medium",
@@ -66,6 +72,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "arj7oStGLkU",
     title: "Inside the Mind of a Master Procrastinator",
+    titleVi: "Bên trong tâm trí của một bậc thầy trì hoãn",
     channel: "TED",
     topic: "ted",
     level: "medium",
@@ -75,6 +82,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "iCvmsMzlF7o",
     title: "The Power of Vulnerability",
+    titleVi: "Sức mạnh của sự dễ bị tổn thương",
     channel: "TED",
     topic: "ted",
     level: "hard",
@@ -85,6 +93,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "dQw4w9WgXcQ",
     title: "Never Gonna Give You Up",
+    titleVi: "Sẽ không bao giờ từ bỏ em",
     channel: "Rick Astley",
     topic: "music",
     level: "easy",
@@ -94,6 +103,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "JGwWNGJdvx8",
     title: "Shape of You",
+    titleVi: "Dáng hình của em",
     channel: "Ed Sheeran",
     topic: "music",
     level: "easy",
@@ -103,6 +113,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "RgKAFK5djSk",
     title: "See You Again (ft. Charlie Puth)",
+    titleVi: "Hẹn ngày gặp lại (cùng Charlie Puth)",
     channel: "Wiz Khalifa",
     topic: "music",
     level: "medium",
@@ -112,6 +123,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "fJ9rUzIMcZQ",
     title: "Bohemian Rhapsody",
+    titleVi: "Khúc ngẫu hứng Bohemian",
     channel: "Queen",
     topic: "music",
     level: "medium",
@@ -121,6 +133,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "hTWKbfoikeg",
     title: "Smells Like Teen Spirit",
+    titleVi: "Phảng phất tinh thần tuổi trẻ",
     channel: "Nirvana",
     topic: "music",
     level: "hard",
@@ -131,6 +144,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "h6fcK_fRYaI",
     title: "The Egg — A Short Story",
+    titleVi: "Quả trứng — Một truyện ngắn",
     channel: "Kurzgesagt – In a Nutshell",
     topic: "science",
     level: "medium",
@@ -140,6 +154,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "MBRqu0YOH14",
     title: "Optimistic Nihilism",
+    titleVi: "Chủ nghĩa hư vô lạc quan",
     channel: "Kurzgesagt – In a Nutshell",
     topic: "science",
     level: "medium",
@@ -149,6 +164,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "sNhhvQGsMEc",
     title: "The Fermi Paradox — Where Are All the Aliens?",
+    titleVi: "Nghịch lý Fermi — Người ngoài hành tinh ở đâu?",
     channel: "Kurzgesagt – In a Nutshell",
     topic: "science",
     level: "hard",
@@ -159,6 +175,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "WxfZkMm3wcg",
     title: "Make It Count",
+    titleVi: "Hãy sống sao cho đáng",
     channel: "Casey Neistat",
     topic: "vlog",
     level: "medium",
@@ -168,6 +185,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "0e3GPea1Tyg",
     title: "$456,000 Squid Game in Real Life!",
+    titleVi: "Trò chơi con mực ngoài đời thực với giải thưởng 456.000 USD!",
     channel: "MrBeast",
     topic: "vlog",
     level: "easy",
@@ -178,6 +196,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "Mh4f9AYRCZY",
     title: "Children Interrupt BBC News Interview",
+    titleVi: "Các con làm gián đoạn cuộc phỏng vấn trên BBC News",
     channel: "BBC News",
     topic: "news",
     level: "medium",
@@ -187,6 +206,7 @@ export const CATALOG_VIDEOS: CatalogVideo[] = [
   {
     id: "NKb9GVU8bHE",
     title: "Syria's War: Who Is Fighting and Why",
+    titleVi: "Chiến tranh Syria: Ai đang chiến đấu và vì sao",
     channel: "Vox",
     topic: "news",
     level: "medium",

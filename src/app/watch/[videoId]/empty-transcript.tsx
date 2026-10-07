@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { FileUp, Languages, Loader2, BookOpenText } from "lucide-react";
 
+import { SEGMENTATION_VERSION } from "@/lib/video/segment";
 import { parseSubtitleFile } from "@/lib/video/subtitle-file";
 import type { LoadedTranscript } from "@/app/actions/captions";
 
@@ -64,6 +65,7 @@ export function EmptyTranscript({
               ? "learner_paste"
               : "learner_upload",
         language: "en",
+        segmentationVersion: SEGMENTATION_VERSION,
         trackKind: "learner",
         saved: false,
       },
@@ -72,9 +74,22 @@ export function EmptyTranscript({
   };
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-      <div className="text-sm text-[#9d9da6]">
-        {errorMessage ?? "Video này chưa có phụ đề trong phiên của bạn."}
+    <div className="flex flex-col items-center gap-5 px-5 py-8 text-center">
+      <div className="space-y-2">
+        <BookOpenText
+          className="mx-auto h-8 w-8 text-[#f5b50a]"
+          aria-hidden="true"
+        />
+        <h3 className="text-base font-medium">Học cùng phụ đề</h3>
+        <p
+          className="text-sm leading-relaxed text-[#9d9da6]"
+          role={errorMessage ? "alert" : "status"}
+        >
+          {errorMessage ??
+            (busy
+              ? "Đang lấy phụ đề tiếng Anh…"
+              : "Lấy phụ đề tiếng Anh để nghe lại từng câu và theo dõi nội dung video.")}
+        </p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -82,7 +97,7 @@ export function EmptyTranscript({
           type="button"
           disabled={busy}
           onClick={onFetchYoutube}
-          className="flex items-center gap-2 rounded-lg bg-[#f5b50a] px-4 py-2 text-sm font-semibold text-[#0c0c0e] transition hover:bg-[#ffca3a] disabled:opacity-60"
+          className="flex items-center gap-2 rounded-lg bg-[#f5b50a] min-h-11 px-4 py-2 text-sm font-semibold text-[#0c0c0e] transition hover:bg-[#ffca3a] disabled:opacity-60"
         >
           {busy ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -94,8 +109,9 @@ export function EmptyTranscript({
         <button
           type="button"
           disabled={busy}
+          aria-expanded={pasteOpen}
           onClick={() => setPasteOpen((v) => !v)}
-          className="flex items-center gap-2 rounded-lg border border-[#232327] bg-[#151518] px-4 py-2 text-sm text-[#e8e8ea] transition hover:border-[#3a3a40]"
+          className="flex items-center gap-2 rounded-lg border border-[#232327] bg-[#151518] min-h-11 px-4 py-2 text-sm text-[#e8e8ea] transition hover:border-[#3a3a40]"
         >
           <FileUp className="h-4 w-4" />
           Dán hoặc tải phụ đề
@@ -106,24 +122,25 @@ export function EmptyTranscript({
         <div className="flex w-full max-w-sm flex-col gap-2 rounded-lg border border-[#232327] bg-[#151518] p-3 text-left">
           <textarea
             ref={textRef}
+            aria-label="Nội dung phụ đề"
             rows={6}
             placeholder={
               "Dán phụ đề .srt / .vtt / [mm:ss] nội dung…\nHoặc văn bản thường để đọc không đồng bộ."
             }
             className="w-full resize-none rounded-md border border-[#232327] bg-[#0c0c0e] p-2 font-mono text-xs text-[#e8e8ea] outline-none placeholder:text-[#55555f] focus:border-[#f5b50a]/50"
           />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => applyRaw(textRef.current?.value ?? "")}
-              className="rounded-md bg-[#f5b50a] px-3 py-1.5 text-xs font-semibold text-[#0c0c0e] hover:bg-[#ffca3a]"
+              className="rounded-md bg-[#f5b50a] min-h-11 px-3 py-1.5 text-xs font-semibold text-[#0c0c0e] hover:bg-[#ffca3a]"
             >
               Dùng phụ đề này
             </button>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-1.5 rounded-md border border-[#232327] px-3 py-1.5 text-xs text-[#e8e8ea] hover:border-[#3a3a40]"
+              className="flex items-center gap-1.5 rounded-md border border-[#232327] min-h-11 px-3 py-1.5 text-xs text-[#e8e8ea] hover:border-[#3a3a40]"
             >
               <BookOpenText className="h-3.5 w-3.5" />
               Chọn file .srt/.vtt
@@ -147,7 +164,9 @@ export function EmptyTranscript({
             />
           </div>
           {pasteError && (
-            <p className="text-xs text-destructive">{pasteError}</p>
+            <p role="alert" className="text-xs text-destructive">
+              {pasteError}
+            </p>
           )}
         </div>
       )}

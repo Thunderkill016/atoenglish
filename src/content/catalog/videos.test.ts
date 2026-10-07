@@ -56,6 +56,13 @@ describe("catalog", () => {
     expect(ids.has("8jPQjjsBbIc")).toBe(true); // TED stress talk
   });
 
+  it("provides a separate Vietnamese meaning for every curated English title", () => {
+    for (const video of getCatalog()) {
+      expect(video.titleVi.trim(), video.id).not.toBe("");
+      expect(video.titleVi, video.id).not.toBe(video.title);
+    }
+  });
+
   it("getCatalog returns the full catalog", () => {
     expect(getCatalog()).toEqual(CATALOG_VIDEOS);
     expect(getCatalog().length).toBeGreaterThanOrEqual(15);

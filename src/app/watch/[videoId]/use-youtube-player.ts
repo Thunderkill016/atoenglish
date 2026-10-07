@@ -91,6 +91,9 @@ export function useYouTubePlayer(
         containerRef.current.appendChild(mountEl);
         player = new window.YT.Player(mountEl, {
           videoId,
+          // Fill the responsive frame instead of the API default 640 × 390.
+          width: "100%",
+          height: "100%",
           playerVars: {
             rel: 0,
             modestbranding: 1,
