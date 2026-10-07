@@ -14,6 +14,7 @@ vi.mock("@/lib/video/workers-ai-binding", () => ({
 }));
 vi.mock("@/lib/security/rate-limit", () => ({
   createRateLimiter: () => ({ check }),
+  getClientIp: () => "203.0.113.10",
 }));
 const input = {
   language: "vi",
@@ -368,6 +369,22 @@ describe("optional cloud subtitles", () => {
       expect(missing.status).toBe(503);
       expect(await missing.json()).toMatchObject({ error: "ai_unavailable" });
     });
+
+    it("degrades an oversized model output to a retryable null line", async () => {
+      const ai = {
+        run: vi
+          .fn()
+          .mockResolvedValueOnce({ translated_text: "A" })
+          .mockResolvedValueOnce({ translated_text: "x".repeat(7000) }),
+      };
+      binding.mockResolvedValue(ai);
+      const response = await POST(request());
+      expect(response.status).toBe(200);
+      expect((await response.json()).lines).toEqual([
+        { i: 2, vi: "A" },
+        { i: 4, vi: null },
+      ]);
+    });
   });
 
   describe("persisted subtitle cache", () => {
@@ -415,6 +432,8 @@ describe("optional cloud subtitles", () => {
       const envelope = JSON.parse(fetcher.mock.calls[0][1].body);
       const sent = JSON.parse(envelope.contents[0].parts[0].text);
       expect(sent.lines).toEqual([{ i: 4, text: input.lines[1].text }]);
+      // The cache key is ours — providers get the transcript, not the video id.
+      expect(sent.videoId).toBeUndefined();
       // Persisted the fresh miss under the user+video+profile+hash key.
       expect(upsert).toHaveBeenCalledTimes(1);
       const [rows] = upsert.mock.calls[0];
@@ -450,6 +469,12 @@ describe("optional cloud subtitles", () => {
     });
 
     it("guests skip the persisted cache entirely", async () => {
+      // Free engine — guests are 401 on the billed Gemini path.
+      vi.stubEnv("SUBTITLE_GEMINI_ENABLED", "");
+      vi.stubEnv("SUBTITLE_M2M100_ENABLED", "true");
+      binding.mockResolvedValue({
+        run: vi.fn().mockResolvedValue({ translated_text: "Khách." }),
+      });
       const guestFrom = vi.fn();
       vi.mocked(createClient).mockResolvedValueOnce({
         auth: {
@@ -457,10 +482,6 @@ describe("optional cloud subtitles", () => {
         },
         from: guestFrom,
       } as never);
-      const fetcher = vi
-        .fn()
-        .mockResolvedValue(model([{ i: 2, vi: "Khách." }]));
-      vi.stubGlobal("fetch", fetcher);
       const response = await POST(request(cachedBody, false));
       expect(response.status).toBe(200);
       expect(guestFrom).not.toHaveBeenCalled();
@@ -481,5 +502,36 @@ describe("optional cloud subtitles", () => {
     vi.stubGlobal("fetch", fetcher);
     expect((await POST(request(input, false))).status).toBe(429);
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("keeps the billed Gemini engine account-bound — guests get 401 before any budget spend", async () => {
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+      },
+    } as never);
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    const response = await POST(request(input, false));
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: "unauthorized" });
+    // Rejected before the limiter — a doomed request must not burn budget.
+    expect(check).not.toHaveBeenCalled();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("maps auth-infrastructure failures to auth_unavailable, not ai_failed", async () => {
+    vi.mocked(createClient).mockRejectedValueOnce(new Error("auth down"));
+    expect((await POST(request())).status).toBe(503);
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        getUser: vi.fn().mockRejectedValue(new Error("session store down")),
+      },
+    } as never);
+    const response = await POST(request());
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      error: "auth_unavailable",
+    });
   });
 });

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import { createRateLimiter, getClientIp } from "@/lib/security/rate-limit";
 import {
   translationInput,
   contextChars,
@@ -83,28 +83,37 @@ export async function POST(request: NextRequest) {
   )
     return error("invalid_input", 400);
   try {
-    const client = await createClient();
+    const session = await createClient()
+      .then(async (client) => ({
+        client,
+        auth: await client.auth.getUser(),
+      }))
+      .catch(() => null);
+    // Auth infrastructure down is distinguishable from "no session".
+    if (!session) return error("auth_unavailable", 503);
+    const { client } = session;
     const {
       data: { user },
       error: authError,
-    } = await client.auth.getUser();
+    } = session.auth;
     // Guest fallback (mission 008): no Translator API exists on mobile, so
     // the server path must not require a session. Guests get a narrower
     // per-IP budget; a missing/invalid session is still distinguishable
     // from an auth outage.
     if (!user && authError && ![400, 401].includes(authError.status ?? 0))
       return error("auth_unavailable", 503);
+    // The operator-billed Gemini engine stays account-bound; guests may
+    // only reach free engines.
+    if (!user && config.engine.kind === "gemini")
+      return error("unauthorized", 401);
     if (user) {
       if (!(await limiter.check(`translate:${user.id}`)).success)
         return error("rate_limited", 429);
-    } else {
-      const ip =
-        request.headers.get("cf-connecting-ip") ??
-        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-        "unknown";
-      if (!(await guestLimiter.check(`translate:guest:${ip}`)).success)
-        return error("rate_limited", 429);
-    }
+    } else if (
+      !(await guestLimiter.check(`translate:guest:${getClientIp(request)}`))
+        .success
+    )
+      return error("rate_limited", 429);
     const signal = AbortSignal.any([
       request.signal,
       AbortSignal.timeout(config.engine.timeoutMs),
@@ -126,6 +135,8 @@ export async function POST(request: NextRequest) {
     let fresh: { i: number; vi: string | null }[] = [];
     if (missing.length) {
       const work = { ...input.data, lines: missing };
+      // Providers get the transcript, not our cache key.
+      delete work.videoId;
       if (config.engine.kind === "local") {
         fresh = await translateLocally(
           work,

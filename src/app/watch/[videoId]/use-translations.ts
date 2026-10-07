@@ -50,6 +50,11 @@ function deviceAPI(): TranslatorAPI | undefined {
 }
 /** Native shell's JavascriptInterface: AtoTranslate.translate(id, text). */
 type ShellBridge = { translate: (id: number, text: string) => void };
+// Module-scoped: the native side exposes a single global callback —
+// __atoShellTranslateResult — so pending ids must stay unique across
+// remounts; a late result must never be attributed to another sentence.
+const shellPending = new Map<number, (vi: string | null) => void>();
+let shellNextId = 0;
 /**
  * ML Kit bridge inside the Android WebView shell (mission 007). Presents the
  * same DeviceTranslator surface as Chrome's Translator API — free, on-device,
@@ -63,23 +68,24 @@ function shellAPI(): DeviceTranslator | undefined {
   };
   const bridge = g.AtoTranslate;
   if (!bridge || typeof bridge.translate !== "function") return undefined;
-  let nextId = 0;
-  const pending = new Map<number, (vi: string | null) => void>();
   g.__atoShellTranslateResult = (id, vi) => {
-    const settle = pending.get(id);
-    pending.delete(id);
+    const settle = shellPending.get(id);
+    shellPending.delete(id);
     settle?.(vi);
   };
   return {
     translate: (text, { signal }) =>
       new Promise<string>((resolve, reject) => {
-        const id = ++nextId;
+        const id = ++shellNextId;
         const onAbort = () => {
-          if (pending.delete(id))
+          if (shellPending.delete(id))
             reject(new DOMException("Aborted", "AbortError"));
         };
-        if (signal.aborted) return onAbort();
-        pending.set(id, (vi) => {
+        if (signal.aborted) {
+          reject(new DOMException("Aborted", "AbortError"));
+          return;
+        }
+        shellPending.set(id, (vi) => {
           signal.removeEventListener("abort", onAbort);
           resolve(vi ?? "");
         });
@@ -87,7 +93,7 @@ function shellAPI(): DeviceTranslator | undefined {
         try {
           bridge.translate(id, text);
         } catch (cause) {
-          pending.delete(id);
+          shellPending.delete(id);
           signal.removeEventListener("abort", onAbort);
           reject(cause instanceof Error ? cause : new Error(String(cause)));
         }
@@ -101,7 +107,9 @@ type CacheItem = {
   lines: { i: number; vi: string }[];
 };
 const ERRORS: Record<string, string> = {
-  unauthorized: "Đăng nhập để dùng bộ dịch trên máy chủ.",
+  unauthorized: "Đăng nhập để dùng bộ dịch này trên máy chủ.",
+  auth_unavailable: "Không kiểm tra được phiên đăng nhập. Thử lại sau.",
+  forbidden: "Yêu cầu bị từ chối. Tải lại trang rồi thử lại.",
   ai_unavailable: "Bộ dịch trên máy chủ chưa được bật.",
   rate_limited: "Đã chạm giới hạn dịch. Đợi một phút rồi thử tiếp.",
   invalid_input: "Một câu quá dài để dịch; tiếng Anh vẫn được giữ nguyên.",
@@ -325,12 +333,13 @@ export function useTranslations(
     needsActivation,
     enableDevice,
   ]);
+  const serverProfile = serverTranslation?.profile ?? TRANSLATION_MODEL;
   const profile =
     resolvedProvider === "device"
       ? DEVICE_TRANSLATION_PROFILE
       : resolvedProvider === "shell"
         ? SHELL_TRANSLATION_PROFILE
-        : (serverTranslation?.profile ?? TRANSLATION_MODEL);
+        : serverProfile;
   const batchSize =
     resolvedProvider === "server"
       ? (serverTranslation?.batchSize ?? TRANSLATION_BATCH_SIZE)
@@ -382,11 +391,14 @@ export function useTranslations(
             )
             .slice(-CACHE_MAX_ITEMS);
         }
-        if (carryOver.current && carryOver.current.sentences === sentences) {
-          // Server-profile cache still wins any overlapping cue.
-          translated = { ...carryOver.current.lines, ...translated };
+        if (carryOver.current) {
+          // Server-profile cache still wins any overlapping cue. The ref
+          // clears only after a successful merge — a corrupt localStorage
+          // read must not silently drop the carried lines.
+          if (carryOver.current.sentences === sentences)
+            translated = { ...carryOver.current.lines, ...translated };
+          carryOver.current = null;
         }
-        carryOver.current = null;
         const hit = cached.find((item) => item.key === fingerprint);
         // Cached transcripts can exceed one request batch; validate in bounded chunks.
         if (hit)
@@ -551,6 +563,19 @@ export function useTranslations(
           // effect and retries there.
           if (resolvedProvider !== "server" && serverAvailable) {
             carryOver.current = { sentences, lines: translated };
+            // Commit a handoff state under the server profile so the
+            // already-translated lines keep displaying — and `pending`
+            // stays true — while the new profile's first state resolves.
+            setState({
+              sentences,
+              scope,
+              provider: serverProfile,
+              title,
+              lines: translated,
+              busy: true,
+              error: null,
+              finished: false,
+            });
             setProvider("server");
             return;
           }
@@ -606,6 +631,7 @@ export function useTranslations(
     maxChars,
     timeoutMs,
     serverModel,
+    serverProfile,
     shell,
     serverAvailable,
     videoId,
@@ -634,15 +660,16 @@ export function useTranslations(
     cacheNotice,
     // True while an untranslated cue can still be delivered — queued,
     // fingerprinting, or in flight — so the UI shows "Đang dịch…" instead of
-    // "Chưa có bản dịch". `current` is deliberately absent: the gap between
-    // mount and the first resolved state is itself a queued cue.
+    // "Chưa có bản dịch". The mount→first-state gap (`!current`) counts as
+    // queued; a parked loop (`current` + not busy) does not — out-of-window
+    // cues are not being delivered until the playhead seeks.
     pending:
       enabled &&
       needsMachine &&
       !(current && state.finished) &&
       !(current && state.error) &&
       !setupError &&
-      (state.busy || providerViable),
+      (state.busy || (providerViable && !current)),
     availability,
     downloading,
     progress,

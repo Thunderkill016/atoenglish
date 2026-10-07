@@ -622,6 +622,9 @@ describe("cross-device server fallback (ATO-TRANSLATE-MOBILE-01)", () => {
     expect(firstWindowCount).toBeGreaterThan(0);
     expect(firstWindowCount).toBeLessThan(30);
     expect(current.finished).toBe(false);
+    // Parked for a seek — out-of-window cues are not queued, so nothing is
+    // "Đang dịch…" until the playhead actually moves.
+    expect(current.pending).toBe(false);
     await act(async () =>
       root.render(<Harness automatic source={source} activeIndex={200} />),
     );

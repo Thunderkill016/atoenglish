@@ -34,8 +34,18 @@ ATO-TRANSLATE-MOBILE-01).
 | 2026-10-07 | Derivation gated on `automatic`/`setupError`              | Ungated, every `automatic:false` watch load would spend server budget on mobile without the learner asking                 | lead (test-driven) |
 | 2026-10-07 | On-device lines carry over on mid-run stepdown            | Without carry-over, cues already translated vanish while the new profile re-fetches them; covers shell stepdown too        | lead (test-driven) |
 | 2026-10-07 | `pending` counts the pre-resolve gap as queued            | Otherwise mount→first-state flashes "Chưa có bản dịch" for cues that are merely queued                                     | lead               |
+| 2026-10-07 | `pending` derives parked from state, not a ref            | Parked ≡ `current && !busy`; reading refs in render is lint-banned — `busy \|\| (viable && !current)` covers the gap       | QA + lint          |
+| 2026-10-07 | Handoff commits a state under the server profile          | Keeps carried lines + `pending` true during stepdown; a mere profile-revision change still hides stale output              | QA (test-driven)   |
 | 2026-10-07 | m2m100 batch ≤8 cues/request, ≤4 concurrent               | batchSize=1 HTTP per cue would burn the 10/min guest limit before the first window ends                                    | lead               |
 | 2026-10-07 | All-lines-errored ⇒ 502, not 200-with-nulls               | Otherwise the client marks the batch "done" and never retries a binding outage                                             | lead (test-driven) |
+| 2026-10-07 | Guest IP via `getClientIp` (last-XFF trust order)         | First-XFF was fully client-spoofable — guest budget reset per request (QA B1)                                              | QA blocking        |
+| 2026-10-07 | Guests rejected before limiter on billed Gemini           | Server fallback may not burn operator money; free engines only for guests (QA N8)                                          | QA                 |
+| 2026-10-07 | `videoId` stripped from provider payloads                 | Cache key is ours; defense-in-depth, providers get the transcript only (QA N10)                                            | QA                 |
+| 2026-10-07 | Oversized m2m100 output ⇒ null line, not batch 502        | Per-line degradation parity with call failures (QA N11)                                                                    | QA                 |
+| 2026-10-07 | `createClient`/`getUser` throws ⇒ `auth_unavailable` 503  | Auth outage must not masquerade as provider failure (QA N13)                                                               | QA                 |
+| 2026-10-07 | Shell pending map hoisted module-scope                    | Global callback must never attribute a late result to another sentence across remounts (QA N4)                             | QA                 |
+| 2026-10-07 | Accepted: rate limiter charged before cache read          | Protects DB+CPU, not just AI spend; cache hits still cost a request slot (QA N15)                                          | lead               |
+| 2026-10-07 | Accepted: carried lines cached under server profile       | localStorage is a display cache, not provenance; DB cache stays pure (QA N6)                                               | lead               |
 
 ## EVIDENCE LOG
 
@@ -57,6 +67,21 @@ ATO-TRANSLATE-MOBILE-01).
 | `.next/types` stale errors after `build:vinext`          | vinext build writes different routes.js                              | accepted — artifact only | clean tsc after `rm -rf .next`                                                               |
 | `src/types/supabase.ts` must match generated output      | `Verify Database` regenerates on a replayed branch                   | accepted                 | hand-written block matches generator convention (column order + `referencedRelation:"user"`) |
 | Migration not applied to production                      | `.env.local` targets production branch                               | accepted — blocked       | prod DB writes need owner instruction; CI replays on its own branch                          |
+| QA B1: guest XFF first-entry spoofable                   | adversarial review (subagent)                                        | accepted — fixed         | `getClientIp(request)` — repo's tested last-entry trust order                                |
+| QA N1: parked loop → all cues "Đang dịch…"               | adversarial review                                                   | accepted — fixed         | parked derives as `current && !busy`; pending formula gates on it                            |
+| QA N2: carried lines flash-hidden on stepdown            | adversarial review                                                   | accepted — fixed         | handoff commits state under server profile; merge survives corrupt localStorage              |
+| QA N3: pre-aborted shell translate never settles         | adversarial review                                                   | accepted — fixed         | reject AbortError before registering pending                                                 |
+| QA N4: shell id collision across remounts                | adversarial review                                                   | accepted — fixed         | module-scope `shellPending`/`shellNextId`                                                    |
+| QA N7: shell failure must step down to server            | adversarial review                                                   | already covered          | stepdown condition is `resolvedProvider !== "server" && serverAvailable`                     |
+| QA N8: guests reach billed Gemini                        | adversarial review                                                   | accepted — fixed         | 401 before limiter on `kind === "gemini"`                                                    |
+| QA N10: `videoId` leaked into provider payloads          | adversarial review                                                   | accepted — fixed         | `delete work.videoId` before dispatch                                                        |
+| QA N11: oversized m2m100 output 502s whole batch         | adversarial review                                                   | accepted — fixed         | per-line length check degrades to null                                                       |
+| QA N12: no pgTAP test for `subtitle_translations`        | adversarial review                                                   | accepted — fixed         | `subtitle_translations_rls.test.sql` (6 assertions)                                          |
+| QA N13: `getUser` throw ⇒ `ai_failed`                    | adversarial review                                                   | accepted — fixed         | session resolution maps to `auth_unavailable` 503                                            |
+| QA N5: carryOver wiped by corrupt localStorage           | adversarial review                                                   | accepted — fixed         | ref clears only after successful merge                                                       |
+| QA N6: carried lines blur profile provenance             | adversarial review                                                   | accepted — display cache | localStorage is not a provenance ledger; DB cache unaffected                                 |
+| QA N9: provider error drops cached lines from response   | adversarial review                                                   | rejected — out of scope  | partial-response contract adds client complexity for marginal gain                           |
+| QA N15: limiter charged on cache hits                    | adversarial review                                                   | accepted                 | limiter protects DB+CPU too, not just AI spend                                               |
 
 ## OPEN BLOCKERS
 

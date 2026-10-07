@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { validateTranslations, type TranslationInput } from "./translation";
+import {
+  validateTranslations,
+  TRANSLATION_MAX_CHARS,
+  type TranslationInput,
+} from "./translation";
 import { abortable, type WorkersAi } from "./workers-ai-translation";
 
 // Dedicated NMT model on Workers AI (owner spec ATO-TRANSLATE-MOBILE-01):
@@ -48,9 +52,12 @@ export async function translateWithM2m100(
           }),
           signal,
         );
+        const vi = output.parse(raw).translated_text.trim();
+        // An oversized expansion degrades to a retryable null line instead
+        // of sinking the whole batch at the final validator.
         results[index] = {
           i: line.i,
-          vi: output.parse(raw).translated_text.trim() || null,
+          vi: vi && vi.length <= TRANSLATION_MAX_CHARS ? vi : null,
         };
       } catch (cause) {
         if (
