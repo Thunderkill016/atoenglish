@@ -69,6 +69,8 @@ beforeEach(() => {
   vi.stubGlobal("crypto", webcrypto);
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.stubGlobal("Translator", undefined);
+  vi.stubGlobal("AtoTranslate", undefined);
+  vi.stubGlobal("__atoShellTranslateResult", undefined);
   localStorage.clear();
   container = document.createElement("div");
   document.body.append(container);
@@ -456,5 +458,45 @@ describe("automatic free preparation", () => {
     );
     await act(async () => document.dispatchEvent(new Event("pointerdown")));
     expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe("native shell translation bridge (mission 007)", () => {
+  it("prefers the shell bridge over every other provider and translates without setup", async () => {
+    const g = globalThis as typeof globalThis & {
+      __atoShellTranslateResult?: (id: number, vi: string | null) => void;
+    };
+    const translate = vi.fn((id: number, text: string) => {
+      setTimeout(() => g.__atoShellTranslateResult?.(id, `Vỏ: ${text}`), 0);
+    });
+    vi.stubGlobal("AtoTranslate", { translate });
+    const cloud = vi.fn();
+    vi.stubGlobal("fetch", cloud);
+    await act(async () => root.render(<Harness automatic />));
+    await check(() => expect(current.finished).toBe(true));
+    expect(current.provider).toBe("shell");
+    expect(current.deviceReady).toBe(true);
+    expect(translate).toHaveBeenCalledTimes(2);
+    expect(current.lines).toEqual({
+      0: `Vỏ: ${sentences[0].text}`,
+      2: `Vỏ: ${sentences[1].text}`,
+    });
+    // Neither the cloud API nor Chrome's Translator was needed.
+    expect(cloud).not.toHaveBeenCalled();
+  });
+
+  it("keeps untranslated cues when the bridge answers null", async () => {
+    const g = globalThis as typeof globalThis & {
+      __atoShellTranslateResult?: (id: number, vi: string | null) => void;
+    };
+    vi.stubGlobal("AtoTranslate", {
+      translate: vi.fn((id: number) => {
+        setTimeout(() => g.__atoShellTranslateResult?.(id, null), 0);
+      }),
+    });
+    await act(async () => root.render(<Harness automatic />));
+    await check(() => expect(current.finished).toBe(true));
+    expect(current.lines).toEqual({});
+    expect(current.error).toBeNull();
   });
 });

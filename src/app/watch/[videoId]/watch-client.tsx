@@ -1023,7 +1023,8 @@ export function WatchClient({
                                     role="status"
                                     className="text-xs text-muted-foreground"
                                   >
-                                    {translation.provider === "device"
+                                    {translation.provider === "device" ||
+                                    translation.provider === "shell"
                                       ? "Dịch máy trên thiết bị"
                                       : `Dịch AI · ${serverTranslation?.label ?? "máy chủ"}`}{" "}
                                     · {Object.keys(translation.lines).length}/

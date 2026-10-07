@@ -13,6 +13,7 @@ import {
   DEVICE_TRANSLATION_PROFILE,
   TRANSLATION_BATCH_SIZE,
   DEVICE_TRANSLATION_BATCH_SIZE,
+  SHELL_TRANSLATION_PROFILE,
   type SubtitleMode,
   type ServerTranslationEngine,
 } from "@/lib/video/translation";
@@ -46,6 +47,53 @@ type TranslatorAPI = {
 function deviceAPI(): TranslatorAPI | undefined {
   return (globalThis as typeof globalThis & { Translator?: TranslatorAPI })
     .Translator;
+}
+/** Native shell's JavascriptInterface: AtoTranslate.translate(id, text). */
+type ShellBridge = { translate: (id: number, text: string) => void };
+/**
+ * ML Kit bridge inside the Android WebView shell (mission 007). Presents the
+ * same DeviceTranslator surface as Chrome's Translator API — free, on-device,
+ * no activation or model-download UI needed from the page's perspective.
+ * Results arrive through window.__atoShellTranslateResult(id, text|null).
+ */
+function shellAPI(): DeviceTranslator | undefined {
+  const g = globalThis as typeof globalThis & {
+    AtoTranslate?: ShellBridge;
+    __atoShellTranslateResult?: (id: number, vi: string | null) => void;
+  };
+  const bridge = g.AtoTranslate;
+  if (!bridge || typeof bridge.translate !== "function") return undefined;
+  let nextId = 0;
+  const pending = new Map<number, (vi: string | null) => void>();
+  g.__atoShellTranslateResult = (id, vi) => {
+    const settle = pending.get(id);
+    pending.delete(id);
+    settle?.(vi);
+  };
+  return {
+    translate: (text, { signal }) =>
+      new Promise<string>((resolve, reject) => {
+        const id = ++nextId;
+        const onAbort = () => {
+          if (pending.delete(id))
+            reject(new DOMException("Aborted", "AbortError"));
+        };
+        if (signal.aborted) return onAbort();
+        pending.set(id, (vi) => {
+          signal.removeEventListener("abort", onAbort);
+          resolve(vi ?? "");
+        });
+        signal.addEventListener("abort", onAbort, { once: true });
+        try {
+          bridge.translate(id, text);
+        } catch (cause) {
+          pending.delete(id);
+          signal.removeEventListener("abort", onAbort);
+          reject(cause instanceof Error ? cause : new Error(String(cause)));
+        }
+      }),
+    destroy: () => {},
+  };
 }
 type CacheItem = {
   key: string;
@@ -94,15 +142,20 @@ export function useTranslations(
   // Resolves the idle wait when the playhead moves (window slides forward).
   const wake = useRef<(() => void) | null>(null);
   const [device, setDevice] = useState<DeviceTranslator | null>(null);
+  // The shell bridge needs no setup — it either exists or it doesn't.
+  const [shell] = useState<DeviceTranslator | null>(() => shellAPI() ?? null);
   // Only an operator-configured free engine may start without a separate choice.
   // Gemini remains explicit; guest server requests are not authorized by this API.
-  const [provider, setProvider] = useState<"device" | "server">(() =>
-    automatic &&
-    scope !== "guest" &&
-    serverTranslation &&
-    serverTranslation.kind !== "gemini"
-      ? "server"
-      : "device",
+  // Inside the native shell, the on-device bridge always wins: free + offline.
+  const [provider, setProvider] = useState<"device" | "server" | "shell">(() =>
+    shell
+      ? "shell"
+      : automatic &&
+          scope !== "guest" &&
+          serverTranslation &&
+          serverTranslation.kind !== "gemini"
+        ? "server"
+        : "device",
   );
   const [availability, setAvailability] = useState("checking");
   const [downloading, setDownloading] = useState(false);
@@ -255,7 +308,9 @@ export function useTranslations(
   const profile =
     provider === "device"
       ? DEVICE_TRANSLATION_PROFILE
-      : (serverTranslation?.profile ?? TRANSLATION_MODEL);
+      : provider === "shell"
+        ? SHELL_TRANSLATION_PROFILE
+        : (serverTranslation?.profile ?? TRANSLATION_MODEL);
   const batchSize =
     provider === "server"
       ? (serverTranslation?.batchSize ?? TRANSLATION_BATCH_SIZE)
@@ -272,6 +327,7 @@ export function useTranslations(
       !enabled ||
       !sentences.length ||
       (provider === "device" && !device) ||
+      (provider === "shell" && !shell) ||
       (provider === "server" && !serverModel)
     )
       return;
@@ -362,11 +418,12 @@ export function useTranslations(
             known: { ...translated, ...human },
           });
           let lines;
-          if (provider === "device" && device) {
+          const local = provider === "shell" ? shell : device;
+          if ((provider === "device" || provider === "shell") && local) {
             // Expert translator has no context parameter. One sentence per call preserves IDs without separator heuristics.
             lines = [];
             for (const line of selected) {
-              const vi = await device.translate(line.text, {
+              const vi = await local.translate(line.text, {
                 signal: AbortSignal.any([
                   controller.signal,
                   AbortSignal.timeout(TRANSLATION_TIMEOUT_MS),
@@ -510,6 +567,7 @@ export function useTranslations(
     maxChars,
     timeoutMs,
     serverModel,
+    shell,
   ]);
   // Reject the previous transcript/account/provider immediately, including the SHA preparation window.
   const current =
@@ -530,7 +588,7 @@ export function useTranslations(
     progress,
     setupError,
     needsActivation: needsActivation || availability === "downloadable",
-    deviceReady: Boolean(device),
+    deviceReady: Boolean(device) || provider === "shell",
     provider,
     enableDevice,
     useServer: () => {

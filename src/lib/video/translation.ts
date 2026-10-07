@@ -6,6 +6,9 @@ import type { Sentence } from "./types";
 export const TRANSLATION_VERSION = "en-vi-context-v4";
 export const TRANSLATION_MODEL = GEMINI_MODEL;
 export const DEVICE_TRANSLATION_PROFILE = "chrome-translator-en-vi-v1";
+// Native shell's on-device translator (ML Kit on Android WebView) — same
+// free/on-device semantics as Chrome's Translator API, different engine.
+export const SHELL_TRANSLATION_PROFILE = "mlkit-translate-en-vi-v1";
 export const DEVICE_TRANSLATION_BATCH_SIZE = 1; // Re-check the active cue and save progress after each device call.
 export const TRANSLATION_BATCH_SIZE = 12; // Small first paint, with room for neighbouring context.
 export const TRANSLATION_MAX_CHARS = 6000; // Bounded provider input/output for a subtitle batch.

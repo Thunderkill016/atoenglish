@@ -18,6 +18,10 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.google.mlkit.nl.translate.TranslateLanguage;
+import com.google.mlkit.nl.translate.Translation;
+import com.google.mlkit.nl.translate.Translator;
+import com.google.mlkit.nl.translate.TranslatorOptions;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.regex.Matcher;
@@ -55,6 +59,7 @@ public class MainActivity extends Activity {
 
     private WebView appView;
     private WebView collector;
+    private Translator translator;
     private String collectingFor;
     private String bridgeScript;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -86,6 +91,10 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(false);
         // The embedded YouTube iframe needs its own cookie storage.
         CookieManager.getInstance().setAcceptThirdPartyCookies(appView, true);
+        // On-device EN→VI translation (Google ML Kit — free, offline-capable).
+        // The web app prefers this provider when the bridge exists; Chrome's
+        // Translator API is unavailable inside WebView.
+        appView.addJavascriptInterface(new TranslateBridge(), "AtoTranslate");
         appView.setWebChromeClient(new WebChromeClient());
         appView.setWebViewClient(
             new WebViewClient() {
@@ -215,6 +224,49 @@ public class MainActivity extends Activity {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 
+    private Translator translator() {
+        if (translator == null) {
+            translator =
+                Translation.getClient(
+                    new TranslatorOptions.Builder()
+                        .setSourceLanguage(TranslateLanguage.ENGLISH)
+                        .setTargetLanguage(TranslateLanguage.VIETNAMESE)
+                        .build());
+        }
+        return translator;
+    }
+
+    /** ML Kit listeners run on the main thread — evaluateJavascript is safe. */
+    private void deliverTranslation(long id, String vi) {
+        appView.evaluateJavascript(
+            "window.__atoShellTranslateResult("
+                + id
+                + ", "
+                + (vi == null ? "null" : JSONObject.quote(vi))
+                + ")",
+            null);
+    }
+
+    private class TranslateBridge {
+        /**
+         * JS contract: AtoTranslate.translate(id, text) →
+         * window.__atoShellTranslateResult(id, string|null). Null means the
+         * cue stays untranslated — the web validator handles it like any
+         * other missing line.
+         */
+        @JavascriptInterface
+        public void translate(final long id, final String text) {
+            Translator t = translator();
+            t.downloadModelIfNeeded()
+                .addOnSuccessListener(
+                    v ->
+                        t.translate(text)
+                            .addOnSuccessListener(vi -> deliverTranslation(id, vi))
+                            .addOnFailureListener(e -> deliverTranslation(id, null)))
+                .addOnFailureListener(e -> deliverTranslation(id, null));
+        }
+    }
+
     private String bridgeScript() {
         if (bridgeScript != null) return bridgeScript;
         try {
@@ -258,6 +310,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         stopCollector();
+        if (translator != null) {
+            translator.close();
+            translator = null;
+        }
         if (appView != null) {
             appView.destroy();
             appView = null;
