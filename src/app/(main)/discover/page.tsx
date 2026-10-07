@@ -6,8 +6,6 @@ import {
   Headphones,
   Repeat2,
   Captions,
-  BookMarked,
-  TextQuote,
   MonitorPlay,
   Library,
 } from "lucide-react";
@@ -15,9 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { getCatalog } from "@/content/catalog/videos";
 import { VideoCard } from "@/components/video-card";
-import { RightRail, WidgetCard, ProgressChart } from "@/components/right-rail";
-import { WeekStrip, currentWeekActivity } from "@/components/week-strip";
-import { ActivityGrid, activityHistory } from "@/components/activity-grid";
+import { RightRail, WidgetCard } from "@/components/right-rail";
 import { formatRelativeAge, formatTimestamp } from "@/lib/format";
 import { DiscoverCatalog } from "./discover-catalog";
 import { DiscoverSearch, DiscoverSearchProvider } from "./discover-search";
@@ -114,9 +110,6 @@ export default async function DiscoverPage() {
     viewer.status === "ready" ? viewer.continueWatching : [];
   const hero = continueWatching[0] ?? null;
   const strip = continueWatching.slice(1);
-  // Resume snapshots are not a learning-event history. Show a neutral week with today only.
-  const week = currentWeekActivity([]);
-  const activity = activityHistory([]);
   const catalog = getCatalog();
   const topicCount = new Set(catalog.map((video) => video.topic)).size;
 
@@ -202,47 +195,6 @@ export default async function DiscoverPage() {
         </div>
 
         <RightRail>
-          <WidgetCard
-            title="Lịch tuần"
-            className="bg-transparent p-0"
-            action={
-              <span className="text-xs text-muted-foreground">Hôm nay</span>
-            }
-          >
-            <WeekStrip
-              days={week.days}
-              activeDays={week.activeDays}
-              todayIndex={week.todayIndex}
-            />
-          </WidgetCard>
-          <WidgetCard
-            title="Flashcard"
-            info="Thống kê thẻ và lượt ôn sẽ xuất hiện khi dữ liệu ôn tập được kết nối."
-          >
-            <dl className="grid grid-cols-2 gap-4">
-              <div>
-                <dt className="text-xs text-muted-foreground">Cần ôn</dt>
-                <dd
-                  className="mt-2 text-xl font-semibold"
-                  aria-label="Cần ôn: chưa có dữ liệu"
-                >
-                  —
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Đang học</dt>
-                <dd
-                  className="mt-2 text-xl font-semibold"
-                  aria-label="Đang học: chưa có dữ liệu"
-                >
-                  —
-                </dd>
-              </div>
-            </dl>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Dữ liệu ôn tập chưa kết nối.
-            </p>
-          </WidgetCard>
           <WidgetCard title="Thống kê" className="bg-transparent p-0">
             <dl className="grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-card p-3">
@@ -263,38 +215,7 @@ export default async function DiscoverPage() {
                 <dt className="text-xs text-muted-foreground">Chủ đề</dt>
                 <dd className="mt-2 text-xl font-semibold">{topicCount}</dd>
               </div>
-              <div className="rounded-xl bg-card p-3">
-                <BookMarked
-                  aria-hidden
-                  className="float-right size-5 text-state-due"
-                />
-                <dt className="text-xs text-muted-foreground">
-                  Từ vựng đã lưu
-                </dt>
-                <dd
-                  className="mt-2 text-xl font-semibold"
-                  aria-label="Từ vựng đã lưu: chưa có dữ liệu"
-                >
-                  —
-                </dd>
-              </div>
-              <div className="rounded-xl bg-card p-3">
-                <TextQuote
-                  aria-hidden
-                  className="float-right size-5 text-state-known"
-                />
-                <dt className="text-xs text-muted-foreground">Câu đã lưu</dt>
-                <dd
-                  className="mt-2 text-xl font-semibold"
-                  aria-label="Câu đã lưu: chưa có dữ liệu"
-                >
-                  —
-                </dd>
-              </div>
             </dl>
-            <p className="mt-3 text-xs leading-5 text-muted-foreground">
-              Dấu —: chưa có dữ liệu cá nhân được kết nối.
-            </p>
           </WidgetCard>
           <WidgetCard title="Tiến trình xem">
             {viewer.status === "guest" ? (
@@ -342,26 +263,6 @@ export default async function DiscoverPage() {
                 </p>
               </>
             )}
-          </WidgetCard>
-          <WidgetCard
-            title="Activity"
-            info="Lịch hoạt động học tập; vị trí xem gần nhất không thay thế lịch sử học."
-            className="bg-transparent p-0"
-          >
-            <ActivityGrid activity={activity} />
-            <p className="mt-3 text-xs leading-5 text-muted-foreground">
-              {viewer.status === "guest"
-                ? "Đăng nhập để lưu hoạt động cá nhân. "
-                : ""}
-              Chưa có dữ liệu lịch sử học được kết nối.
-            </p>
-          </WidgetCard>
-          <WidgetCard
-            title="Progress"
-            info="Tiến độ dựa trên kết quả ôn tập, không suy từ số video đã mở."
-            className="bg-transparent p-0"
-          >
-            <ProgressChart />
           </WidgetCard>
           <WidgetCard title="Học với video" className="bg-transparent p-0">
             <ol className="space-y-5">

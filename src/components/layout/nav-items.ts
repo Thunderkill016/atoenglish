@@ -1,24 +1,19 @@
-import { BookOpen, House, Library, RefreshCw, User } from "lucide-react";
+import { House, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 /**
- * Shared main-nav entries for the masthead text nav and mobile `BottomNav`.
- * Routes beyond /discover land in later slices and remain non-navigable
- * until their product surface exists.
+ * Shared main-nav entries for the desktop `IconRail` and mobile `BottomNav`.
+ * Only real, reachable routes appear here — surfaces that do not exist yet
+ * get an entry when their page ships, not before.
  */
 export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  /** Planned surfaces remain visible but cannot navigate to missing routes. */
-  available?: boolean;
 }
 
 export const MAIN_NAV_ITEMS: NavItem[] = [
   { href: "/discover", label: "Khám phá", icon: House },
-  { href: "/read", label: "Đọc", icon: BookOpen, available: false },
-  { href: "/review", label: "Ôn", icon: RefreshCw, available: false },
-  { href: "/library", label: "Thư viện", icon: Library, available: false },
   { href: "/me", label: "Tôi", icon: User },
 ];
 

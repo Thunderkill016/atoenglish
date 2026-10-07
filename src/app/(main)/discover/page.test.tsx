@@ -66,26 +66,22 @@ function hasHeading(text: string) {
 }
 
 describe("home viewer states", () => {
-  it("keeps statistics, flashcards, Activity and Progress visible without fabricating personal totals", async () => {
+  it("shows only widgets backed by real data and hides unconnected placeholders", async () => {
     mockClient(null);
     const rail = await renderHome();
-    for (const title of ["Thống kê", "Flashcard", "Activity", "Progress"]) {
+    for (const title of ["Thống kê", "Tiến trình xem", "Học với video"]) {
       expect(hasHeading(title)).toBe(true);
+    }
+    for (const title of ["Lịch tuần", "Flashcard", "Activity", "Progress"]) {
+      expect(hasHeading(title)).toBe(false);
     }
     const stats = [...rail.querySelectorAll("section")].find(
       (section) => section.querySelector("h2")?.textContent === "Thống kê",
     )!;
     expect(
       [...stats.querySelectorAll("dd")].map((item) => item.textContent),
-    ).toEqual(["18", "5", "—", "—"]);
-    expect(
-      rail.querySelector(
-        'figure[aria-label="Tiến độ ôn tập: chưa có dữ liệu"]',
-      ),
-    ).toBeInTheDocument();
-    expect(rail.textContent).toContain(
-      "Chưa có dữ liệu lịch sử học được kết nối.",
-    );
+    ).toEqual(["18", "5"]);
+    expect(rail.textContent).not.toContain("—");
   });
 
   it("keeps guests in the public catalog without querying personal sources", async () => {
