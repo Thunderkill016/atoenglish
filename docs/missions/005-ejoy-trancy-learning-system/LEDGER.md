@@ -445,3 +445,117 @@ verification on `1d5c2533-f69d-4a8e-b582-884809ab5175`: signup →
 session cookie cleared (`/me` then bounces to `/login?next=/me`), re-login
 honors `next`. An earlier `7fd432a6` deploy shipped the server-action
 sign-out which failed live and was replaced before this deploy.
+
+## UI token consolidation — watch + 404 — 07/10/2026
+
+Visual audit (browser QA, desktop + mobile, both themes) found the watch
+surface ran a parallel hardcoded palette (`#0c0c0e`, `#111114`, `#232327`,
+`#9d9da6`, `#e8e8ea`, `#f5b50a`, `white/5`…) beside the semantic token
+system, and `not-found.tsx` painted the page with `bg-foreground` — a text
+token — producing white text on a light background in dark mode.
+
+Changes: new `--bg-elevated` token in `globals.css`; all watch surfaces
+(`watch-client.tsx`, `transcript-rail.tsx`, `empty-transcript.tsx`)
+converted to semantic tokens (background/card/elevated, border,
+foreground/muted-foreground, primary/ring); the watch root keeps class
+`dark` so the learning surface stays dark even when the learner picks the
+light theme; `not-found.tsx` rewritten on `bg-background`/`text-foreground`
+tokens.
+
+Validation: zero remaining hex/white literals in watch surfaces; tsc,
+ESLint, prettier, 325/325 unit tests, production build. Browser QA:
+404 readable in both themes; watch renders identically dark under light
+and dark app themes; discover light theme unaffected. Not yet deployed.
+
+## Nav + right-rail placeholder removal — 07/10/2026
+
+Audit follow-up: the primary nav and the discover right rail dedicated most
+of their space to surfaces that cannot render real data.
+
+Changes: `MAIN_NAV_ITEMS` now lists only reachable routes (/discover, /me);
+the `available` flag and the disabled "Sắp ra mắt" branches were removed
+from `BottomNav` (flex equal-width slots instead of a fixed 5-col grid) and
+`IconRail`. On the discover rail, widgets that could only render
+placeholders for every user — Lịch tuần, Flashcard, Activity, Progress —
+were removed along with the two always-"—" personal cells inside Thống kê
+and the dead helpers/components (week-strip.tsx, activity-grid.tsx,
+ProgressChart, activity-grid.test.ts). Kept: Thống kê (real catalog
+numbers), Tiến trình xem (real resume count for signed-in users, login
+CTA for guests), Học với video tips. Widgets return when a data source
+lands.
+
+Validation: discover page tests updated to assert the new contract
+(real widgets present, placeholder widgets and "—" absent); 320/320 unit
+tests, ESLint, tsc, production build. Browser QA confirmed: guest rail
+shows three real widgets; mobile nav shows two reachable destinations.
+Not yet deployed.
+
+## Surface-override removal — 07/10/2026
+
+`.dark .discover-home` remapped five tokens just for the home feed — a
+third color system that existed to lift the old widget stack. With the
+rail trimmed to real widgets it was removed; discover now uses the same
+token values as every other surface. `UIUX-SYSTEM.md` sections 10–12 were
+corrected to match what actually shipped (rail 7→3 real widgets, widget
+removal rather than auth-gating, `--elevated` added instead of a parallel
+alias layer). Browser QA at 360/768/1024/1440 on discover and watch shows
+no contrast or layout regressions.
+
+## Button unification (P1) — 07/10/2026
+
+The watch surface defined its own button styling outside `buttonVariants`:
+a hand-rolled `controlBtn` class string for the seven transport controls
+and five ad-hoc CTA class strings in `empty-transcript.tsx`. A `control`
+variant (ghost-on-dark, `aria-pressed` paints the active gold state) and
+an `icon-xl` size (44px round touch target) were added to
+`buttonVariants`; the transport cluster now derives from it — including
+the filled gold play button (`default` + `icon-xl`) — and the manual
+`loopSentence && "bg-primary/15"` merges were deleted since
+`aria-pressed` covers them. Empty-state CTAs map onto `default`/`outline`
+variants with `min-h-11`. `disabled:pointer-events-auto` is kept on the
+transport bar so tooltips still explain why a key is disabled.
+
+Validation: tsc, ESLint, prettier, 320/320 unit tests; browser QA shows
+the transport bar and empty-state buttons render identically to before.
+
+## Read-mode mobile disclosure + ?t= deep links — 07/10/2026
+
+P1 remainder: in read mode below `sm` the transport cluster (seek bar +
+seven controls) now collapses behind a "Điều khiển" disclosure button —
+the reader sees video + caption anchor + text without transport chrome.
+Landing and login needed no work: both were already fully tokenized.
+
+P2 `?t=` deep links (Vertex search→timestamp pattern): a shared
+`seekWithDeepLink` wraps every deliberate seek — sentence click, prev/next
+transport keys, dictionary replay — and writes `?t=<ms>` into the URL via
+`history.replaceState`. Any position the learner navigates to becomes a
+shareable link; `/watch/<id>?t=ms` already landed on the right sentence,
+now verified end-to-end in the browser.
+
+Validation: new watch-client test asserts `?t=` is written on seek and the
+player seeks+plays; 321/321 unit tests, lint, prettier. Browser-verified
+both directions on dev server. Deployed earlier at `069e977e` (P1 batch);
+the ?t= change itself is not yet deployed.
+
+## P3 sweep — error surfaces + touch targets — 07/10/2026
+
+Subagent sweep of all non-watch surfaces found the same token-misuse trap
+in two more places: `src/app/error.tsx` and `src/app/global-error.tsx`
+painted `bg-foreground text-white` — unreadable in dark mode, and worse in
+`global-error` whose replacement `<html>` never carries `.dark`. Both now
+use `bg-background`/`text-foreground`; `text-primary-foreground` fixed on
+primary buttons; the inverted button keeps `bg-foreground` fill with
+`text-background` and a real hover state. `widget-error-boundary.tsx`
+dropped `bg-foreground/50`+`border-white/5` for `bg-card`/`border-border`,
+matching its `WidgetCard` siblings. The layout skip link now uses
+`focus:text-primary-foreground`. Icon-only dictionary buttons moved to
+44px (`size-11`).
+
+Left as design decisions (documented, not mechanical): sub-44px text
+controls in dense filter/nav rows (WCAG 2.2 AA exempts inline text-size
+targets); TED brand badge and media/backdrop `bg-black/*` overlays are
+legitimately untokenized.
+
+Validation: prettier, eslint, tsc (stale `.next/types` from the concurrent
+deploy regenerated clean), 321/321 unit tests, production build. Deployed
+in the same push as the `?t=` deep-link change.
