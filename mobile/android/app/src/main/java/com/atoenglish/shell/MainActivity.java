@@ -230,6 +230,12 @@ public class MainActivity extends Activity {
     }
 
     private class CaptionBridge {
+        /** Diagnostic messages from ato-bridge.js — visible during field QA. */
+        @JavascriptInterface
+        public void onStatus(final String msg) {
+            handler.post(() -> toast("collector: " + msg));
+        }
+
         /** Called by ato-bridge.js on the collector's JS thread. */
         @JavascriptInterface
         public void onCaptions(final String json) {

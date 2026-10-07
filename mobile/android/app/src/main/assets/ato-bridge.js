@@ -23,7 +23,17 @@
       /* Bridge absent — page must not die on it. */
     }
   };
+  // Diagnostic surface: tells the shell (toast) which stage failed instead
+  // of dying silently — also useful learner-facing feedback later.
+  const status = (msg) => {
+    try {
+      AtoBridge.onStatus(String(msg));
+    } catch {
+      /* ignore */
+    }
+  };
   if (!videoId || typeof AtoBridge === "undefined") return;
+  status("collector start " + videoId);
 
   const kind = (track) => (track.kind === "asr" ? "asr" : "manual");
 
@@ -86,8 +96,12 @@
         credentials: "include",
         signal: controller.signal,
       });
-      if (response.status !== 200) return null;
+      if (response.status !== 200) {
+        status("timedtext HTTP " + response.status + " " + track.languageCode);
+        return null;
+      }
       const body = await response.json();
+      if (!validEvents(body?.events)) status("events invalid " + track.languageCode);
       return validEvents(body?.events)
         ? {
             languageCode: track.languageCode,
@@ -96,6 +110,7 @@
           }
         : null;
     } catch {
+      status("timedtext fetch error " + track.languageCode);
       return null;
     } finally {
       clearTimeout(timer);
@@ -117,7 +132,11 @@
     }
     const tracks =
       response?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-    if (!Array.isArray(tracks) || tracks.length === 0) return done(null);
+    if (!Array.isArray(tracks) || tracks.length === 0) {
+      status(response ? "no captionTracks on video" : "no playerResponse");
+      return done(null);
+    }
+    status("tracks: " + tracks.map((t) => t.languageCode + "/" + (t.kind ?? "manual")).join(","));
 
     // English: uploader-authored first, then ASR — first success wins.
     const english = tracks
@@ -143,7 +162,10 @@
       const data = await fetchTrack(vietnamese, deadline);
       if (data) output.push(data);
     }
-    if (!output.length) return done(null);
+    if (!output.length) {
+      status("english fetch failed");
+      return done(null);
+    }
 
     const details = response.videoDetails;
     const durationMs = Number(details.lengthSeconds) * 1000;
