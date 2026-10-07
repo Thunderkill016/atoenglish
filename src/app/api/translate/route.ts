@@ -5,6 +5,7 @@ import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
 import { createRateLimiter } from "@/lib/security/rate-limit";
 import {
   translationInput,
+  contextChars,
   validateTranslations,
   TRANSLATION_SYSTEM_PROMPT,
   TRANSLATION_VERSION,
@@ -70,10 +71,7 @@ export async function POST(request: NextRequest) {
   if (
     config.engine.kind === "workers-ai" &&
     (input.data.lines.length > config.engine.batchSize ||
-      [...input.data.before, ...input.data.lines, ...input.data.after].reduce(
-        (total, line) => total + line.text.length,
-        0,
-      ) > config.engine.maxChars)
+      contextChars(input.data) > config.engine.maxChars)
   )
     return error("invalid_input", 400);
   try {

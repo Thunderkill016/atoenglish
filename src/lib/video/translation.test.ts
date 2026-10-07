@@ -1,6 +1,7 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
 import { webcrypto } from "node:crypto";
 import {
+  outsideTranslationWindow,
   translationBatch,
   translationFingerprint,
   translationInput,
@@ -160,5 +161,52 @@ describe("subtitle translation contract", () => {
     expect(
       await translationFingerprint(sentences, 2, DEVICE_TRANSLATION_PROFILE),
     ).not.toBe(key);
+  });
+});
+
+describe("learner-paced window and whole-video context", () => {
+  it("only offers cues from one back to twelve ahead of the playhead", () => {
+    // IDs are n*2; playhead on ID 20 (offset 10) → offsets 9..22 allowed.
+    const skip = outsideTranslationWindow(sentences, 20);
+    const allowed = sentences.filter((s) => !skip.has(s.i)).map((s) => s.i);
+    expect(allowed).toEqual(
+      Array.from({ length: 14 }, (_, k) => (9 + k) * 2),
+    );
+    const batch = translationBatch(sentences, new Set(), 20, 30, 6000, skip);
+    expect(batch[0].i).toBe(20);
+    expect(batch.at(-1)!.i).toBe(44);
+    // Window exhausted → nothing to do until the learner moves on.
+    const done = new Set(allowed);
+    expect(translationBatch(sentences, done, 20, 30, 6000, skip)).toEqual([]);
+  });
+
+  it("adds the video title and known Vietnamese of preceding lines as context only", () => {
+    const input = translationPayload(sentences, [sentences[5]], 6000, {
+      title: "  A talk about fathers  ",
+      known: { 6: "Câu ba.", 8: "Câu bốn.", 12: "Không phải ngữ cảnh." },
+    });
+    expect(input.title).toBe("A talk about fathers");
+    expect(input.before).toEqual([
+      { i: 6, text: "Sentence 3.", vi: "Câu ba." },
+      { i: 8, text: "Sentence 4.", vi: "Câu bốn." },
+    ]);
+    // Following lines never carry Vietnamese, and only the source is translated.
+    expect(input.after).toEqual([
+      { i: 12, text: "Sentence 6." },
+      { i: 14, text: "Sentence 7." },
+    ]);
+    expect(input.lines).toEqual([{ i: 10, text: "Sentence 5." }]);
+  });
+
+  it("drops title and known Vietnamese before ever truncating the source", () => {
+    const source = sentences[5];
+    const tight = source.text.length + "Sentence 4.".length;
+    const input = translationPayload(sentences, [source], tight, {
+      title: "Long title",
+      known: { 8: "Câu bốn." },
+    });
+    expect(input.title).toBeUndefined();
+    expect(input.lines).toEqual([{ i: 10, text: source.text }]);
+    expect(input.before).toEqual([{ i: 8, text: "Sentence 4." }]);
   });
 });

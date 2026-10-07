@@ -10,6 +10,7 @@ import {
 } from "@/lib/security/rate-limit";
 import { fetchYoutubeCaptions } from "@/lib/video/captions";
 import { SEGMENTATION_VERSION, segmentTranscript } from "@/lib/video/segment";
+import { alignHumanTranslation } from "@/lib/video/align-translation";
 import { parseSubtitleFile } from "@/lib/video/subtitle-file";
 import { YOUTUBE_VIDEO_ID_RE } from "@/lib/video/youtube-url";
 import type { Json } from "@/types/supabase";
@@ -254,7 +255,9 @@ export async function fetchVideoCaptions(
   }
 
   const loaded: LoadedTranscript = {
-    sentences,
+    sentences: result.viEvents
+      ? alignHumanTranslation(sentences, result.viEvents, result.events)
+      : sentences,
     origin: originForTrack(result.track.kind),
     language: result.track.languageCode,
     segmentationVersion: SEGMENTATION_VERSION,

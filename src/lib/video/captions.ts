@@ -86,6 +86,8 @@ export interface CaptionSuccess {
   source: "ios" | "android" | "watch" | "timedtext";
   track: CaptionTrackInfo;
   events: Json3Event[];
+  /** Uploader-authored Vietnamese track, when the video has one. */
+  viEvents?: Json3Event[];
   video: { title?: string; channel?: string; durationMs?: number };
 }
 
@@ -158,6 +160,22 @@ export function pickEnglishTrack(
     }
   });
   return best;
+}
+
+/**
+ * Uploader-authored Vietnamese only: ASR `vi` is speech recognition of
+ * Vietnamese audio, not a translation, and YouTube's own `tlang` output is
+ * machine translation — neither counts as a human subtitle.
+ */
+export function pickVietnameseTrack<
+  T extends { languageCode: string; kind?: string },
+>(tracks: T[]): T | null {
+  return (
+    tracks.find(
+      (t) =>
+        /^vi(?:[-_]|$)/i.test(t.languageCode) && trackKind(t.kind) === "manual",
+    ) ?? null
+  );
 }
 
 function toTrackInfo(t: {
@@ -320,6 +338,21 @@ export async function fetchYoutubeCaptions(
     return i >= 0 ? tracks[i] : null;
   };
 
+  // Best effort: the English track is already in hand, so a failed, blocked
+  // or budget-exhausted Vietnamese fetch must never turn success into failure.
+  const fetchHumanVietnamese = async (
+    tracks: CaptionTrackInfo[],
+  ): Promise<Json3Event[] | undefined> => {
+    const vi = pickVietnameseTrack(tracks);
+    if (!vi?.baseUrl) return undefined;
+    try {
+      return (await fetchTrackJson3(vi.baseUrl)) ?? undefined;
+    } catch (e) {
+      if (e instanceof AbortFetch) throw e;
+      return undefined;
+    }
+  };
+
   try {
     // Steps 1–2: youtubei player (iOS, then Android).
     for (const client of PLAYER_CLIENTS) {
@@ -347,6 +380,7 @@ export async function fetchYoutubeCaptions(
           source: client.name,
           track,
           events,
+          viEvents: await fetchHumanVietnamese(tracks),
           video: videoDetails(data),
         };
       }
@@ -380,6 +414,7 @@ export async function fetchYoutubeCaptions(
                   source: "watch",
                   track,
                   events,
+                  viEvents: await fetchHumanVietnamese(tracks),
                   video: {},
                 };
               }

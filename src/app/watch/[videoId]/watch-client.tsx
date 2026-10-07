@@ -38,9 +38,11 @@ import {
 import { useYouTubePlayer } from "./use-youtube-player";
 import { useTranslations } from "./use-translations";
 import { SEGMENTATION_VERSION } from "@/lib/video/segment";
-import type {
-  SubtitleMode,
-  ServerTranslationEngine,
+import {
+  showsEnglish,
+  showsVietnamese,
+  type SubtitleMode,
+  type ServerTranslationEngine,
 } from "@/lib/video/translation";
 
 const ERROR_MESSAGES: Record<CaptionActionError, string> = {
@@ -99,7 +101,10 @@ export function WatchClient({
   const [loopSentence, setLoopSentence] = useState(false);
   const [autoPause, setAutoPause] = useState(false);
   const [showKeys, setShowKeys] = useState(false);
-  const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>("bilingual");
+  // Learner default: try the English first; Vietnamese stays blurred per line.
+  const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>("reveal");
+  // Sentence whose caption-strip Vietnamese the learner revealed (reveal mode).
+  const [captionRevealed, setCaptionRevealed] = useState<number | null>(null);
 
   const controls = useYouTubePlayer(videoId, initialPositionMs);
   const {
@@ -139,9 +144,20 @@ export function WatchClient({
     activeIndex,
     transcript?.language ?? "en",
     serverTranslation,
+    transcript?.title ?? catalogVideo?.title,
   );
-  const showEnglish = subtitleMode === "bilingual" || subtitleMode === "en";
-  const showVietnamese = subtitleMode === "bilingual" || subtitleMode === "vi";
+  const showEnglish = showsEnglish(subtitleMode);
+  const showVietnamese = showsVietnamese(subtitleMode);
+  // Every practisable line already has the channel's own Vietnamese.
+  const allHuman =
+    sentences.length > 0 && sentences.every((s) => s.noise || s.vi);
+  const captionVi = activeSentence
+    ? translation.lines[activeSentence.i]
+    : undefined;
+  const captionBlurred =
+    subtitleMode === "reveal" &&
+    Boolean(captionVi) &&
+    captionRevealed !== activeSentence?.i;
 
   // ── Sentence-boundary behaviours (loop / auto-pause) ──────────────────────
   const handledBoundary = useRef(-1);
@@ -288,6 +304,9 @@ export function WatchClient({
         case "q":
           replayCurrent();
           break;
+        case "v":
+          if (activeIndex >= 0) setCaptionRevealed(activeIndex);
+          break;
         case "?":
           setShowKeys((v) => !v);
           break;
@@ -303,6 +322,7 @@ export function WatchClient({
     goNext,
     replayCurrent,
     timedSentences.length,
+    activeIndex,
   ]);
 
   const cycleSpeed = () => {
@@ -489,15 +509,33 @@ export function WatchClient({
                             ""
                           )}
                         </p>
-                        {activeSentence && showVietnamese && (
-                          <p
-                            lang="vi"
-                            className="text-balance text-[15px] font-normal leading-normal text-[#c5c5ce] sm:text-base"
-                          >
-                            {translation.lines[activeSentence.i] ??
-                              "Chưa có bản dịch cho câu này."}
-                          </p>
-                        )}
+                        {activeSentence &&
+                          showVietnamese &&
+                          (captionBlurred ? (
+                            <button
+                              type="button"
+                              data-testid="reveal-caption"
+                              onClick={() =>
+                                setCaptionRevealed(activeSentence.i)
+                              }
+                              aria-label="Hiện nghĩa tiếng Việt (V)"
+                              className="mx-auto block rounded-md focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+                            >
+                              <span
+                                aria-hidden
+                                className="block select-none text-balance text-[15px] font-normal leading-normal text-[#c5c5ce] blur-[5px] sm:text-base"
+                              >
+                                {captionVi}
+                              </span>
+                            </button>
+                          ) : (
+                            <p
+                              lang="vi"
+                              className="text-balance text-[15px] font-normal leading-normal text-[#c5c5ce] sm:text-base"
+                            >
+                              {captionVi ?? "Chưa có bản dịch cho câu này."}
+                            </p>
+                          ))}
                       </div>
                     </div>
                   </div>
@@ -626,7 +664,8 @@ export function WatchClient({
                         Phím tắt:
                       </span>{" "}
                       Space phát/dừng · A câu trước · D câu sau · S lặp câu · R
-                      tự dừng sau câu · Q nghe lại câu · ? bảng này
+                      tự dừng sau câu · Q nghe lại câu · V hiện nghĩa câu ·
+                      ? bảng này
                       <p className="mt-1.5">
                         Phím tắt không hoạt động khi đang nhập văn bản hoặc con
                         trỏ nằm trong trình phát video.
@@ -685,6 +724,9 @@ export function WatchClient({
                             }
                             className="min-h-11 rounded-lg border border-[#232327] bg-[#19191c] px-2 text-[#e8e8ea]"
                           >
+                            <option value="reveal">
+                              Anh · Việt khi chạm
+                            </option>
                             <option value="bilingual">Anh + Việt</option>
                             <option value="en">Tiếng Anh</option>
                             <option value="vi">Tiếng Việt</option>
@@ -695,7 +737,18 @@ export function WatchClient({
                           <>
                             {/^en(?:-|$)/i.test(transcript.language) ? (
                               <>
-                                {!translation.deviceReady &&
+                                {translation.humanCount > 0 && (
+                                  <p
+                                    role="status"
+                                    className="text-xs text-[#9d9da6]"
+                                  >
+                                    Phụ đề tiếng Việt của kênh ·{" "}
+                                    {translation.humanCount}/{sentences.length}{" "}
+                                    câu
+                                  </p>
+                                )}
+                                {!allHuman &&
+                                  !translation.deviceReady &&
                                   translation.provider === "device" &&
                                   (translation.availability ===
                                   "unavailable" ? (
@@ -744,7 +797,8 @@ export function WatchClient({
                                     {translation.busy ? " · đang dịch…" : ""}
                                   </p>
                                 )}
-                                {serverTranslation &&
+                                {!allHuman &&
+                                  serverTranslation &&
                                   loggedIn &&
                                   translation.provider !== "server" && (
                                     <button

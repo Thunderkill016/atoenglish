@@ -669,6 +669,13 @@ test.describe("free subtitle translation", () => {
   test.beforeEach(async ({ page }) => {
     await stubYouTubePlayer(page);
   });
+  // These checks cover the always-on bilingual layout; the learner default
+  // (Vietnamese blurred until revealed) has its own test below.
+  async function showBilingual(page: Page) {
+    await page
+      .getByRole("combobox", { name: "Hiển thị phụ đề" })
+      .selectOption("bilingual");
+  }
   async function translator(page: Page, slow = false) {
     await page.addInitScript(
       ({ slow }) => {
@@ -724,6 +731,7 @@ test.describe("free subtitle translation", () => {
       page,
       "1\n00:00:00,000 --> 00:00:08,000\nThis long subtitle is a layout test for bilingual captions on small screens and should remain inside the caption strip without overlapping the video controls.",
     );
+    await showBilingual(page);
     await page
       .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
       .click();
@@ -829,6 +837,7 @@ test.describe("free subtitle translation", () => {
     await translator(page);
     await page.goto(`/watch/${VIDEO_ID}`);
     await pasteTranscript(page, SRT);
+    await showBilingual(page);
     await page
       .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
       .click();
@@ -879,6 +888,7 @@ test.describe("free subtitle translation", () => {
     });
     await page.goto(`/watch/${VIDEO_ID}`);
     await pasteTranscript(page, SRT);
+    await showBilingual(page);
     await expect(
       page.getByRole("button", {
         name: "Thử dịch nhanh miễn phí",
@@ -923,6 +933,7 @@ test.describe("free subtitle translation", () => {
     await expect(page.getByTestId("sentence-text")).toHaveCount(0);
     await page.reload();
     await pasteTranscript(page, SRT);
+    await showBilingual(page);
     await page
       .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
       .click();
@@ -981,6 +992,7 @@ test.describe("free subtitle translation", () => {
     });
     await page.goto(`/watch/${VIDEO_ID}`);
     await pasteTranscript(page, SRT);
+    await showBilingual(page);
     await page
       .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
       .click();
@@ -1000,6 +1012,31 @@ test.describe("free subtitle translation", () => {
     ).toBeVisible();
     expect(calls).toBe(0);
   });
+  test("learner default blurs Vietnamese until a line is revealed", async ({
+    page,
+  }) => {
+    await translator(page);
+    await page.goto(`/watch/${VIDEO_ID}`);
+    await pasteTranscript(page, SRT);
+    await expect(
+      page.getByRole("combobox", { name: "Hiển thị phụ đề" }),
+    ).toHaveValue("reveal");
+    await page
+      .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
+      .click();
+    const rail = page.getByTestId("transcript-rail");
+    // Translated but hidden: English stays readable, Vietnamese is not exposed.
+    await expect(rail.getByTestId("reveal-translation").first()).toBeVisible();
+    await expect(rail.getByTestId("translated-sentence")).toHaveCount(0);
+    await rail.getByTestId("reveal-translation").first().click();
+    await expect(rail.getByTestId("translated-sentence").first()).toHaveText(
+      "Câu đầu tiên.",
+    );
+    // Only the chosen line is revealed.
+    await expect(rail.getByTestId("reveal-translation")).toHaveCount(1);
+    await expect(rail.getByText("First line.")).toBeVisible();
+  });
+
   test("unsupported browser keeps source usable without cloud requests", async ({
     page,
   }) => {

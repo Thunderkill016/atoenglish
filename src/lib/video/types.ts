@@ -51,6 +51,11 @@ export interface Sentence {
   words?: SentenceWord[];
   /** Music/applause-only line — shown in the transcript but not practised. */
   noise?: boolean;
+  /**
+   * Vietnamese from the uploader's own (manual, non-ASR) YouTube track,
+   * aligned to this sentence by time. Human-authored — never machine output.
+   */
+  vi?: string;
 }
 
 export type TranscriptOrigin =

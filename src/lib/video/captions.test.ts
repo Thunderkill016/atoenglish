@@ -248,3 +248,52 @@ describe("parseTimedTextList", () => {
     expect(tracks[1]).toMatchObject({ languageCode: "vi", kind: "manual" });
   });
 });
+
+describe("fetchYoutubeCaptions — human Vietnamese track", () => {
+  const player = (tracks: Array<{ languageCode: string; kind?: string }>) => ({
+    playabilityStatus: { status: "OK" },
+    videoDetails: { title: "T", author: "A", lengthSeconds: "10" },
+    captions: {
+      playerCaptionsTracklistRenderer: {
+        captionTracks: tracks.map((t) => ({
+          ...t,
+          baseUrl: `https://www.youtube.com/api/timedtext?v=${VIDEO_ID}&lang=${t.languageCode}${t.kind ? `&kind=${t.kind}` : ""}`,
+        })),
+      },
+    },
+  });
+  const en = { events: [{ tStartMs: 0, dDurationMs: 1000, segs: [{ utf8: "Hello." }] }] };
+  const vi = { events: [{ tStartMs: 0, dDurationMs: 1000, segs: [{ utf8: "Xin chào." }] }] };
+
+  it("fetches the uploader's manual vi track alongside English", async () => {
+    const { fetch } = router([
+      [PLAYER_RE, jsonRes(player([{ languageCode: "en" }, { languageCode: "vi" }]))],
+      [/lang=vi/, jsonRes(vi)],
+      [/lang=en/, jsonRes(en)],
+    ]);
+    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    expect(result.ok && result.viEvents).toEqual(vi.events);
+  });
+
+  it("never treats ASR vi as a translation", async () => {
+    const { calls, fetch } = router([
+      [PLAYER_RE, jsonRes(player([{ languageCode: "en" }, { languageCode: "vi", kind: "asr" }]))],
+      [/lang=en/, jsonRes(en)],
+    ]);
+    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    expect(result.ok && result.viEvents).toBeUndefined();
+    expect(calls.some((c) => /lang=vi/.test(c.url))).toBe(false);
+  });
+
+  it("keeps the English success when the vi fetch fails", async () => {
+    const { fetch } = router([
+      [PLAYER_RE, jsonRes(player([{ languageCode: "en" }, { languageCode: "vi" }]))],
+      [/lang=vi/, textRes("blocked", 403)],
+      [/lang=en/, jsonRes(en)],
+    ]);
+    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.events).toEqual(en.events);
+    expect(result.ok && result.viEvents).toBeUndefined();
+  });
+});

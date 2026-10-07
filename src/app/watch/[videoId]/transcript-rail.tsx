@@ -11,7 +11,11 @@ import { cn } from "@/lib/utils";
 import { formatTimestamp } from "@/lib/format";
 import type { Sentence } from "@/lib/video/types";
 
-import type { SubtitleMode } from "@/lib/video/translation";
+import {
+  showsEnglish,
+  showsVietnamese,
+  type SubtitleMode,
+} from "@/lib/video/translation";
 export { formatTimestamp };
 
 interface TranscriptRailProps {
@@ -162,6 +166,16 @@ export function TranscriptRail({
   const [phraseMode, setPhraseMode] = useState(false);
   const [phraseStart, setPhraseStart] = useState<PhraseStart | null>(null);
   const [phraseError, setPhraseError] = useState<string | null>(null);
+  // Lines the learner chose to reveal in `reveal` mode (per transcript).
+  const [revealed, setRevealed] = useState<Set<number>>(() => new Set());
+  const [revealedFor, setRevealedFor] = useState(sentences);
+  if (revealedFor !== sentences) {
+    setRevealedFor(sentences);
+    setRevealed(new Set());
+  }
+  const mixedSources =
+    sentences.some((s) => s.vi) &&
+    sentences.some((s) => !s.vi && translations[s.i]);
 
   useEffect(() => {
     if (!following || prose || activeIndex < 0) return;
@@ -185,7 +199,7 @@ export function TranscriptRail({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {onLookup && (subtitleMode === "en" || subtitleMode === "bilingual") && (
+      {onLookup && showsEnglish(subtitleMode) && (
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#232327] px-4 py-2">
           <span className="text-xs text-[#9d9da6]">Chạm từ để tra nghĩa</span>
           <button
@@ -280,7 +294,7 @@ export function TranscriptRail({
                   <span className="text-[11px] text-[#9d9da6]">Văn bản</span>
                 )
               )}
-              {(subtitleMode === "en" || subtitleMode === "bilingual") && (
+              {showsEnglish(subtitleMode) && (
                 <p
                   lang="en"
                   className={cn(
@@ -302,18 +316,43 @@ export function TranscriptRail({
                   />
                 </p>
               )}
-              {(subtitleMode === "vi" || subtitleMode === "bilingual") && (
-                <p
-                  lang="vi"
-                  data-testid="translated-sentence"
-                  className={cn(
-                    "text-[15px] leading-[1.65] text-[#c5c5ce] [overflow-wrap:anywhere]",
-                    prose && "sm:text-base",
-                  )}
-                >
-                  {translations[s.i] ?? "Chưa có bản dịch cho câu này."}
-                </p>
-              )}
+              {showsVietnamese(subtitleMode) &&
+                (subtitleMode === "reveal" &&
+                !revealed.has(s.i) &&
+                translations[s.i] ? (
+                  <button
+                    type="button"
+                    data-testid="reveal-translation"
+                    onClick={() =>
+                      setRevealed((prev) => new Set(prev).add(s.i))
+                    }
+                    aria-label="Hiện nghĩa tiếng Việt của câu này"
+                    className="block w-full rounded-md text-left focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+                  >
+                    <span
+                      aria-hidden
+                      className="block select-none text-[15px] leading-[1.65] text-[#c5c5ce] blur-[5px] [overflow-wrap:anywhere]"
+                    >
+                      {translations[s.i]}
+                    </span>
+                  </button>
+                ) : (
+                  <p
+                    lang="vi"
+                    data-testid="translated-sentence"
+                    className={cn(
+                      "text-[15px] leading-[1.65] text-[#c5c5ce] [overflow-wrap:anywhere]",
+                      prose && "sm:text-base",
+                    )}
+                  >
+                    {translations[s.i] ?? "Chưa có bản dịch cho câu này."}
+                    {mixedSources && translations[s.i] && !s.vi && (
+                      <span className="ml-2 text-[11px] text-[#9d9da6]">
+                        · dịch máy
+                      </span>
+                    )}
+                  </p>
+                ))}
             </div>
           );
         })}

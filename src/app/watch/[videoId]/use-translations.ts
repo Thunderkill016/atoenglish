@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Sentence } from "@/lib/video/types";
 import {
+  outsideTranslationWindow,
   translationBatch,
   translationPayload,
   translationFingerprint,
@@ -78,7 +79,18 @@ export function useTranslations(
   activeIndex: number,
   sourceLanguage: string,
   serverTranslation: ServerTranslationEngine | null,
+  /** Video title — whole-video context for the server model. */
+  title?: string,
 ) {
+  // Uploader-authored Vietnamese wins over any machine output and is never
+  // re-translated; it also anchors pronouns for neighbouring machine cues.
+  const human = useMemo(() => {
+    const lines: Record<number, string> = {};
+    for (const s of sentences) if (s.vi) lines[s.i] = s.vi;
+    return lines;
+  }, [sentences]);
+  // Resolves the idle wait when the playhead moves (window slides forward).
+  const wake = useRef<(() => void) | null>(null);
   const [device, setDevice] = useState<DeviceTranslator | null>(null);
   const [provider, setProvider] = useState<"device" | "server">("device");
   const [availability, setAvailability] = useState("checking");
@@ -101,6 +113,7 @@ export function useTranslations(
   const alive = useRef(true);
   useEffect(() => {
     active.current = activeIndex;
+    wake.current?.();
   }, [activeIndex]);
   useEffect(() => {
     let disposed = false;
@@ -166,7 +179,7 @@ export function useTranslations(
     }
   };
   const enabled =
-    (mode === "bilingual" || mode === "vi") &&
+    (mode === "bilingual" || mode === "reveal" || mode === "vi") &&
     /^en(?:-|$)/i.test(sourceLanguage);
   const profile =
     provider === "device"
@@ -242,7 +255,10 @@ export function useTranslations(
         error: null,
         finished: false,
       });
-      const completed = new Set(Object.keys(translated).map(Number));
+      const completed = new Set([
+        ...Object.keys(translated).map(Number),
+        ...Object.keys(human).map(Number),
+      ]);
       while (!disposed) {
         const selected = translationBatch(
           sentences,
@@ -250,10 +266,29 @@ export function useTranslations(
           active.current,
           batchSize,
           maxChars,
+          outsideTranslationWindow(sentences, active.current),
         );
-        if (!selected.length) break;
+        if (!selected.length) {
+          if (sentences.every((s) => completed.has(s.i))) break;
+          // Window done, rest of the video not reached yet: idle until seek.
+          setState({
+            ...result,
+            lines: translated,
+            busy: false,
+            error: null,
+            finished: false,
+          });
+          await new Promise<void>((resolve) => {
+            wake.current = resolve;
+          });
+          wake.current = null;
+          continue;
+        }
         try {
-          const input = translationPayload(sentences, selected, maxChars);
+          const input = translationPayload(sentences, selected, maxChars, {
+            title,
+            known: { ...translated, ...human },
+          });
           let lines;
           if (provider === "device" && device) {
             // Expert translator has no context parameter. One sentence per call preserves IDs without separator heuristics.
@@ -386,10 +421,13 @@ export function useTranslations(
     return () => {
       disposed = true;
       controller.abort();
+      wake.current?.();
     };
   }, [
     enabled,
     sentences,
+    human,
+    title,
     scope,
     segmentationVersion,
     retry,
@@ -407,7 +445,9 @@ export function useTranslations(
     state.scope === scope &&
     state.provider === profile;
   return {
-    lines: current ? state.lines : {},
+    // Human lines show even before any translator is activated.
+    lines: { ...(current ? state.lines : {}), ...human },
+    humanCount: Object.keys(human).length,
     busy: enabled && current && state.busy,
     error: current ? state.error : null,
     finished: current && state.finished,

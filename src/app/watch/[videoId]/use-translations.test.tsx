@@ -109,7 +109,10 @@ describe("server subtitle scheduling and cache", () => {
     );
     expect(requests[0].lines.map((line: { i: number }) => line.i)).toEqual([0]);
     expect(requests[0].after).toEqual([{ i: 2, text: sentences[1].text }]);
-    expect(requests[1].before).toEqual([{ i: 0, text: sentences[0].text }]);
+    // The preceding cue carries its own Vietnamese so pronouns stay consistent.
+    expect(requests[1].before).toEqual([
+      { i: 0, text: sentences[0].text, vi: "Nghĩa mẫu." },
+    ]);
     expect(sentences[1].start_ms).toBe(3500);
     await act(async () => root.render(<Harness mode="en" />));
     await act(async () => root.render(<Harness />));
@@ -216,11 +219,47 @@ describe("device translation scheduling", () => {
     ).toEqual([{ i: 0, vi: "Câu số không." }]);
     failActive = false;
     await act(async () => current.retry());
+    // Only the playhead window (1 back / 12 ahead of cue 14) is translated;
+    // cues 1–12 wait until the learner gets there.
+    await check(() =>
+      expect(Object.keys(current.lines).map(Number).sort((a, b) => a - b)).toEqual([
+        0, 13, 14, 15,
+      ]),
+    );
+    expect(current.finished).toBe(false);
+    expect(current.busy).toBe(false);
+    await act(async () =>
+      root.render(<Harness source={source} activeIndex={0} />),
+    );
     await check(() => expect(current.finished).toBe(true));
     expect(
       translate.mock.calls.filter(([text]) => text === "Cue 0."),
     ).toHaveLength(1);
     expect(Object.keys(current.lines)).toHaveLength(16);
     expect(cloud).not.toHaveBeenCalled();
+  });
+
+  it("shows the channel's own Vietnamese without activation and never re-translates it", async () => {
+    const translate = vi.fn((text: string) => Promise.resolve(`Máy: ${text}`));
+    vi.stubGlobal("Translator", {
+      availability: async () => "available",
+      create: async () => ({ translate, destroy: vi.fn() }),
+    });
+    const source = [
+      { ...sentences[0], vi: "Bố tôi đã dạy tôi." },
+      sentences[1],
+    ];
+    await act(async () => root.render(<Harness source={source} />));
+    expect(current.lines).toEqual({ 0: "Bố tôi đã dạy tôi." });
+    expect(current.humanCount).toBe(1);
+    await act(async () => current.enableDevice());
+    await check(() => expect(current.finished).toBe(true));
+    expect(translate.mock.calls.map(([text]) => text)).toEqual([
+      sentences[1].text,
+    ]);
+    expect(current.lines).toEqual({
+      0: "Bố tôi đã dạy tôi.",
+      2: `Máy: ${sentences[1].text}`,
+    });
   });
 });

@@ -302,3 +302,18 @@ Gotchas found: thinking mode on by default burns all `max_tokens` with empty `co
 **Gate:** tsc ✓ · eslint 0/0 ✓ · 246 unit ✓ (+11) · 80/80 e2e (2 skipped live smoke) ✓ · next build ✓ · vinext/Cloudflare build ✓
 
 **Not yet verified:** binding call inside the deployed Worker (REST shape verified; Node dev has no binding; previews lack auth secrets so signed-in translate cannot be smoked there). Still open: DB cache `transcript_translations`, guest read of cached translations, enabling the flag in production, deploy.
+
+## Learner-first subtitle translation — research of 39 repos + implementation — 2026-10-07
+
+Owner: "web này là học tiếng Anh" + "phải nghiên cứu tất cả thư viện repo về nó và phát triển hoàn chỉnh tính năng này". Re-extracted `research/ejoy-archive-2026-10-06` (192 MB packets); 28/39 repos have translation-related files; read real code of read-frog, LLPlayer, easysubs, zeeguu api/web, echo-type, lexweave (+ file inventory of bespoke, mLearn, LWT, openlingo). Synthesis table in RESEARCH-NOTES "Dịch phụ đề hướng học". GPL repos → ideas only; no code copied.
+
+**Shipped (design from research):**
+1. **Human Vietnamese first** (eJOY/Language Reactor; Slice-2 contract order): `fetchYoutubeCaptions` also fetches the uploader's *manual* `vi` track (never ASR `vi`, never `tlang`), best-effort (failure/budget never breaks EN). `alignHumanTranslation` attaches it per sentence by cue midpoint/overlap, stored as `Sentence.vi` in the existing jsonb (no migration).
+   - **Live check caught a real defect**: on TED `iG9CE55wbtY` the VI track is a differently timed cut — time alignment paired "I've been blown away…" with a later line. Added a structural gate: accept only if ≥80 % of VI cue starts sit within 300 ms of an EN cue start. Live over all 18 catalog videos: 2 accepted (0.99, 0.94 — pairs read correct), 6 rejected (0.12–0.61), 10 have no VI track. Rejected tracks fall back to labelled machine translation.
+2. **Learner default `reveal` mode** ("Anh · Việt khi chạm"): English first, Vietnamese blurred per line until tapped (rail + caption strip), `V` reveals the current line; bilingual/en/vi/hidden still available. Mixed sources tag machine lines "· dịch máy"; status shows "Phụ đề tiếng Việt của kênh · n/m câu"; activation buttons hidden when every line is human.
+3. **Playhead window** (LLPlayer 1 back / 12 ahead): no whole-video background translation; loop idles until the learner moves, resumes on seek; cancels on unmount.
+4. **Context**: video title + preceding lines' existing Vietnamese (human or machine) for pronoun/term consistency; budget order source → nearest context → known VI → title (dropped, never truncated). `TRANSLATION_VERSION` → `en-vi-context-v4` (invalidates old caches by design).
+
+**Gate:** tsc (src) ✓ · eslint ✓ · 257 unit ✓ (+11) · 82/82 e2e ✓ (+2: reveal default; bilingual tests now select their mode) · next build ✓ · vinext/Cloudflare build ✓ · live YouTube alignment check ✓ (above).
+
+**Not done / open:** per-line 👍/👎 rating (Trancy) → `pilot_events`; word lookup → saved item (Zeeguu bookmark model) is Slice 3; DB translation cache; Workers AI flag + deploy; Hy-MT2 local prompt still ignores title/known VI (pinned p1 profile).
