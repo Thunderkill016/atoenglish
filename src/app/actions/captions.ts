@@ -462,20 +462,27 @@ export async function saveLearnerTranscript(
 }
 
 /** Persist playback position for "continue watching" (SPEC §4.4). */
+export type WatchPositionResult =
+  | { ok: true }
+  | {
+      ok: false;
+      error: "invalid_input" | "unauthorized" | "not_saved" | "error";
+    };
+
 export async function saveWatchPosition(
   videoId: string,
   positionMs: number,
-): Promise<void> {
+): Promise<WatchPositionResult> {
   if (
     !YOUTUBE_VIDEO_ID_RE.test(videoId) ||
     !Number.isFinite(positionMs) ||
     positionMs < 0
   ) {
-    return;
+    return { ok: false, error: "invalid_input" };
   }
   const { supabase, user } = await currentUser();
-  if (!user || !supabase) return;
-  await supabase
+  if (!user || !supabase) return { ok: false, error: "unauthorized" };
+  const { data, error } = await supabase
     .from("content_sources")
     .update({
       last_position_ms: Math.round(positionMs),
@@ -483,5 +490,9 @@ export async function saveWatchPosition(
     })
     .eq("user_id", user.id)
     .eq("kind", "youtube")
-    .eq("external_id", videoId);
+    .eq("external_id", videoId)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: "error" };
+  return data ? { ok: true } : { ok: false, error: "not_saved" };
 }

@@ -100,26 +100,54 @@ Tham khảo: `read-frog` có `parseScrollingAsrSubtitles` kèm test cho đúng c
 
 ### 4.4 Điều khiển trình phát
 
-- Câu đang phát tô sáng, tự cuộn; từ đang nói tô sáng khi có thời gian từng từ.
-- Bấm câu để tua; lặp câu hiện tại; câu trước / câu sau; tốc độ 1× / 0.75× / 0.5×; **tự dừng sau mỗi câu** (bật/tắt).
-- Phím tắt: `Space` phát/dừng, `A`/`D` câu trước/sau, `S` lặp câu, `R` tự dừng; có danh sách phím tắt, không chặn phím khi đang gõ vào ô nhập.
-- **Chế độ rạp**: video lớn, phụ đề song ngữ dưới video, transcript bên cạnh (desktop) hoặc bên dưới (mobile).
-- **Chế độ đọc**: video thu nhỏ, transcript hiển thị như văn bản liền mạch theo câu; tra/lưu giống chế độ rạp.
-- Nhớ vị trí xem cuối (`last_position_ms`) để tiếp tục từ `/discover` / `/library`.
+ATO-WATCH-01 (quyết định owner 07/10) áp dụng trong `/watch` hiện có:
+
+- Một `activeSegmentId` từ controller là nguồn chung của Focus Sentence,
+  transcript, ưu tiên bản dịch và vocabulary. Timeline chuẩn hóa overlap nhưng
+  giữ `Sentence` gốc và schema; câu sai/thiếu timing chỉ đọc, không giả nút phát.
+- Nghe thường, nghe lại một câu, lặp ×3 (tính cả lượt đầu) hoặc liên tục; nghỉ
+  400 ms giữa lượt. Khóa khoảng một câu để clock vượt sang câu kế vẫn dừng đúng
+  mục tiêu. Chọn câu/prev/next đổi mục tiêu và reset lượt; tua tự do thoát lặp và
+  giữ trạng thái phát/dừng. Lặp ưu tiên hơn tự dừng. Tự dừng giữ câu vừa nghe;
+  Play tiếp tục câu sau. Dừng thủ công/native hoặc tra từ hủy replay đang chờ.
+- Buffering/tốc độ/tua cập nhật deadline; thay nguồn hủy timer. Tốc độ 0.5, 0.75,
+  1, 1.25× chỉ khi YouTube hỗ trợ, hiển thị giá trị API xác nhận.
+- Space, A/D, Q nghe lại, S lặp, R tự dừng, V nghĩa, ? trợ giúp; ←/→ tua 5 giây.
+  Không chiếm phím khi nhập liệu, dialog, slider hoặc kích hoạt nút bằng Space.
+- Focus Sentence giữ xuống dòng tự nhiên, timestamp/nghe lại/lựa chọn lặp.
+  Chỉ câu active bung vocabulary curated hiện có; giữ tra từ/chọn cụm/nhãn nguồn.
+- Cuộn/tìm để đọc độc lập với câu phát. Chỉ nút “Theo câu đang phát” bật follow
+  lại. Watch >200 câu dùng `@tanstack/react-virtual@3.14.13`, key ID, đo chiều cao,
+  overscan 8; desktop rail, mobile trang. Tìm toàn nguồn, cuộn theo index, giữ row
+  có focus/dictionary return và bù chiều cao khi VI đến muộn. Chế độ Đọc dựng đủ
+  toàn văn để sao chép/Ctrl+F. Đổi chế độ giữ cùng official IFrame.
+- Lưu vị trí tài khoản mỗi 15 giây và khi dừng có chủ ý, không ghi mỗi gap;
+  lỗi/không có record không được báo đã lưu. `?t=<ms>` thắng vị trí tài khoản.
+  Không thêm sync khách hoặc migration.
+
+Giới hạn: seek tới keyframe và rate acknowledgement do official YouTube IFrame
+quyết định. Fixture không chứng minh độ chính xác ranh giới âm thanh thực tế.
 
 ## 5. Song ngữ, tra cứu và phân tích AI
 
 ### 5.1 Phụ đề tiếng Việt
 
-Thứ tự nguồn bản dịch, cho từng transcript:
+Nguồn người đăng (`vi` manual, căn theo thời gian) thắng mọi dịch máy. Giữ cache
+và nhãn provider hiện có. Theo quyết định ưu tiên miễn phí của owner, bộ dịch
+trên thiết bị hoặc free server đã cấu hình có thể khởi động tự động; Gemini vẫn
+là lựa chọn riêng theo cấu hình/đồng ý hiện có. Không thêm engine hoặc proxy.
 
-1. **Track tiếng Việt do người đăng tạo** (nếu `captionTracks` có `vi` không phải `asr`) — căn theo thời gian vào câu EN; nhãn "Phụ đề tiếng Việt của video".
-2. **Dịch máy bằng Gemini theo câu** — gửi danh sách câu đã ghép (chỉ văn bản, không gửi dữ liệu người học), theo lô, trả JSON `[{i, vi}]` kiểm bằng Zod; câu thiếu thì để trống, không bịa; nhãn "Dịch máy (AI)"; cache theo (transcript, `segmentation_version`, model).
-3. Không có bản dịch → chỉ hiện EN, có thông báo.
+Hàng đợi ATO-WATCH-01 ưu tiên câu active → 5 câu tiếp → 2 câu trước bằng thứ tự
+nguồn, không giả ID liên tục. Tua cập nhật ưu tiên. Chỉ một tác vụ device chạy;
+tác vụ nền nhường vùng mới, kết quả giữ đúng ID và nguồn. Device dịch tiếp phần
+còn lại ở ưu tiên thấp; server chỉ dịch vùng gần để giữ quota. Cập nhật nền/cache
+được gom tối đa mỗi 250 ms để toàn văn Đọc vẫn tương tác được; câu gần và kết quả
+cuối cập nhật ngay. Lỗi dịch không chặn EN hay phát video. Giữ kiểm tra output,
+nguồn/model/version, cache theo transcript/segmentation/provider/title hiện có.
 
-Không phụ thuộc tham số `tlang=vi` (tự dịch của YouTube): kiểm chứng 06/10 trả **429** ngay lần gọi đầu. Có thể thử như nguồn phụ sau này nếu đo được ổn định.
-
-Chế độ hiển thị: EN + VI / chỉ EN / chỉ VI / ẩn hết (nghe không phụ đề). Bản dịch chỉ dịch khi người học bật song ngữ (không dịch mọi video mở ra).
+Không dựa vào `tlang=vi`: probe 06/10 nhận 429. EN+VI mặc định tự động; EN / VI /
+ẩn / nghĩa khi chạm vẫn hoạt động. Tìm không được lộ nghĩa đang giấu. Chưa thêm
+phân tích AI, lưu từ, chấm học, dictation hoặc tutor trong ATO-WATCH-01.
 
 ### 5.2 Tra từ / cụm từ
 

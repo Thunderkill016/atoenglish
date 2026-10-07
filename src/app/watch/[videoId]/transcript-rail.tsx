@@ -1,6 +1,22 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import {
+  defaultRangeExtractor,
+  useVirtualizer,
+  useWindowVirtualizer,
+  type Range,
+  type VirtualItem,
+} from "@tanstack/react-virtual";
 import { ChevronDown, ChevronUp, Play, Search, X } from "lucide-react";
 import {
   tokenizeText,
@@ -28,6 +44,8 @@ interface TranscriptRailProps {
   activeIndex: number;
   nowMs: number;
   onSeek: (ms: number) => void;
+  onSelectSentence?: (id: number) => void;
+  playableIds?: ReadonlySet<number>;
   /** Read mode renders sentences as flowing prose lines. */
   prose?: boolean;
   onLookup?: (
@@ -39,6 +57,27 @@ interface TranscriptRailProps {
 
 // Search is a word/phrase query, bounded like the existing dictionary intake.
 const MAX_SEARCH_QUERY_LENGTH = 120;
+export const TRANSCRIPT_VIRTUAL_THRESHOLD = 200;
+const VIRTUAL_OVERSCAN = 8; // Owner-selected buffer on either side of the viewport.
+const ESTIMATED_ROW_HEIGHT = 200; // Bilingual text + timestamp; measured after mounting.
+const DESKTOP_QUERY = "(min-width: 1024px)"; // The existing lg rail breakpoint.
+function subscribeDesktop(listener: () => void) {
+  const query = window.matchMedia(DESKTOP_QUERY);
+  query.addEventListener("change", listener);
+  return () => query.removeEventListener("change", listener);
+}
+const isDesktop = () => window.matchMedia(DESKTOP_QUERY).matches;
+const serverDesktop = () => false;
+function playable(sentence: Sentence) {
+  return (
+    sentence.start_ms != null &&
+    sentence.end_ms != null &&
+    Number.isFinite(sentence.start_ms) &&
+    Number.isFinite(sentence.end_ms) &&
+    sentence.start_ms >= 0 &&
+    sentence.end_ms > sentence.start_ms
+  );
+}
 
 function captionSearchText(text: string) {
   return normalizeSearchText(text.replace(/[’‘]/g, "'").replace(/\s+/g, " "));
@@ -212,10 +251,108 @@ export function TranscriptRail({
   activeIndex,
   nowMs,
   onSeek,
+  onSelectSentence,
+  playableIds,
   prose = false,
   onLookup,
 }: TranscriptRailProps) {
+  "use no memo"; // TanStack Virtual exposes a mutable instance; do not compiler-cache its rows.
   const containerRef = useRef<HTMLDivElement>(null);
+  const desktop = useSyncExternalStore(
+    subscribeDesktop,
+    isDesktop,
+    serverDesktop,
+  );
+  const virtual = !prose && sentences.length > TRANSCRIPT_VIRTUAL_THRESHOLD;
+  const [scrollMargin, setScrollMargin] = useState(0);
+  const marginRef = useRef<number | null>(null);
+  const [focusedId, setFocusedId] = useState<number | null>(null);
+  const [lookupId, setLookupId] = useState<number | null>(null);
+  const indexById = useMemo(
+    () => new Map(sentences.map((s, index) => [s.i, index])),
+    [sentences],
+  );
+  const rangeExtractor = useCallback(
+    (range: Range) => {
+      const indices = new Set(defaultRangeExtractor(range));
+      // A dictionary restores the original word button, even if its cue is offscreen.
+      for (const id of [focusedId, lookupId]) {
+        const index = id == null ? undefined : indexById.get(id);
+        if (index != null) indices.add(index);
+      }
+      return [...indices].sort((a, b) => a - b);
+    },
+    [focusedId, lookupId, indexById],
+  );
+  const options = {
+    count: sentences.length,
+    estimateSize: () => ESTIMATED_ROW_HEIGHT,
+    getItemKey: (index: number) => `seg-${sentences[index].i}`,
+    overscan: VIRTUAL_OVERSCAN,
+    rangeExtractor,
+    gap: 8, // The existing mb-2 reading gap; measured row height excludes margin.
+  };
+  const railVirtualizer = useVirtualizer({
+    ...options,
+    getScrollElement: () => containerRef.current,
+    enabled: virtual && desktop,
+  });
+  const pageVirtualizer = useWindowVirtualizer({
+    ...options,
+    scrollMargin,
+    enabled: virtual && !desktop,
+    // The site's html has smooth scrolling. Each dynamic measurement would
+    // restart that animation, so a distant search never reaches its cue.
+    scrollToFn: (offset, { adjustments }, instance) =>
+      instance.scrollElement?.scrollTo({
+        top: offset + (adjustments ?? 0),
+        behavior: "instant",
+      }),
+  });
+  const virtualizer = desktop ? railVirtualizer : pageVirtualizer;
+  useEffect(() => {
+    if (!virtual || desktop) return;
+    const element = containerRef.current;
+    if (!element) return;
+    const update = () => {
+      const margin = element.getBoundingClientRect().top + window.scrollY;
+      const previous = marginRef.current;
+      // A late Focus Sentence translation also changes the stage height above
+      // the mobile document. Preserve the reader's position inside the rail.
+      if (previous != null && window.scrollY >= previous && margin !== previous)
+        window.scrollTo({
+          top: window.scrollY + margin - previous,
+          behavior: "instant",
+        });
+      marginRef.current = margin;
+      setScrollMargin(margin);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    // Stage/caption height can change without resizing the transcript itself.
+    if (element.parentElement?.parentElement)
+      observer.observe(element.parentElement.parentElement);
+    window.addEventListener("resize", update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [virtual, desktop]);
+  const locateSentence = (id: number, explicit: boolean) => {
+    if (!desktop && !explicit) return; // Playback never scrolls the mobile document.
+    const index = indexById.get(id);
+    if (virtual && index != null)
+      virtualizer.scrollToIndex(index, { align: "auto" });
+    else
+      revealSentence(containerRef.current, id, { allowPageScroll: explicit });
+  };
+  const lookup: TranscriptRailProps["onLookup"] = onLookup
+    ? (term, sentence, trigger) => {
+        setLookupId(sentence.i);
+        onLookup(term, sentence, trigger);
+      }
+    : undefined;
   const [following, setFollowing] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
@@ -239,6 +376,8 @@ export function TranscriptRail({
     setPhraseMode(false);
     setPhraseStart(null);
     setPhraseError(null);
+    setFocusedId(null);
+    setLookupId(null);
   }
   const activeGlosses = useMemo(() => {
     const sentence = sentences.find((s) => s.i === activeIndex);
@@ -260,15 +399,28 @@ export function TranscriptRail({
     matches.findIndex((sentence) => sentence.i === matchId),
   );
   const currentMatch = query.trim() ? matches[matchPosition]?.i : undefined;
-  const hasTimedSentences = sentences.some(
-    (sentence) => sentence.start_ms != null,
+  useLayoutEffect(() => {
+    const anchorIndex =
+      currentMatch == null ? undefined : indexById.get(currentMatch);
+    // A manually chosen row can sit near the bottom of the viewport. Resize
+    // compensation must protect that row, not just the first visible row.
+    virtualizer.shouldAdjustScrollPositionOnItemSizeChange =
+      !following && anchorIndex != null
+        ? (item: VirtualItem) => item.index < anchorIndex
+        : undefined;
+    return () => {
+      virtualizer.shouldAdjustScrollPositionOnItemSizeChange = undefined;
+    };
+  }, [virtualizer, currentMatch, indexById, following]);
+  const hasTimedSentences = sentences.some((sentence) =>
+    playableIds ? playableIds.has(sentence.i) : playable(sentence),
   );
   const chooseMatch = (position: number) => {
     if (!matches.length) return;
     const sentence = matches[(position + matches.length) % matches.length];
     setMatchId(sentence.i);
     setFollowing(false);
-    revealSentence(containerRef.current, sentence.i, { allowPageScroll: true });
+    locateSentence(sentence.i, true);
     searchInputRef.current?.focus({ preventScroll: true });
   };
   const closeSearch = () => {
@@ -283,10 +435,159 @@ export function TranscriptRail({
   useEffect(() => {
     if (!following || prose || activeIndex < 0) return;
     // Playback may move the transcript rail, never the document/video stage.
-    revealSentence(containerRef.current, activeIndex, {
-      allowPageScroll: false,
-    });
-  }, [activeIndex, following, prose, translations, subtitleMode]);
+    if (virtual) {
+      const index = indexById.get(activeIndex);
+      if (desktop && index != null)
+        virtualizer.scrollToIndex(index, { align: "auto" });
+    } else
+      revealSentence(containerRef.current, activeIndex, {
+        allowPageScroll: false,
+      });
+  }, [
+    activeIndex,
+    following,
+    prose,
+    translations,
+    subtitleMode,
+    virtual,
+    virtualizer,
+    desktop,
+    indexById,
+  ]);
+
+  const renderSentence = (s: Sentence, offset: number, item?: VirtualItem) => {
+    const active = s.i === activeIndex;
+    return (
+      <div
+        key={`seg-${s.i}`}
+        ref={item ? virtualizer.measureElement : undefined}
+        data-index={offset}
+        style={
+          item
+            ? {
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${item.start - (desktop ? 0 : scrollMargin)}px)`,
+              }
+            : undefined
+        }
+        data-sentence={s.i}
+        data-search-match={matchIds.has(s.i) || undefined}
+        data-search-current={s.i === currentMatch || undefined}
+        aria-current={active ? "true" : undefined}
+        className={cn(
+          "group space-y-2 rounded-xl px-3 py-3 text-left transition-colors",
+          !item && "mb-2",
+          active ? "bg-primary/10 text-foreground" : "text-muted-foreground",
+          s.i === currentMatch && "ring-1 ring-inset ring-primary/50",
+          s.noise && "opacity-50",
+          prose && "mb-4 py-3",
+        )}
+      >
+        {(playableIds ? playableIds.has(s.i) : playable(s)) ? (
+          <button
+            type="button"
+            onClick={() =>
+              onSelectSentence ? onSelectSentence(s.i) : onSeek(s.start_ms!)
+            }
+            aria-label={`Nghe câu ${formatTimestamp(s.start_ms!)}`}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-foreground/5 px-3 text-xs tabular-nums text-muted-foreground hover:bg-foreground/10 focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <Play aria-hidden className="h-3.5 w-3.5" />
+            {prose ? "Nghe lại" : formatTimestamp(s.start_ms!)}
+          </button>
+        ) : (
+          !prose && (
+            <span className="text-[11px] text-muted-foreground">Văn bản</span>
+          )
+        )}
+        {showsEnglish(subtitleMode) && (
+          <p
+            lang="en"
+            className={cn(
+              "text-base leading-[1.65] [overflow-wrap:anywhere]",
+              prose && "sm:text-lg",
+              active && "text-primary",
+            )}
+          >
+            {s.noise && <span className="sr-only">Âm thanh nền: </span>}
+            <SentenceText
+              sentence={s}
+              nowMs={nowMs}
+              active={active}
+              onLookup={lookup}
+              phraseMode={phraseMode}
+              phraseStart={phraseStart}
+              onPhraseStart={setPhraseStart}
+              onPhraseError={setPhraseError}
+            />
+          </p>
+        )}
+        {showsVietnamese(subtitleMode) &&
+          (subtitleMode === "reveal" &&
+          !revealed.has(s.i) &&
+          translations[s.i] ? (
+            <button
+              type="button"
+              data-testid="reveal-translation"
+              onClick={() => setRevealed((prev) => new Set(prev).add(s.i))}
+              aria-label="Hiện nghĩa tiếng Việt của câu này"
+              className="block w-full rounded-md text-left focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              <span
+                aria-hidden
+                className="block select-none text-[15px] leading-[1.65] text-foreground/75 blur-[5px] [overflow-wrap:anywhere]"
+              >
+                {translations[s.i]}
+              </span>
+            </button>
+          ) : (
+            <p
+              lang="vi"
+              data-testid="translated-sentence"
+              className={cn(
+                "text-[15px] leading-[1.65] text-foreground/75 [overflow-wrap:anywhere]",
+                prose && "sm:text-base",
+              )}
+            >
+              {translations[s.i] ??
+                (translationPending
+                  ? "Đang dịch…"
+                  : "Chưa có bản dịch cho câu này.")}
+              {mixedSources && translations[s.i] && !s.vi && (
+                <span className="ml-2 text-[11px] text-muted-foreground">
+                  · dịch máy
+                </span>
+              )}
+            </p>
+          ))}
+        {active && showsEnglish(subtitleMode) && activeGlosses.length > 0 && (
+          <div
+            data-testid="automatic-vocabulary"
+            className="border-t border-primary/15 pt-2"
+          >
+            <p className="mb-1 text-[11px] text-muted-foreground">
+              Từ trong câu · nghĩa từ điển
+            </p>
+            <dl className="space-y-1 text-sm leading-relaxed">
+              {activeGlosses.map((entry) => (
+                <div key={entry.word} className="[overflow-wrap:anywhere]">
+                  <dt className="inline font-medium text-foreground">
+                    {entry.surface}
+                  </dt>{" "}
+                  <dd className="inline text-foreground/75">
+                    · {entry.meaning_vn}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   if (sentences.length === 0) return null;
 
@@ -303,11 +604,7 @@ export function TranscriptRail({
                 setMatchId(null);
                 setSearchOpen(false);
                 // Search closes first; then an explicit return may scroll the mobile page.
-                requestAnimationFrame(() =>
-                  revealSentence(containerRef.current, activeIndex, {
-                    allowPageScroll: true,
-                  }),
-                );
+                requestAnimationFrame(() => locateSentence(activeIndex, true));
               }
               setFollowing((value) => !value);
             }}
@@ -443,6 +740,19 @@ export function TranscriptRail({
       )}
       <div
         ref={containerRef}
+        onFocusCapture={(event) => {
+          const row = (event.target as HTMLElement).closest<HTMLElement>(
+            "[data-sentence]",
+          );
+          if (row) setFocusedId(Number(row.dataset.sentence));
+        }}
+        onBlurCapture={(event) => {
+          if (
+            !(event.relatedTarget instanceof Node) ||
+            !event.currentTarget.contains(event.relatedTarget)
+          )
+            setFocusedId(null);
+        }}
         onWheel={() => setFollowing(false)}
         onTouchMove={() => setFollowing(false)}
         onPointerDown={(e) => {
@@ -466,136 +776,27 @@ export function TranscriptRail({
           prose && "mx-auto w-full max-w-[68ch] sm:p-4",
           !prose && "lg:flex-1 lg:overflow-y-auto lg:overscroll-contain",
         )}
+        style={virtual ? { overflowAnchor: "none" } : undefined}
         data-testid="transcript-rail"
       >
-        {sentences.map((s) => {
-          const active = s.i === activeIndex;
-          return (
-            <div
-              key={s.i}
-              data-sentence={s.i}
-              data-search-match={matchIds.has(s.i) || undefined}
-              data-search-current={s.i === currentMatch || undefined}
-              aria-current={active ? "true" : undefined}
-              className={cn(
-                "group mb-2 space-y-2 rounded-xl px-3 py-3 text-left transition-colors",
-                active
-                  ? "bg-primary/10 text-foreground"
-                  : "text-muted-foreground",
-                s.i === currentMatch && "ring-1 ring-inset ring-primary/50",
-                s.noise && "opacity-50",
-                prose && "mb-4 py-3",
+        {virtual ? (
+          <div
+            data-testid="virtual-transcript"
+            style={{
+              height: virtualizer.getTotalSize(),
+              position: "relative",
+              width: "100%",
+            }}
+          >
+            {virtualizer
+              .getVirtualItems()
+              .map((item) =>
+                renderSentence(sentences[item.index], item.index, item),
               )}
-            >
-              {s.start_ms != null ? (
-                <button
-                  type="button"
-                  onClick={() => onSeek(s.start_ms!)}
-                  aria-label={`Nghe câu ${formatTimestamp(s.start_ms)}`}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-full bg-foreground/5 px-3 text-xs tabular-nums text-muted-foreground hover:bg-foreground/10 focus-visible:outline-2 focus-visible:outline-ring"
-                >
-                  <Play aria-hidden className="h-3.5 w-3.5" />
-                  {prose ? "Nghe lại" : formatTimestamp(s.start_ms)}
-                </button>
-              ) : (
-                !prose && (
-                  <span className="text-[11px] text-muted-foreground">
-                    Văn bản
-                  </span>
-                )
-              )}
-              {showsEnglish(subtitleMode) && (
-                <p
-                  lang="en"
-                  className={cn(
-                    "text-base leading-[1.65] [overflow-wrap:anywhere]",
-                    prose && "sm:text-lg",
-                    active && "text-primary",
-                  )}
-                >
-                  {s.noise && <span className="sr-only">Âm thanh nền: </span>}
-                  <SentenceText
-                    sentence={s}
-                    nowMs={nowMs}
-                    active={active}
-                    onLookup={onLookup}
-                    phraseMode={phraseMode}
-                    phraseStart={phraseStart}
-                    onPhraseStart={setPhraseStart}
-                    onPhraseError={setPhraseError}
-                  />
-                </p>
-              )}
-              {showsVietnamese(subtitleMode) &&
-                (subtitleMode === "reveal" &&
-                !revealed.has(s.i) &&
-                translations[s.i] ? (
-                  <button
-                    type="button"
-                    data-testid="reveal-translation"
-                    onClick={() =>
-                      setRevealed((prev) => new Set(prev).add(s.i))
-                    }
-                    aria-label="Hiện nghĩa tiếng Việt của câu này"
-                    className="block w-full rounded-md text-left focus-visible:outline-2 focus-visible:outline-ring"
-                  >
-                    <span
-                      aria-hidden
-                      className="block select-none text-[15px] leading-[1.65] text-foreground/75 blur-[5px] [overflow-wrap:anywhere]"
-                    >
-                      {translations[s.i]}
-                    </span>
-                  </button>
-                ) : (
-                  <p
-                    lang="vi"
-                    data-testid="translated-sentence"
-                    className={cn(
-                      "text-[15px] leading-[1.65] text-foreground/75 [overflow-wrap:anywhere]",
-                      prose && "sm:text-base",
-                    )}
-                  >
-                    {translations[s.i] ??
-                      (translationPending
-                        ? "Đang dịch…"
-                        : "Chưa có bản dịch cho câu này.")}
-                    {mixedSources && translations[s.i] && !s.vi && (
-                      <span className="ml-2 text-[11px] text-muted-foreground">
-                        · dịch máy
-                      </span>
-                    )}
-                  </p>
-                ))}
-              {active &&
-                showsEnglish(subtitleMode) &&
-                activeGlosses.length > 0 && (
-                  <div
-                    data-testid="automatic-vocabulary"
-                    className="border-t border-primary/15 pt-2"
-                  >
-                    <p className="mb-1 text-[11px] text-muted-foreground">
-                      Từ trong câu · nghĩa từ điển
-                    </p>
-                    <dl className="space-y-1 text-sm leading-relaxed">
-                      {activeGlosses.map((entry) => (
-                        <div
-                          key={entry.word}
-                          className="[overflow-wrap:anywhere]"
-                        >
-                          <dt className="inline font-medium text-foreground">
-                            {entry.surface}
-                          </dt>{" "}
-                          <dd className="inline text-foreground/75">
-                            · {entry.meaning_vn}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                )}
-            </div>
-          );
-        })}
+          </div>
+        ) : (
+          sentences.map((sentence, offset) => renderSentence(sentence, offset))
+        )}
       </div>
     </div>
   );

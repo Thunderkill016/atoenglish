@@ -52,7 +52,7 @@ describe("subtitle translation contract", () => {
     expect(first[0].i).toBe(38);
     expect(first.length).toBeLessThanOrEqual(12);
     const done = new Set(first.map((s) => s.i));
-    expect(translationBatch(sentences, done, 38)[0].i).toBe(0);
+    expect(translationBatch(sentences, done, 38)[0].i).toBe(36);
     expect(
       translationBatch(sentences, new Set([4]), 0).map((s) => s.i),
     ).toEqual([0, 2]);
@@ -203,14 +203,14 @@ describe("translation context cache identity", () => {
 });
 
 describe("learner-paced window and whole-video context", () => {
-  it("only offers cues from one back to twelve ahead of the playhead", () => {
-    // IDs are n*2; playhead on ID 20 (offset 10) → offsets 9..22 allowed.
+  it("only offers cues from two back to five ahead of the playhead", () => {
+    // IDs are n*2; playhead on ID 20 (offset 10) → offsets 8..15 allowed.
     const skip = outsideTranslationWindow(sentences, 20);
     const allowed = sentences.filter((s) => !skip.has(s.i)).map((s) => s.i);
-    expect(allowed).toEqual(Array.from({ length: 14 }, (_, k) => (9 + k) * 2));
+    expect(allowed).toEqual(Array.from({ length: 8 }, (_, k) => (8 + k) * 2));
     const batch = translationBatch(sentences, new Set(), 20, 30, 6000, skip);
     expect(batch[0].i).toBe(20);
-    expect(batch.at(-1)!.i).toBe(44);
+    expect(batch.at(-1)!.i).toBe(30);
     // Window exhausted → nothing to do until the learner moves on.
     const done = new Set(allowed);
     expect(translationBatch(sentences, done, 20, 30, 6000, skip)).toEqual([]);

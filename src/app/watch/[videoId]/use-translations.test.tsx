@@ -84,6 +84,46 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 describe("server subtitle scheduling and cache", () => {
+  it("restricts server calls to current, next five, then previous two by source offset", async () => {
+    const source = Array.from({ length: 30 }, (_, offset) => ({
+      i: offset * 10,
+      text: `Cue ${offset}.`,
+      start_ms: offset * 1000,
+      end_ms: offset * 1000 + 900,
+    }));
+    const fetcher = vi.fn(async (_url: string, init: RequestInit) => {
+      const input = JSON.parse(init.body as string);
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          source: "ai",
+          model: engine.model,
+          profile: engine.profile,
+          version: TRANSLATION_VERSION,
+          lines: input.lines.map((s: { i: number }) => ({
+            i: s.i,
+            vi: "Nghĩa fixture.",
+          })),
+        }),
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await act(async () =>
+      root.render(<Harness automatic source={source} activeIndex={100} />),
+    );
+    await check(() => expect(current.busy).toBe(false));
+    await check(() => expect(fetcher).toHaveBeenCalledTimes(8));
+    expect(
+      fetcher.mock.calls.map(
+        ([, init]) => JSON.parse(init.body as string).lines[0].i,
+      ),
+    ).toEqual([100, 110, 120, 130, 140, 150, 90, 80]);
+    expect(current.finished).toBe(false);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(fetcher).toHaveBeenCalledTimes(8); // No server background translation.
+  });
   it("hides old context output immediately and never reuses it for another title", async () => {
     let release!: () => void;
     const gate = new Promise<void>((resolve) => {
@@ -218,6 +258,120 @@ describe("server subtitle scheduling and cache", () => {
 });
 
 describe("device translation scheduling", () => {
+  it("preempts background work on seek, keeps human Vietnamese and never overlaps device tasks", async () => {
+    const source = Array.from({ length: 30 }, (_, i) => ({
+      i,
+      text: `Cue ${i}.`,
+      start_ms: i * 1000,
+      end_ms: i * 1000 + 900,
+      ...(i === 21 ? { vi: "Tiếng Việt có sẵn." } : {}),
+    }));
+    let running = 0;
+    let peak = 0;
+    let backgroundSignal: AbortSignal | undefined;
+    const translate = vi.fn(
+      (text: string, { signal }: { signal: AbortSignal }) => {
+        running++;
+        peak = Math.max(peak, running);
+        const promise =
+          text === "Cue 6." || text === "Cue 20."
+            ? new Promise<string>((_resolve, reject) => {
+                if (text === "Cue 6.") backgroundSignal = signal;
+                signal.addEventListener("abort", () => reject(signal.reason), {
+                  once: true,
+                });
+              })
+            : Promise.resolve(`Fixture ${text}`);
+        return promise.finally(() => {
+          running--;
+        });
+      },
+    );
+    vi.stubGlobal("Translator", {
+      availability: async () => "available",
+      create: async () => ({ translate, destroy: vi.fn() }),
+    });
+    await act(async () =>
+      root.render(
+        <Harness
+          automatic
+          source={source}
+          model={{ ...engine, kind: "gemini" }}
+        />,
+      ),
+    );
+    await check(() => expect(backgroundSignal).toBeDefined());
+    expect(translate.mock.calls.map(([text]) => text)).toEqual(
+      Array.from({ length: 7 }, (_, i) => `Cue ${i}.`),
+    );
+    await act(async () =>
+      root.render(<Harness source={source} activeIndex={20} />),
+    );
+    await check(() => expect(translate.mock.calls.at(-1)?.[0]).toBe("Cue 20."));
+    expect(backgroundSignal!.aborted).toBe(true);
+    expect(peak).toBe(1);
+    expect(current.error).toBeNull();
+    expect(current.lines[21]).toBe("Tiếng Việt có sẵn.");
+    expect(current.lines[6]).toBeUndefined();
+  });
+
+  it("flushes the last background lines to cache before reporting complete", async () => {
+    const source = Array.from({ length: 12 }, (_, i) => ({
+      i,
+      text: `Cache cue ${i}.`,
+      start_ms: i * 1000,
+      end_ms: i * 1000 + 900,
+    }));
+    const translate = vi.fn(async (text: string) => `Nghĩa ${text}`);
+    vi.stubGlobal("Translator", {
+      availability: async () => "available",
+      create: async () => ({ translate, destroy: vi.fn() }),
+    });
+    await act(async () => root.render(<Harness source={source} />));
+    await act(async () => current.enableDevice());
+    await check(() => expect(current.finished).toBe(true));
+    expect(translate).toHaveBeenCalledTimes(12);
+    expect(Object.keys(current.lines)).toHaveLength(12);
+    const cache = JSON.parse(
+      localStorage.getItem("atoenglish.subtitle-vi.v1:isolated-test")!,
+    );
+    expect(cache.at(-1).lines).toHaveLength(12);
+    await act(async () => root.unmount());
+    root = createRoot(container);
+    await act(async () => root.render(<Harness source={source} />));
+    await act(async () => current.enableDevice());
+    await check(() => expect(current.finished).toBe(true));
+    expect(Object.keys(current.lines)).toHaveLength(12);
+    expect(translate).toHaveBeenCalledTimes(12);
+  });
+
+  it("settles an old device request before translating a replacement transcript and drops its late output", async () => {
+    let release!: (value: string) => void;
+    const translate = vi.fn((text: string) =>
+      text === sentences[0].text
+        ? new Promise<string>((resolve) => {
+            release = resolve;
+          })
+        : Promise.resolve("Nghĩa nguồn mới."),
+    );
+    vi.stubGlobal("Translator", {
+      availability: async () => "available",
+      create: async () => ({ translate, destroy: vi.fn() }),
+    });
+    await act(async () => root.render(<Harness />));
+    await act(async () => current.enableDevice());
+    await check(() => expect(translate).toHaveBeenCalledOnce());
+    const replacement = [{ ...sentences[0], text: "Replacement source." }];
+    await act(async () => root.render(<Harness source={replacement} />));
+    expect(current.lines).toEqual({});
+    expect(translate).toHaveBeenCalledOnce();
+    await act(async () => release("Kết quả nguồn cũ."));
+    await check(() => expect(current.lines[0]).toBe("Nghĩa nguồn mới."));
+    expect(translate.mock.calls.map(([text]) => text)).toEqual([
+      sentences[0].text,
+      "Replacement source.",
+    ]);
+  });
   // No server engine configured → a mid-run failure keeps the device provider
   // and an explicit retry resumes it (the auto-stepdown case is covered in the
   // cross-device suite below).
@@ -269,23 +423,14 @@ describe("device translation scheduling", () => {
     ).toEqual([{ i: 0, vi: "Câu số không." }]);
     failActive = false;
     await act(async () => current.retry());
-    // Only the playhead window (1 back / 12 ahead of cue 14) is translated;
-    // cues 1–12 wait until the learner gets there.
-    await check(() =>
-      expect(
-        Object.keys(current.lines)
-          .map(Number)
-          .sort((a, b) => a - b),
-      ).toEqual([0, 13, 14, 15]),
-    );
-    expect(current.finished).toBe(false);
-    expect(current.busy).toBe(false);
-    await act(async () =>
-      root.render(
-        <Harness source={source} activeIndex={0} model={null as never} />,
-      ),
-    );
+    // Device-only background work finishes the rest after the new near window.
     await check(() => expect(current.finished).toBe(true));
+    expect(translate.mock.calls.slice(2, 6).map(([text]) => text)).toEqual([
+      "Cue 14.",
+      "Cue 15.",
+      "Cue 13.",
+      "Cue 12.",
+    ]);
     expect(
       translate.mock.calls.filter(([text]) => text === "Cue 0."),
     ).toHaveLength(1);

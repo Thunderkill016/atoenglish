@@ -1,5 +1,12 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { Sentence } from "@/lib/video/types";
 import {
   outsideTranslationWindow,
@@ -22,6 +29,9 @@ const CACHE_MAX_ITEMS = 10; // Bounded per-account device cache; no DB persisten
 const CACHE_MAX_CHARS = 500_000; // Leave room for other localStorage users.
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const TRANSPORT_GRACE_MS = 5000; // Allow a server timeout response to arrive.
+const BACKGROUND_YIELD_MS = 30; // Let playback/input render between low-priority device calls.
+const BACKGROUND_PUBLISH_MS = 250; // Batch background paints/cache writes; near cues still publish immediately.
+const PRIORITY_CHANGED = "playhead-priority-changed";
 const PAIR = { sourceLanguage: "en", targetLanguage: "vi" } as const;
 type DeviceTranslator = {
   translate: (
@@ -181,6 +191,11 @@ export function useTranslations(
   const [retry, setRetry] = useState(0);
   const [cacheNotice, setCacheNotice] = useState<string | null>(null);
   const active = useRef(activeIndex);
+  const deviceTask = useRef<{
+    controller: AbortController;
+    background: boolean;
+    promise: Promise<string>;
+  } | null>(null);
   const setup = useRef<AbortController | null>(null);
   const alive = useRef(true);
   // Lines already produced by the device path survive a mid-run step-down to
@@ -190,6 +205,8 @@ export function useTranslations(
     lines: Record<number, string>;
   } | null>(null);
   useEffect(() => {
+    if (active.current !== activeIndex && deviceTask.current?.background)
+      deviceTask.current.controller.abort(PRIORITY_CHANGED);
     active.current = activeIndex;
     wake.current?.();
   }, [activeIndex]);
@@ -376,6 +393,7 @@ export function useTranslations(
       );
       if (disposed) return;
       let translated: Record<number, string> = {};
+      let lastPublishedAt = 0;
       try {
         const raw = localStorage.getItem(storageKey);
         if (raw) {
@@ -425,9 +443,39 @@ export function useTranslations(
       const completed = new Set([
         ...Object.keys(translated).map(Number),
         ...Object.keys(human).map(Number),
+        ...sentences.filter((s) => s.noise).map((s) => s.i),
       ]);
+      const persistCache = () => {
+        try {
+          const entry = {
+            key: fingerprint,
+            at: Date.now(),
+            lines: Object.entries(translated).map(([i, vi]) => ({
+              i: Number(i),
+              vi,
+            })),
+          };
+          cached = [
+            ...cached.filter((item) => item.key !== fingerprint),
+            entry,
+          ].slice(-CACHE_MAX_ITEMS);
+          while (
+            cached.length > 1 &&
+            JSON.stringify(cached).length > CACHE_MAX_CHARS
+          )
+            cached.shift();
+          const serialized = JSON.stringify(cached);
+          if (serialized.length > CACHE_MAX_CHARS)
+            throw new Error("Oversized cache");
+          localStorage.setItem(storageKey, serialized);
+        } catch {
+          setCacheNotice(
+            "Không lưu được cache trên thiết bị; bản dịch hiện tại vẫn dùng được.",
+          );
+        }
+      };
       while (!disposed) {
-        const selected = translationBatch(
+        let selected = translationBatch(
           sentences,
           completed,
           active.current,
@@ -435,8 +483,26 @@ export function useTranslations(
           maxChars,
           outsideTranslationWindow(sentences, active.current),
         );
+        const background =
+          resolvedProvider !== "server" && selected.length === 0;
+        if (background) {
+          selected = translationBatch(
+            sentences,
+            completed,
+            active.current,
+            DEVICE_TRANSLATION_BATCH_SIZE,
+          );
+          if (selected.length) {
+            const selectedFor = active.current;
+            await new Promise<void>((resolve) =>
+              setTimeout(resolve, BACKGROUND_YIELD_MS),
+            );
+            if (disposed) return;
+            if (active.current !== selectedFor) continue; // Re-evaluate priority before starting work.
+          }
+        }
         if (!selected.length) {
-          if (sentences.every((s) => completed.has(s.i))) break;
+          if (sentences.every((s) => completed.has(s.i) || s.noise)) break;
           // Window done, rest of the video not reached yet: idle until seek.
           setState({
             ...result,
@@ -451,6 +517,7 @@ export function useTranslations(
           wake.current = null;
           continue;
         }
+        let taskController: AbortController | undefined;
         try {
           const input = translationPayload(sentences, selected, maxChars, {
             title,
@@ -466,13 +533,29 @@ export function useTranslations(
             // Expert translator has no context parameter. One sentence per call preserves IDs without separator heuristics.
             lines = [];
             for (const line of selected) {
-              const vi = await local.translate(line.text, {
-                signal: AbortSignal.any([
-                  controller.signal,
-                  AbortSignal.timeout(TRANSLATION_TIMEOUT_MS),
-                ]),
-              });
+              // Cleanup aborts an old run. Await its settlement before starting a
+              // new source/provider run: there is never a second device task in flight.
+              if (deviceTask.current)
+                await Promise.allSettled([deviceTask.current.promise]);
               if (disposed) return;
+              taskController = new AbortController();
+              const signal = AbortSignal.any([
+                controller.signal,
+                taskController.signal,
+                AbortSignal.timeout(TRANSLATION_TIMEOUT_MS),
+              ]);
+              const promise = local.translate(line.text, { signal });
+              const task = { controller: taskController, background, promise };
+              deviceTask.current = task;
+              let vi: string;
+              try {
+                vi = await promise;
+              } finally {
+                if (deviceTask.current === task) deviceTask.current = null;
+              }
+              if (disposed) return;
+              if (taskController.signal.reason === PRIORITY_CHANGED)
+                throw PRIORITY_CHANGED;
               const validated = validateTranslations(
                 [{ i: line.i, vi: vi.trim() || null }],
                 [line],
@@ -480,13 +563,6 @@ export function useTranslations(
               lines.push(validated);
               if (vi.trim())
                 translated = { ...translated, [line.i]: vi.trim() };
-              setState({
-                ...result,
-                lines: translated,
-                busy: true,
-                error: null,
-                finished: false,
-              });
             }
           } else {
             const response = await fetch("/api/translate", {
@@ -522,42 +598,28 @@ export function useTranslations(
           for (const line of validateTranslations(lines, selected))
             if (line.vi) translated = { ...translated, [line.i]: line.vi };
           selected.forEach((line) => completed.add(line.i)); // Null/missing outputs wait for an explicit retry, not an endless request loop.
-          try {
-            const entry = {
-              key: fingerprint,
-              at: Date.now(),
-              lines: Object.entries(translated).map(([i, vi]) => ({
-                i: Number(i),
-                vi,
-              })),
-            };
-            cached = [
-              ...cached.filter((item) => item.key !== fingerprint),
-              entry,
-            ].slice(-CACHE_MAX_ITEMS);
-            while (
-              cached.length > 1 &&
-              JSON.stringify(cached).length > CACHE_MAX_CHARS
-            )
-              cached.shift();
-            const serialized = JSON.stringify(cached);
-            if (serialized.length > CACHE_MAX_CHARS)
-              throw new Error("Oversized cache");
-            localStorage.setItem(storageKey, serialized);
-          } catch {
-            setCacheNotice(
-              "Không lưu được cache trên thiết bị; bản dịch hiện tại vẫn dùng được.",
-            );
-          }
-          setState({
-            ...result,
-            lines: translated,
-            busy: true,
-            error: null,
-            finished: false,
-          });
+          // A 3,000-line Read document must remain interactive while the device
+          // translates the remainder. The final state below flushes every line.
+          if (
+            background &&
+            Date.now() - lastPublishedAt < BACKGROUND_PUBLISH_MS
+          )
+            continue;
+          lastPublishedAt = Date.now();
+          persistCache();
+          const publish = () =>
+            setState({
+              ...result,
+              lines: translated,
+              busy: true,
+              error: null,
+              finished: false,
+            });
+          if (background) startTransition(publish);
+          else publish();
         } catch (cause) {
           if (disposed || controller.signal.aborted) return;
+          if (taskController?.signal.reason === PRIORITY_CHANGED) continue;
           // A failed on-device path (Translator or the native bridge) steps
           // down to the server once — the provider change re-enters this
           // effect and retries there.
@@ -592,7 +654,8 @@ export function useTranslations(
           return;
         }
       }
-      if (!disposed)
+      if (!disposed) {
+        persistCache();
         setState({
           ...result,
           lines: translated,
@@ -600,6 +663,7 @@ export function useTranslations(
           error: null,
           finished: true,
         });
+      }
     };
     void run().catch(() => {
       if (!disposed)

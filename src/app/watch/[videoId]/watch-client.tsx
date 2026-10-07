@@ -19,6 +19,7 @@ import {
   Pause,
   Play,
   Repeat,
+  RotateCcw,
   Settings2,
   Timer,
 } from "lucide-react";
@@ -52,10 +53,12 @@ import {
 import { EmptyTranscript } from "./empty-transcript";
 import {
   TranscriptRail,
+  TRANSCRIPT_VIRTUAL_THRESHOLD,
   SentenceText,
   formatTimestamp,
 } from "./transcript-rail";
 import { useYouTubePlayer } from "./use-youtube-player";
+import { useSentencePlayer, type RepeatMode } from "./use-sentence-player";
 import { useTranslations } from "./use-translations";
 import { SEGMENTATION_VERSION } from "@/lib/video/segment";
 import {
@@ -76,7 +79,7 @@ const ERROR_MESSAGES: Record<CaptionActionError, string> = {
   error: "Có lỗi khi lấy phụ đề. Thử lại hoặc dán phụ đề.",
 };
 
-const SPEEDS = [1, 0.75, 0.5] as const;
+const SPEEDS = [0.5, 0.75, 1, 1.25] as const;
 const POSITION_SAVE_INTERVAL_MS = 15_000;
 // Tenth-second steps make the native slider useful for fine keyboard seeking.
 const SEEK_STEP_MS = 100;
@@ -96,16 +99,6 @@ interface WatchClientProps {
   initialPositionMs: number | null;
 }
 
-/** Index of the sentence covering `ms` (last sentence whose start ≤ ms). */
-function activeSentenceIndex(sentences: Sentence[], ms: number): number {
-  let idx = -1;
-  for (const s of sentences) {
-    if (s.start_ms != null && s.start_ms <= ms) idx = s.i;
-    else if (s.start_ms != null && s.start_ms > ms) break;
-  }
-  return idx;
-}
-
 export function WatchClient({
   videoId,
   loggedIn,
@@ -121,8 +114,7 @@ export function WatchClient({
   const [phase, setPhase] = useState<Phase>(initial ? "ready" : "fetching");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("theater");
-  const [loopSentence, setLoopSentence] = useState(false);
-  const [autoPause, setAutoPause] = useState(false);
+  const [positionNotice, setPositionNotice] = useState<string | null>(null);
   const [showKeys, setShowKeys] = useState(false);
   // Owner's automatic-learning default: both languages appear without revealing each cue.
   // The optional reveal mode still supports an English-first practice session.
@@ -151,26 +143,53 @@ export function WatchClient({
     rate,
     containerRef,
     loadError,
-    play,
-    pause,
-    seekToMs,
     setRate,
+    readClock,
   } = controls;
-  // The hook returns a fresh object literal every render; memoize the
-  // imperative surface so effects below don't re-subscribe every poll tick.
-  const player = useMemo(
-    () => ({ play, pause, seekToMs, setRate }),
-    [play, pause, seekToMs, setRate],
-  );
-
   const sentences = useMemo(() => transcript?.sentences ?? [], [transcript]);
-  const timedSentences = useMemo(
-    () => sentences.filter((s) => s.start_ms != null),
-    [sentences],
+  const {
+    controller,
+    state: sentenceState,
+    timeline,
+    activeSentence,
+  } = useSentencePlayer(videoId, sentences, controls);
+  const activeIndex = activeSentence?.i ?? -1;
+  const timedSentences = timeline.segments;
+  const timedIdxOfActive = timedSentences.findIndex(
+    (s) => s.id === sentenceState.activeSegmentId,
   );
-  const activeIndex = activeSentenceIndex(sentences, nowMs);
-  const activeSentence =
-    activeIndex >= 0 ? sentences.find((s) => s.i === activeIndex) : undefined;
+  const listening = playing || sentenceState.phase === "gap";
+  const playableIds = useMemo(
+    () => new Set(timeline.idBySentence.keys()),
+    [timeline],
+  );
+  const loopSentence = sentenceState.repeatMode !== "once";
+  const autoPause = sentenceState.autoPause;
+  const player = useMemo(
+    () => ({
+      play: controller.play,
+      pause: controller.pause,
+      seekToMs: controller.seek,
+      setRate,
+    }),
+    [controller, setRate],
+  );
+  const goPrev = controller.previous;
+  const goNext = controller.next;
+  const replayCurrent = controller.replay;
+  const seekWithDeepLink = useCallback(
+    (ms: number) => {
+      const target = timeline.segments.find((s) => s.startMs === ms);
+      if (target) controller.selectSegment(target.id);
+    },
+    [controller, timeline],
+  );
+  const chooseRepeat = (mode: RepeatMode) => controller.setRepeat(mode);
+  const toggleRepeat = () =>
+    controller.setRepeat(loopSentence ? "once" : "continuous");
+  const supportedSpeeds = SPEEDS.filter((speed) =>
+    controls.availableRates.includes(speed),
+  );
 
   const translation = useTranslations(
     sentences,
@@ -195,70 +214,6 @@ export function WatchClient({
     subtitleMode === "reveal" &&
     Boolean(captionVi) &&
     captionRevealed !== activeSentence?.i;
-
-  // ── Sentence-boundary behaviours (loop / auto-pause) ──────────────────────
-  const handledBoundary = useRef(-1);
-  useEffect(() => {
-    if (!activeSentence?.end_ms || !playing) return;
-    if (nowMs < activeSentence.end_ms) {
-      // Back inside the sentence — re-arm so the loop can fire on the next
-      // boundary crossing. The guard only suppresses repeat fires while the
-      // clock stays past the same end (double-seek jitter protection).
-      handledBoundary.current = -1;
-      return;
-    }
-    if (handledBoundary.current === activeIndex) return;
-    handledBoundary.current = activeIndex;
-    if (loopSentence && activeSentence.start_ms != null) {
-      player.seekToMs(activeSentence.start_ms);
-    } else if (autoPause) {
-      player.pause();
-    }
-  }, [
-    nowMs,
-    activeSentence,
-    activeIndex,
-    loopSentence,
-    autoPause,
-    playing,
-    player,
-  ]);
-
-  // Every deliberate seek makes the URL shareable: ?t=ms lands on the same
-  // sentence for whoever opens it (the Vertex search→timestamp pattern).
-  const seekWithDeepLink = useCallback(
-    (ms: number) => {
-      handledBoundary.current = -1;
-      player.seekToMs(ms);
-      player.play();
-      const url = new URL(window.location.href);
-      url.searchParams.set("t", String(Math.floor(ms)));
-      window.history.replaceState(null, "", url);
-    },
-    [player],
-  );
-
-  const seekToSentence = useCallback(
-    (index: number) => {
-      const s = timedSentences[index];
-      if (s?.start_ms == null) return;
-      seekWithDeepLink(s.start_ms);
-    },
-    [timedSentences, seekWithDeepLink],
-  );
-
-  const timedIdxOfActive = timedSentences.findIndex((s) => s.i === activeIndex);
-  const goPrev = useCallback(() => {
-    const idx = timedIdxOfActive > 0 ? timedIdxOfActive - 1 : 0;
-    seekToSentence(idx);
-  }, [timedIdxOfActive, seekToSentence]);
-  const goNext = useCallback(() => {
-    const idx = Math.min(timedIdxOfActive + 1, timedSentences.length - 1);
-    seekToSentence(idx);
-  }, [timedIdxOfActive, timedSentences.length, seekToSentence]);
-  const replayCurrent = useCallback(() => {
-    if (timedIdxOfActive >= 0) seekToSentence(timedIdxOfActive);
-  }, [timedIdxOfActive, seekToSentence]);
 
   // ── Fetch / fallback flows ────────────────────────────────────────────────
   const requestVersion = useRef(0);
@@ -483,25 +438,72 @@ export function WatchClient({
 
   // ── Persist playback position (logged-in only, SPEC §4.4) ────────────────
   const positionRef = useRef(nowMs);
+  const savingActiveRef = useRef(listening);
   useEffect(() => {
     positionRef.current = nowMs;
-  }, [nowMs]);
+    savingActiveRef.current = listening;
+  }, [nowMs, listening]);
+  const saveQueue = useRef<{ running: boolean; pending: number | null }>({
+    running: false,
+    pending: null,
+  });
+  const positionMounted = useRef(true);
+  useEffect(() => {
+    positionMounted.current = true;
+    return () => {
+      positionMounted.current = false;
+    };
+  }, []);
+  const persistPosition = useCallback(
+    async (ms: number) => {
+      if (!loggedIn || !Number.isFinite(ms) || ms < 0) return;
+      const queue = saveQueue.current;
+      queue.pending = ms;
+      if (queue.running) return;
+      queue.running = true;
+      try {
+        while (queue.pending != null) {
+          const position = queue.pending;
+          queue.pending = null;
+          try {
+            const result = await saveWatchPosition(videoId, position);
+            if (positionMounted.current)
+              setPositionNotice(
+                result.ok
+                  ? null
+                  : "Chưa lưu được vị trí xem. Bạn vẫn có thể tiếp tục nghe.",
+              );
+          } catch {
+            if (positionMounted.current)
+              setPositionNotice(
+                "Mất kết nối khi lưu vị trí xem. Bạn vẫn có thể tiếp tục nghe.",
+              );
+          }
+        }
+      } finally {
+        queue.running = false;
+      }
+    },
+    [loggedIn, videoId],
+  );
   useEffect(() => {
     if (!loggedIn) return;
     const t = setInterval(() => {
-      if (playing && positionRef.current > 0) {
-        void saveWatchPosition(videoId, positionRef.current);
+      if (savingActiveRef.current && positionRef.current > 0) {
+        void persistPosition(positionRef.current);
       }
     }, POSITION_SAVE_INTERVAL_MS);
     return () => clearInterval(t);
-  }, [loggedIn, playing, videoId]);
-  const wasPlaying = useRef(playing);
+  }, [loggedIn, persistPosition]);
+  const savedRevision = useRef({ controller, revision: 0 });
   useEffect(() => {
-    if (wasPlaying.current && !playing && loggedIn && positionRef.current > 0) {
-      void saveWatchPosition(videoId, positionRef.current);
+    if (savedRevision.current.controller !== controller)
+      savedRevision.current = { controller, revision: 0 };
+    if (sentenceState.saveRevision !== savedRevision.current.revision) {
+      savedRevision.current.revision = sentenceState.saveRevision;
+      void persistPosition(readClock().nowMs);
     }
-    wasPlaying.current = playing;
-  }, [playing, loggedIn, videoId]);
+  }, [controller, sentenceState.saveRevision, readClock, persistPosition]);
 
   // ── Keyboard shortcuts (SPEC §4.4) ────────────────────────────────────────
   useEffect(() => {
@@ -524,7 +526,7 @@ export function WatchClient({
       switch (e.key.toLowerCase()) {
         case " ":
           e.preventDefault();
-          if (playing) player.pause();
+          if (listening) player.pause();
           else player.play();
           break;
         case "a":
@@ -534,16 +536,28 @@ export function WatchClient({
           goNext();
           break;
         case "s":
-          if (timedSentences.length > 0) setLoopSentence((v) => !v);
+          if (timedSentences.length > 0)
+            controller.setRepeat(
+              controller.getSnapshot().repeatMode === "once"
+                ? "continuous"
+                : "once",
+            );
           break;
         case "r":
-          if (timedSentences.length > 0) setAutoPause((v) => !v);
+          if (timedSentences.length > 0)
+            controller.setAutoPause(!controller.getSnapshot().autoPause);
           break;
         case "q":
           replayCurrent();
           break;
         case "v":
           if (activeIndex >= 0) setCaptionRevealed(activeIndex);
+          break;
+        case "arrowleft":
+        case "arrowright":
+          if (target?.closest("button, a, [role=slider]")) return;
+          e.preventDefault();
+          controller.seekBy(e.key === "ArrowLeft" ? -1 : 1);
           break;
         case "?":
           setShowKeys((v) => !v);
@@ -554,19 +568,15 @@ export function WatchClient({
     return () => window.removeEventListener("keydown", onKey);
   }, [
     ready,
-    playing,
+    listening,
     player,
     goPrev,
     goNext,
     replayCurrent,
     timedSentences.length,
     activeIndex,
+    controller,
   ]);
-
-  const cycleSpeed = () => {
-    const idx = SPEEDS.indexOf(rate as (typeof SPEEDS)[number]);
-    player.setRate(SPEEDS[(idx + 1) % SPEEDS.length]);
-  };
 
   const trackLabel =
     transcript?.trackKind === "asr"
@@ -586,7 +596,7 @@ export function WatchClient({
   const hasTimedSentences = timedSentences.length > 0;
 
   return (
-    <DictionaryPanel onOpen={player.pause}>
+    <DictionaryPanel onOpen={controller.pause}>
       <DictionaryContent>
         {(openLookup) => {
           const lookupWord = (
@@ -608,10 +618,9 @@ export function WatchClient({
                   sentence.start_ms == null
                     ? null
                     : formatTimestamp(sentence.start_ms),
-                replay:
-                  sentence.start_ms == null
-                    ? undefined
-                    : () => seekWithDeepLink(sentence.start_ms!),
+                replay: !timeline.idBySentence.has(sentence.i)
+                  ? undefined
+                  : () => seekWithDeepLink(sentence.start_ms!),
               },
             });
           return (
@@ -620,6 +629,11 @@ export function WatchClient({
               className={cn(
                 "dark flex min-h-dvh flex-col bg-background text-foreground",
                 viewMode === "theater" && "lg:h-dvh lg:overflow-hidden",
+                // Virtualizer owns resize compensation, including the stage
+                // above the mobile rail; browser anchoring would apply it twice.
+                viewMode === "theater" &&
+                  sentences.length > TRANSCRIPT_VIRTUAL_THRESHOLD &&
+                  "[overflow-anchor:none]",
               )}
             >
               <header className="flex shrink-0 items-center gap-3 border-b border-border px-3 py-3 sm:px-5">
@@ -777,6 +791,61 @@ export function WatchClient({
                                   : "Chưa có bản dịch cho câu này.")}
                             </p>
                           ))}
+                        {activeSentence &&
+                          timeline.idBySentence.has(activeSentence.i) && (
+                            <div
+                              className="flex flex-wrap items-center justify-center gap-2 text-xs font-normal text-muted-foreground"
+                              data-testid="focus-tools"
+                            >
+                              <span>
+                                {formatTimestamp(activeSentence.start_ms!)}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={!ready}
+                                onClick={replayCurrent}
+                                aria-label="Nghe lại câu (Q)"
+                                className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring"
+                              >
+                                <RotateCcw aria-hidden className="size-4" />
+                                Nghe lại
+                              </button>
+                              <label className="inline-flex min-h-11 items-center gap-1">
+                                <span className="sr-only">Lặp câu</span>
+                                <select
+                                  disabled={!ready}
+                                  aria-label="Lặp câu"
+                                  value={sentenceState.repeatMode}
+                                  onChange={(e) =>
+                                    chooseRepeat(e.target.value as RepeatMode)
+                                  }
+                                  className="min-h-11 max-w-full rounded-lg bg-elevated px-2 text-foreground"
+                                >
+                                  <option value="once">Một lần</option>
+                                  <option value="three">Lặp ×3</option>
+                                  <option value="continuous">
+                                    Lặp liên tục
+                                  </option>
+                                </select>
+                              </label>
+                              {loopSentence && (
+                                <span role="status" data-testid="repeat-count">
+                                  {Math.min(
+                                    sentenceState.completed +
+                                      (sentenceState.phase === "segment"
+                                        ? 1
+                                        : 0),
+                                    sentenceState.repeatMode === "three"
+                                      ? 3
+                                      : Infinity,
+                                  )}
+                                  {sentenceState.repeatMode === "three"
+                                    ? " / 3"
+                                    : " lượt"}
+                                </span>
+                              )}
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -810,8 +879,7 @@ export function WatchClient({
                       disabled={!ready || durationMs <= 0}
                       aria-valuetext={`${formatTimestamp(nowMs)} / ${formatTimestamp(durationMs)}`}
                       onChange={(e) => {
-                        handledBoundary.current = -1;
-                        player.seekToMs(Number(e.target.value));
+                        controller.seek(Number(e.target.value));
                       }}
                       className="h-6 w-full cursor-pointer accent-primary disabled:cursor-default"
                     />
@@ -834,12 +902,12 @@ export function WatchClient({
                         })}
                         disabled={!ready}
                         onClick={() =>
-                          playing ? player.pause() : player.play()
+                          listening ? player.pause() : player.play()
                         }
                         title="Phát / dừng (Space)"
-                        aria-label={playing ? "Dừng video" : "Phát video"}
+                        aria-label={listening ? "Dừng video" : "Phát video"}
                       >
-                        {playing ? (
+                        {listening ? (
                           <Pause className="h-5 w-5" />
                         ) : (
                           <Play className="h-5 w-5 pl-0.5" />
@@ -863,7 +931,7 @@ export function WatchClient({
                         type="button"
                         className={controlBtn}
                         disabled={!ready || !hasTimedSentences}
-                        onClick={() => setLoopSentence((v) => !v)}
+                        onClick={toggleRepeat}
                         aria-pressed={loopSentence}
                         title="Lặp câu hiện tại (S)"
                         aria-label="Lặp câu hiện tại (S)"
@@ -874,27 +942,35 @@ export function WatchClient({
                         type="button"
                         className={controlBtn}
                         disabled={!ready || !hasTimedSentences}
-                        onClick={() => setAutoPause((v) => !v)}
+                        onClick={() => controller.setAutoPause(!autoPause)}
                         aria-pressed={autoPause}
                         title="Tự dừng sau mỗi câu (R)"
                         aria-label="Tự dừng sau mỗi câu (R)"
                       >
                         <Timer className="h-4.5 w-4.5" />
                       </button>
-                      <button
-                        type="button"
-                        className={cn(
-                          controlBtn,
-                          "gap-1 px-2 font-mono text-xs",
-                        )}
-                        disabled={!ready}
-                        onClick={cycleSpeed}
-                        title="Tốc độ phát"
-                        aria-label={`Tốc độ phát ${rate}×`}
-                      >
-                        <FastForward className="h-4 w-4" />
-                        {rate}×
-                      </button>
+                      <label className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 text-xs text-muted-foreground">
+                        <FastForward aria-hidden className="h-4 w-4" />
+                        <span className="sr-only">Tốc độ phát</span>
+                        <select
+                          aria-label={`Tốc độ phát ${rate}×`}
+                          value={rate}
+                          disabled={!ready}
+                          onChange={(e) =>
+                            player.setRate(Number(e.target.value))
+                          }
+                          className="min-h-11 bg-transparent text-foreground"
+                        >
+                          {supportedSpeeds.map((speed) => (
+                            <option key={speed} value={speed}>
+                              {speed}×
+                            </option>
+                          ))}
+                          {!supportedSpeeds.includes(
+                            rate as (typeof SPEEDS)[number],
+                          ) && <option value={rate}>{rate}×</option>}
+                        </select>
+                      </label>
                       <span className="ml-auto whitespace-nowrap px-2 font-mono text-xs tabular-nums text-muted-foreground">
                         {formatTimestamp(nowMs)}
                         {durationMs > 0 && ` / ${formatTimestamp(durationMs)}`}
@@ -911,6 +987,14 @@ export function WatchClient({
                       </button>
                     </div>
                   </div>
+                  {positionNotice && (
+                    <p
+                      role="status"
+                      className="mt-2 text-xs text-muted-foreground"
+                    >
+                      {positionNotice}
+                    </p>
+                  )}
                   {showKeys && (
                     <div className="mt-2 shrink-0 rounded-lg border border-border bg-elevated p-3 text-xs leading-relaxed text-muted-foreground">
                       <span className="font-semibold text-foreground">
@@ -918,7 +1002,7 @@ export function WatchClient({
                       </span>{" "}
                       Space phát/dừng · A câu trước · D câu sau · S lặp câu · R
                       tự dừng sau câu · Q nghe lại câu · V hiện nghĩa câu · ?
-                      bảng này
+                      bảng này · ←/→ tua 5 giây
                       <p className="mt-1.5">
                         Phím tắt không hoạt động khi đang nhập văn bản hoặc con
                         trỏ nằm trong trình phát video.
@@ -1105,6 +1189,11 @@ export function WatchClient({
                         activeIndex={activeIndex}
                         nowMs={nowMs}
                         onSeek={seekWithDeepLink}
+                        onSelectSentence={(i) => {
+                          const id = timeline.idBySentence.get(i);
+                          if (id) controller.selectSegment(id);
+                        }}
+                        playableIds={playableIds}
                         prose={viewMode === "read"}
                         onLookup={lookupWord}
                       />
