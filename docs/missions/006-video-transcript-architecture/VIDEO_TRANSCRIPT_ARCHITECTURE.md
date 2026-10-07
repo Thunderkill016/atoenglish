@@ -59,6 +59,14 @@ creator_authorized | ai_transcription`.
 3. Otherwise `not_available` — the client runs acquisition fallbacks
    (server fetch → extension capture → learner paste/upload).
 
+`resolveTranscript` also returns `savedPositionMs` from the
+`content_sources` row — resume position survives a library fallthrough.
+
+On a library hit for a signed-in learner, the watch page backfills the
+account copy via `persistAccountTranscript` (shared with the actions) —
+this is what lets `saveWatchPosition` find a row and makes the video
+part of the learner's account library.
+
 Used by `/watch/[videoId]` (was inline duplicated code). Same function is
 the future lookup for any other surface — dictation, review, share intake.
 

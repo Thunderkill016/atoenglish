@@ -8,6 +8,7 @@ import {
   resolveTranscript,
   type TranscriptStore,
 } from "@/lib/video/transcript-resolver";
+import { persistAccountTranscript } from "@/lib/video/persist-transcript";
 import { WatchClient } from "./watch-client";
 
 export const metadata: Metadata = {
@@ -31,20 +32,6 @@ export default async function WatchPage({
   const { data } = await supabase.auth.getUser();
   const user = data.user;
 
-  // Saved playback position needs the content_sources row either way — the
-  // resolver only reads transcripts.
-  let savedPositionMs: number | null = null;
-  if (user) {
-    const { data: source } = await supabase
-      .from("content_sources")
-      .select("last_position_ms")
-      .eq("user_id", user.id)
-      .eq("kind", "youtube")
-      .eq("external_id", videoId)
-      .maybeSingle();
-    savedPositionMs = source?.last_position_ms || null;
-  }
-
   // TranscriptResolver: account copy first, then the shared library cache.
   // The store interface is structural; casting avoids instantiating the
   // full generated Supabase client type at this call site.
@@ -55,9 +42,21 @@ export default async function WatchPage({
   );
   const initial = resolved.status === "found" ? resolved.transcript : null;
 
+  // Library hit for a signed-in learner: claim the account copy so resume
+  // position and library ownership persist — the same backfill the fetch
+  // action performs. Without it, saveWatchPosition silently matched no row.
+  if (user && resolved.status === "found" && resolved.scope === "library") {
+    initial!.saved = await persistAccountTranscript(
+      supabase,
+      user.id,
+      videoId,
+      initial!,
+    );
+  }
+
   // ?t=ms (deep link from library/review later) wins over the stored position.
   const deepLinkMs = t && /^\d+$/.test(t) ? Number(t) : null;
-  const initialPositionMs = deepLinkMs ?? savedPositionMs;
+  const initialPositionMs = deepLinkMs ?? resolved.savedPositionMs;
 
   return (
     <WatchClient

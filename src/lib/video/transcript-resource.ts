@@ -75,11 +75,15 @@ const SEGMENT_TEXT_MAX = 2000;
  * clamped so `endMs` never exceeds the next segment's `startMs` (YouTube
  * timedtext and SRT both produce soft overlaps — rejecting them would
  * break real files); a segment that would clamp to zero duration is
- * dropped. Returns a sorted, deduped-by-id array.
+ * dropped. Returns a sorted array; duplicate caller-supplied ids get a
+ * `-N` suffix so React keys never collide.
  */
 export function normalizeSegments(
   segments: readonly Omit<TranscriptSegment, "id">[] | TranscriptSegment[],
 ): TranscriptSegment[] {
+  if (!Array.isArray(segments)) {
+    throw new TranscriptValidationError("segments must be an array");
+  }
   const normalized: TranscriptSegment[] = [];
   for (const [index, s] of segments.entries()) {
     const { startMs, endMs, text } = s;
@@ -93,18 +97,25 @@ export function normalizeSegments(
         `segment ${index}: invalid timing ${startMs}–${endMs}`,
       );
     }
-    if (
-      typeof text !== "string" ||
-      !text.trim() ||
-      text.length > SEGMENT_TEXT_MAX
-    ) {
+    const trimmed = typeof text === "string" ? text.trim() : "";
+    if (!trimmed || trimmed.length > SEGMENT_TEXT_MAX) {
       throw new TranscriptValidationError(`segment ${index}: invalid text`);
     }
-    const id =
-      "id" in s && typeof s.id === "string" && s.id ? s.id : `seg-${index}`;
-    normalized.push({ id, startMs, endMs, text: text.trim() });
+    normalized.push({
+      id: "id" in s && typeof s.id === "string" && s.id ? s.id : "",
+      startMs,
+      endMs,
+      text: trimmed,
+    });
   }
   normalized.sort((a, b) => a.startMs - b.startMs || a.endMs - b.endMs);
+  // Generated ids follow sorted order so they match display position.
+  const seenIds = new Set<string>();
+  for (const [i, seg] of normalized.entries()) {
+    if (!seg.id) seg.id = `seg-${i}`;
+    if (seenIds.has(seg.id)) seg.id = `${seg.id}-${i}`;
+    seenIds.add(seg.id);
+  }
   const out: TranscriptSegment[] = [];
   for (const [i, seg] of normalized.entries()) {
     const next = normalized[i + 1];
@@ -149,8 +160,8 @@ export function validateTranscriptResource(
       "ai_transcription requires provenance.model",
     );
   }
-  resource.segments = normalizeSegments(resource.segments);
-  return resource;
+  // Normalize into a fresh object — never mutate the caller's resource.
+  return { ...resource, segments: normalizeSegments(resource.segments) };
 }
 
 /**
@@ -164,16 +175,29 @@ export function aiTranscriptionAllowed(media: VideoResource): boolean {
   return media.provider === "upload" || media.provider === "voa";
 }
 
-/** Map a storage `Sentence` row to canonical segments (lossless). */
+/**
+ * Map a storage `Sentence` row to canonical segments. This is a
+ * timing+text projection: `Sentence` extras (`words`, `noise`, `vi`) do
+ * not exist in the segment model. Untimed sentences (plain-text/paste
+ * transcripts) cannot become segments — they throw instead of
+ * fabricating `0–0` timings.
+ */
 export function sentencesToSegments(
   sentences: Sentence[],
 ): TranscriptSegment[] {
-  return sentences.map((s, i) => ({
-    id: `seg-${s.i ?? i}`,
-    startMs: s.start_ms ?? 0,
-    endMs: s.end_ms ?? s.start_ms ?? 0,
-    text: s.text,
-  }));
+  return sentences.map((s, i) => {
+    if (s.start_ms === null || s.end_ms === null) {
+      throw new TranscriptValidationError(
+        `sentence ${i} is untimed — canonical segments require timing`,
+      );
+    }
+    return {
+      id: `seg-${s.i ?? i}`,
+      startMs: s.start_ms,
+      endMs: s.end_ms,
+      text: s.text,
+    };
+  });
 }
 
 /** Map canonical segments back to the storage `Sentence` shape. */

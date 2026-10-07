@@ -18,7 +18,17 @@ export const runtime = "edge";
  * credentials or a future bearer token — this endpoint never accepts
  * unauthenticated payloads.
  */
+/** Importer payloads are caption tracks — far above this is abuse. */
+const MAX_BODY_BYTES = 5 * 1024 * 1024;
+
 export async function POST(request: Request) {
+  const declared = Number(request.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY_BYTES) {
+    return NextResponse.json(
+      { ok: false, error: "invalid_file" },
+      { status: 413 },
+    );
+  }
   let body: { videoId?: unknown; payload?: unknown };
   try {
     body = await request.json();

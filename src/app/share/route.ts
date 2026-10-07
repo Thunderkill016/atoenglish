@@ -16,10 +16,14 @@ export const runtime = "edge";
  */
 export function GET(request: Request) {
   const params = new URL(request.url).searchParams;
+  // `url` is the authoritative field; text/title tokens are scanned only
+  // when they look like URLs (contain a host dot) — a bare 11-char word in
+  // a video title must not shadow the real link.
+  const urlParam = params.get("url") ?? "";
   const candidates = [
-    ...(params.get("text") ?? "").split(/\s+/),
-    params.get("url") ?? "",
-    params.get("title") ?? "",
+    urlParam,
+    ...(params.get("text") ?? "").split(/\s+/).filter((t) => t.includes(".")),
+    ...(params.get("title") ?? "").split(/\s+/).filter((t) => t.includes(".")),
   ];
   for (const token of candidates) {
     const videoId = token && parseYoutubeUrl(token);

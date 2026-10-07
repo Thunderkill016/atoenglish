@@ -42,6 +42,22 @@ describe("GET /share (PWA share_target intake)", () => {
     expect(res.headers.get("location")).toBe(`${BASE}/discover`);
   });
 
+  it("prefers `url` over URL-looking tokens inside `text`", async () => {
+    const res = await GET(
+      req(
+        `?text=${encodeURIComponent("https://youtu.be/8jPQjjsBbIc")}&url=${encodeURIComponent("https://youtu.be/8DfvwZ812dM")}`,
+      ),
+    );
+    expect(res.headers.get("location")).toBe(`${BASE}/watch/8DfvwZ812dM`);
+  });
+
+  it("does not treat a bare 11-char word in text as a video id", async () => {
+    const res = await GET(
+      req(`?text=${encodeURIComponent("watch abcdefghijk now")}`),
+    );
+    expect(res.headers.get("location")).toBe(`${BASE}/discover`);
+  });
+
   it("falls back to /discover for unparseable shares", async () => {
     const res = await GET(req(`?text=${encodeURIComponent("hello world")}`));
     expect(res.headers.get("location")).toBe(`${BASE}/discover`);

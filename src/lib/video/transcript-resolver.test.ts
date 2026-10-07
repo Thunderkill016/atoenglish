@@ -38,6 +38,7 @@ const SOURCE = {
   title: "T",
   channel: "C",
   duration_ms: 60000,
+  last_position_ms: 42000,
 };
 
 const ACCOUNT_ROW = {
@@ -73,6 +74,23 @@ describe("resolveTranscript", () => {
       expect(r.transcript.saved).toBe(true);
       expect(r.transcript.trackKind).toBe("manual");
       expect(r.transcript.title).toBe("T");
+      expect(r.savedPositionMs).toBe(42000);
+    }
+  });
+
+  it("falls through to the library when the account source has no transcript", async () => {
+    const store = fakeStore({
+      content_sources: [SOURCE],
+      // source row exists but its transcript row is missing/empty.
+      content_transcripts: [],
+      shared_transcripts: [LIBRARY_ROW],
+    });
+    const r = await resolveTranscript(store, VIDEO, "u1");
+    expect(r.status).toBe("found");
+    if (r.status === "found") {
+      expect(r.scope).toBe("library");
+      // Position survives the fallthrough — the source row still exists.
+      expect(r.savedPositionMs).toBe(42000);
     }
   });
 
@@ -113,7 +131,13 @@ describe("resolveTranscript", () => {
 
   it("reports not_available when nothing exists", async () => {
     const r = await resolveTranscript(fakeStore({}), VIDEO, "u1");
-    expect(r).toEqual({ status: "not_available" });
+    expect(r).toEqual({ status: "not_available", savedPositionMs: null });
+  });
+
+  it("returns position even with no transcript anywhere", async () => {
+    const store = fakeStore({ content_sources: [SOURCE] });
+    const r = await resolveTranscript(store, VIDEO, "u1");
+    expect(r).toEqual({ status: "not_available", savedPositionMs: 42000 });
   });
 
   it("ignores empty sentence arrays", async () => {

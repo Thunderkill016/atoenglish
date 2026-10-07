@@ -92,6 +92,20 @@ describe("normalizeSegments", () => {
   it("rejects an empty segment list", () => {
     expect(() => normalizeSegments([])).toThrow(TranscriptValidationError);
   });
+
+  it("rejects non-array input", () => {
+    expect(() => normalizeSegments(null as never)).toThrow(
+      TranscriptValidationError,
+    );
+  });
+
+  it("makes duplicate ids unique", () => {
+    const out = normalizeSegments([
+      { id: "x", startMs: 0, endMs: 100, text: "a" },
+      { id: "x", startMs: 200, endMs: 300, text: "b" },
+    ]);
+    expect(new Set(out.map((s) => s.id)).size).toBe(2);
+  });
 });
 
 describe("validateTranscriptResource", () => {
@@ -163,5 +177,11 @@ describe("sentence/segment mapping", () => {
     expect(back.map((s) => s.text)).toEqual(["Hello", "World"]);
     expect(back.map((s) => s.start_ms)).toEqual([0, 1300]);
     expect(back.map((s) => s.end_ms)).toEqual([1200, 2500]);
+  });
+
+  it("throws on untimed sentences instead of fabricating 0-0 timing", () => {
+    expect(() =>
+      sentencesToSegments([{ i: 0, start_ms: null, end_ms: null, text: "x" }]),
+    ).toThrow(TranscriptValidationError);
   });
 });

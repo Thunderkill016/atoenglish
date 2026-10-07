@@ -17,8 +17,8 @@ import {
   type CaptionsPayload,
 } from "@/lib/video/extension-bridge";
 import { parseSubtitleFile } from "@/lib/video/subtitle-file";
+import { persistAccountTranscript } from "@/lib/video/persist-transcript";
 import { YOUTUBE_VIDEO_ID_RE } from "@/lib/video/youtube-url";
-import type { Json } from "@/types/supabase";
 import type { Sentence, TranscriptOrigin } from "@/lib/video/types";
 
 // Caption intake runs once on opening a video, or on explicit retry:
@@ -177,36 +177,7 @@ async function persistTranscript(
   videoId: string,
   loaded: LoadedTranscript,
 ) {
-  const { data: source, error: srcError } = await supabase
-    .from("content_sources")
-    .upsert(
-      {
-        user_id: userId,
-        kind: "youtube",
-        external_id: videoId,
-        title: loaded.title ?? null,
-        channel: loaded.channel ?? null,
-        duration_ms: loaded.durationMs ?? null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,kind,external_id" },
-    )
-    .select("id")
-    .single();
-  if (srcError || !source) return false;
-
-  const { error: trError } = await supabase.from("content_transcripts").upsert(
-    {
-      source_id: source.id,
-      user_id: userId,
-      origin: loaded.origin,
-      language: loaded.language,
-      segmentation_version: SEGMENTATION_VERSION,
-      sentences: loaded.sentences as unknown as Json,
-    },
-    { onConflict: "source_id" },
-  );
-  return !trError;
+  return persistAccountTranscript(supabase, userId, videoId, loaded);
 }
 
 /**

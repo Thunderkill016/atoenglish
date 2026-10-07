@@ -40,3 +40,22 @@ None.
 - 2026-10-07 — lead: scaffolded mission, mapped existing resolver/import
   code, drafted contract + docs, implemented type layer, resolver,
   endpoint, share route, tests.
+- 2026-10-07 — adversarial QA (`subagent_explore`, ato-qa brief):
+  **FAIL**, one blocking + ten non-blocking findings. Resolution:
+  - B1 (pre-existing bug this mission owns): signed-in library hits never
+    backfilled the account row, so `saveWatchPosition` silently no-op'd.
+    Confirmed it predates this diff (shared-cache SSR read landed in
+    `a5241486`); fixed now — page backfills via extracted
+    `persistAccountTranscript`, resolver returns `savedPositionMs`,
+    double `content_sources` query removed.
+  - normalizeSegments: real dedup (`-N` suffix on duplicate ids),
+    non-array guard, post-trim length check, generated ids after sort.
+  - `validateTranscriptResource` no longer mutates its argument.
+  - `sentencesToSegments` throws on untimed sentences instead of
+    fabricating `0–0` timings (canonical segments require timing).
+  - `/share`: `url` param wins; text/title tokens scanned only when they
+    contain a host dot — bare 11-char title words can't shadow the link.
+  - `/api/transcripts`: rejects `Content-Length > 5 MB` before parsing.
+  - Noted not-blocking: REST endpoint inherits hourly-only rate limit
+    (burst binding stays on the fetch action); persist proved by
+    action-level tests rather than a mocked-supabase route test.

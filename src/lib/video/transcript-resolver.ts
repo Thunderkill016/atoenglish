@@ -34,14 +34,21 @@ export interface TranscriptStore {
 }
 
 export type ResolveResult =
-  | { status: "found"; transcript: LoadedTranscript; scope: RightsScope }
-  | { status: "not_available" };
+  | {
+      status: "found";
+      transcript: LoadedTranscript;
+      scope: RightsScope;
+      /** Persisted resume position for the signed-in learner, if any. */
+      savedPositionMs: number | null;
+    }
+  | { status: "not_available"; savedPositionMs: number | null };
 
 interface SourceRow {
   id: string;
   title: string | null;
   channel: string | null;
   duration_ms: number | null;
+  last_position_ms: number | null;
 }
 
 interface TranscriptRow {
@@ -90,15 +97,18 @@ export async function resolveTranscript(
   videoId: string,
   userId: string | null,
 ): Promise<ResolveResult> {
+  let savedPositionMs: number | null = null;
+
   if (userId) {
     const { data: source } = await store
       .from("content_sources")
-      .select("id, title, channel, duration_ms")
+      .select("id, title, channel, duration_ms, last_position_ms")
       .eq("user_id", userId)
       .eq("kind", "youtube")
       .eq("external_id", videoId)
       .maybeSingle();
     if (source) {
+      savedPositionMs = (source as SourceRow).last_position_ms || null;
       const { data: transcript } = await store
         .from("content_transcripts")
         .select("origin, language, sentences, segmentation_version")
@@ -112,7 +122,12 @@ export async function resolveTranscript(
           )
         : null;
       if (loaded) {
-        return { status: "found", transcript: loaded, scope: "account" };
+        return {
+          status: "found",
+          transcript: loaded,
+          scope: "account",
+          savedPositionMs,
+        };
       }
     }
   }
@@ -132,8 +147,15 @@ export async function resolveTranscript(
       )
     : null;
   if (sharedLoaded) {
-    return { status: "found", transcript: sharedLoaded, scope: "library" };
+    return {
+      status: "found",
+      transcript: sharedLoaded,
+      scope: "library",
+      // A content_sources row can exist without a transcript (e.g. cleared
+      // data) — the learner's resume position still applies.
+      savedPositionMs,
+    };
   }
 
-  return { status: "not_available" };
+  return { status: "not_available", savedPositionMs };
 }
