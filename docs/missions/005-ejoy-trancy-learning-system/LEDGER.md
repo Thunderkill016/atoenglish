@@ -115,13 +115,14 @@ New AtoEnglish learning system at the Trancy standard, replacing the old curricu
 **Research round 3** (2 subagents): mined corpus ảnh Trancy + wave-2 products; added LingQ 5.0 backlash lesson (visual novelty forgiven, workflow regressions not — every capability stayed ≤1 click), Netflix/Spotify "personal-first" ordering, VN mobile reality (bottom nav kept), premium-vs-cluttered craft attributes (one accent budget, hairline > shadow, tinted neutrals).
 
 **New visual direction — full reskin, not polish:**
+
 - Palette: warm paper canvas `oklch(0.966 0.008 95)` + warm ink + deep-green accent (same hue family, quieter); dark = warm charcoal (not blue-black). `--mark` highlighter token reserved for saved words.
 - Typography: **Be Vietnam Pro** (VN-native diacritics) body + **Playfair** variable serif for display/wordmark — replaces Plus Jakarta Sans.
 - Shell: icon rail → **masthead** (serif wordmark, text nav with underline-active, theme toggle right); mobile bottom nav unchanged.
 - `/discover`: serif "Hôm nay học gì?" + micro-caps date line; resume hero → hairline bookmark card; widgets → borderless margin column (micro-caps titles + hairline separators); WeekStrip → 7 dots; topic chips → underline tabs; level segment → ink pill.
 - VideoCard: meta pills + avatar removed → single dot-separated meta line + colored level dot.
 - Landing: serif wordmark/headlines, hairline header.
-- Dead-code cleanup in globals.css: removed unused minimal-*/chart-*/sidebar-*/phase-*/feedback tokens + streak/spotlight/lesson-flip/metal-reflect/step-dot utilities (zero usage verified by grep).
+- Dead-code cleanup in globals.css: removed unused minimal-_/chart-_/sidebar-_/phase-_/feedback tokens + streak/spotlight/lesson-flip/metal-reflect/step-dot utilities (zero usage verified by grep).
 
 **Rejected (documented):** dark-first cinema shelves (catalog too small, NN/g horizontal-scroll-on-desktop evidence), Duolingo-style forced path, Lingopie-style "a lot going on" metric strip.
 
@@ -131,7 +132,7 @@ New AtoEnglish learning system at the Trancy standard, replacing the old curricu
 
 Owner rejected the v4 "Bàn học" editorial direction ("phải làm giống home của trancy"). Re-grounded on the actual captured Trancy home screenshot (`/tmp/trancy-research/live/shots/home.png`) and restored/derived from `bc5c55f7`:
 
-- **Dark-first** (defaultTheme="dark", Trancy home is dark; light theme still available via toggle). Neutral palette — warm-paper experiment reverted; dead-token cleanup kept (minimal-*/chart-*/sidebar-*/phase-*/streak/flip utilities).
+- **Dark-first** (defaultTheme="dark", Trancy home is dark; light theme still available via toggle). Neutral palette — warm-paper experiment reverted; dead-token cleanup kept (minimal-_/chart-_/sidebar-_/phase-_/streak/flip utilities).
 - **IconRail restored** (masthead removed); active item = neutral gray square per Trancy.
 - Top paste field is the page header — greeting/H1 removed to match Trancy home (no "Khám phá" title).
 - VideoCard: channel avatar circle moved onto the thumb's bottom-left corner (TED-logo position in Trancy), pill meta kept.
@@ -153,7 +154,6 @@ Owner: "Ko dùng màu xanh lá cây và pattern cũ nữa". Trancy structure kep
 
 **Gate:** tsc ✓ · eslint 0/0 ✓ · 36/36 e2e ✓ · build ✓
 
-
 ## Repository-first product research and selective design — 2026-10-06
 
 **Owner request:** continue after Trancy login; understand current docs/code, inspect Trancy, compare multiple products and public repositories to develop AtoEnglish intelligently rather than copy it.
@@ -167,7 +167,6 @@ Owner: "Ko dùng màu xanh lá cây và pattern cũ nữa". Trancy structure kep
 **Execution packet:** finish caption/Worker boundary; contextual understanding (slice 2); idempotent save and source return (slice 3); dictation → due review (slices 4/5). Acceptance UX-1…LEARN-2 in RESEARCH-NOTES. State: RESEARCH COMPLETE; product loop still IN PROGRESS.
 
 **Validation of this documentation checkpoint:** `npm run check:source-of-truth` PASS; `git diff --check` PASS; local `tsc --noEmit --incremental false` PASS against the preserved checkout. These checks do not run reference repositories, exercise the new learning loop or verify a release.
-
 
 ## Home v6 — selective design implemented — 2026-10-06
 
@@ -191,9 +190,7 @@ Owner explicitly required restoring statistics, replacing duplicate search input
 
 Regression findings fixed: removed lucide brand icon import; native search Escape cleared text instead of closing; native first/last focus could escape to browser chrome; origin validation wrongly compared localhost to internal 0.0.0.0; body-only locking left a second root scrollbar. Both dialogs now lock root/body and use shared focus boundaries. Verification results follow below; no commit/push/merge/deploy or real Gemini/DB writes.
 
-
 **Final local evidence:** TypeScript `tsc --noEmit --incremental false` PASS; changed-file ESLint PASS; 37 unit tests PASS (home 9, dictionary route 15, catalog 8, activity 5). Full guest home/landing E2E 55/55 PASS across 5 viewports (1854px, 1440px, 1024px, 393px, 320px), including modal scroll locks, first/last focus, Esc, link/filter/channel discovery, curated lookup/miss and guest AI recovery. Source-of-truth and diff whitespace checks PASS. Browser desktop/320px screenshots saved in the calling chat outputs. Tests skip real auth/DB seeding; successful authenticated Gemini runtime, RLS, audio quality and production remain unverified. No commit/push/merge/deploy.
-
 
 ## Home/search visual refinement — 2026-10-07
 
@@ -203,13 +200,11 @@ Channel selection now filters exact channel in the shared context: TED has 5 cat
 
 Evidence: final clean TypeScript and changed-file ESLint; 37 unit tests PASS. Full guest home/landing E2E 55/55 PASS across 5 viewports, including new channel/focus/thumbnail assertions and first-screen desktop statistics. After the final mobile chip spacing and clear-query regression, focused picker/reflow E2E 10/10 PASS. Browser screenshots inspected desktop 1440x640 and mobile 320x720; saved as v4 outputs. Formatter run on changed TSX/tests; source-of-truth and whitespace checks PASS. No commit/push/merge/deploy, DB writes or authenticated live AI validation.
 
-
 ## Curated Vietnamese title meanings — 2026-10-07
 
 Owner authorized title translation following the recommendation: optional secondary Vietnamese meanings for discovery, original English/channel retained. Added `titleVi` to all 18 curated entries. One shared `Hiện nghĩa Việt` toggle (off by default, compact icon on mobile/search) controls catalog and search previews. Search indexes original/Vietnamese titles independently of visibility, with the existing diacritic/đ normalization. Reset preserves display choice; choice is page-session state, not persisted. Existing VideoCard takes an optional secondary meaning, so non-catalog resume cards remain unchanged. No official YouTube translation claim, runtime AI calls, migrations or DB/cache writes; titles outside catalog still original.
 
 Validation: final TypeScript PASS, changed-file ESLint PASS, 38 unit tests PASS (catalog translation coverage included), full guest home/landing E2E 60/60 PASS across five viewports. New browser regression checks defaults, original link/title preservation, shared toggles, hidden Vietnamese search, reset behavior and zero dictionary/translation requests. Browser desktop and 320px inspected; screenshots saved in calling chat outputs. Source-of-truth/diff checks PASS. No commit/push/merge/deploy.
-
 
 ## Watch player layout and transcript follow — 2026-10-07
 
@@ -236,7 +231,6 @@ Owner continued with Trancy practice versus local watch screenshots. Bounded cha
 
 **Limits/handoff:** authenticated AI success, translation quality, aligned VI cache, source/card persistence/RLS, production and learner outcomes remain unverified or unfinished. No commit/push/merge/deploy. Plate THU-9 was read fresh, but the connector was removed from available tools before update; this checkpoint is not yet mirrored there. Continue the existing PLAN slice-2 alignment/understanding work, then the separately governed save/library/review slices.
 
-
 ## Free-first automatic subtitle translation research and foundation — 07/10/2026
 
 **Authority:** owner prioritized automatic translation, free use and meaning quality, and requested live Trancy, GitHub translation repos and Google Translate research. Same existing AtoEnglish checkout/branch/HEAD; prior home/dictionary/player WIP preserved.
@@ -249,7 +243,6 @@ Owner continued with Trancy practice versus local watch screenshots. Bounded cha
 
 **Open gates:** six samples do not meet the documented 30-case semantic release gate. No real authenticated Gemini/API quality run, no broadly supported free provider chosen, no self-hosted model run, no authored-VI ingestion priority or persistent DB translation cache. Therefore this is a research-backed translation foundation, not completion of the core quality engine or mission 005. No DB/schema/billing changes, commit/push/merge/deploy. Plate connector unavailable; no mirrored checkpoint claimed.
 
-
 ## Actual free local model evaluation and watch adapter — 07/10/2026
 
 Owner continued “Bây giờ nghiên cứu để phát triển đi”. Same branch `docs/005-ejoy-trancy-system`/HEAD `938a69081ffd009a6ee2d67fcf5f29df0fc77061`; uncommitted prior WIP preserved. Downloaded official pinned Tencent Hy-MT2-1.8B Q4_K_M and llama.cpp b11457 CPU archive, verified both SHA-256 against official metadata; no system runtime install. Baseline six-case model run caught a break-even/profit meaning error. Official contextual prompt shape plus general data/meaning/name constraints evaluated against 30 frozen authored cases through the actual new adapter: all completed, Codex reading detected no critical meaning error and three wording/name concerns. Not independent blinded review, not real-library release corpus. p50 4.3885s, empirical p95 11.041s, max 13.17s per cue on CPU two threads. Original Google/device outputs retained separately; no global ranking.
@@ -257,7 +250,6 @@ Owner continued “Bây giờ nghiên cứu để phát triển đi”. Same bra
 Integrated optional local model into existing `/api/translate`/`/watch`: source-bound single-cue outputs, adjacent context, provider-specific batch/character/timeout, private backend key, checked response model/profile, cache pinned to model/quantization/runtime/prompt, cancellation and no Gemini fallback. Auth cookie + user verification and rate limiter unchanged. Config sample disabled; no .env.local edits or default enablement. Temporary loopback evaluator stopped after use to return RAM; about 1.13GB model remains in calling workspace. No DB writes/schema/provider billing/production/auth configuration changes, commit/push/merge/deploy.
 
 Local WIP verification: typecheck clean; changed-file lint clean. Focused unit 31 PASS (adapter/route/budget/hook), then three hook tests rerun PASS after correcting test-harness side effects without disabling lint. Guest translation E2E 25/25 PASS across five viewports, run from projectless cwd with DB/Auth env removed and integration cases excluded; player/translator mocks verify UI only. vinext/Cloudflare build PASS (existing route-classification warnings). Current real browser watch remains usable with the original embedded video and no synthetic subtitles. Source-of-truth/whitespace checks run after documentation update. Remaining: signed-in model/browser smoke, independent permitted-library semantic review, authored VI priority and DB cache. This is an experimental engine increment, not full core-quality or mission-005 completion. Plate connector unavailable, no mirror claimed.
-
 
 ## Subtitle spacing and reading presentation — 07/10/2026
 
@@ -287,11 +279,11 @@ Owner: "làm sao để sử dụng được trên đa nền tảng" → "làm đ
 
 **Eval** (same 30 frozen authored cases as Hy-MT2, run via Cloudflare REST `/ai/run` on account `6b09…26b2`; production `TRANSLATION_SYSTEM_PROMPT`, one cue per call, context in `before`):
 
-| Engine | Meaning errors (my reading vs authored criteria) | Latency | Cost |
-|---|---|---|---|
+| Engine                                               | Meaning errors (my reading vs authored criteria)                                                                                                                                                          | Latency                          | Cost                                                                                     |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------- |
 | `@cf/google/gemma-4-26b-a4b-it`, thinking off, t=0.2 | 1 weak: #6 "Thầy ấy là thầy của tôi" lost father context (Hy-MT2: "Ông ấy"). Others correct incl. break-even/profit, must-not vs don't-have-to, idioms, Tiny Desk name kept, injection translated as text | p50 ≈1.3 s; outliers 7.6 s, 37 s | ≈2.2–3.2 Neurons/cue (≈ 3,800 cues/day inside 10k free Neurons; $0.011/1k Neurons after) |
-| `@cf/meta/m2m100-1.2b` | ≥8 critical: "dưới thời tiết", accordion→"cờ vua", break-even→"phá vỡ" (×2), must-not→"không nên", "piece of cake"/"call it a day"/"on her plate" literal | ≈0.7 s | cheapest |
-| Hy-MT2-1.8B Q4 local (earlier run) | 0 critical, 3 wording concerns | p50 4.4 s CPU | own host |
+| `@cf/meta/m2m100-1.2b`                               | ≥8 critical: "dưới thời tiết", accordion→"cờ vua", break-even→"phá vỡ" (×2), must-not→"không nên", "piece of cake"/"call it a day"/"on her plate" literal                                                 | ≈0.7 s                           | cheapest                                                                                 |
+| Hy-MT2-1.8B Q4 local (earlier run)                   | 0 critical, 3 wording concerns                                                                                                                                                                            | p50 4.4 s CPU                    | own host                                                                                 |
 
 Decision recorded: **m2m100 rejected**. Gemma 4 implemented as opt-in engine. Not blind/independent review; authored corpus only.
 
@@ -308,7 +300,8 @@ Gotchas found: thinking mode on by default burns all `max_tokens` with empty `co
 Owner: "web này là học tiếng Anh" + "phải nghiên cứu tất cả thư viện repo về nó và phát triển hoàn chỉnh tính năng này". Re-extracted `research/ejoy-archive-2026-10-06` (192 MB packets); 28/39 repos have translation-related files; read real code of read-frog, LLPlayer, easysubs, zeeguu api/web, echo-type, lexweave (+ file inventory of bespoke, mLearn, LWT, openlingo). Synthesis table in RESEARCH-NOTES "Dịch phụ đề hướng học". GPL repos → ideas only; no code copied.
 
 **Shipped (design from research):**
-1. **Human Vietnamese first** (eJOY/Language Reactor; Slice-2 contract order): `fetchYoutubeCaptions` also fetches the uploader's *manual* `vi` track (never ASR `vi`, never `tlang`), best-effort (failure/budget never breaks EN). `alignHumanTranslation` attaches it per sentence by cue midpoint/overlap, stored as `Sentence.vi` in the existing jsonb (no migration).
+
+1. **Human Vietnamese first** (eJOY/Language Reactor; Slice-2 contract order): `fetchYoutubeCaptions` also fetches the uploader's _manual_ `vi` track (never ASR `vi`, never `tlang`), best-effort (failure/budget never breaks EN). `alignHumanTranslation` attaches it per sentence by cue midpoint/overlap, stored as `Sentence.vi` in the existing jsonb (no migration).
    - **Live check caught a real defect**: on TED `iG9CE55wbtY` the VI track is a differently timed cut — time alignment paired "I've been blown away…" with a later line. Added a structural gate: accept only if ≥80 % of VI cue starts sit within 300 ms of an EN cue start. Live over all 18 catalog videos: 2 accepted (0.99, 0.94 — pairs read correct), 6 rejected (0.12–0.61), 10 have no VI track. Rejected tracks fall back to labelled machine translation.
 2. **Learner default `reveal` mode** ("Anh · Việt khi chạm"): English first, Vietnamese blurred per line until tapped (rail + caption strip), `V` reveals the current line; bilingual/en/vi/hidden still available. Mixed sources tag machine lines "· dịch máy"; status shows "Phụ đề tiếng Việt của kênh · n/m câu"; activation buttons hidden when every line is human.
 3. **Playhead window** (LLPlayer 1 back / 12 ahead): no whole-video background translation; loop idles until the learner moves, resumes on seek; cancels on unmount.
@@ -323,6 +316,7 @@ Owner: "web này là học tiếng Anh" + "phải nghiên cứu tất cả thư 
 Owner: "Vậy làm theo họ đi" → "làm extension đi". Investigated all fallback paths first: public Invidious API is effectively dead (1 instance up, its upstream blocked); `youtubei/v1/get_transcript` returns 400 "Precondition check failed" without full session; yt-dlp on the throttled IP gets the same 429. The only mechanism that reliably works is fetching inside the learner's own YouTube session — what every caption extension does.
 
 **Shipped:**
+
 1. `extension/` — MV3, no build step. `content-youtube-main.js` (`world: MAIN`) reads `getPlayerResponse()` + fetches each needed track's json3 same-origin (EN manual/ASR + uploader-authored VI only); `content-youtube-relay.js` writes the payload to `chrome.storage.local` and closes the import tab; `content-app.js` marks `documentElement.dataset.atoenglishExt` and relays `storage.onChanged` → `window.postMessage` into the page. `window.opener` is unusable — YouTube's COOP severs it — hence the storage relay.
 2. `src/lib/video/extension-bridge.ts` — `validateCaptionsPayload` (untrusted postMessage shape check) + `payloadToTranscript` (same pick-EN → segment → align-VI pipeline as the server fetch). `importYoutubeCaptions` server action re-validates + persists for signed-in users; guests get the identical client-side path.
 3. Watch page: "Lấy qua extension" opens `youtube.com/watch?v=…#atoenglish-import`; listener accepts the payload from youtube.com or same-origin relay; 45 s timeout with an honest error. `blocked` now also maps HTTP 429 (was 403-only) so throttling surfaces as "YouTube đang chặn…" instead of a generic error.
@@ -332,3 +326,122 @@ Owner: "Vậy làm theo họ đi" → "làm extension đi". Investigated all fal
 **Gate:** tsc ✓ · eslint ✓ · 274 unit ✓ (+8 bridge) · prettier ✓ · live browser extension loop ✓ (fixture-routed timedtext).
 
 **Not done:** real-session timedtext re-check once this IP cools down; Chrome Web Store packaging; Firefox `world:"MAIN"` fallback.
+
+## Automatic watch/translation/vocabulary — 2026-10-07 (owner's latest refinement)
+
+Base observed `b4983877`, branch `docs/005-ejoy-trancy-system`. Concurrent shared-transcript migration/seed/actions/page/types WIP preserved; not run or released by this increment.
+
+- Existing WatchClient now fetches once on opening a video with no initial transcript, defaults to visible bilingual captions, automatically prepares supported device translation, and starts already-configured free server translation only for authenticated scopes. A standard page/play gesture activates a first browser-model download; explicit setup/error retries remain. Late intake/save/import results cannot overwrite a newer chosen transcript. No auto-play, dictionary AI fan-out, automatic vocabulary save or scheduler changes.
+- Active cue shows up to three curated dictionary terms/phrases directly, with labelled general meanings, longest known phrase and honest misses. Same desktop rail scroller; mobile document scrolling. Existing dictionary drawer/replay/phrase selection and extension compatibility retained.
+- Translation cache now includes title and original Vietnamese anchors; old title results hidden during fingerprint/response replacement. Pending browser preparation cannot override an explicit server choice. Model/provider failure never automatically calls Gemini.
+- Additional actual pinned Hy-MT2 budget experiment: 18 outputs on 9 frozen windows, candidate retained 3 critical semantic errors (baseline 5). Raw/review in projectless `outputs/translation-evaluation.json`; Codex reading, not independent blind review. No claim of best-model quality or release readiness.
+
+Validation: 70 related unit tests passed; typecheck and targeted ESLint clean before the final test-only layout measurement update, followed by a final repeat. Initial 55 browser cases had 54 passes and one 320px measurement failure; root was document movement between separate rectangle reads, fixed by measuring the whole caption/controls in one snapshot. The 320px case passed, then 15 targeted regression cases passed across 1854×950, 1440×640, 1024×768, 393×851 and 320×720 (opening, cache, long captions). Browser fixtures prove flow/layout, not actual YouTube caption availability or model quality. Browser tests ran a separate port-3100 instance of this existing Next app with all .env credentials disabled and a loopback empty backend; caption actions, player and translations mocked. Source-of-truth check and diff whitespace check passed. No production DB writes, provider flag/billing/auth changes, commit, merge or deploy. Screenshots in projectless `outputs/automatic-player-{width}.png`, clearly headed synthetic test captions.
+
+Remaining: actual production/session caption availability, supported-device download in each browser, authenticated configured-server runtime, independent real-library translation quality, vocabulary contextual sense selection and later persistence/learning gates. Native browser translation can fail idioms; general dictionary meanings can differ from the sense in a cue. Current unsupported browsers need available original Vietnamese or a configured authenticated server; source/paste/import remain usable.
+
+## Caption acquisition root-cause research — 07/10/2026
+
+Owner asked why Trancy obtains captions. Fresh official Chrome CRX v7.9.4 and Learning Center public JS inspected without installing/executing them; source hashes/function offsets stored in projectless `work/product-research/trancy-caption-assets/`. Authenticated Trancy UI shows 395 EN/VI lines for `oyRxhiAC9u8`, not proof of a fresh cache miss. Existing AtoEnglish fetch library probed once for the same public video with no actions/auth/DB: iOS/Android metadata both HTTP 200/playability OK/one track; caption body HTTP 429 four times; six-request budget exhausted, overall blocked. Corrected TRANCY-DEEP-DIVE §2/§5.4 and added §9: native-XHR capture and player track driving, optional current-session direct fetch/token reuse, raw-cache bridge to Learning Center, API/cached captions, distinct premium audio transcription. Earlier “extension avoids 429” wording is not a verified guarantee; ours currently lacks the native-response-first mechanism. Private backend cold-miss behavior remains unknown. Automatic-player/shared-cache WIP untouched; no DB writes, user/account changes, production code, commit or deploy. Existing repo typecheck rechecked; evidence distinguishes static code, UI and local upstream refusal.
+
+## Native caption intake repair — 07/10/2026
+
+Owner continuation: “Vậy giờ xử lý ntn ?” → “tiếp tục”. Existing web `/watch`
+and caption companion repaired, preserving automatic translation/vocabulary
+and shared-cache WIP. Companion 0.2.0 attaches MAIN and isolated relay at
+document_start, captures native XHR/fetch json3 in the embedded player,
+drives the chosen native track and attempts one same-session direct fallback
+when not refused. Exact origin/frame/video and request-version guards;
+StrictMode sends once; loaded/pasted content wins late races; optional VI
+refusal preserves EN. Bounded passive/active observation cleanup preserves
+later user choices and new-video settings. Tab closes after storage succeeds.
+Server stops on 403/429 instead of repeating/changing client. Browser shape
+validation cannot attest provenance: imported/pasted text is private, not a
+public-cache seed. No audio/video download, token fabrication or copied
+Trancy source/assets. PROJECT_STATE/TASK_CONTRACT reconcile the earlier
+extension-closed wording with the later owner-authorized caption exception.
+
+Validation: 142 relevant unit tests passed, final 11 collector cases repeated;
+clean final typecheck and targeted ESLint. 3 installed-extension browser
+fixtures passed (auto EN/VI, native refusal, explicit storage/tab handoff);
+15 existing browser checks passed across five viewport sizes (automatic
+understanding, long captions, device/cache/timing). Fixed a test-only iframe
+navigation race rather than adding sleeps/retries. Isolated port-3100 Next
+runtime, credentials blanked, loopback empty backend and routed synthetic
+YouTube/actions/providers; no production writes. Source-of-truth/diff checks
+clean. One real local public probe still returned 429/blocked, now stopping
+after 2 requests (previously 6); before/after sanitized artifacts preserved.
+See TRANCY-DEEP-DIVE §9.1 and extension/README for concrete flow and limits.
+
+Not released: real-session native acquisition, deployed shared-cache state,
+Firefox/distribution and production runtime remain unverified. No DB
+migration/seed, provider/auth/billing change, commit, merge or deploy.
+
+## Production deployment — 07/10/2026
+
+Owner explicitly requested “deploy đi”. Deployed the existing working tree
+on branch `docs/005-ejoy-trancy-system`, GitHub base
+`b498387789033c473f0a9b1e2ce53b8a2eb75394`; this is not a deployment of
+that committed SHA alone. Release source SHA-256
+`59e0233355e183f51176a08fe1b8fddb6f4c2ee36efb959b57b177be0de2ce65`
+(152 runtime/config/public/extension and source-test files) remained
+unchanged between validation and release. Used the existing
+`npm run deploy:vinext` build/manifest patch/Cloudflare CLI workflow.
+
+Before release, read-only Neon production checks confirmed
+`shared_transcripts`, RLS with public SELECT only and the write RPC executable
+by service_role only. Migration `20261013000000_shared_transcripts.sql`
+was already recorded at `2026-10-07T08:07:36.838Z`; shared cache held zero
+videos before release. No migration, seed, secret/auth/provider-flag change,
+commit, push or merge was performed in this release.
+
+Validation: full ESLint, 309 unit tests across 30 files, standalone typecheck,
+Next production build, vinext production build and diff checks passed.
+Previous synthetic native-extension/browser regression evidence remains
+fixture evidence, not a claim of native live-session availability.
+
+Cloudflare deployed version `17b13453-7d40-40e6-b070-a617fe170add`
+with 100% traffic, deployment `00eeb501-6398-41a3-b612-ca0d78c5818a`
+at `2026-10-07T09:31:09.472936Z`. Previous version for recovery:
+`2c209009-b5b3-4bbd-999e-e4fd87550520`. Public `/api/health` returned
+200, database connected and matching version `17b1345`; `/discover` and
+`/watch/8jPQjjsBbIc` returned 200. Public WatchClient JS and layout CSS
+SHA-256 matched the local build; SSR referenced the new WatchClient asset
+with the native caption request guard.
+
+Actual production browser: discover and YouTube player rendered; opening
+a video automatically started caption intake, then surfaced YouTube's
+server refusal. No console warnings/errors observed. This browser had no
+companion installed. Worker deployment does not update the local unpacked
+extension: reload companion 0.2.0 and the app to test native capture in the
+learner's own session. Native real-session captions and translation quality
+remain unverified; do not claim the cache is populated or that all videos
+now have captions. The manifest, file hashes and public checks are stored
+in projectless `work/product-research/atoenglish-deploy-2026-10-07.json`.
+
+## Account auth flow — 07/10/2026
+
+Owner request “Xử lý đăng ký và đăng nhập tài khoản đi”. Verified on
+production before changing anything: email signup already returned a live
+session but left learners on `/login`; the legacy `signOut` server action
+existed but no UI called it — and once wired it proved broken by design
+(server-side `getAuth().signOut()` invalidates upstream but the compat
+surface discards Set-Cookie, so the browser session cookie survived).
+
+Changes: signup redirects immediately when `data.session` is present;
+new `/me` surface shows the signed-in email and signs out through the
+browser `/api/auth` proxy (the only path that clears the session cookie);
+“Tôi” nav item enabled on icon-rail and bottom-nav; the watch-page
+“Đăng nhập để lưu” link carries `?next=/watch/<id>`; `resolveAuthNext`
+and `localizeAuthError` extracted to `src/app/login/auth-helpers.ts` and
+shared with `/auth/callback` (open redirects fall back to `/discover`;
+`INVALID_CREDENTIALS` underscore form now maps correctly). The dead
+`src/app/actions/auth.ts` was removed.
+
+Validation: 325/325 unit tests, ESLint, standalone typecheck, Next build,
+vinext build, Playwright auth spec 10/10 (desktop + mobile). Production
+verification on `1d5c2533-f69d-4a8e-b582-884809ab5175`: signup →
+`/discover`, `/me` shows email, `POST /api/auth/sign-out` 200 with the
+session cookie cleared (`/me` then bounces to `/login?next=/me`), re-login
+honors `next`. An earlier `7fd432a6` deploy shipped the server-action
+sign-out which failed live and was replaced before this deploy.

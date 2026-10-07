@@ -34,7 +34,7 @@ Owner decisions defining scope (2026-10-06):
 - **Primary learner:** Vietnamese self-learners who learn through videos and films they already watch.
 - **Scale:** one learner (Hoàng) validates the loop first; the architecture must stay multi-user-ready (per-user data ownership and RLS), but no public launch work until the loop is validated.
 - **Monetization:** none. No paywall, subscription, plan tiers, quotas or payment integration — Trancy's pricing tiers and upsell UX are explicitly not copied (REDESIGN §2).
-- **Platform:** web only. Browser extension and native mobile apps stay closed until the web loop is validated.
+- **Platform:** the existing web product. The owner's later “làm extension đi” decision (recorded in mission 005 LEDGER) allows the bounded YouTube caption companion needed by `/watch`; a general browser-extension platform and native mobile apps remain closed. This source checkpoint does not establish deployment or real-session caption availability.
 - **Content:** a curated video library plus any pasted YouTube link; the product fetches the video's existing captions automatically (Trancy-style) and falls back to a learner-provided transcript when fetching fails — see the constraint below.
 
 Product references: an authenticated deep-dive of Trancy (extension code, Learning Center, live API traffic, 36 screenshots — `docs/missions/005-ejoy-trancy-learning-system/TRANCY-DEEP-DIVE.md`), a desk study of eJOY, and a static review of 39 open-source learning repositories (owner research package, branch `research/ejoy-archive-2026-10-06`; summarised in `docs/missions/005-ejoy-trancy-learning-system/RESEARCH-NOTES.md`). The UI/UX adaptation of Trancy is specified in `docs/missions/005-ejoy-trancy-learning-system/REDESIGN.md` — take the verified layout/interaction patterns, drop what does not fit (dark-only, paywall nags, machine-translated Vietnamese, 40-route sprawl). Trancy's design defines the standard; it is not evidence the loop works for AtoEnglish learners.
@@ -47,7 +47,7 @@ Five separate objects: **content source → sentence + timestamp (+ translation)
 
 - YouTube Terms of Service prohibit accessing the service "using any automated means (such as robots, botnets or scrapers)" and downloading content except as expressly authorized by the service or with prior written permission (https://www.youtube.com/t/terms).
 - YouTube Data API `captions.download` "requires the user to have permission to edit the video" (https://developers.google.com/youtube/v3/docs/captions/download) — it cannot fetch captions for arbitrary public videos.
-- **Owner decision 2026-10-06, made after reviewing the two points above:** fetch the captions YouTube already publishes for the video (unofficial timed-text endpoint) server-side, store only the caption text per learner, and play the video only through the official embedded player. The owner accepts the terms-of-service and breakage risk. Mitigations are mandatory: no video/audio download, no bulk crawling (fetch only on a learner's explicit request, rate-limited), and a learner-provided transcript fallback (`.srt`/`.vtt`/paste) whenever fetching fails or is blocked.
+- **Owner decision 2026-10-06, made after reviewing the two points above:** fetch the captions YouTube already publishes for the video (unofficial timed-text endpoint) server-side, store only the caption text per learner, and play the video only through the official embedded player. The owner accepts the terms-of-service and breakage risk. Mitigations are mandatory: no video/audio download, no bulk crawling (fetch only for the video the learner opens, once per mounted page, rate-limited; explicit retries after failure), and a learner-provided transcript fallback (`.srt`/`.vtt`/paste) whenever fetching fails or is blocked.
 
 ## Minimum active product surface
 
@@ -93,7 +93,7 @@ The following are **not active product directions and must not create maintenanc
 - badges, achievement collections, confetti and decorative reward systems;
 - mandatory Job/Career lesson overlays or a separate career-English track;
 - payments, subscriptions, plan tiers and usage quotas;
-- browser extension and native mobile apps (until the web loop is validated);
+- general browser-extension products and native mobile apps (the owner-authorized YouTube caption companion is the bounded exception above);
 - non-YouTube video platforms (Netflix, HBO, Coursera…), web-page translation and PDF translation;
 - generating subtitles from video audio (e.g. Whisper) — it requires downloading audio;
 - AI voice conversation partners (eJOY AI Speaking World, Trancy AITalk) and pronunciation scoring;

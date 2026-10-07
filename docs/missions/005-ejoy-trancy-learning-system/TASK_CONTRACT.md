@@ -36,7 +36,7 @@ See [SPEC.md](./SPEC.md) for product behaviour and [REDESIGN.md](./REDESIGN.md) 
 ## NON-GOALS
 
 - Downloading video/audio, AI subtitle generation from audio, bulk/batch crawling, fetching without a learner's explicit request, paid proxies.
-- Browser extension, native mobile app, Netflix/other platforms, web-page or PDF translation, offline sync.
+- General browser-extension products, native mobile app, Netflix/other platforms, web-page or PDF translation, offline sync. The later owner-authorized YouTube caption companion is a bounded `/watch` intake exception (see latest refinement below).
 - Payments, plans, quotas, upsell/paywall UX, public launch, multi-user onboarding work.
 - Trancy surfaces beyond the six routes (podcast, movies, books/EPUB, PDF, AITalk, sentence-pack studio, assessments) — all deferred per REDESIGN §3/§8.
 - Pronunciation scoring, AI voice conversation partner (AITalk / AI Speaking World), structured lesson curriculum, CEFR/band claims.
@@ -135,7 +135,6 @@ One merged PR per slice, plus a short validation note after Hoàng uses the loop
 
 `IN_PROGRESS` — discover/player implementation and home WIP exist in this checkout as of 2026-10-06. The current owner research request is completed in RESEARCH-NOTES; the learning loop and required Worker/production evidence remain incomplete.
 
-
 ## Research checkpoint — 2026-10-06
 
 Owner requested repository-first research, authenticated Trancy inspection and comparisons with other products/repos to improve AtoEnglish rather than copy the reference. This updates the method of design selection, not the six-surface scope. REDESIGN §9 and RESEARCH-NOTES contain the bounded implementation packet. Current checkout and upstream/main differ; Plate THU-8/THU-9 still describe the prior direction. No production, migration, learning efficacy or completion claim is implied by this research checkpoint.
@@ -144,5 +143,29 @@ Owner requested repository-first research, authenticated Trancy inspection and c
 
 Automatic EN→VI translation is the current focus. Free engines are evaluated by meaning quality, not a marketing score. Preserve original sentences/IDs/timing, expose missing/failed outputs, separate provider-specific caches, and never fall back to a billed provider implicitly. Chrome quick translation is opt-in and cannot satisfy the quality engine acceptance after four critical failures in six authored smoke cases. A real provider/corpus evaluation and the existing persistence/RLS acceptance remain required; mocked UI/route checks establish alignment and failure handling only.
 
-
 07/10 bounded local-engine outcome: optional self-hosted contextual subtitle adapter integrated into existing route/client and tested with actual pinned Hy-MT2 Q4 on 30 authored cases. Preserve login boundary, source clocks/IDs, provider-scoped cache, cancellation and no automatic Gemini fallback. Config disabled by default; no production enablement or full Slice 2 acceptance. Codex reading and synthetic UI tests are not independent human/real-library evidence. See RESEARCH-NOTES update for measurements and remaining gates.
+
+### Owner refinement — 07/10/2026: automatic player understanding
+
+Owner: “Tiếp tục học hỏi trancy để phát triển trang player video và tính năng dịch và học từ vựng của nó tự động chứ ko cần phải bấm nút”. This supersedes the earlier explicit caption-fetch/device-download-only UX and the reveal default: opening a video requests captions once, defaults to visible EN+VI, prepares a supported available device model, and uses an ordinary page/play gesture for a first Chrome model download. Only already-configured free server engines may start for an authenticated learner; Gemini stays an explicit choice. No automatic retry/fallback or new provider configuration.
+
+Scope: existing `/watch`, translation hook, shared curated dictionary, regression tests and evidence. Automatic vocabulary is a bounded list of existing dictionary meanings for the active cue (longest existing phrase first, honest misses omitted), not contextual AI sense verification, saving or learning assessment. Preserve uploaded/manual VI, original EN/IDs/times, model-specific caches, extension compatibility and manual fallback. Do not auto-play, auto-save words, mark learned, modify FSRS, migrate DB or deploy. Acceptance: one opening request under StrictMode, stale results cannot replace pasted/imported content, ordinary interaction prepares browser download once, failure stops, human VI wins, modes/caches/seek remain correct, no extra document/rail scroller on desktop, clean typecheck and tests. Real caption availability and translation quality remain separate live gates.
+
+### Owner refinement — 07/10/2026: native caption intake repair
+
+Owner asked why Trancy can obtain captions, then “Vậy giờ xử lý ntn ?” and
+“tiếp tục”. Refine the existing caption companion authorized by the earlier
+“làm extension đi” decision in LEDGER: inject at document_start in the embedded
+YouTube player, read native json3 first, drive a bounded native track request,
+and use a single same-session direct fallback only when not refused. Do not
+copy proprietary code, download audio/video, bulk crawl, manufacture session
+tokens or extend this into a general extension platform.
+
+Acceptance: exact parent origin/frame/video and bounded payload checks; one
+automatic request under StrictMode; no overwrite of loaded/pasted captions;
+stop server intake on 403/429; optional VI refusal preserves EN; import tab
+closes after successful storage; only trusted server acquisition may populate
+the public cache. Typecheck, focused unit tests and installed-extension
+browser fixtures must pass. Real-session source availability and deployed
+cache/runtime remain separate gates; no DB migration, seed or deploy authorized
+by this continuation.

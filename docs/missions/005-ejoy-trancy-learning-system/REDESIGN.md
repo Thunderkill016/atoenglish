@@ -43,7 +43,7 @@ Nguyên tắc chủ đạo: **học bố cục và tương tác quan sát đư�
 | Trancy                                                   | AtoEnglish                                                   | Ghi chú                                             |
 | -------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- |
 | `/home` (feed tổng)                                      | `/discover`                                                  | ô dán link + feed video curated + right rail ôn tập |
-| `/practice/<id>`                                         | `/watch/[videoId]`                                           | thích nghi cơ chế T1–T3, theo §9                                |
+| `/practice/<id>`                                         | `/watch/[videoId]`                                           | thích nghi cơ chế T1–T3, theo §9                    |
 | `/youtube`, `/youtube/recommendations`                   | `/discover` (mục "Video mới từ kênh", "Khám phá kênh" — sau) | v1 chỉ thư viện curated                             |
 | `/vocabulary` + `/review-vocabulary` + `/flashcard-home` | `/library` (tab Từ) + `/review`                              | tách "kho" và "ôn" giữ nguyên ý tưởng 2 mặt         |
 | `/sentence`                                              | `/library` (tab Câu)                                         |                                                     |
@@ -151,7 +151,6 @@ Nguyên tắc chủ đạo: **học bố cục và tương tác quan sát đư�
 
 Không: extension, Netflix/podcast/movie/books/PDF surfaces, AITalk, chấm phát âm, whisper, premium/quota UI, mascot/gamification, đa ngôn ngữ học, dark-only, đăng ký kênh YouTube. Tất cả đều có thể mở lại sau bằng cùng primitive (nội dung → câu → token → luyện).
 
-
 ## 9. Thiết kế chọn lọc sau khảo sát đa sản phẩm — 06/10/2026
 
 Yêu cầu owner mới: hiểu dự án trước, học Trancy cùng nhiều sản phẩm/repo để cải thiện, không cứ copy giống họ. Mục này cập nhật những chi tiết mô phỏng trong §1–§7; SPEC vẫn quyết định scope/data model. Căn cứ và packet nghiệm thu UX/DATA/LEARN nằm trong [RESEARCH-NOTES.md](./RESEARCH-NOTES.md); mã và giấy phép tại [TECH-KNOWLEDGE.md §10](./TECH-KNOWLEDGE.md).
@@ -197,7 +196,6 @@ The later lookup increment supersedes the earlier layout-only limitation: captio
 
 Reuse the existing subtitle rail and caption area (natural height after the reading-layout correction below). One native selector chooses Anh+Việt / Anh / Việt / hidden; original word lookup remains available only when EN is shown, independent timestamps remain replay controls. Device model creation is an explicit click/download, followed by automatic translation of available English captions. Label this quick machine translation and explain its idiom/name limitation; it is not the chosen quality engine. Progress shows translated/total cues, errors keep source intact, retries are explicit, unsupported browsers show a clear state. Mobile retains document scrolling; theater retains the rail scroller. Server AI is visible only when explicitly configured and signed in, never an implicit fallback. No premium/credit purchase UX added.
 
-
 ### Khoảng cách phụ đề và bản đọc — owner correction 07/10/2026
 
 - Các từ tra cứu dùng đúng khoảng trắng trong nguồn; không thêm padding ngang từng từ. Hover/focus và tô từ theo thời gian vẫn hoạt động, không thay câu hoặc timestamp.
@@ -205,3 +203,9 @@ Reuse the existing subtitle rail and caption area (natural height after the read
 - Bỏ clamp hai dòng và chiều cao cố định khiến cuối câu mất khỏi màn hình. Khối caption lấy chiều cao tự nhiên; video desktop co trong phần còn lại của grid và áp sát caption. Mobile giữ viewport YouTube tối thiểu 200px, nội dung đi theo document. Không thêm scroller cho caption.
 - Rail: Anh 16px, Việt 15px, line-height 1.65, mỗi cặp cách 8px. Read: căn trái, tối đa 68ch, Anh 18px / Việt 16px khi đủ chiều rộng; mỗi cặp câu thành đoạn rõ. Timestamp/nghe lại độc lập, source EN vẫn tra từ/cụm được.
 - Nghiệm thu kỹ thuật: mọi rect chữ của câu mẫu dài phải nằm trong vùng caption, không chồng slider, không cuộn ngang; spacing override phải giữ chữ đọc được. Desktop theater chỉ rail cuộn; read/mobile chỉ document. Nguồn/model/cache không thay đổi. Mẫu bố cục không chứng minh kết quả học hay chất lượng dịch.
+
+### Automatic player refinement — 07/10/2026
+
+Latest owner request supersedes the prior explicit download and reveal default above. Open a video → fetch captions once → visible EN+VI without separate intake/translate/reveal buttons. Loading shows a compact status; failure offers “Thử lấy lại phụ đề”. Paste/upload stays usable during intake. Available device models prepare automatically; downloadable models start on ordinary player/page interaction because Chrome requires activation. Keep setup progress/error and explicit retry, never retry in a loop or silently change to Gemini. An already-enabled local/Workers engine can prepare automatically for signed-in learners; feature flags and API auth remain enforced.
+
+The active transcript row shows up to three curated words/phrases with visible Vietnamese dictionary glosses below its EN+VI pair. This shares the existing rail scroller, does not open a modal/pause video or request AI per word. Label “Từ trong câu · nghĩa từ điển”: these are general dictionary senses, not verified context meanings or saved/learned items. Longest curated phrase wins; no phrase across punctuation, no invented miss, no marking proficiency. The existing word/phrase drawer remains available for deeper lookup and explicit saving. Keep optional reveal/English/Vietnamese/hidden modes; hidden/VI-only modes hide automatic vocabulary too.
