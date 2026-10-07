@@ -1,7 +1,6 @@
 "use server";
 
 import { headers } from "next/headers";
-import { randomUUID } from "node:crypto";
 
 import { createClient } from "@/lib/supabase/server";
 import { rpcService } from "@/lib/supabase/service";
@@ -118,7 +117,7 @@ async function logCaptionEvent(
     await supabase.from("pilot_events").insert({
       event_name: eventName,
       user_id: user?.id ?? null,
-      anonymous_id: randomUUID(),
+      anonymous_id: crypto.randomUUID(),
       source: "youtube",
       unit_id: videoId,
     });

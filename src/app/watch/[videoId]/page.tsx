@@ -4,8 +4,10 @@ import type { Metadata } from "next";
 
 import { createClient } from "@/lib/supabase/server";
 import { YOUTUBE_VIDEO_ID_RE } from "@/lib/video/youtube-url";
-import type { Sentence, TranscriptOrigin } from "@/lib/video/types";
-import type { LoadedTranscript } from "@/app/actions/captions";
+import {
+  resolveTranscript,
+  type TranscriptStore,
+} from "@/lib/video/transcript-resolver";
 import { WatchClient } from "./watch-client";
 
 export const metadata: Metadata = {
@@ -29,75 +31,29 @@ export default async function WatchPage({
   const { data } = await supabase.auth.getUser();
   const user = data.user;
 
-  let initial: LoadedTranscript | null = null;
+  // Saved playback position needs the content_sources row either way — the
+  // resolver only reads transcripts.
   let savedPositionMs: number | null = null;
-
   if (user) {
     const { data: source } = await supabase
       .from("content_sources")
-      .select("id, title, channel, duration_ms, last_position_ms")
+      .select("last_position_ms")
       .eq("user_id", user.id)
       .eq("kind", "youtube")
       .eq("external_id", videoId)
       .maybeSingle();
-    if (source) {
-      savedPositionMs = source.last_position_ms || null;
-      const { data: transcript } = await supabase
-        .from("content_transcripts")
-        .select("origin, language, sentences, segmentation_version")
-        .eq("source_id", source.id)
-        .maybeSingle();
-      const sentences = transcript?.sentences as unknown as
-        | Sentence[]
-        | undefined;
-      if (transcript && Array.isArray(sentences) && sentences.length > 0) {
-        initial = {
-          sentences,
-          origin: transcript.origin as TranscriptOrigin,
-          language: transcript.language,
-          segmentationVersion: transcript.segmentation_version,
-          trackKind:
-            transcript.origin === "youtube_asr"
-              ? "asr"
-              : transcript.origin === "youtube_manual"
-                ? "manual"
-                : "learner",
-          title: source.title ?? undefined,
-          channel: source.channel ?? undefined,
-          durationMs: source.duration_ms ?? undefined,
-          saved: true,
-        };
-      }
-    }
+    savedPositionMs = source?.last_position_ms || null;
   }
 
-  if (!initial) {
-    // Shared caption cache — a transcript fetched by anyone serves every
-    // learner, guest included, with no upstream call.
-    const { data: shared } = await supabase
-      .from("shared_transcripts")
-      .select(
-        "origin, language, sentences, segmentation_version, title, channel, duration_ms",
-      )
-      .eq("video_id", videoId)
-      .maybeSingle();
-    const sharedSentences = shared?.sentences as unknown as
-      | Sentence[]
-      | undefined;
-    if (shared && Array.isArray(sharedSentences) && sharedSentences.length) {
-      initial = {
-        sentences: sharedSentences,
-        origin: shared.origin as TranscriptOrigin,
-        language: shared.language,
-        segmentationVersion: shared.segmentation_version,
-        trackKind: shared.origin === "youtube_asr" ? "asr" : "manual",
-        title: shared.title ?? undefined,
-        channel: shared.channel ?? undefined,
-        durationMs: shared.duration_ms ?? undefined,
-        saved: false,
-      };
-    }
-  }
+  // TranscriptResolver: account copy first, then the shared library cache.
+  // The store interface is structural; casting avoids instantiating the
+  // full generated Supabase client type at this call site.
+  const resolved = await resolveTranscript(
+    supabase as unknown as TranscriptStore,
+    videoId,
+    user?.id ?? null,
+  );
+  const initial = resolved.status === "found" ? resolved.transcript : null;
 
   // ?t=ms (deep link from library/review later) wins over the stored position.
   const deepLinkMs = t && /^\d+$/.test(t) ? Number(t) : null;

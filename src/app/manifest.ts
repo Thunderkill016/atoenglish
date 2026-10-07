@@ -13,6 +13,13 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait",
     lang: "vi",
     categories: ["education", "productivity"],
+    // YouTube app → Share → AtoEnglish (installed PWA, Android/desktop).
+    // /share canonicalizes the shared URL to /watch/[videoId].
+    share_target: {
+      action: "/share",
+      method: "GET",
+      params: { title: "title", text: "text", url: "url" },
+    },
     icons: [
       {
         src: "/icon-192.png",
