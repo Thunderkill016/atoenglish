@@ -9,32 +9,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LoginSchema, SignUpSchema } from "@/lib/security/validation";
-
-/**
- * Maps auth-server error strings (English, from better-auth/Neon) to
- * Vietnamese copy shown in the inline form error. Credential errors stay
- * deliberately generic — we never reveal which field failed.
- */
-function localizeAuthError(message: string): string {
-  const m = message.toLowerCase();
-  if (/invalid (email|login|credential)|invalid email or password/.test(m)) {
-    return "Email hoặc mật khẩu không đúng.";
-  }
-  if (
-    /already (registered|exists|in use)|email.*(in use|registered|taken)/.test(
-      m,
-    )
-  ) {
-    return "Email này đã được đăng ký. Hãy đăng nhập.";
-  }
-  if (/too many|rate limit/.test(m)) {
-    return "Bạn đã thử quá nhiều lần. Vui lòng đợi một lát rồi thử lại.";
-  }
-  if (/not found|no user/.test(m)) {
-    return "Không tìm thấy tài khoản với email này.";
-  }
-  return "";
-}
+import { localizeAuthError, resolveAuthNext } from "@/app/login/auth-helpers";
 
 function LoginForm() {
   const router = useRouter();
@@ -79,7 +54,7 @@ function LoginForm() {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: callbackUrl },
@@ -87,6 +62,15 @@ function LoginForm() {
       setPending(null);
       if (error) {
         setFormError(localizeAuthError(error.message) || error.message);
+        return;
+      }
+      // Neon Auth signs the learner in immediately (verified live: a session
+      // exists right after sign-up). Leaving them on the form would make them
+      // "log in" again into an already-authenticated session.
+      if (data.session) {
+        toast.success("Đã tạo tài khoản.");
+        router.push(resolveAuthNext(next));
+        router.refresh();
         return;
       }
       toast.success("Đã tạo tài khoản. Kiểm tra email để xác nhận.");
@@ -102,9 +86,7 @@ function LoginForm() {
       setFormError(localizeAuthError(error.message) || error.message);
       return;
     }
-    router.push(
-      next.startsWith("/") && !next.startsWith("//") ? next : "/discover",
-    );
+    router.push(resolveAuthNext(next));
     router.refresh();
   };
 

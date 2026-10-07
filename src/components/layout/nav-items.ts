@@ -19,7 +19,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { href: "/read", label: "Đọc", icon: BookOpen, available: false },
   { href: "/review", label: "Ôn", icon: RefreshCw, available: false },
   { href: "/library", label: "Thư viện", icon: Library, available: false },
-  { href: "/me", label: "Tôi", icon: User, available: false },
+  { href: "/me", label: "Tôi", icon: User },
 ];
 
 /** Exact match or a nested route under the item (e.g. /library/words). */

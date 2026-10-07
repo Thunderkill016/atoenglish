@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-
-const DEFAULT_POST_AUTH_PATH = "/discover";
+import { resolveAuthNext } from "@/app/login/auth-helpers";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -19,9 +18,5 @@ export async function GET(request: Request) {
 
   // `next` is an internal path supplied by our own login flow — reject
   // absolute/scheme-relative URLs so it cannot become an open redirect.
-  const destination =
-    next && next.startsWith("/") && !next.startsWith("//")
-      ? next
-      : DEFAULT_POST_AUTH_PATH;
-  return NextResponse.redirect(`${origin}${destination}`);
+  return NextResponse.redirect(`${origin}${resolveAuthNext(next)}`);
 }
