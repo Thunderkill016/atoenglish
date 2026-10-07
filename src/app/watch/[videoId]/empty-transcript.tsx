@@ -93,25 +93,27 @@ export function EmptyTranscript({
         >
           {errorMessage ??
             (busy
-              ? "Đang lấy phụ đề tiếng Anh…"
+              ? "Đang tự lấy phụ đề tiếng Anh…"
               : "Lấy phụ đề tiếng Anh để nghe lại từng câu và theo dõi nội dung video.")}
         </p>
       </div>
 
       <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={onFetchYoutube}
-          className="flex items-center gap-2 rounded-lg bg-[#f5b50a] min-h-11 px-4 py-2 text-sm font-semibold text-[#0c0c0e] transition hover:bg-[#ffca3a] disabled:opacity-60"
-        >
-          {busy ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
+        {busy ? (
+          <Loader2
+            aria-label="Đang tự lấy phụ đề"
+            className="mx-auto h-5 w-5 animate-spin text-[#f5b50a]"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={onFetchYoutube}
+            className="flex items-center gap-2 rounded-lg bg-[#f5b50a] min-h-11 px-4 py-2 text-sm font-semibold text-[#0c0c0e] transition hover:bg-[#ffca3a] disabled:opacity-60"
+          >
             <Languages className="h-4 w-4" />
-          )}
-          Lấy phụ đề từ YouTube
-        </button>
+            Thử lấy lại phụ đề
+          </button>
+        )}
         {extensionReady && onExtensionFetch && (
           <button
             type="button"
@@ -125,7 +127,6 @@ export function EmptyTranscript({
         )}
         <button
           type="button"
-          disabled={busy}
           aria-expanded={pasteOpen}
           onClick={() => setPasteOpen((v) => !v)}
           className="flex items-center gap-2 rounded-lg border border-[#232327] bg-[#151518] min-h-11 px-4 py-2 text-sm text-[#e8e8ea] transition hover:border-[#3a3a40]"

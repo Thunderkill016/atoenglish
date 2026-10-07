@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Sentence } from "@/lib/video/types";
 import {
   outsideTranslationWindow,
@@ -66,6 +66,7 @@ type Result = {
   sentences: Sentence[] | null;
   scope: string;
   provider: string;
+  title?: string;
   lines: Record<number, string>;
   busy: boolean;
   error: string | null;
@@ -81,6 +82,7 @@ export function useTranslations(
   serverTranslation: ServerTranslationEngine | null,
   /** Video title — whole-video context for the server model. */
   title?: string,
+  { automatic = false }: { automatic?: boolean } = {},
 ) {
   // Uploader-authored Vietnamese wins over any machine output and is never
   // re-translated; it also anchors pronouns for neighbouring machine cues.
@@ -92,11 +94,22 @@ export function useTranslations(
   // Resolves the idle wait when the playhead moves (window slides forward).
   const wake = useRef<(() => void) | null>(null);
   const [device, setDevice] = useState<DeviceTranslator | null>(null);
-  const [provider, setProvider] = useState<"device" | "server">("device");
+  // Only an operator-configured free engine may start without a separate choice.
+  // Gemini remains explicit; guest server requests are not authorized by this API.
+  const [provider, setProvider] = useState<"device" | "server">(() =>
+    automatic &&
+    scope !== "guest" &&
+    serverTranslation &&
+    serverTranslation.kind !== "gemini"
+      ? "server"
+      : "device",
+  );
   const [availability, setAvailability] = useState("checking");
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const [setupError, setSetupError] = useState<string | null>(null);
+  const [needsActivation, setNeedsActivation] = useState(false);
+  const autoPrepared = useRef(false);
   const [state, setState] = useState<Result>({
     sentences: null,
     scope: "",
@@ -138,9 +151,10 @@ export function useTranslations(
     };
   }, []);
   useEffect(() => () => device?.destroy(), [device]);
-  // Called directly from a click: browser model creation requires user activation.
-  const enableDevice = async () => {
-    if (downloading) return;
+  // Available models prepare automatically. Downloads resume from a normal
+  // player/page gesture because Chrome requires transient user activation.
+  const enableDevice = useCallback(async () => {
+    if (setup.current || device) return;
     const api = deviceAPI();
     if (!api) return;
     const controller = new AbortController();
@@ -148,6 +162,7 @@ export function useTranslations(
     setDownloading(true);
     setProgress(null);
     setSetupError(null);
+    setNeedsActivation(false);
     try {
       const translator = await api.create({
         ...PAIR,
@@ -161,26 +176,82 @@ export function useTranslations(
           });
         },
       });
-      if (!alive.current) {
+      if (!alive.current || controller.signal.aborted) {
         translator.destroy();
         return;
       }
       setDevice(translator);
       setProvider("device");
     } catch (cause) {
-      if (!controller.signal.aborted)
+      if (!alive.current || controller.signal.aborted) return;
+      if (
+        (cause instanceof DOMException || cause instanceof Error) &&
+        cause.name === "NotAllowedError"
+      ) {
+        setNeedsActivation(true);
+      } else {
         console.warn("Device subtitle translation setup failed", cause);
-      if (alive.current && !controller.signal.aborted)
         setSetupError(
           "Không tải được bộ dịch trên thiết bị. Kiểm tra kết nối rồi thử lại.",
         );
+      }
     } finally {
-      if (alive.current) setDownloading(false);
+      if (setup.current === controller) setup.current = null;
+      if (alive.current && !controller.signal.aborted) setDownloading(false);
     }
-  };
+  }, [device]);
   const enabled =
     (mode === "bilingual" || mode === "reveal" || mode === "vi") &&
     /^en(?:-|$)/i.test(sourceLanguage);
+  const needsMachine =
+    !sentences.length || sentences.some((s) => !s.noise && !s.vi);
+  useEffect(() => {
+    if (
+      !automatic ||
+      !enabled ||
+      !needsMachine ||
+      provider !== "device" ||
+      device ||
+      setupError
+    )
+      return;
+    // Queue setup outside the effect; cleanup prevents a stale preparation on unmount.
+    let disposed = false;
+    if (
+      availability === "available" &&
+      !autoPrepared.current &&
+      !needsActivation
+    ) {
+      void Promise.resolve().then(() => {
+        if (disposed) return;
+        autoPrepared.current = true;
+        void enableDevice();
+      });
+    }
+    const prepareOnGesture = () => {
+      if (availability !== "checking" && availability !== "unavailable")
+        void enableDevice();
+    };
+    document.addEventListener("pointerdown", prepareOnGesture, {
+      capture: true,
+    });
+    document.addEventListener("keydown", prepareOnGesture, { capture: true });
+    return () => {
+      disposed = true;
+      document.removeEventListener("pointerdown", prepareOnGesture, true);
+      document.removeEventListener("keydown", prepareOnGesture, true);
+    };
+  }, [
+    automatic,
+    enabled,
+    needsMachine,
+    provider,
+    device,
+    setupError,
+    availability,
+    needsActivation,
+    enableDevice,
+  ]);
   const profile =
     provider === "device"
       ? DEVICE_TRANSLATION_PROFILE
@@ -208,12 +279,13 @@ export function useTranslations(
     let disposed = false;
     let cached: CacheItem[] = [];
     const storageKey = CACHE_PREFIX + scope;
-    const result = { sentences, scope, provider: profile };
+    const result = { sentences, scope, provider: profile, title };
     const run = async () => {
       const fingerprint = await translationFingerprint(
         sentences,
         segmentationVersion,
         profile,
+        title,
       );
       if (disposed) return;
       let translated: Record<number, string> = {};
@@ -443,7 +515,8 @@ export function useTranslations(
   const current =
     state.sentences === sentences &&
     state.scope === scope &&
-    state.provider === profile;
+    state.provider === profile &&
+    state.title === title;
   return {
     // Human lines show even before any translator is activated.
     lines: { ...(current ? state.lines : {}), ...human },
@@ -456,11 +529,16 @@ export function useTranslations(
     downloading,
     progress,
     setupError,
+    needsActivation: needsActivation || availability === "downloadable",
     deviceReady: Boolean(device),
     provider,
     enableDevice,
     useServer: () => {
-      if (serverModel) setProvider("server");
+      if (!serverModel) return;
+      // A late device download must not override a deliberate engine choice.
+      setup.current?.abort();
+      setDownloading(false);
+      setProvider("server");
     },
     retry: () => setRetry((value) => value + 1),
   };

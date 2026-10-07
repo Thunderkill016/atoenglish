@@ -10,6 +10,7 @@
  * `lookupGloss` — no morphological guessing.
  */
 import { VOCABULARY_ENTRIES } from "@/lib/dict/vocabulary";
+import { tokenizeText } from "./tokenize";
 
 export type GlossEntry = {
   /** The normalized headword as stored in the dictionary. */
@@ -97,4 +98,53 @@ export function lookupGloss(normalizedWord: string): GlossEntry | null {
     if (entry) return entry;
   }
   return null;
+}
+
+// Three glosses keep the active cue readable on narrow screens; not a proficiency score.
+export const ACTIVE_CUE_GLOSS_LIMIT = 3;
+const MAX_GLOSS_WORDS = Math.max(
+  ...VOCABULARY_ENTRIES.map((entry) => entry.word.split(" ").length),
+);
+export type SentenceGloss = GlossEntry & { readonly surface: string };
+/** Curated meanings, not model-generated/context-verified senses. Honest misses stay absent. */
+export function sentenceGlosses(text: string): SentenceGloss[] {
+  const tokens = tokenizeText(text);
+  const seen = new Set<string>();
+  const result: SentenceGloss[] = [];
+  for (
+    let i = 0;
+    i < tokens.length && result.length < ACTIVE_CUE_GLOSS_LIMIT;
+    i++
+  ) {
+    if (tokens[i].type !== "word") continue;
+    const words: string[] = [];
+    const surfaces: string[] = [];
+    let match: SentenceGloss | null = null;
+    let last = i;
+    for (
+      let j = i;
+      j < tokens.length && words.length < MAX_GLOSS_WORDS;
+      j += 2
+    ) {
+      const token = tokens[j];
+      if (token.type !== "word" || (j > i && tokens[j - 1].type !== "space"))
+        break;
+      words.push(token.normalized);
+      surfaces.push(token.text);
+      const entry =
+        words.length === 1
+          ? lookupGloss(words[0])
+          : dictionary.get(words.join(" "));
+      if (entry) {
+        match = { ...entry, surface: surfaces.join(" ") };
+        last = j;
+      }
+    }
+    if (!match) continue;
+    i = last;
+    if (seen.has(match.word)) continue;
+    seen.add(match.word);
+    result.push(match);
+  }
+  return result;
 }

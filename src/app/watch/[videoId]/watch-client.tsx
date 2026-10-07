@@ -35,12 +35,14 @@ import {
   saveLearnerTranscript,
   saveWatchPosition,
   type CaptionActionError,
+  type CaptionActionResult,
   type LoadedTranscript,
 } from "@/app/actions/captions";
 import {
   CAPTIONS_ACK_TYPE,
   CAPTIONS_MESSAGE_TYPE,
   YOUTUBE_ORIGIN,
+  CAPTIONS_REQUEST_TYPE,
   payloadToTranscript,
   validateCaptionsPayload,
   type CaptionsPayload,
@@ -63,7 +65,7 @@ import {
 
 const ERROR_MESSAGES: Record<CaptionActionError, string> = {
   invalid_url: "Link video không hợp lệ.",
-  no_captions: "Video này không có phụ đề tiếng Anh.",
+  no_captions: "Chưa lấy được phụ đề tiếng Anh cho video này.",
   blocked:
     "YouTube đang chặn yêu cầu từ máy chủ. Hãy dán hoặc tải phụ đề thủ công.",
   rate_limited: "Bạn đã lấy phụ đề quá nhiều lần. Thử lại sau.",
@@ -114,14 +116,15 @@ export function WatchClient({
   const [transcript, setTranscript] = useState<LoadedTranscript | null>(
     initial,
   );
-  const [phase, setPhase] = useState<Phase>(initial ? "ready" : "idle");
+  const [phase, setPhase] = useState<Phase>(initial ? "ready" : "fetching");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("theater");
   const [loopSentence, setLoopSentence] = useState(false);
   const [autoPause, setAutoPause] = useState(false);
   const [showKeys, setShowKeys] = useState(false);
-  // Learner default: try the English first; Vietnamese stays blurred per line.
-  const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>("reveal");
+  // Owner's automatic-learning default: both languages appear without revealing each cue.
+  // The optional reveal mode still supports an English-first practice session.
+  const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>("bilingual");
   // Sentence whose caption-strip Vietnamese the learner revealed (reveal mode).
   const [captionRevealed, setCaptionRevealed] = useState<number | null>(null);
 
@@ -164,6 +167,7 @@ export function WatchClient({
     transcript?.language ?? "en",
     serverTranslation,
     transcript?.title ?? catalogVideo?.title,
+    { automatic: true },
   );
   const showEnglish = showsEnglish(subtitleMode);
   const showVietnamese = showsVietnamese(subtitleMode);
@@ -231,11 +235,43 @@ export function WatchClient({
   }, [timedIdxOfActive, seekToSentence]);
 
   // ── Fetch / fallback flows ────────────────────────────────────────────────
+  const requestVersion = useRef(0);
+  const openingRequest = useRef<Promise<CaptionActionResult> | null>(null);
+  useEffect(() => {
+    if (initial) return;
+    let disposed = false;
+    const version = requestVersion.current;
+    // One intake per mounted video, even under React StrictMode. Only visited
+    // pages fetch captions; library prefetch and server rendering never do.
+    openingRequest.current ??= fetchVideoCaptions(videoId);
+    void openingRequest.current
+      .then((result) => {
+        if (disposed || version !== requestVersion.current) return;
+        if (result.ok) {
+          setTranscript(result);
+          setPhase("ready");
+          setErrorMessage(null);
+        } else {
+          setErrorMessage(ERROR_MESSAGES[result.error]);
+          setPhase("error");
+        }
+      })
+      .catch(() => {
+        if (disposed || version !== requestVersion.current) return;
+        setErrorMessage(ERROR_MESSAGES.error);
+        setPhase("error");
+      });
+    return () => {
+      disposed = true;
+    };
+  }, [videoId, initial]);
   const handleFetchYoutube = useCallback(async () => {
+    const version = ++requestVersion.current;
     setPhase("fetching");
     setErrorMessage(null);
     try {
       const result = await fetchVideoCaptions(videoId);
+      if (version !== requestVersion.current) return;
       if (!result.ok) {
         setErrorMessage(ERROR_MESSAGES[result.error]);
         setPhase("error");
@@ -244,6 +280,7 @@ export function WatchClient({
       setTranscript(result);
       setPhase("ready");
     } catch {
+      if (version !== requestVersion.current) return;
       setErrorMessage(ERROR_MESSAGES.error);
       setPhase("error");
     }
@@ -251,20 +288,46 @@ export function WatchClient({
 
   const handleParsed = useCallback(
     async (parsed: LoadedTranscript, raw: string) => {
+      const version = ++requestVersion.current;
       setTranscript(parsed);
       setPhase("ready");
       setErrorMessage(null);
       if (loggedIn) {
         const saved = await saveLearnerTranscript(videoId, raw);
-        if (saved.ok) setTranscript(saved);
+        if (saved.ok && version === requestVersion.current)
+          setTranscript(saved);
       }
     },
     [videoId, loggedIn],
   );
 
-  // ── Extension import (SPEC §4.2 — captions fetched in the learner's own
-  // YouTube session, bypassing server-side timedtext rate limits) ───────────
+  // Extension acquisition uses the native YouTube session, which can still
+  // refuse captions. Automatic iframe messages and explicit tab imports share
+  // the validated parse path; late automatic results never replace user input.
   const extensionWaitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nativeRequestVersion = useRef<number | null>(null);
+  const nativeFrame = useRef<Window | null>(null);
+  useEffect(() => {
+    if (initial || transcript || !ready) return;
+    const frame = containerRef.current?.querySelector("iframe");
+    if (!frame?.contentWindow) return;
+    // StrictMode replays effects: re-arm the listener version after cleanup,
+    // while still sending only one collection request to this iframe.
+    nativeRequestVersion.current = requestVersion.current;
+    if (nativeFrame.current === frame.contentWindow) return;
+    nativeFrame.current = frame.contentWindow;
+    frame.contentWindow.postMessage(
+      { type: CAPTIONS_REQUEST_TYPE, videoId },
+      YOUTUBE_ORIGIN,
+    );
+  }, [initial, transcript, ready, videoId, containerRef]);
+  useEffect(
+    () => () => {
+      if (extensionWaitRef.current) clearTimeout(extensionWaitRef.current);
+      nativeRequestVersion.current = null;
+    },
+    [],
+  );
   // The extension's app-side content script marks documentElement before the
   // page hydrates; a no-subscribe external store reads that DOM flag without
   // an SSR/client mismatch or a setState-in-effect lint hit.
@@ -280,6 +343,8 @@ export function WatchClient({
       source: MessageEventSource | null,
       origin: string,
     ) => {
+      const version = ++requestVersion.current;
+      nativeRequestVersion.current = null;
       if (extensionWaitRef.current) {
         clearTimeout(extensionWaitRef.current);
         extensionWaitRef.current = null;
@@ -292,7 +357,23 @@ export function WatchClient({
       };
       setErrorMessage(null);
       if (loggedIn) {
-        const result = await importYoutubeCaptions(videoId, payload);
+        let result: CaptionActionResult;
+        try {
+          result = await importYoutubeCaptions(videoId, payload);
+        } catch {
+          // This is the server-action boundary: a rejected import must leave
+          // an actionable state rather than an unhandled message promise.
+          if (version === requestVersion.current) {
+            setErrorMessage(ERROR_MESSAGES.error);
+            setPhase("error");
+          }
+          ack();
+          return;
+        }
+        if (version !== requestVersion.current) {
+          ack();
+          return;
+        }
         if (!result.ok) {
           setErrorMessage(ERROR_MESSAGES[result.error]);
           setPhase("error");
@@ -336,17 +417,27 @@ export function WatchClient({
       if (!raw || raw.type !== CAPTIONS_MESSAGE_TYPE) return;
       const payload = validateCaptionsPayload(raw);
       if (!payload || payload.videoId !== videoId) return;
+      if (event.origin === YOUTUBE_ORIGIN) {
+        if (
+          event.source !== nativeFrame.current ||
+          nativeRequestVersion.current === null ||
+          nativeRequestVersion.current !== requestVersion.current ||
+          transcript
+        )
+          return;
+      } else if (event.source !== window) return;
       void handleExtensionPayload(payload, event.source, event.origin);
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [videoId, handleExtensionPayload]);
+  }, [videoId, handleExtensionPayload, transcript]);
 
   const handleExtensionFetch = useCallback(() => {
+    ++requestVersion.current;
     setPhase("fetching");
     setErrorMessage(null);
-    // Keep the opener link: the YouTube tab postMessages the tracks back here.
-    // The #atoenglish-import hash tells the extension's YouTube collector that
+    // The isolated extension relay uses chrome.storage because YouTube's
+    // COOP can sever window.opener. The #atoenglish-import hash tells the extension's YouTube collector that
     // this tab exists to hand captions back; it self-closes once stored.
     window.open(
       `https://www.youtube.com/watch?v=${videoId}#atoenglish-import`,
@@ -818,7 +909,7 @@ export function WatchClient({
                     )}
                     {transcript && !transcript.saved && !loggedIn && (
                       <Link
-                        href="/login"
+                        href={`/login?next=${encodeURIComponent(`/watch/${videoId}`)}`}
                         className="w-full text-xs text-[#f5b50a] hover:underline"
                       >
                         Đăng nhập để lưu
@@ -877,30 +968,16 @@ export function WatchClient({
                                       để bật dịch Anh–Việt.
                                     </p>
                                   ) : (
-                                    <>
-                                      <button
-                                        type="button"
-                                        disabled={
-                                          translation.downloading ||
-                                          translation.availability ===
-                                            "checking"
-                                        }
-                                        onClick={() =>
-                                          void translation.enableDevice()
-                                        }
-                                        className="min-h-11 rounded-full bg-[#f5b50a] px-4 text-xs font-medium text-[#0c0c0e] disabled:opacity-50"
-                                      >
-                                        {translation.downloading
-                                          ? `Đang tải bộ dịch${translation.progress == null ? "…" : ` · ${translation.progress}%`}`
-                                          : "Thử dịch nhanh miễn phí"}
-                                      </button>
-                                      <p className="text-xs text-[#9d9da6]">
-                                        Dịch nhanh trên thiết bị; có thể dịch
-                                        sát chữ với thành ngữ và tên riêng. Lần
-                                        đầu cần tải bộ ngôn ngữ; sau đó phụ đề
-                                        được dịch tự động.
-                                      </p>
-                                    </>
+                                    <p
+                                      role="status"
+                                      className="text-xs text-[#9d9da6]"
+                                    >
+                                      {translation.downloading
+                                        ? `Đang chuẩn bị dịch miễn phí${translation.progress == null ? "…" : ` · ${translation.progress}%`}`
+                                        : translation.needsActivation
+                                          ? "Phát video hoặc chạm trang để trình duyệt tải bộ dịch lần đầu."
+                                          : "Đang chuẩn bị dịch miễn phí…"}
+                                    </p>
                                   ))}
                                 {(translation.deviceReady ||
                                   translation.provider === "server") && (

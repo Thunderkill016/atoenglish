@@ -164,14 +164,50 @@ describe("subtitle translation contract", () => {
   });
 });
 
+describe("translation context cache identity", () => {
+  it("invalidates on a changed video title or human Vietnamese anchor", async () => {
+    const key = await translationFingerprint(
+      sentences,
+      2,
+      DEVICE_TRANSLATION_PROFILE,
+      "Talk A",
+    );
+    expect(
+      await translationFingerprint(
+        sentences,
+        2,
+        DEVICE_TRANSLATION_PROFILE,
+        "Talk B",
+      ),
+    ).not.toBe(key);
+    expect(
+      await translationFingerprint(
+        sentences,
+        2,
+        DEVICE_TRANSLATION_PROFILE,
+        "  Talk A  ",
+      ),
+    ).toBe(key);
+    const anchored = sentences.map((s, n) =>
+      n ? s : { ...s, vi: "Bố tôi đã dạy tôi." },
+    );
+    expect(
+      await translationFingerprint(
+        anchored,
+        2,
+        DEVICE_TRANSLATION_PROFILE,
+        "Talk A",
+      ),
+    ).not.toBe(key);
+  });
+});
+
 describe("learner-paced window and whole-video context", () => {
   it("only offers cues from one back to twelve ahead of the playhead", () => {
     // IDs are n*2; playhead on ID 20 (offset 10) → offsets 9..22 allowed.
     const skip = outsideTranslationWindow(sentences, 20);
     const allowed = sentences.filter((s) => !skip.has(s.i)).map((s) => s.i);
-    expect(allowed).toEqual(
-      Array.from({ length: 14 }, (_, k) => (9 + k) * 2),
-    );
+    expect(allowed).toEqual(Array.from({ length: 14 }, (_, k) => (9 + k) * 2));
     const batch = translationBatch(sentences, new Set(), 20, 30, 6000, skip);
     expect(batch[0].i).toBe(20);
     expect(batch.at(-1)!.i).toBe(44);

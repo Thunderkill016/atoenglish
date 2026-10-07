@@ -917,6 +917,45 @@ export type Database = {
           },
         ];
       };
+      shared_transcripts: {
+        Row: {
+          video_id: string;
+          origin: string;
+          language: string;
+          segmentation_version: number;
+          sentences: Json;
+          title: string | null;
+          channel: string | null;
+          duration_ms: number | null;
+          imported_via: string;
+          fetched_at: string;
+        };
+        Insert: {
+          video_id: string;
+          origin: string;
+          language: string;
+          segmentation_version: number;
+          sentences: Json;
+          title?: string | null;
+          channel?: string | null;
+          duration_ms?: number | null;
+          imported_via?: string;
+          fetched_at?: string;
+        };
+        Update: {
+          video_id?: string;
+          origin?: string;
+          language?: string;
+          segmentation_version?: number;
+          sentences?: Json;
+          title?: string | null;
+          channel?: string | null;
+          duration_ms?: number | null;
+          imported_via?: string;
+          fetched_at?: string;
+        };
+        Relationships: [];
+      };
       speaking_sessions: {
         Row: {
           id: string;
@@ -1898,6 +1937,20 @@ export type Database = {
       update_unit_content_updated_at: {
         Args: {};
         Returns: string;
+      };
+      upsert_shared_transcript: {
+        Args: {
+          p_video_id: string;
+          p_origin: string;
+          p_language: string;
+          p_segmentation_version: number;
+          p_sentences: Json;
+          p_title?: string;
+          p_channel?: string;
+          p_duration_ms?: number;
+          p_imported_via?: string;
+        };
+        Returns: undefined;
       };
       use_streak_freeze: {
         Args: { p_user_id: string };

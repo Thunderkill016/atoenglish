@@ -27,7 +27,7 @@ import {
 } from "@/content/catalog/videos";
 import { parseYoutubeUrl } from "@/lib/video/youtube-url";
 import { formatTimestamp } from "@/lib/format";
-import { trapDialogFocus } from "@/lib/utils";
+import { normalizeSearchText, trapDialogFocus } from "@/lib/utils";
 import { DictionaryPanel } from "@/components/dictionary-panel";
 
 const SearchContext = createContext<{
@@ -102,13 +102,7 @@ export function TitleTranslationToggle({
   );
 }
 
-export const normalizeDiscoverQuery = (text: string) =>
-  text
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase()
-    .replace(/đ/g, "d")
-    .trim();
+export const normalizeDiscoverQuery = normalizeSearchText;
 
 /** Compact launcher, one input in a native modal; no remote YouTube search is implied. */
 export function DiscoverSearch() {

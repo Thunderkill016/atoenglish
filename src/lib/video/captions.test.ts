@@ -23,7 +23,12 @@ function mockFetch(
 ) {
   const calls: RecordedCall[] = [];
   const fn = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
-    const u = typeof url === "string" ? url : url instanceof URL ? url.toString() : url.url;
+    const u =
+      typeof url === "string"
+        ? url
+        : url instanceof URL
+          ? url.toString()
+          : url.url;
     calls.push({ url: u, init });
     return handler(u, init);
   }) as unknown as typeof fetch & { mock: { calls: unknown[][] } };
@@ -36,10 +41,9 @@ const jsonRes = (data: unknown, status = 200) =>
     headers: { "content-type": "application/json" },
   });
 
-const textRes = (text: string, status = 200) =>
-  new Response(text, { status });
+const textRes = (text: string, status = 200) => new Response(text, { status });
 
-const noDelay = () => Promise.resolve();
+const noDelay = (_ms?: number) => Promise.resolve();
 
 /** Route map: predicate → response or "throw"/"next". */
 function router(
@@ -70,7 +74,10 @@ describe("fetchYoutubeCaptions — chain order", () => {
       [PLAYER_RE, jsonRes(rickrollPlayer)],
       [TIMEDTEXT_RE, jsonRes(rickrollAsr)],
     ]);
-    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch,
+      delay: noDelay,
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.source).toBe("ios");
@@ -82,7 +89,8 @@ describe("fetchYoutubeCaptions — chain order", () => {
   });
 
   it("prefers the manual en track over en asr", async () => {
-    const tracks = rickrollPlayer.captions.playerCaptionsTracklistRenderer.captionTracks;
+    const tracks =
+      rickrollPlayer.captions.playerCaptionsTracklistRenderer.captionTracks;
     const i = pickEnglishTrack(tracks);
     expect(tracks[i].languageCode).toBe("en");
     expect(tracks[i].kind).not.toBe("asr");
@@ -112,7 +120,10 @@ describe("fetchYoutubeCaptions — chain order", () => {
       }
       return jsonRes(rickrollAsr);
     });
-    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch,
+      delay: noDelay,
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.source).toBe("android");
@@ -125,11 +136,17 @@ describe("fetchYoutubeCaptions — chain order", () => {
       rickrollPlayer.captions,
     )}};</script></html>`;
     const { calls, fetch } = router([
-      [PLAYER_RE, jsonRes({ playabilityStatus: { status: "ERROR", reason: "x" } })],
+      [
+        PLAYER_RE,
+        jsonRes({ playabilityStatus: { status: "ERROR", reason: "x" } }),
+      ],
       [WATCH_RE, textRes(watchHtml)],
       [TIMEDTEXT_RE, jsonRes(rickrollAsr)],
     ]);
-    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch,
+      delay: noDelay,
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.source).toBe("watch");
@@ -145,7 +162,10 @@ describe("fetchYoutubeCaptions — chain order", () => {
       [/type=list/, textRes(listXml)],
       [/timedtext\?/, jsonRes(rickrollAsr)],
     ]);
-    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch,
+      delay: noDelay,
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.source).toBe("timedtext");
@@ -158,32 +178,56 @@ describe("fetchYoutubeCaptions — budget, retry, abort", () => {
     const { calls, fetch } = mockFetch(async () => {
       throw new Error("network down");
     });
-    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch,
+      delay: noDelay,
+    });
     expect(result.ok).toBe(false);
     expect(calls.length).toBeLessThanOrEqual(UPSTREAM_REQUEST_BUDGET);
   });
 
-  it("backs off only on retryable failures (429) and stops on 404", async () => {
-    const delays: number[] = [];
-    const record = (ms: number) => {
-      delays.push(ms);
-      return Promise.resolve();
-    };
-    // 429 on every call → each chain step retries its own ladder
-    // (iOS burns 4 requests + Android 2 = the shared 6-request budget).
-    const { calls: c1, fetch: f1 } = router([[PLAYER_RE, jsonRes({}, 429)]]);
-    await fetchYoutubeCaptions(VIDEO_ID, { fetch: f1, delay: record });
-    expect(delays).toEqual([300, 600, 1200, 300]);
-    expect(c1.length).toBeLessThanOrEqual(UPSTREAM_REQUEST_BUDGET);
+  it.each([403, 429])(
+    "stops the whole chain on refusal (%s), with no retry",
+    async (status) => {
+      const delay = vi.fn(noDelay);
+      const { calls, fetch } = router([[PLAYER_RE, jsonRes({}, status)]]);
+      expect(await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay })).toEqual({
+        ok: false,
+        error: "blocked",
+      });
+      expect(calls).toHaveLength(1);
+      expect(delay).not.toHaveBeenCalled();
+    },
+  );
 
-    // 404 → no retry, moves straight to the next chain step
-    const { calls: c2, fetch: f2 } = router([
-      [PLAYER_RE, jsonRes({}, 404)],
+  it("stops on refused caption bodies even when player metadata succeeded", async () => {
+    const delay = vi.fn(noDelay);
+    const { calls, fetch } = router([
+      [PLAYER_RE, jsonRes(rickrollPlayer)],
+      [TIMEDTEXT_RE, textRes("rate limited", 429)],
     ]);
-    await fetchYoutubeCaptions(VIDEO_ID, { fetch: f2, delay: noDelay });
-    const playerCalls = c2.filter((c) => PLAYER_RE.test(c.url));
-    expect(playerCalls).toHaveLength(2); // iOS once + Android once, no retries
-    expect(c1.length).toBeGreaterThan(2); // 429 did retry
+    expect(await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay })).toEqual({
+      ok: false,
+      error: "blocked",
+    });
+    expect(calls).toHaveLength(2);
+    expect(delay).not.toHaveBeenCalled();
+  });
+
+  it("retains bounded retry for transient 5xx and moves past 404", async () => {
+    const delay = vi.fn(noDelay);
+    const { calls, fetch } = router([[PLAYER_RE, jsonRes({}, 503)]]);
+    await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay });
+    expect(delay.mock.calls.map(([ms]) => ms)).toEqual([300, 600, 1200, 300]);
+    expect(calls.length).toBeLessThanOrEqual(UPSTREAM_REQUEST_BUDGET);
+    const missing = router([[PLAYER_RE, jsonRes({}, 404)]]);
+    await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch: missing.fetch,
+      delay: noDelay,
+    });
+    expect(
+      missing.calls.filter((call) => PLAYER_RE.test(call.url)),
+    ).toHaveLength(2);
   });
 
   it("aborts the whole chain when the signal fires", async () => {
@@ -216,7 +260,10 @@ describe("fetchYoutubeCaptions — error mapping", () => {
       [WATCH_RE, textRes("<html></html>")],
       [TIMEDTEXT_RE, textRes("<transcript_list></transcript_list>")],
     ]);
-    const result = await fetchYoutubeCaptions("9bZkp7q19f0", { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions("9bZkp7q19f0", {
+      fetch,
+      delay: noDelay,
+    });
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toBe("no_captions");
@@ -224,14 +271,20 @@ describe("fetchYoutubeCaptions — error mapping", () => {
 
   it("maps blocked playability to blocked", async () => {
     const blocked = {
-      playabilityStatus: { status: "LOGIN_REQUIRED", reason: "Sign in to confirm you're not a bot" },
+      playabilityStatus: {
+        status: "LOGIN_REQUIRED",
+        reason: "Sign in to confirm you're not a bot",
+      },
     };
     const { fetch } = router([
       [PLAYER_RE, jsonRes(blocked)],
       [WATCH_RE, textRes("<html></html>")],
       [TIMEDTEXT_RE, textRes("<transcript_list></transcript_list>")],
     ]);
-    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch,
+      delay: noDelay,
+    });
     expect(result).toEqual({ ok: false, error: "blocked" });
   });
 
@@ -243,7 +296,10 @@ describe("fetchYoutubeCaptions — error mapping", () => {
       [WATCH_RE, textRes("Sorry", 429)],
       [TIMEDTEXT_RE, textRes("Sorry", 429)],
     ]);
-    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch,
+      delay: noDelay,
+    });
     expect(result).toEqual({ ok: false, error: "blocked" });
   });
 });
@@ -274,36 +330,60 @@ describe("fetchYoutubeCaptions — human Vietnamese track", () => {
       },
     },
   });
-  const en = { events: [{ tStartMs: 0, dDurationMs: 1000, segs: [{ utf8: "Hello." }] }] };
-  const vi = { events: [{ tStartMs: 0, dDurationMs: 1000, segs: [{ utf8: "Xin chào." }] }] };
+  const en = {
+    events: [{ tStartMs: 0, dDurationMs: 1000, segs: [{ utf8: "Hello." }] }],
+  };
+  const vi = {
+    events: [{ tStartMs: 0, dDurationMs: 1000, segs: [{ utf8: "Xin chào." }] }],
+  };
 
   it("fetches the uploader's manual vi track alongside English", async () => {
     const { fetch } = router([
-      [PLAYER_RE, jsonRes(player([{ languageCode: "en" }, { languageCode: "vi" }]))],
+      [
+        PLAYER_RE,
+        jsonRes(player([{ languageCode: "en" }, { languageCode: "vi" }])),
+      ],
       [/lang=vi/, jsonRes(vi)],
       [/lang=en/, jsonRes(en)],
     ]);
-    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch,
+      delay: noDelay,
+    });
     expect(result.ok && result.viEvents).toEqual(vi.events);
   });
 
   it("never treats ASR vi as a translation", async () => {
     const { calls, fetch } = router([
-      [PLAYER_RE, jsonRes(player([{ languageCode: "en" }, { languageCode: "vi", kind: "asr" }]))],
+      [
+        PLAYER_RE,
+        jsonRes(
+          player([{ languageCode: "en" }, { languageCode: "vi", kind: "asr" }]),
+        ),
+      ],
       [/lang=en/, jsonRes(en)],
     ]);
-    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch,
+      delay: noDelay,
+    });
     expect(result.ok && result.viEvents).toBeUndefined();
     expect(calls.some((c) => /lang=vi/.test(c.url))).toBe(false);
   });
 
   it("keeps the English success when the vi fetch fails", async () => {
     const { fetch } = router([
-      [PLAYER_RE, jsonRes(player([{ languageCode: "en" }, { languageCode: "vi" }]))],
+      [
+        PLAYER_RE,
+        jsonRes(player([{ languageCode: "en" }, { languageCode: "vi" }])),
+      ],
       [/lang=vi/, textRes("blocked", 403)],
       [/lang=en/, jsonRes(en)],
     ]);
-    const result = await fetchYoutubeCaptions(VIDEO_ID, { fetch, delay: noDelay });
+    const result = await fetchYoutubeCaptions(VIDEO_ID, {
+      fetch,
+      delay: noDelay,
+    });
     expect(result.ok).toBe(true);
     expect(result.ok && result.events).toEqual(en.events);
     expect(result.ok && result.viEvents).toBeUndefined();

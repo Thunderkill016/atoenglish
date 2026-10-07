@@ -75,6 +75,18 @@ const PLAYER_STUB_SOURCE = `(() => {
 })();`;
 
 async function stubYouTubePlayer(page: Page): Promise<void> {
+  // Automatic intake must never reach production telemetry/DB in fixture tests.
+  await page.route("**/watch/*", (route) => {
+    if (
+      route.request().method() !== "POST" ||
+      !route.request().headers()["next-action"]
+    )
+      return route.continue();
+    return route.fulfill({
+      contentType: "text/x-component",
+      body: '0:{"a":"$1","f":[],"b":"fixture"}\n1:{"ok":false,"error":"no_captions"}\n',
+    });
+  });
   // Broad abort registered first — Playwright consults routes in reverse
   // registration order, so the narrower iframe_api fulfil below wins.
   await page.route(
@@ -125,7 +137,7 @@ test.describe("/watch/[videoId]", () => {
   }) => {
     await page.goto(`/watch/${VIDEO_ID}`);
     await expect(
-      page.getByRole("button", { name: "Lấy phụ đề từ YouTube" }),
+      page.getByRole("button", { name: "Thử lấy lại phụ đề" }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Dán hoặc tải phụ đề" }),
@@ -143,8 +155,9 @@ test.describe("/watch/[videoId]", () => {
   test("fetch from YouTube yields a transcript or a mapped error", async ({
     page,
   }) => {
+    await page.unroute("**/watch/*");
     await page.goto(`/watch/${VIDEO_ID}`);
-    await page.getByRole("button", { name: "Lấy phụ đề từ YouTube" }).click();
+    await page.getByRole("button", { name: "Thử lấy lại phụ đề" }).click();
     // The dev server makes a real upstream call here — either outcome is a
     // valid upstream result; this explicit integration case can emit server telemetry. The regex covers every error mapped in
     // watch-client.tsx ERROR_MESSAGES except "unauthorized" (guests may
@@ -666,11 +679,108 @@ test.describe("/watch/[videoId]", () => {
 
 // Browser translation is mocked: these checks establish UI/ID/cancellation behavior, not translation quality.
 test.describe("free subtitle translation", () => {
+  test("opens with automatic captions, translation and vocabulary, without extra buttons", async ({
+    page,
+  }) => {
+    let captionRequests = 0;
+    let dictionaryRequests = 0;
+    await page.route("**/watch/*", (route) => {
+      if (
+        route.request().method() !== "POST" ||
+        !route.request().headers()["next-action"]
+      )
+        return route.continue();
+      captionRequests++;
+      const result = {
+        ok: true,
+        language: "en",
+        origin: "youtube_manual",
+        trackKind: "manual",
+        saved: false,
+        title: "Automatic learning · synthetic test captions",
+        sentences: [
+          { i: 0, text: "I work here.", start_ms: 0, end_ms: 3000 },
+          { i: 1, text: "We go to work.", start_ms: 4000, end_ms: 7000 },
+        ],
+      };
+      return route.fulfill({
+        contentType: "text/x-component",
+        body:
+          '0:{"a":"$1","f":[],"b":"fixture"}\n1:' +
+          JSON.stringify(result) +
+          "\n",
+      });
+    });
+    await page.route("**/api/dictionary", (route) => {
+      dictionaryRequests++;
+      return route.abort();
+    });
+    await page.addInitScript(() => {
+      (window as unknown as { Translator: unknown }).Translator = {
+        availability: async () => "available",
+        create: async () => ({
+          destroy: () => {},
+          translate: async (text: string) =>
+            text === "I work here."
+              ? "Tôi làm việc ở đây."
+              : "Chúng tôi đi làm.",
+        }),
+      };
+    });
+    await page.goto(`/watch/${VIDEO_ID}`);
+    const rail = page.getByTestId("transcript-rail");
+    await expect(rail.getByTestId("translated-sentence").first()).toHaveText(
+      "Tôi làm việc ở đây.",
+    );
+    await expect(rail.getByTestId("automatic-vocabulary")).toContainText(
+      "làm việc / công việc",
+    );
+    await expect(
+      page.getByRole("combobox", { name: "Hiển thị phụ đề" }),
+    ).toHaveValue("bilingual");
+    await expect(
+      page.getByRole("button", { name: "Thử lấy lại phụ đề" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Thử dịch nhanh miễn phí" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Phát video", exact: true }),
+    ).toBeVisible();
+    expect(captionRequests).toBe(1);
+    expect(dictionaryRequests).toBe(0);
+    expect(await getSeeks(page)).toHaveLength(0);
+    if (page.viewportSize()!.width >= 1024)
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollHeight <= innerHeight,
+        ),
+      ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: `/home/thunder/Documents/Codex/2026-10-06/p/outputs/automatic-player-${page.viewportSize()!.width}.png`,
+      fullPage: true,
+    });
+    await rail
+      .getByRole("button", { name: "Nghe câu 0:04", exact: true })
+      .click();
+    await expect(rail.getByTestId("automatic-vocabulary")).toContainText(
+      "go to work",
+    );
+    await page
+      .getByRole("combobox", { name: "Hiển thị phụ đề" })
+      .selectOption("hidden");
+    await expect(rail.getByTestId("automatic-vocabulary")).toHaveCount(0);
+  });
+
   test.beforeEach(async ({ page }) => {
     await stubYouTubePlayer(page);
   });
-  // These checks cover the always-on bilingual layout; the learner default
-  // (Vietnamese blurred until revealed) has its own test below.
+  // Bilingual is the automatic default; reveal remains an optional practice mode.
   async function showBilingual(page: Page) {
     await page
       .getByRole("combobox", { name: "Hiển thị phụ đề" })
@@ -732,9 +842,6 @@ test.describe("free subtitle translation", () => {
       "1\n00:00:00,000 --> 00:00:08,000\nThis long subtitle is a layout test for bilingual captions on small screens and should remain inside the caption strip without overlapping the video controls.",
     );
     await showBilingual(page);
-    await page
-      .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
-      .click();
     await expect(page.getByTestId("translated-sentence")).toBeVisible();
     await page
       .getByRole("button", { name: "Nghe câu 0:00", exact: true })
@@ -743,11 +850,21 @@ test.describe("free subtitle translation", () => {
     await expect(strip.locator("[lang=vi]")).toContainText(
       "Đây là câu phụ đề dài",
     );
-    const bounds = await strip.boundingBox();
-    const content = await strip.locator(":scope > div").boundingBox();
-    const controls = await page
-      .getByRole("slider", { name: "Vị trí phát video" })
-      .boundingBox();
+    // One DOM snapshot: mobile scroll anchoring can move the page between
+    // separate boundingBox calls when asynchronous Vietnamese text arrives.
+    const { bounds, content, controls } = await strip.evaluate((el) => {
+      const rect = (node: Element) => {
+        const box = node.getBoundingClientRect();
+        return { y: box.y, height: box.height };
+      };
+      return {
+        bounds: rect(el),
+        content: rect(el.querySelector(":scope > div")!),
+        controls: rect(
+          document.querySelector('[aria-label="Vị trí phát video"]')!,
+        ),
+      };
+    });
     expect(content!.y).toBeGreaterThanOrEqual(bounds!.y);
     expect(content!.y + content!.height).toBeLessThanOrEqual(
       bounds!.y + bounds!.height,
@@ -838,9 +955,6 @@ test.describe("free subtitle translation", () => {
     await page.goto(`/watch/${VIDEO_ID}`);
     await pasteTranscript(page, SRT);
     await showBilingual(page);
-    await page
-      .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
-      .click();
     await expect(page.getByTestId("translated-sentence").first()).toHaveText(
       "Câu đầu tiên.",
     );
@@ -877,7 +991,7 @@ test.describe("free subtitle translation", () => {
       .toEqual([3.5]);
   });
 
-  test("starts only after activation, shows bilingual lines, caches and retains timing", async ({
+  test("starts from ordinary interaction, shows bilingual lines, caches and retains timing", async ({
     page,
   }) => {
     await translator(page);
@@ -894,17 +1008,7 @@ test.describe("free subtitle translation", () => {
         name: "Thử dịch nhanh miễn phí",
         exact: true,
       }),
-    ).toBeVisible();
-    expect(
-      await page.evaluate(
-        () =>
-          (window as unknown as { __translationCalls: string[] })
-            .__translationCalls,
-      ),
-    ).toEqual([]);
-    await page
-      .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
-      .click();
+    ).toHaveCount(0);
     await expect(page.getByTestId("translated-sentence").first()).toHaveText(
       "Câu đầu tiên.",
     );
@@ -934,9 +1038,6 @@ test.describe("free subtitle translation", () => {
     await page.reload();
     await pasteTranscript(page, SRT);
     await showBilingual(page);
-    await page
-      .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
-      .click();
     await expect(page.getByTestId("translated-sentence").first()).toHaveText(
       "Câu đầu tiên.",
     );
@@ -955,9 +1056,6 @@ test.describe("free subtitle translation", () => {
     await translator(page, true);
     await page.goto(`/watch/${VIDEO_ID}`);
     await pasteTranscript(page, SRT);
-    await page
-      .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
-      .click();
     await page
       .getByRole("combobox", { name: "Hiển thị phụ đề" })
       .selectOption("en");
@@ -993,9 +1091,6 @@ test.describe("free subtitle translation", () => {
     await page.goto(`/watch/${VIDEO_ID}`);
     await pasteTranscript(page, SRT);
     await showBilingual(page);
-    await page
-      .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
-      .click();
     await expect(
       page.getByRole("region", { name: "Phụ đề video" }).getByRole("alert"),
     ).toContainText("Chưa dịch được phụ đề.");
@@ -1012,7 +1107,7 @@ test.describe("free subtitle translation", () => {
     ).toBeVisible();
     expect(calls).toBe(0);
   });
-  test("learner default blurs Vietnamese until a line is revealed", async ({
+  test("optional reveal mode blurs Vietnamese until a line is revealed", async ({
     page,
   }) => {
     await translator(page);
@@ -1020,10 +1115,10 @@ test.describe("free subtitle translation", () => {
     await pasteTranscript(page, SRT);
     await expect(
       page.getByRole("combobox", { name: "Hiển thị phụ đề" }),
-    ).toHaveValue("reveal");
+    ).toHaveValue("bilingual");
     await page
-      .getByRole("button", { name: "Thử dịch nhanh miễn phí", exact: true })
-      .click();
+      .getByRole("combobox", { name: "Hiển thị phụ đề" })
+      .selectOption("reveal");
     const rail = page.getByTestId("transcript-rail");
     // Translated but hidden: English stays readable, Vietnamese is not exposed.
     await expect(rail.getByTestId("reveal-translation").first()).toBeVisible();
@@ -1065,5 +1160,180 @@ test.describe("free subtitle translation", () => {
         .getByRole("button", { name: "Tra từ “First”", exact: true }),
     ).toBeVisible();
     expect(calls).toBe(0);
+  });
+});
+
+test.describe("transcript navigation", () => {
+  test.beforeEach(async ({ page }) => {
+    await stubYouTubePlayer(page);
+    await page.addInitScript(() => {
+      // Deliberately synthetic model output: tests prove UI/navigation, not quality.
+      Object.defineProperty(window, "Translator", {
+        configurable: true,
+        value: {
+          availability: async () => "available",
+          create: async () => ({
+            destroy() {},
+            translate: async (text: string) =>
+              text.includes("work")
+                ? "Họ làm việc từ đầu."
+                : "Phụ đề giả lập dùng kiểm thử.",
+          }),
+        },
+      });
+    });
+  });
+  async function openTranscript(page: Page) {
+    await page.goto(`/watch/${VIDEO_ID}`);
+    const lines = Array.from(
+      { length: 80 },
+      (_, index) =>
+        "[" +
+        Math.floor(index / 60) +
+        ":" +
+        String(index % 60).padStart(2, "0") +
+        "] " +
+        (index === 0
+          ? "Synthetic test captions."
+          : index === 5
+            ? "I work here."
+            : index === 35
+              ? "They work from scratch."
+              : "Fixture sentence " + index + "."),
+    );
+    await pasteTranscript(page, lines.join("\n"));
+    const rail = page.getByTestId("transcript-rail");
+    await expect(rail.locator("[data-sentence]")).toHaveCount(80);
+    await expect(
+      rail.locator('[data-sentence="5"]').getByTestId("translated-sentence"),
+    ).toHaveText("Họ làm việc từ đầu.");
+    return rail;
+  }
+
+  test("transcript search finds visible bilingual text without seeking or removing context", async ({
+    page,
+  }) => {
+    const rail = await openTranscript(page);
+    await page
+      .getByRole("button", { name: "Tìm trong phụ đề", exact: true })
+      .click();
+    const input = page.getByRole("searchbox", { name: "Tìm câu trong phụ đề" });
+    await input.fill("WORK");
+    await expect(
+      page.getByRole("status").filter({ hasText: "1 / 2 câu phù hợp" }),
+    ).toBeVisible();
+    await input.press("Enter");
+    const first = rail.locator('[data-sentence="5"]');
+    await expect(first).toHaveAttribute("data-search-current", "true");
+    await expect(first).toBeInViewport();
+    expect(await getSeeks(page)).toEqual([]);
+    expect(
+      await input.evaluate((element) => element === document.activeElement),
+    ).toBe(true);
+
+    const artifactDir = process.env.ATOENGLISH_RESEARCH_OUTPUT_DIR;
+    if (artifactDir) {
+      // Preserve an explicitly labelled fixture in the screenshot, not real video content.
+      await input.scrollIntoViewIfNeeded();
+      await page.screenshot({
+        path:
+          artifactDir +
+          "/player-navigation-" +
+          page.viewportSize()!.width +
+          ".png",
+      });
+    }
+    await page.evaluate(() => {
+      (window as unknown as { __t: number }).__t = 65;
+    });
+    await expect(rail.locator('[data-sentence="65"]')).toHaveAttribute(
+      "aria-current",
+      "true",
+    );
+    await expect(first).toHaveAttribute("data-search-current", "true");
+    await expect(first).toBeInViewport();
+    await page.getByRole("button", { name: "Câu phù hợp tiếp" }).click();
+    await expect(rail.locator('[data-sentence="35"]')).toHaveAttribute(
+      "data-search-current",
+      "true",
+    );
+    await expect(rail.locator('[data-sentence="35"]')).toBeInViewport();
+    expect(await getSeeks(page)).toEqual([]);
+    await expect(rail.locator("[data-sentence]")).toHaveCount(80);
+    expect(
+      await input.evaluate((element) => element === document.activeElement),
+    ).toBe(true);
+
+    await input.fill("lam viec tu dau");
+    await expect(first).toHaveAttribute("data-search-match", "true");
+    await page
+      .getByLabel("Hiển thị phụ đề", { exact: true })
+      .selectOption("reveal");
+    await expect(rail.locator('[data-search-match="true"]')).toHaveCount(0);
+    await first
+      .getByRole("button", { name: "Hiện nghĩa tiếng Việt của câu này" })
+      .click();
+    await expect(first).toHaveAttribute("data-search-match", "true");
+    await input.fill("from scratch");
+    await input.press("Enter");
+    await rail
+      .getByRole("button", { name: "Nghe câu 0:35", exact: true })
+      .click();
+    expect(await getSeeks(page)).toContainEqual({
+      seconds: 35,
+      allowSeekAhead: true,
+    });
+    await expect(page.getByTestId("video-frame").locator("iframe")).toHaveCount(
+      1,
+    );
+  });
+
+  test("transcript search preserves manual reading and explicitly returns to the playing cue", async ({
+    page,
+  }) => {
+    const rail = await openTranscript(page);
+    await page
+      .getByRole("button", { name: "Tìm trong phụ đề", exact: true })
+      .click();
+    const input = page.getByRole("searchbox", { name: "Tìm câu trong phụ đề" });
+    await input.fill("from scratch");
+    await input.press("Enter");
+    await expect(rail.locator('[data-sentence="35"]')).toBeInViewport();
+    await page.evaluate(() => {
+      (window as unknown as { __t: number }).__t = 65;
+    });
+    await expect(rail.locator('[data-sentence="65"]')).toHaveAttribute(
+      "aria-current",
+      "true",
+    );
+    await expect(rail.locator('[data-sentence="35"]')).toBeInViewport();
+    await input.press("Escape");
+    await expect(input).toHaveCount(0);
+    const searchButton = page.getByRole("button", {
+      name: "Tìm trong phụ đề",
+      exact: true,
+    });
+    await expect(searchButton).toBeFocused();
+    await page
+      .getByRole("button", { name: "Theo câu đang phát", exact: true })
+      .click();
+    await expect(rail.locator('[data-sentence="65"]')).toBeInViewport();
+    expect(await getSeeks(page)).toEqual([]);
+    await page.getByRole("button", { name: "Chế độ đọc", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Tìm trong phụ đề", exact: true })
+      .click();
+    await input.fill("I work here");
+    await input.press("Enter");
+    await expect(rail.locator('[data-sentence="5"]')).toBeInViewport();
+    expect(
+      await rail.evaluate(
+        (element) => element.scrollHeight <= element.clientHeight,
+      ),
+    ).toBe(true);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    );
+    expect(overflow).toBe(false);
   });
 });

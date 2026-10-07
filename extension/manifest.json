@@ -1,23 +1,31 @@
 {
   "manifest_version": 3,
   "name": "AtoEnglish Captions",
-  "version": "0.1.0",
-  "description": "Lấy phụ đề YouTube trong phiên trình duyệt của bạn và gửi sang AtoEnglish để học từng câu.",
+  "version": "0.2.0",
+  "description": "L\u1ea5y ph\u1ee5 \u0111\u1ec1 YouTube trong phi\u00ean tr\u00ecnh duy\u1ec7t c\u1ee7a b\u1ea1n v\u00e0 g\u1eedi sang AtoEnglish \u0111\u1ec3 h\u1ecdc t\u1eebng c\u00e2u.",
   "permissions": ["storage"],
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/watch*"],
+      "matches": [
+        "https://www.youtube.com/watch*",
+        "https://www.youtube.com/embed/*"
+      ],
       "js": ["content-youtube-main.js"],
       "world": "MAIN",
-      "run_at": "document_idle"
+      "run_at": "document_start",
+      "all_frames": true
     },
     {
       "matches": ["https://www.youtube.com/watch*"],
       "js": ["content-youtube-relay.js"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     },
     {
-      "matches": ["http://localhost:3000/*", "https://*.workers.dev/*"],
+      "matches": [
+        "http://localhost:3000/*",
+        "http://localhost:3100/*",
+        "https://atoenglish.thunderkill016.workers.dev/*"
+      ],
       "js": ["content-app.js"],
       "run_at": "document_start"
     }

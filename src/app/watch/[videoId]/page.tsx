@@ -71,6 +71,34 @@ export default async function WatchPage({
     }
   }
 
+  if (!initial) {
+    // Shared caption cache — a transcript fetched by anyone serves every
+    // learner, guest included, with no upstream call.
+    const { data: shared } = await supabase
+      .from("shared_transcripts")
+      .select(
+        "origin, language, sentences, segmentation_version, title, channel, duration_ms",
+      )
+      .eq("video_id", videoId)
+      .maybeSingle();
+    const sharedSentences = shared?.sentences as unknown as
+      | Sentence[]
+      | undefined;
+    if (shared && Array.isArray(sharedSentences) && sharedSentences.length) {
+      initial = {
+        sentences: sharedSentences,
+        origin: shared.origin as TranscriptOrigin,
+        language: shared.language,
+        segmentationVersion: shared.segmentation_version,
+        trackKind: shared.origin === "youtube_asr" ? "asr" : "manual",
+        title: shared.title ?? undefined,
+        channel: shared.channel ?? undefined,
+        durationMs: shared.duration_ms ?? undefined,
+        saved: false,
+      };
+    }
+  }
+
   // ?t=ms (deep link from library/review later) wins over the stored position.
   const deepLinkMs = t && /^\d+$/.test(t) ? Number(t) : null;
   const initialPositionMs = deepLinkMs ?? savedPositionMs;

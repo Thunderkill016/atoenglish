@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Play } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronUp, Play, Search, X } from "lucide-react";
 import {
   tokenizeText,
   phraseFromTokens,
   type ReadToken,
 } from "@/lib/read/tokenize";
-import { cn } from "@/lib/utils";
+import { cn, normalizeSearchText } from "@/lib/utils";
+import { sentenceGlosses } from "@/lib/read/gloss";
 import { formatTimestamp } from "@/lib/format";
 import type { Sentence } from "@/lib/video/types";
 
@@ -32,6 +33,56 @@ interface TranscriptRailProps {
     sentence: Sentence,
     trigger: HTMLButtonElement,
   ) => void;
+}
+
+// Search is a word/phrase query, bounded like the existing dictionary intake.
+const MAX_SEARCH_QUERY_LENGTH = 120;
+
+function captionSearchText(text: string) {
+  return normalizeSearchText(text.replace(/[’‘]/g, "'").replace(/\s+/g, " "));
+}
+
+function matchingSentences(
+  sentences: Sentence[],
+  translations: Record<number, string>,
+  mode: SubtitleMode,
+  revealed: Set<number>,
+  query: string,
+) {
+  const key = captionSearchText(query);
+  if (!key) return [];
+  return sentences.filter((sentence) => {
+    const english =
+      showsEnglish(mode) && captionSearchText(sentence.text).includes(key);
+    // Finding hidden Vietnamese would reveal answers in the touch-to-reveal mode.
+    const vietnamese =
+      showsVietnamese(mode) &&
+      (mode !== "reveal" || revealed.has(sentence.i)) &&
+      captionSearchText(translations[sentence.i] ?? "").includes(key);
+    return english || vietnamese;
+  });
+}
+
+function revealSentence(
+  container: HTMLDivElement | null,
+  sentenceI: number,
+  { allowPageScroll }: { allowPageScroll: boolean },
+) {
+  if (!container) return;
+  const row = container.querySelector<HTMLElement>(
+    '[data-sentence="' + sentenceI + '"]',
+  );
+  if (!row) return;
+  if (container.scrollHeight <= container.clientHeight) {
+    // Only an explicit search action may move a read-mode/mobile document.
+    if (allowPageScroll) row.scrollIntoView({ block: "nearest" });
+    return;
+  }
+  const bounds = container.getBoundingClientRect();
+  const line = row.getBoundingClientRect();
+  if (line.top < bounds.top) container.scrollTop += line.top - bounds.top;
+  else if (line.bottom > bounds.bottom)
+    container.scrollTop += line.bottom - bounds.bottom;
 }
 
 type PhraseStart = { sentenceI: number; tokenIndex: number };
@@ -163,6 +214,12 @@ export function TranscriptRail({
 }: TranscriptRailProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [following, setFollowing] = useState(true);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
+  const searchId = useId();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [matchId, setMatchId] = useState<number | null>(null);
   const [phraseMode, setPhraseMode] = useState(false);
   const [phraseStart, setPhraseStart] = useState<PhraseStart | null>(null);
   const [phraseError, setPhraseError] = useState<string | null>(null);
@@ -172,71 +229,211 @@ export function TranscriptRail({
   if (revealedFor !== sentences) {
     setRevealedFor(sentences);
     setRevealed(new Set());
+    setQuery("");
+    setMatchId(null);
+    setSearchOpen(false);
+    setFollowing(true);
+    setPhraseMode(false);
+    setPhraseStart(null);
+    setPhraseError(null);
   }
+  const activeGlosses = useMemo(() => {
+    const sentence = sentences.find((s) => s.i === activeIndex);
+    return sentence && !sentence.noise ? sentenceGlosses(sentence.text) : [];
+  }, [sentences, activeIndex]);
   const mixedSources =
     sentences.some((s) => s.vi) &&
     sentences.some((s) => !s.vi && translations[s.i]);
 
+  const matches = useMemo(
+    () =>
+      matchingSentences(sentences, translations, subtitleMode, revealed, query),
+    [sentences, translations, subtitleMode, revealed, query],
+  );
+  const matchIds = new Set(matches.map((sentence) => sentence.i));
+  // Keep the chosen sentence stable if translations add earlier matches later.
+  const matchPosition = Math.max(
+    0,
+    matches.findIndex((sentence) => sentence.i === matchId),
+  );
+  const currentMatch = query.trim() ? matches[matchPosition]?.i : undefined;
+  const hasTimedSentences = sentences.some(
+    (sentence) => sentence.start_ms != null,
+  );
+  const chooseMatch = (position: number) => {
+    if (!matches.length) return;
+    const sentence = matches[(position + matches.length) % matches.length];
+    setMatchId(sentence.i);
+    setFollowing(false);
+    revealSentence(containerRef.current, sentence.i, { allowPageScroll: true });
+    searchInputRef.current?.focus({ preventScroll: true });
+  };
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setQuery("");
+    setMatchId(null);
+    searchButtonRef.current?.focus();
+  };
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
   useEffect(() => {
     if (!following || prose || activeIndex < 0) return;
-    const container = containerRef.current;
-    if (!container || container.scrollHeight <= container.clientHeight) return;
-    const el = container.querySelector<HTMLElement>(
-      `[data-sentence="${activeIndex}"]`,
-    );
-    if (!el) return;
-    // Only move this rail, never the document or the video stage.
-    const railRect = container.getBoundingClientRect();
-    const lineRect = el.getBoundingClientRect();
-    if (lineRect.top < railRect.top) {
-      container.scrollTop += lineRect.top - railRect.top;
-    } else if (lineRect.bottom > railRect.bottom) {
-      container.scrollTop += lineRect.bottom - railRect.bottom;
-    }
-  }, [activeIndex, following, prose]);
+    // Playback may move the transcript rail, never the document/video stage.
+    revealSentence(containerRef.current, activeIndex, {
+      allowPageScroll: false,
+    });
+  }, [activeIndex, following, prose, translations, subtitleMode]);
 
   if (sentences.length === 0) return null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {onLookup && showsEnglish(subtitleMode) && (
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#232327] px-4 py-2">
-          <span className="text-xs text-[#9d9da6]">Chạm từ để tra nghĩa</span>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#232327] px-3 py-1.5">
+        {!prose && hasTimedSentences && (
+          <button
+            type="button"
+            aria-pressed={following}
+            onClick={() => {
+              if (!following) {
+                setQuery("");
+                setMatchId(null);
+                setSearchOpen(false);
+                // Search closes first; then an explicit return may scroll the mobile page.
+                requestAnimationFrame(() =>
+                  revealSentence(containerRef.current, activeIndex, {
+                    allowPageScroll: true,
+                  }),
+                );
+              }
+              setFollowing((value) => !value);
+            }}
+            className="min-h-11 min-w-0 flex-1 rounded-lg px-2 text-left text-xs text-[#f5b50a] hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+          >
+            {following ? "Đang theo câu phát · Tắt" : "Theo câu đang phát"}
+          </button>
+        )}
+        {onLookup && showsEnglish(subtitleMode) && (
           <button
             type="button"
             aria-pressed={phraseMode}
             onClick={() => {
-              setPhraseMode((v) => !v);
+              setPhraseMode((value) => !value);
               setPhraseStart(null);
               setPhraseError(null);
             }}
-            className="min-h-11 rounded-full border border-[#232327] px-3 text-xs text-[#f5b50a]"
+            className="min-h-11 shrink-0 rounded-lg px-2 text-xs text-[#f5b50a] hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
           >
             Chọn cụm
           </button>
-          {phraseMode && (
-            <p role="status" className="w-full text-xs text-[#9d9da6]">
-              {phraseStart
-                ? "Chọn từ cuối trong cùng câu; chọn câu khác để bắt đầu lại."
-                : "Chọn từ đầu rồi từ cuối trong cùng một câu."}
-            </p>
-          )}
-          {phraseError && (
-            <p role="alert" className="w-full text-xs text-[#f5b50a]">
-              {phraseError}
-            </p>
-          )}
-        </div>
-      )}
-      {!prose && sentences.some((s) => s.start_ms != null) && (
+        )}
         <button
+          ref={searchButtonRef}
           type="button"
-          aria-pressed={following}
-          onClick={() => setFollowing((v) => !v)}
-          className="min-h-11 shrink-0 border-b border-[#232327] px-4 text-left text-xs text-[#f5b50a] hover:bg-white/5"
+          aria-label="Tìm trong phụ đề"
+          aria-expanded={searchOpen}
+          aria-controls={searchId}
+          title="Tìm câu trong phụ đề"
+          onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
+          className="ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-[#9d9da6] hover:bg-white/5 aria-expanded:text-[#f5b50a] focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
         >
-          {following ? "Đang theo câu phát · Tắt" : "Theo câu đang phát"}
+          <Search aria-hidden className="size-4" />
         </button>
+        {phraseMode && showsEnglish(subtitleMode) && (
+          <p role="status" className="w-full pb-1 text-xs text-[#9d9da6]">
+            {phraseStart
+              ? "Chọn từ cuối trong cùng câu; chọn câu khác để bắt đầu lại."
+              : "Chọn từ đầu rồi từ cuối trong cùng một câu."}
+          </p>
+        )}
+        {phraseError && (
+          <p role="alert" className="w-full pb-1 text-xs text-[#f5b50a]">
+            {phraseError}
+          </p>
+        )}
+      </div>
+      {searchOpen && (
+        <div
+          id={searchId}
+          className="shrink-0 space-y-1 border-b border-[#232327] px-3 py-2"
+        >
+          <div className="flex items-center gap-1">
+            <input
+              ref={searchInputRef}
+              type="search"
+              aria-label="Tìm câu trong phụ đề"
+              aria-describedby={searchId + "-status"}
+              placeholder="Tìm từ hoặc cụm trong câu…"
+              maxLength={MAX_SEARCH_QUERY_LENGTH}
+              value={query}
+              onChange={(event) => {
+                const value = event.target.value;
+                setQuery(value);
+                setMatchId(null);
+                if (value.trim()) setFollowing(false);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  closeSearch();
+                } else if (event.key === "Enter") {
+                  event.preventDefault();
+                  // Enter locates the first match, then cycles; Shift+Enter moves back.
+                  chooseMatch(
+                    event.shiftKey
+                      ? matchPosition - 1
+                      : matchId == null
+                        ? matchPosition
+                        : matchPosition + 1,
+                  );
+                }
+              }}
+              className="min-h-11 min-w-0 flex-1 rounded-lg border border-[#34343a] bg-[#19191c] px-3 text-sm text-[#e8e8ea] outline-none placeholder:text-[#9d9da6] focus-visible:border-[#f5b50a]"
+            />
+            <button
+              type="button"
+              aria-label="Câu phù hợp trước"
+              disabled={!matches.length}
+              onClick={() => chooseMatch(matchPosition - 1)}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#c5c5ce] hover:bg-white/5 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+            >
+              <ChevronUp aria-hidden className="size-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Câu phù hợp tiếp"
+              disabled={!matches.length}
+              onClick={() => chooseMatch(matchPosition + 1)}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#c5c5ce] hover:bg-white/5 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+            >
+              <ChevronDown aria-hidden className="size-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Đóng tìm phụ đề"
+              onClick={closeSearch}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#9d9da6] hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-[#f5b50a]"
+            >
+              <X aria-hidden className="size-4" />
+            </button>
+          </div>
+          <p
+            id={searchId + "-status"}
+            role="status"
+            className="text-xs leading-relaxed text-[#9d9da6]"
+          >
+            {!query.trim()
+              ? "Tìm trong ngôn ngữ đang hiển thị · Enter để đến câu."
+              : matches.length
+                ? matchPosition +
+                  1 +
+                  " / " +
+                  matches.length +
+                  " câu phù hợp · bấm mốc thời gian để nghe."
+                : "Không tìm thấy trong phụ đề đang hiển thị."}
+          </p>
+        </div>
       )}
       <div
         ref={containerRef}
@@ -271,10 +468,13 @@ export function TranscriptRail({
             <div
               key={s.i}
               data-sentence={s.i}
+              data-search-match={matchIds.has(s.i) || undefined}
+              data-search-current={s.i === currentMatch || undefined}
               aria-current={active ? "true" : undefined}
               className={cn(
                 "group mb-2 space-y-2 rounded-xl px-3 py-3 text-left transition-colors",
                 active ? "bg-[#f5b50a]/10 text-[#e8e8ea]" : "text-[#9d9da6]",
+                s.i === currentMatch && "ring-1 ring-inset ring-[#f5b50a]/50",
                 s.noise && "opacity-50",
                 prose && "mb-4 py-3",
               )}
@@ -353,6 +553,33 @@ export function TranscriptRail({
                     )}
                   </p>
                 ))}
+              {active &&
+                showsEnglish(subtitleMode) &&
+                activeGlosses.length > 0 && (
+                  <div
+                    data-testid="automatic-vocabulary"
+                    className="border-t border-[#f5b50a]/15 pt-2"
+                  >
+                    <p className="mb-1 text-[11px] text-[#9d9da6]">
+                      Từ trong câu · nghĩa từ điển
+                    </p>
+                    <dl className="space-y-1 text-sm leading-relaxed">
+                      {activeGlosses.map((entry) => (
+                        <div
+                          key={entry.word}
+                          className="[overflow-wrap:anywhere]"
+                        >
+                          <dt className="inline font-medium text-[#e8e8ea]">
+                            {entry.surface}
+                          </dt>{" "}
+                          <dd className="inline text-[#c5c5ce]">
+                            · {entry.meaning_vn}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                )}
             </div>
           );
         })}

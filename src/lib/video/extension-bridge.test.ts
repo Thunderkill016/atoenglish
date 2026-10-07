@@ -60,6 +60,25 @@ describe("validateCaptionsPayload", () => {
     expect(validateCaptionsPayload(bad)).toBeNull();
   });
 
+  it.each([NaN, Infinity, -1])(
+    "rejects an invalid cue duration %s",
+    (duration) => {
+      expect(
+        validateCaptionsPayload(
+          payload({
+            tracks: [
+              {
+                languageCode: "en",
+                kind: "manual",
+                events: [ev(0, "Hello.", duration)],
+              },
+            ],
+          }),
+        ),
+      ).toBeNull();
+    },
+  );
+
   it("rejects unknown track kinds", () => {
     const bad = payload({
       tracks: [{ languageCode: "en", kind: "weird", events: EN_EVENTS }],

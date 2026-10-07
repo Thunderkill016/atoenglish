@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { randomUUID } from "node:crypto";
 
 import { createClient } from "@/lib/supabase/server";
+import { rpcService } from "@/lib/supabase/service";
 import {
   createRateLimiter,
   getClientIpFromHeaders,
@@ -21,7 +22,7 @@ import { YOUTUBE_VIDEO_ID_RE } from "@/lib/video/youtube-url";
 import type { Json } from "@/types/supabase";
 import type { Sentence, TranscriptOrigin } from "@/lib/video/types";
 
-// SPEC §4.2: fetching captions is a per-learner, explicit-action-only,
+// Caption intake runs once on opening a video, or on explicit retry:
 // rate-limited operation enforced in TWO layers — the CF binding alone does
 // NOT enforce the quota:
 //  - burst: CAPTION_RATE_LIMITER native binding (5/min distributed ceiling —
@@ -210,9 +211,102 @@ async function persistTranscript(
 }
 
 /**
- * Fetch YouTube captions for a video (SPEC §4.2). Explicit learner action
- * only; an existing stored transcript is returned without any upstream call.
- * Guests can fetch but nothing is persisted (RLS needs an owner).
+ * The shared caption cache: one public row per video, served to every
+ * learner. Only YouTube-origin transcripts go in — learner uploads/pastes
+ * stay per-user. Reads work for guests (RLS select is public); writes go
+ * through the service RPC so callers can't inject transcript content.
+ */
+async function readSharedTranscript(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  videoId: string,
+): Promise<LoadedTranscript | null> {
+  const { data: shared } = await supabase
+    .from("shared_transcripts")
+    .select(
+      "origin, language, sentences, segmentation_version, title, channel, duration_ms",
+    )
+    .eq("video_id", videoId)
+    .maybeSingle();
+  if (!shared) return null;
+  const sentences = shared.sentences as unknown as Sentence[];
+  if (!Array.isArray(sentences) || sentences.length === 0) return null;
+  return {
+    sentences,
+    origin: shared.origin as TranscriptOrigin,
+    language: shared.language,
+    segmentationVersion: shared.segmentation_version,
+    trackKind: shared.origin === "youtube_asr" ? "asr" : "manual",
+    title: shared.title ?? undefined,
+    channel: shared.channel ?? undefined,
+    durationMs: shared.duration_ms ?? undefined,
+    saved: false,
+  };
+}
+
+/**
+ * Upsert the shared cache. Best-effort — a failed cache write must never
+ * fail the learner's fetch, so the result is only returned, not thrown.
+ */
+async function shareTranscript(
+  videoId: string,
+  loaded: LoadedTranscript,
+  importedVia: "server" | "extension" = "server",
+) {
+  if (loaded.origin !== "youtube_manual" && loaded.origin !== "youtube_asr") {
+    return;
+  }
+  await rpcService("upsert_shared_transcript", {
+    p_video_id: videoId,
+    p_origin: loaded.origin,
+    p_language: loaded.language,
+    p_segmentation_version: SEGMENTATION_VERSION,
+    // Bound SQL params map JS arrays to PG arrays, not jsonb — the JSON
+    // string is what the jsonb input function accepts (verified live: raw
+    // array fails with "invalid input syntax for type json").
+    p_sentences: JSON.stringify(loaded.sentences),
+    p_title: loaded.title ?? null,
+    p_channel: loaded.channel ?? null,
+    p_duration_ms: loaded.durationMs ?? null,
+    p_imported_via: importedVia,
+  });
+}
+
+/** A real YouTube transcript has more than a handful of segmented lines. */
+const MIN_SHARED_SENTENCES = 5;
+/** Slack before a transcript can plausibly outlast the video duration. */
+const DURATION_SLACK_MS = 60_000;
+
+/**
+ * Cheap attestation for a browser-imported transcript before it may seed the
+ * public cache: YouTube timedtext always carries monotonically ordered timing
+ * on every line, and the text must stay inside the video's own duration. A
+ * crafted payload that fails these stays private to the importing learner —
+ * the checks catch junk, not a determined attacker, which is why only
+ * signed-in imports may share and every row keeps its imported_via marker.
+ */
+function plausibleYoutubeTranscript(loaded: LoadedTranscript) {
+  if (!/^en(?:[-_]|$)/i.test(loaded.language)) return false;
+  if (loaded.sentences.length < MIN_SHARED_SENTENCES) return false;
+  let previous = -Infinity;
+  for (const sentence of loaded.sentences) {
+    if (sentence.start_ms === null || sentence.start_ms < previous) {
+      return false;
+    }
+    previous = sentence.start_ms;
+  }
+  if (
+    loaded.durationMs !== undefined &&
+    previous > loaded.durationMs + DURATION_SLACK_MS
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Fetch YouTube captions for a visited video. Existing private/shared
+ * captions return without upstream acquisition. Guests have no private
+ * library writes; successful server acquisition can enrich the public cache.
  */
 export async function fetchVideoCaptions(
   videoId: string,
@@ -236,6 +330,22 @@ export async function fetchVideoCaptions(
   if (user && supabase) {
     const existing = await existingTranscript(supabase, user.id, videoId);
     if (existing) return { ok: true, ...existing };
+  }
+  if (supabase) {
+    // Shared cache: any earlier fetch — by anyone — makes this instant and
+    // never touches YouTube again.
+    const shared = await readSharedTranscript(supabase, videoId);
+    if (shared) {
+      if (user) {
+        shared.saved = await persistTranscript(
+          supabase,
+          user.id,
+          videoId,
+          shared,
+        );
+      }
+      return { ok: true, ...shared };
+    }
   }
 
   const result = await fetchYoutubeCaptions(videoId, {
@@ -279,14 +389,17 @@ export async function fetchVideoCaptions(
   if (user && supabase) {
     loaded.saved = await persistTranscript(supabase, user.id, videoId, loaded);
   }
+  // A successful upstream fetch enriches the shared cache for everyone —
+  // even when this caller is a guest (service RPC writes, not the user).
+  await shareTranscript(videoId, loaded);
   await logCaptionEvent(ctx, "caption_fetch_succeeded", videoId);
   return { ok: true, ...loaded };
 }
 
 /**
  * Persist a transcript imported by the browser extension (SPEC §4.2 fallback —
- * the fetch ran inside the user's own YouTube session, so this path never
- * hits the server-side timedtext rate limit). The payload is untrusted:
+ * collection ran inside the user's YouTube session; that collection can
+ * still be refused). The payload is untrusted:
  * re-validated and re-segmented here before anything is stored.
  */
 export async function importYoutubeCaptions(
@@ -325,6 +438,12 @@ export async function importYoutubeCaptions(
     saved: false,
   };
   loaded.saved = await persistTranscript(supabase, user.id, videoId, loaded);
+  // Browser payloads are untrusted even after shape checks, so only imports
+  // that pass the plausibility gate enrich the shared cache — marked
+  // imported_via='extension' for audit. Anything implausible stays private.
+  if (plausibleYoutubeTranscript(loaded)) {
+    await shareTranscript(videoId, loaded, "extension");
+  }
   await logCaptionEvent(ctx, "caption_fetch_fallback", videoId);
   return { ok: true, ...loaded };
 }

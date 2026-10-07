@@ -27,7 +27,7 @@ export type ServerTranslationEngine = {
   timeoutMs: number;
 };
 /**
- * `reveal` (learner default): English first, Vietnamese blurred per line
+ * `reveal` (optional practice mode): English first, Vietnamese blurred per line
  * until the learner asks for it — understanding is attempted in English.
  */
 export type SubtitleMode = "reveal" | "bilingual" | "en" | "vi" | "hidden";
@@ -47,7 +47,9 @@ const sourceLine = z
 // Preceding lines may carry their existing Vietnamese so pronouns/terms stay
 // consistent across cues (LLPlayer KeepContext). Context only — never output.
 const contextLine = sourceLine
-  .extend({ vi: z.string().trim().min(1).max(TRANSLATION_MAX_CHARS).optional() })
+  .extend({
+    vi: z.string().trim().min(1).max(TRANSLATION_MAX_CHARS).optional(),
+  })
   .strict();
 export const translationInput = z
   .object({
@@ -225,18 +227,21 @@ export async function translationFingerprint(
   sentences: Sentence[],
   segmentationVersion: number,
   provider = TRANSLATION_MODEL,
+  title?: string,
 ): Promise<string> {
   const bytes = new TextEncoder().encode(
     JSON.stringify([
       TRANSLATION_VERSION,
       provider,
       segmentationVersion,
+      title?.trim().slice(0, TRANSLATION_TITLE_MAX_CHARS) || null,
       sentences.map((s) => [
         s.i,
         s.text,
         s.start_ms,
         s.end_ms,
         s.noise ?? false,
+        s.vi ?? null, // Human context changes the neighbouring machine meaning.
       ]),
     ]),
   );

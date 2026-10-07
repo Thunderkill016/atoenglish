@@ -1,12 +1,10 @@
 /**
  * Caption import bridge between the browser extension and the watch page.
  *
- * The extension runs on youtube.com in the user's real session (the same
- * mechanism Trancy/easysubs/asbplayer use — the only reliable way to read
- * YouTube captions without hitting timedtext IP rate limits). It opens
- * youtube.com/watch from the app, reads `player.getPlayerResponse()`
- * captionTracks, fetches each track's json3 in-page (same-origin), then
- * postMessages the tracks back to the app tab that opened it.
+ * The companion reads native caption responses in the embedded YouTube
+ * document or an explicitly opened YouTube import tab. Native-session requests
+ * can still be refused: validation/fixtures do not prove upstream availability.
+ * Only caption text/timing crosses this boundary, never cookies or request URLs.
  *
  * Trust boundary: the message comes from a youtube.com document, but its
  * contents are untrusted data — every field is validated before use.
@@ -17,9 +15,11 @@ import { SEGMENTATION_VERSION, segmentTranscript } from "./segment";
 import { alignHumanTranslation } from "./align-translation";
 import { pickEnglishTrack, pickVietnameseTrack } from "./captions";
 
-/** Message the extension posts from the youtube.com tab to the opener. */
+/** Caption message from the embedded YouTube frame or isolated import relay. */
 export const CAPTIONS_MESSAGE_TYPE = "atoenglish:youtube-captions";
-/** Reply the app posts back so the YouTube tab can stop retrying. */
+/** Parent asks the installed companion to collect its own embedded video. */
+export const CAPTIONS_REQUEST_TYPE = "atoenglish:request-captions";
+/** Receipt acknowledgement for a caption message; never requests a retry. */
 export const CAPTIONS_ACK_TYPE = "atoenglish:youtube-captions-ack";
 /** Origins the extension content script legitimately runs on. */
 export const YOUTUBE_ORIGIN = "https://www.youtube.com";
@@ -52,7 +52,10 @@ function isJson3Event(value: unknown): value is Json3Event {
     e !== null &&
     typeof e.tStartMs === "number" &&
     Number.isFinite(e.tStartMs) &&
-    (e.dDurationMs === undefined || typeof e.dDurationMs === "number") &&
+    (e.dDurationMs === undefined ||
+      (typeof e.dDurationMs === "number" &&
+        Number.isFinite(e.dDurationMs) &&
+        e.dDurationMs >= 0)) &&
     (e.aAppend === undefined || e.aAppend === 1) &&
     (e.segs === undefined ||
       (Array.isArray(e.segs) &&

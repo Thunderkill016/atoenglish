@@ -17,6 +17,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   fetchVideoCaptions,
+  importYoutubeCaptions,
   saveLearnerTranscript,
   saveWatchPosition,
 } from "./captions";
@@ -96,6 +97,7 @@ const h = vi.hoisted(() => {
   const limiterCheck = vi.fn();
   const requestHeaders = vi.fn();
   const fetchYoutubeCaptions = vi.fn();
+  const rpcService = vi.fn();
 
   return {
     calls,
@@ -107,8 +109,11 @@ const h = vi.hoisted(() => {
     limiterCheck,
     requestHeaders,
     fetchYoutubeCaptions,
+    rpcService,
   };
 });
+
+vi.mock("@/lib/supabase/service", () => ({ rpcService: h.rpcService }));
 
 // ─── Module-boundary mocks ───────────────────────────────────────────────────
 
@@ -121,9 +126,10 @@ vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => undefined, getAll: () => [] }),
 }));
 
-vi.mock("@/lib/video/captions", () => ({
-  fetchYoutubeCaptions: h.fetchYoutubeCaptions,
-}));
+vi.mock("@/lib/video/captions", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/video/captions")>();
+  return { ...actual, fetchYoutubeCaptions: h.fetchYoutubeCaptions };
+});
 
 vi.mock("@/lib/security/rate-limit", async (importOriginal) => {
   const actual =
@@ -182,6 +188,13 @@ const CAPTIONS_OK = {
   events: MANUAL_EVENTS,
   video: { title: "T", channel: "C", durationMs: 212000 },
 };
+
+/** Six real-feeling cues — enough timed sentences to pass the share gate. */
+const MANUAL_EVENTS_LONG = Array.from({ length: 6 }, (_, i) => ({
+  tStartMs: i * 2000,
+  dDurationMs: 1800,
+  segs: [{ utf8: `Sentence number ${i + 1}.` }],
+}));
 
 const SRT = `1
 00:00:01,000 --> 00:00:03,000
@@ -256,6 +269,7 @@ const callsFor = (table: string, method?: string) =>
 
 beforeEach(() => {
   h.calls.length = 0;
+  h.rpcService.mockReset().mockResolvedValue({ data: null, error: null });
   h.tableHandlers.clear();
   h.from.mockClear();
   h.getUser.mockReset().mockResolvedValue({
@@ -556,5 +570,78 @@ describe("saveWatchPosition", () => {
     expect(eqArgs).toContainEqual(["user_id", USER.id]);
     expect(eqArgs).toContainEqual(["kind", "youtube"]);
     expect(eqArgs).toContainEqual(["external_id", VIDEO_ID]);
+  });
+});
+
+describe("caption cache and provenance", () => {
+  it("serves a guest from shared cache with no upstream or cache write", async () => {
+    h.tableHandlers.set("shared_transcripts", () => ({
+      data: {
+        origin: "youtube_manual",
+        language: "en",
+        sentences: STORED_SENTENCES,
+        segmentation_version: 1,
+        title: "Shared title",
+      },
+      error: null,
+    }));
+    const result = await fetchVideoCaptions(VIDEO_ID);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.sentences).toEqual(STORED_SENTENCES);
+    expect(result.saved).toBe(false);
+    expect(h.fetchYoutubeCaptions).not.toHaveBeenCalled();
+    expect(h.rpcService).not.toHaveBeenCalled();
+  });
+  it("stores only successful server acquisitions in the shared cache", async () => {
+    await fetchVideoCaptions(VIDEO_ID);
+    expect(h.rpcService).toHaveBeenCalledWith(
+      "upsert_shared_transcript",
+      expect.objectContaining({
+        p_video_id: VIDEO_ID,
+        p_origin: "youtube_manual",
+        p_sentences: expect.any(String),
+        p_imported_via: "server",
+      }),
+    );
+  });
+  it("shares plausible signed-in extension imports with provenance marking", async () => {
+    asLoggedIn();
+    stubWritableDb();
+    const result = await importYoutubeCaptions(VIDEO_ID, {
+      videoId: VIDEO_ID,
+      tracks: [
+        { languageCode: "en", kind: "manual", events: MANUAL_EVENTS_LONG },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    expect(callsFor("content_transcripts", "upsert")).toHaveLength(1);
+    expect(h.rpcService).toHaveBeenCalledWith(
+      "upsert_shared_transcript",
+      expect.objectContaining({
+        p_video_id: VIDEO_ID,
+        p_origin: "youtube_manual",
+        p_imported_via: "extension",
+      }),
+    );
+  });
+  it("keeps implausible extension imports private to the learner", async () => {
+    asLoggedIn();
+    stubWritableDb();
+    const result = await importYoutubeCaptions(VIDEO_ID, {
+      videoId: VIDEO_ID,
+      tracks: [{ languageCode: "en", kind: "manual", events: MANUAL_EVENTS }],
+    });
+    expect(result.ok).toBe(true);
+    expect(callsFor("content_transcripts", "upsert")).toHaveLength(1);
+    expect(h.rpcService).not.toHaveBeenCalled();
+  });
+  it("does not share learner-pasted content or upstream refusals", async () => {
+    asLoggedIn();
+    stubWritableDb();
+    await saveLearnerTranscript(VIDEO_ID, SRT);
+    h.fetchYoutubeCaptions.mockResolvedValue({ ok: false, error: "blocked" });
+    await fetchVideoCaptions(VIDEO_ID);
+    expect(h.rpcService).not.toHaveBeenCalled();
   });
 });

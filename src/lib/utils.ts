@@ -26,3 +26,13 @@ export function trapDialogFocus(
     first?.focus();
   }
 }
+
+/** Case- and accent-insensitive literal search for Vietnamese learner text. */
+export function normalizeSearchText(text: string) {
+  return text
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .trim();
+}

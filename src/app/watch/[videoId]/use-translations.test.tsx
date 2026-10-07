@@ -1,4 +1,4 @@
-import { act, useEffect } from "react";
+import { act, StrictMode, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { webcrypto } from "node:crypto";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
@@ -30,11 +30,15 @@ function Harness({
   model = engine,
   source = sentences,
   activeIndex = 0,
+  automatic = false,
+  title,
 }: {
   mode?: SubtitleMode;
   model?: ServerTranslationEngine;
   source?: Sentence[];
   activeIndex?: number;
+  automatic?: boolean;
+  title?: string;
 }) {
   const value = useTranslations(
     source,
@@ -44,6 +48,8 @@ function Harness({
     activeIndex,
     "en",
     model,
+    title,
+    { automatic },
   );
   useEffect(() => {
     current = value;
@@ -74,6 +80,39 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 describe("server subtitle scheduling and cache", () => {
+  it("hides old context output immediately and never reuses it for another title", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const fetcher = vi.fn(async (_url: string, init: RequestInit) => {
+      const input = JSON.parse(init.body as string);
+      if (input.title === "Talk B") await gate;
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          source: "ai",
+          model: engine.model,
+          profile: engine.profile,
+          version: TRANSLATION_VERSION,
+          lines: input.lines.map((line: { i: number }) => ({
+            i: line.i,
+            vi: "Nghĩa mẫu.",
+          })),
+        }),
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await act(async () => root.render(<Harness automatic title="Talk A" />));
+    await check(() => expect(current.finished).toBe(true));
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    await act(async () => root.render(<Harness automatic title="Talk B" />));
+    expect(current.lines).toEqual({});
+    await check(() => expect(fetcher).toHaveBeenCalledTimes(3));
+    await act(async () => release());
+    await check(() => expect(current.finished).toBe(true));
+    expect(fetcher).toHaveBeenCalledTimes(4);
+  });
   it("activates explicitly, sends one cue with neighbors and never reuses a different model revision", async () => {
     // Revision-2 answers wait for an explicit release so the "old revision is
     // hidden immediately" check cannot race with act() flushing the mock.
@@ -222,9 +261,11 @@ describe("device translation scheduling", () => {
     // Only the playhead window (1 back / 12 ahead of cue 14) is translated;
     // cues 1–12 wait until the learner gets there.
     await check(() =>
-      expect(Object.keys(current.lines).map(Number).sort((a, b) => a - b)).toEqual([
-        0, 13, 14, 15,
-      ]),
+      expect(
+        Object.keys(current.lines)
+          .map(Number)
+          .sort((a, b) => a - b),
+      ).toEqual([0, 13, 14, 15]),
     );
     expect(current.finished).toBe(false);
     expect(current.busy).toBe(false);
@@ -261,5 +302,159 @@ describe("device translation scheduling", () => {
       0: "Bố tôi đã dạy tôi.",
       2: `Máy: ${sentences[1].text}`,
     });
+  });
+});
+
+describe("automatic free preparation", () => {
+  it("does not let a late device download override an explicit server choice", async () => {
+    let finish!: (value: {
+      translate: ReturnType<typeof vi.fn>;
+      destroy: ReturnType<typeof vi.fn>;
+    }) => void;
+    const destroy = vi.fn();
+    vi.stubGlobal("Translator", {
+      availability: async () => "downloadable",
+      create: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      ),
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ ok: false, error: "ai_unavailable" })),
+      ),
+    );
+    await act(async () =>
+      root.render(<Harness automatic model={{ ...engine, kind: "gemini" }} />),
+    );
+    await act(async () => document.dispatchEvent(new Event("pointerdown")));
+    await act(async () => current.useServer());
+    await act(async () => finish({ translate: vi.fn(), destroy }));
+    expect(current.provider).toBe("server");
+    expect(current.deviceReady).toBe(false);
+    expect(destroy).toHaveBeenCalledTimes(1);
+  });
+  it("prepares an available device once under StrictMode and translates without a button", async () => {
+    const translate = vi.fn(async () => "Nghĩa tự động.");
+    const create = vi.fn(async () => ({ translate, destroy: vi.fn() }));
+    vi.stubGlobal("Translator", {
+      availability: async () => "available",
+      create,
+    });
+    vi.stubGlobal("fetch", vi.fn());
+    await act(async () =>
+      root.render(
+        <StrictMode>
+          <Harness automatic model={{ ...engine, kind: "gemini" }} />
+        </StrictMode>,
+      ),
+    );
+    await check(() => expect(current.finished).toBe(true));
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(translate).toHaveBeenCalledTimes(2);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it("downloads from an ordinary play gesture, deduplicates setup and never retries a network failure automatically", async () => {
+    let reject!: (reason: Error) => void;
+    const create = vi.fn(
+      () =>
+        new Promise<never>((_resolve, fail) => {
+          reject = fail;
+        }),
+    );
+    vi.stubGlobal("Translator", {
+      availability: async () => "downloadable",
+      create,
+    });
+    vi.stubGlobal("fetch", vi.fn());
+    await act(async () =>
+      root.render(<Harness automatic model={{ ...engine, kind: "gemini" }} />),
+    );
+    expect(create).not.toHaveBeenCalled();
+    await act(async () => {
+      document.dispatchEvent(new Event("pointerdown"));
+      document.dispatchEvent(new Event("keydown"));
+    });
+    expect(create).toHaveBeenCalledTimes(1);
+    await act(async () => reject(new Error("fixture network failure")));
+    expect(current.setupError).not.toBeNull();
+    await act(async () => document.dispatchEvent(new Event("pointerdown")));
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it("waits for a real gesture when available-model creation requires activation", async () => {
+    const translate = vi.fn(async () => "Nghĩa tự động.");
+    const create = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new DOMException("Gesture required", "NotAllowedError"),
+      )
+      .mockResolvedValue({ translate, destroy: vi.fn() });
+    vi.stubGlobal("Translator", {
+      availability: async () => "available",
+      create,
+    });
+    await act(async () =>
+      root.render(<Harness automatic model={{ ...engine, kind: "gemini" }} />),
+    );
+    await check(() => expect(current.needsActivation).toBe(true));
+    expect(current.setupError).toBeNull();
+    expect(create).toHaveBeenCalledTimes(1);
+    await act(async () => document.dispatchEvent(new Event("pointerdown")));
+    await check(() => expect(current.finished).toBe(true));
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+  it("automatically uses a configured free server without selecting it", async () => {
+    const fetcher = vi.fn(async (_url: string, init: RequestInit) => {
+      const input = JSON.parse(init.body as string);
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          source: "ai",
+          model: engine.model,
+          profile: engine.profile,
+          version: TRANSLATION_VERSION,
+          lines: input.lines.map((line: { i: number }) => ({
+            i: line.i,
+            vi: "Dịch tự động.",
+          })),
+        }),
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await act(async () => root.render(<Harness automatic />));
+    await check(() => expect(current.finished).toBe(true));
+    expect(current.provider).toBe("server");
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+  it("does not prepare a model for fully translated human captions or English-only display", async () => {
+    const create = vi.fn();
+    vi.stubGlobal("Translator", {
+      availability: async () => "available",
+      create,
+    });
+    const source = sentences.map((s) => ({ ...s, vi: "Bản của kênh." }));
+    await act(async () =>
+      root.render(
+        <Harness
+          automatic
+          source={source}
+          model={{ ...engine, kind: "gemini" }}
+        />,
+      ),
+    );
+    await act(async () => document.dispatchEvent(new Event("pointerdown")));
+    expect(create).not.toHaveBeenCalled();
+    await act(async () =>
+      root.render(
+        <Harness automatic mode="en" model={{ ...engine, kind: "gemini" }} />,
+      ),
+    );
+    await act(async () => document.dispatchEvent(new Event("pointerdown")));
+    expect(create).not.toHaveBeenCalled();
   });
 });

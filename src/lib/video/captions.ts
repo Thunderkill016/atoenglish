@@ -6,12 +6,12 @@
  *
  * Constraints:
  * - ≤ UPSTREAM_REQUEST_BUDGET requests per call across the whole chain.
- * - Backoff RETRY_DELAYS only for network errors / 403 / 429 / 5xx.
+ * - Backoff RETRY_DELAYS only for network errors / 5xx; stop on 403/429.
  * - `fmt` on a track `baseUrl` must be *replaced* with `json3` (appending
  *   leaves `fmt=srv3` in place and YouTube returns XML — verified 06/10).
  * - Timedtext requests carry the fixed WEB client params read-frog uses to
- *   reduce blocking. PO Tokens only exist in a real browser session, so
- *   server-side fetches will still be blocked on some videos — the
+ *   reduce blocking. This server path does not acquire session attestation;
+ *   fixed params cannot guarantee caption access. Some requests fail — the
  *   upload/paste fallback is mandatory, not optional.
  * - `fetch`/`delay`/`signal` are injectable so tests run on fixtures.
  */
@@ -127,9 +127,9 @@ interface PlayerResponse {
 
 class BudgetExhausted extends Error {}
 class AbortFetch extends Error {}
+class UpstreamRefused extends Error {}
 
-const isRetryableStatus = (status: number) =>
-  status === 403 || status === 429 || status >= 500;
+const isRetryableStatus = (status: number) => status >= 500;
 
 const trackKind = (kind: string | undefined): "manual" | "asr" =>
   kind === "asr" ? "asr" : "manual";
@@ -235,7 +235,11 @@ export function parseTimedTextList(xml: string): CaptionTrackInfo[] {
       attrs.match(new RegExp(`${name}="([^"]*)"`))?.[1];
     const lang = get("lang_code");
     if (!lang) continue;
-    tracks.push({ languageCode: lang, kind: trackKind(get("kind")), name: get("lang_original") });
+    tracks.push({
+      languageCode: lang,
+      kind: trackKind(get("kind")),
+      name: get("lang_original"),
+    });
   }
   return tracks;
 }
@@ -244,10 +248,12 @@ export async function fetchYoutubeCaptions(
   videoId: string,
   deps: CaptionFetchDeps = {},
 ): Promise<CaptionResult> {
-  if (!YOUTUBE_VIDEO_ID_RE.test(videoId)) return { ok: false, error: "invalid_url" };
+  if (!YOUTUBE_VIDEO_ID_RE.test(videoId))
+    return { ok: false, error: "invalid_url" };
 
   const doFetch = deps.fetch ?? fetch;
-  const delay = deps.delay ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
+  const delay =
+    deps.delay ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
   const signal = deps.signal;
 
   let budget = UPSTREAM_REQUEST_BUDGET;
@@ -267,7 +273,10 @@ export async function fetchYoutubeCaptions(
       try {
         res = await doFetch(url, { ...init, signal });
       } catch (e) {
-        if (signal?.aborted || (e instanceof Error && e.name === "AbortError")) {
+        if (
+          signal?.aborted ||
+          (e instanceof Error && e.name === "AbortError")
+        ) {
           throw new AbortFetch();
         }
         // Network error — retryable while delay ladder + budget remain.
@@ -278,6 +287,9 @@ export async function fetchYoutubeCaptions(
         return null;
       }
       if (res.ok) return res;
+      // Changing client identity or repeating a refused caption URL does not
+      // repair 403/429. End this intake; native-session import remains separate.
+      if (res.status === 403 || res.status === 429) throw new UpstreamRefused();
       if (
         isRetryableStatus(res.status) &&
         attempt < RETRY_DELAYS_MS.length &&
@@ -286,10 +298,6 @@ export async function fetchYoutubeCaptions(
         await delay(RETRY_DELAYS_MS[attempt++]);
         continue;
       }
-      // 403 and an exhausted 429 both mean YouTube is refusing this server —
-      // surface "blocked" so the UI points at the manual-paste fallback,
-      // not a generic "try again" that cannot succeed right now.
-      if (res.status === 403 || res.status === 429) sawBlocked = true;
       return null;
     }
   };
@@ -375,7 +383,9 @@ export async function fetchYoutubeCaptions(
         sawPlayableNoTracks = true;
         continue;
       }
-      const events = track.baseUrl ? await fetchTrackJson3(track.baseUrl) : null;
+      const events = track.baseUrl
+        ? await fetchTrackJson3(track.baseUrl)
+        : null;
       if (events) {
         return {
           ok: true,
@@ -424,7 +434,13 @@ export async function fetchYoutubeCaptions(
             } else {
               sawPlayableNoTracks = true;
             }
-          } catch {
+          } catch (error) {
+            if (
+              error instanceof AbortFetch ||
+              error instanceof UpstreamRefused ||
+              error instanceof BudgetExhausted
+            )
+              throw error;
             // malformed embedded JSON — fall through to timedtext
           }
         }
@@ -451,7 +467,14 @@ export async function fetchYoutubeCaptions(
         const res = await request(url.toString());
         const data = (await json(res)) as { events?: Json3Event[] } | null;
         if (data?.events?.length) {
-          return { ok: true, videoId, source: "timedtext", track, events: data.events, video: {} };
+          return {
+            ok: true,
+            videoId,
+            source: "timedtext",
+            track,
+            events: data.events,
+            video: {},
+          };
         }
       } else {
         sawPlayableNoTracks = true;
@@ -459,6 +482,7 @@ export async function fetchYoutubeCaptions(
     }
   } catch (e) {
     if (e instanceof AbortFetch) return { ok: false, error: "aborted" };
+    if (e instanceof UpstreamRefused) return { ok: false, error: "blocked" };
     if (!(e instanceof BudgetExhausted)) return { ok: false, error: "error" };
   }
 
