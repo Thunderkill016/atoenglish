@@ -14,6 +14,7 @@
  * caller's fallback concern, not the resolver's.
  */
 
+import { isStaleSegmentation } from "./segment";
 import type { Sentence, TranscriptOrigin } from "./types";
 import type { LoadedTranscript } from "@/app/actions/captions";
 import type { RightsScope } from "./transcript-resource";
@@ -84,6 +85,8 @@ function rowToTranscript(
     title: meta.title ?? undefined,
     channel: meta.channel ?? undefined,
     durationMs: meta.duration_ms ?? undefined,
+    stale:
+      isStaleSegmentation(row.origin, row.segmentation_version) || undefined,
     saved,
   };
 }

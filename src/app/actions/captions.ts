@@ -9,7 +9,11 @@ import {
   getClientIpFromHeaders,
 } from "@/lib/security/rate-limit";
 import { fetchYoutubeCaptions } from "@/lib/video/captions";
-import { SEGMENTATION_VERSION, segmentTranscript } from "@/lib/video/segment";
+import {
+  SEGMENTATION_VERSION,
+  isStaleSegmentation,
+  segmentTranscript,
+} from "@/lib/video/segment";
 import { alignHumanTranslation } from "@/lib/video/align-translation";
 import {
   payloadToTranscript,
@@ -74,6 +78,12 @@ export interface LoadedTranscript {
   durationMs?: number;
   /** True when the transcript was persisted to the learner's library. */
   saved: boolean;
+  /**
+   * Cached YouTube transcript segmented under older rules — usable
+   * immediately, but a background refetch may upgrade it. Never set on
+   * learner-authored content (no upstream to upgrade from).
+   */
+  stale?: boolean;
 }
 
 export type CaptionActionResult =
@@ -167,6 +177,9 @@ async function existingTranscript(
     title: source.title ?? undefined,
     channel: source.channel ?? undefined,
     durationMs: source.duration_ms ?? undefined,
+    stale:
+      isStaleSegmentation(transcript.origin, transcript.segmentation_version) ||
+      undefined,
     saved: true,
   };
 }
@@ -209,6 +222,9 @@ async function readSharedTranscript(
     title: shared.title ?? undefined,
     channel: shared.channel ?? undefined,
     durationMs: shared.duration_ms ?? undefined,
+    stale:
+      isStaleSegmentation(shared.origin, shared.segmentation_version) ||
+      undefined,
     saved: false,
   };
 }
@@ -297,24 +313,36 @@ export async function fetchVideoCaptions(
   if (!burst.success) return { ok: false, error: "rate_limited" };
 
   const { supabase, user } = ctx;
+  // Soft invalidation: a YouTube transcript segmented under older rules is
+  // served as-is when nothing better exists, but does not end the lookup —
+  // the upstream chain still runs so blob-era rows upgrade themselves.
+  let staleFallback: LoadedTranscript | null = null;
   if (user && supabase) {
     const existing = await existingTranscript(supabase, user.id, videoId);
-    if (existing) return { ok: true, ...existing };
+    if (existing) {
+      if (!isStaleSegmentation(existing.origin, existing.segmentationVersion))
+        return { ok: true, ...existing };
+      staleFallback = existing;
+    }
   }
   if (supabase) {
     // Shared cache: any earlier fetch — by anyone — makes this instant and
-    // never touches YouTube again.
+    // never touches YouTube again. A fresh shared row beats a stale private
+    // copy; a stale shared row only replaces the fallback.
     const shared = await readSharedTranscript(supabase, videoId);
     if (shared) {
-      if (user) {
-        shared.saved = await persistTranscript(
-          supabase,
-          user.id,
-          videoId,
-          shared,
-        );
+      if (!isStaleSegmentation(shared.origin, shared.segmentationVersion)) {
+        if (user) {
+          shared.saved = await persistTranscript(
+            supabase,
+            user.id,
+            videoId,
+            shared,
+          );
+        }
+        return { ok: true, ...shared };
       }
-      return { ok: true, ...shared };
+      staleFallback ??= shared;
     }
   }
 
@@ -334,6 +362,9 @@ export async function fetchVideoCaptions(
       error: result.error,
       detail: result.detail,
     });
+    // Refetching a stale cached row must never regress to an error screen —
+    // the old segmentation is still better than none.
+    if (staleFallback) return { ok: true, ...staleFallback };
     return { ok: false, error };
   }
 
@@ -343,6 +374,7 @@ export async function fetchVideoCaptions(
   });
   if (sentences.length === 0) {
     await logCaptionEvent(ctx, "caption_fetch_failed", videoId);
+    if (staleFallback) return { ok: true, ...staleFallback };
     return { ok: false, error: "no_captions" };
   }
 

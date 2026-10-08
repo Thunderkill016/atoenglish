@@ -158,6 +158,43 @@ describe("opening a video automatically", () => {
       container.querySelector('[data-testid="translated-sentence"]'),
     ).toHaveTextContent("Tôi làm việc ở đây.");
   });
+
+  it("shows a stale transcript immediately, then silently upgrades it", async () => {
+    const fresh: LoadedTranscript = {
+      ...transcript,
+      sentences: [{ i: 0, text: "Fresh sentence.", start_ms: 0, end_ms: 2000 }],
+    };
+    let resolveFetch!: (r: CaptionActionResult) => void;
+    actions.fetchVideoCaptions.mockReturnValue(
+      new Promise((r) => (resolveFetch = r)),
+    );
+    await act(async () => render({ ...transcript, stale: true }));
+    // Blob-era sentences render right away — the upgrade stays in flight.
+    expect(container.textContent).toContain("I work here.");
+    await check(() =>
+      expect(actions.fetchVideoCaptions).toHaveBeenCalledTimes(1),
+    );
+    await act(async () => resolveFetch({ ok: true, ...fresh }));
+    await check(() =>
+      expect(container.textContent).toContain("Fresh sentence."),
+    );
+  });
+
+  it("keeps the stale transcript on screen when the upgrade fails", async () => {
+    actions.fetchVideoCaptions.mockResolvedValue({
+      ok: false,
+      error: "blocked",
+    });
+    await act(async () => render({ ...transcript, stale: true }));
+    await check(() =>
+      expect(actions.fetchVideoCaptions).toHaveBeenCalledTimes(1),
+    );
+    await check(() => expect(container.textContent).toContain("I work here."));
+    // No error swap — the stale copy is still the best available.
+    expect(
+      container.querySelector('[data-testid="translated-sentence"]'),
+    ).not.toBeNull();
+  });
   it("writes a shareable ?t= deep link on sentence seek", async () => {
     await act(async () => render(transcript));
     const chip = [...container.querySelectorAll("button")].find(

@@ -219,7 +219,9 @@ export function WatchClient({
   const requestVersion = useRef(0);
   const openingRequest = useRef<Promise<CaptionActionResult> | null>(null);
   useEffect(() => {
-    if (initial) return;
+    // A stale cached transcript still renders, but its blob-era segmentation
+    // gets a silent background upgrade attempt. Failure keeps it on screen.
+    if (initial && !initial.stale) return;
     let disposed = false;
     const version = requestVersion.current;
     // One intake per mounted video, even under React StrictMode. Only visited
@@ -232,13 +234,14 @@ export function WatchClient({
           setTranscript(result);
           setPhase("ready");
           setErrorMessage(null);
-        } else {
+        } else if (!initial?.stale) {
           setErrorMessage(ERROR_MESSAGES[result.error]);
           setPhase("error");
         }
       })
       .catch(() => {
         if (disposed || version !== requestVersion.current) return;
+        if (initial?.stale) return;
         setErrorMessage(ERROR_MESSAGES.error);
         setPhase("error");
       });
