@@ -83,11 +83,23 @@ ATO-TRANSLATE-MOBILE-01).
 | QA N9: provider error drops cached lines from response   | adversarial review                                                   | rejected — out of scope  | partial-response contract adds client complexity for marginal gain                           |
 | QA N15: limiter charged on cache hits                    | adversarial review                                                   | accepted                 | limiter protects DB+CPU too, not just AI spend                                               |
 
-## OPEN BLOCKERS
+## DEPLOYMENT (owner-authorized 2026-10-08)
 
-- Deploy order: merge/deploy (owner) → then `SUBTITLE_M2M100_ENABLED=true`
-  on the Worker; the flag alone on old code does nothing, and the route's
-  guest path only exists in this diff.
+1. Prod ledger drift reconciled: `20261014000000_shared_imported_via.sql`
+   effects verified fully applied (column, check, 9-arg function, grants)
+   but unrecorded → inserted the `_neon_migrations` row, then
+   `db:migrate` applied `20261015000000_subtitle_translations.sql`.
+2. Prod default-privileges drift reconciled: prod's `__neon_compat__`
+   ledger row predates the current grant list (`anon`/`service_role`
+   missing) → re-applied the three `alter default privileges` statements
+   and granted `anon`/`service_role` on `subtitle_translations`;
+   `npm run db:test` → all pgTAP suites PASS on prod.
+3. `SUBTITLE_M2M100_ENABLED=true` secret set on Worker `atoenglish`.
+4. `npm run deploy:vinext` → version `250051e8`, `env.AI` bound.
+   Health `/api/health` 200 (version `250051e`, db connected).
+5. Verified live: watch HTML serializes the m2m100 engine; guest
+   `POST /api/translate` → real m2m100 VI output ("Thank you. I am honored
+   to be with you today." → Vietnamese).
 
 ## IMPLEMENTED CHANGES
 
