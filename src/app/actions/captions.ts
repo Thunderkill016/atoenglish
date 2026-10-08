@@ -327,6 +327,13 @@ export async function fetchVideoCaptions(
         ? "error"
         : result.error;
     await logCaptionEvent(ctx, "caption_fetch_failed", videoId);
+    // pilot_events has no metadata column, so the per-route refusal detail
+    // goes to Worker logs (Workers Observability) for diagnosis.
+    console.warn("caption_fetch_failed", {
+      videoId,
+      error: result.error,
+      detail: result.detail,
+    });
     return { ok: false, error };
   }
 
