@@ -1450,6 +1450,10 @@ test.describe("transcript navigation", () => {
     await input.press("Escape");
     await page.getByRole("button", { name: "Chế độ đọc", exact: true }).click();
     await expect(rail.locator("[data-sentence]")).toHaveCount(3000);
+    await expect(rail.locator('[data-sentence="0"]')).toHaveCSS(
+      "content-visibility",
+      "auto",
+    );
     await expect(page.getByTestId("virtual-transcript")).toHaveCount(0);
     // Full source text remains in the document for selection and browser Ctrl+F.
     await expect(rail).toContainText("Fixture sentence 2999.");

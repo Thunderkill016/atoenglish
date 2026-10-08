@@ -514,7 +514,14 @@ export function TranscriptRail({
                 width: "100%",
                 transform: `translateY(${item.start - (desktop ? 0 : scrollMargin)}px)`,
               }
-            : undefined
+            : prose
+              ? {
+                  // Keep full source DOM for copy/Ctrl+F while the browser
+                  // skips layout/paint of thousands of offscreen paragraphs.
+                  contentVisibility: "auto",
+                  containIntrinsicSize: `auto ${ESTIMATED_ROW_HEIGHT}px`,
+                }
+              : undefined
         }
         data-sentence={s.i}
         data-search-match={matchIds.has(s.i) || undefined}
