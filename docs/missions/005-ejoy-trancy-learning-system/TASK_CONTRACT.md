@@ -169,3 +169,46 @@ the public cache. Typecheck, focused unit tests and installed-extension
 browser fixtures must pass. Real-session source availability and deployed
 cache/runtime remain separate gates; no DB migration, seed or deploy authorized
 by this continuation.
+
+## Owner refinement — ATO-WATCH-01, 2026-10-07
+
+The owner's approved implementation plan narrows this PR to the existing
+`/watch` sentence-learning player. It supersedes earlier player/translation
+behaviour where inconsistent, without activating another mission or later slices.
+
+- One canonical normalized `TranscriptSegment` ID controls Focus Sentence,
+  transcript highlight, translation priority and existing vocabulary. Preserve
+  original `Sentence` text, word timings, VI and source metadata; invalid timing
+  stays readable without a fabricated playback action. No storage migration.
+- Route all transport through one controller. Lock one cue's bounds before
+  playback; once, three total turns or continuous repeat, with 400ms breaks.
+  Retarget resets the count; free seeking exits repeat and preserves play/pause.
+  Repeat wins over auto-pause. Auto-pause holds the heard cue; Play advances.
+  Manual/native pause or dictionary cancels pending replay; buffering, rate
+  changes and replacement recalculate/cancel deadlines. Keep the same official
+  IFrame across view modes. Confirm actual YouTube speeds, including 1.25×.
+- Keep existing keys and add left/right five-second seeks without hijacking
+  inputs, dialogs, sliders or native button activation. Focus Sentence adds
+  timestamp/replay/repeat; expand existing vocabulary only on the active row.
+- Search/read position is independent from playback; manual reading disables
+  follow until explicit return. Watch transcripts over 200 rows use pinned
+  TanStack Virtual 3.14.13 IDs, measured heights and overscan eight, with desktop
+  rail/mobile page scroll. Read mode keeps all text for copy and browser search.
+  Late translation must retain the chosen row and focus.
+- Translation priority: current, next five, previous two. One device task at a
+  time, preempt background on seek; device translates the remainder at low
+  priority, server only near cues. Preserve human VI/cache/provider labels;
+  stale work never replaces another transcript and errors never block EN/audio.
+- Account positions persist every 15 seconds and deliberate stops, not each
+  repeat gap; only an acknowledged matching update counts as saved. Keep deep
+  link precedence. No guest synchronization or database migration.
+
+Delivery: dedicated branch from verified draft PR #235, stacked draft targeting
+its base branch, formatter/typecheck/lint/unit/Playwright/Next+vinext/docs checks.
+Delivery reconciliation 2026-10-08: #235 merged at main `5f263ce5` during this
+slice. The unpublished branch is rebased onto that verified merge and the draft
+now targets main, preserving the requested ATO-WATCH-01-only review diff.
+Separate fixtures, browser UI and real YouTube/audio evidence. Stop at external
+review: no merge/deploy, dictation, shadowing, Q&A, scoring, dictionary replacement,
+study-card writes or whole-page redesign. Real acoustic boundary verification is
+an explicit review gate, not something deterministic clocks prove.

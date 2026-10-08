@@ -14,11 +14,10 @@ export const TRANSLATION_BATCH_SIZE = 12; // Small first paint, with room for ne
 export const TRANSLATION_MAX_CHARS = 6000; // Bounded provider input/output for a subtitle batch.
 export const TRANSLATION_TIMEOUT_MS = 20_000;
 export const TRANSLATION_CONTEXT_LINES = 2; // Resolve pronouns without submitting the entire video.
-// Translate only around the playhead (LLPlayer's 1-back/12-ahead window): a
-// learner who never reaches the end never pays for it, and seeking pulls the
-// window along instead of queueing the whole video.
-export const TRANSLATION_WINDOW_BACK = 1;
-export const TRANSLATION_WINDOW_AHEAD = 12;
+// ATO-WATCH-01: current cue, five ahead, then two behind. Only the device
+// may continue outside this window; server quota is reserved for near playback.
+export const TRANSLATION_WINDOW_BACK = 2;
+export const TRANSLATION_WINDOW_AHEAD = 5;
 export const TRANSLATION_TITLE_MAX_CHARS = 200;
 export type ServerTranslationEngine = {
   kind: "local" | "workers-ai" | "workers-ai-mt" | "gemini";
@@ -101,8 +100,8 @@ export function outsideTranslationWindow(
   back = TRANSLATION_WINDOW_BACK,
   ahead = TRANSLATION_WINDOW_AHEAD,
 ): Set<number> {
-  const found = sentences.findIndex((s) => s.i >= activeIndex);
-  const at = found < 0 ? sentences.length - 1 : found;
+  const found = sentences.findIndex((s) => s.i === activeIndex);
+  const at = found < 0 ? 0 : found;
   return new Set(
     sentences
       .filter((_, offset) => offset < at - back || offset > at + ahead)
@@ -215,7 +214,18 @@ export function translationBatch(
     (s) => !completed.has(s.i) && !skip.has(s.i),
   );
   if (!pending.length) return [];
-  const start = pending.find((s) => s.i >= activeIndex)?.i ?? pending[0].i;
+  const activeOffset = Math.max(
+    0,
+    sentences.findIndex((s) => s.i === activeIndex),
+  );
+  const available = new Set(pending.map((s) => s.i));
+  const start =
+    sentences.slice(activeOffset).find((s) => available.has(s.i))?.i ??
+    sentences
+      .slice(0, activeOffset)
+      .reverse()
+      .find((s) => available.has(s.i))?.i ??
+    pending[0].i;
   const result: Sentence[] = [];
   let chars = 0;
   const startOffset = sentences.findIndex((s) => s.i === start);

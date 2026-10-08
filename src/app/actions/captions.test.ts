@@ -539,28 +539,60 @@ describe("saveLearnerTranscript", () => {
 
 describe("saveWatchPosition", () => {
   it("resolves without touching the DB for guests", async () => {
-    await expect(saveWatchPosition(VIDEO_ID, 5_000)).resolves.toBeUndefined();
+    await expect(saveWatchPosition(VIDEO_ID, 5_000)).resolves.toEqual({
+      ok: false,
+      error: "unauthorized",
+    });
     expect(h.from).not.toHaveBeenCalled();
   });
 
   it("resolves without touching the DB for an invalid videoId", async () => {
     asLoggedIn();
-    await expect(
-      saveWatchPosition(BAD_VIDEO_ID, 5_000),
-    ).resolves.toBeUndefined();
+    await expect(saveWatchPosition(BAD_VIDEO_ID, 5_000)).resolves.toEqual({
+      ok: false,
+      error: "invalid_input",
+    });
     expect(h.from).not.toHaveBeenCalled();
   });
 
   it("resolves without touching the DB for a negative position", async () => {
     asLoggedIn();
-    await expect(saveWatchPosition(VIDEO_ID, -1)).resolves.toBeUndefined();
+    await expect(saveWatchPosition(VIDEO_ID, -1)).resolves.toEqual({
+      ok: false,
+      error: "invalid_input",
+    });
     expect(h.from).not.toHaveBeenCalled();
   });
 
+  it("reports a missing account-owned source as not saved", async () => {
+    asLoggedIn();
+    h.tableHandlers.set("content_sources", () => ({ data: null, error: null }));
+    await expect(saveWatchPosition(VIDEO_ID, 5000)).resolves.toEqual({
+      ok: false,
+      error: "not_saved",
+    });
+  });
+  it("reports database failures instead of acknowledging a save", async () => {
+    asLoggedIn();
+    h.tableHandlers.set("content_sources", () => ({
+      data: null,
+      error: { message: "Unavailable" },
+    }));
+    await expect(saveWatchPosition(VIDEO_ID, 5000)).resolves.toEqual({
+      ok: false,
+      error: "error",
+    });
+  });
   it("updates content_sources.last_position_ms for a logged-in learner", async () => {
     asLoggedIn();
 
-    await expect(saveWatchPosition(VIDEO_ID, 5_000)).resolves.toBeUndefined();
+    h.tableHandlers.set("content_sources", () => ({
+      data: { id: "source-id" },
+      error: null,
+    }));
+    await expect(saveWatchPosition(VIDEO_ID, 5_000)).resolves.toEqual({
+      ok: true,
+    });
 
     const updates = callsFor("content_sources", "update");
     expect(updates).toHaveLength(1);

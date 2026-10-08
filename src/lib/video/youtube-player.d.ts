@@ -12,6 +12,10 @@ declare global {
           events?: {
             onReady?: (e: { target: YTPlayer }) => void;
             onStateChange?: (e: { target: YTPlayer; data: number }) => void;
+            onPlaybackRateChange?: (e: {
+              target: YTPlayer;
+              data: number;
+            }) => void;
           };
         },
       ) => YTPlayer;
@@ -35,6 +39,7 @@ export interface YTPlayer {
   getDuration(): number;
   getPlayerState(): number;
   getPlaybackRate(): number;
+  getAvailablePlaybackRates(): number[];
   setPlaybackRate(rate: number): void;
   destroy(): void;
 }

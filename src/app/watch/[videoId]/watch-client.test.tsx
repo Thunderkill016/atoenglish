@@ -27,20 +27,26 @@ const frameRef = vi.hoisted(() => {
   };
   return { fixture, anchor };
 });
+const clock = vi.hoisted(() => ({
+  nowMs: 0,
+  durationMs: 60_000,
+  playing: false,
+  rate: 1,
+  state: "paused" as "paused" | "playing" | "ended",
+}));
 const player = vi.hoisted(() => ({
   play: vi.fn(),
   pause: vi.fn(),
   seekToMs: vi.fn(),
   setRate: vi.fn(),
+  readClock: vi.fn(() => ({ ...clock })),
 }));
 vi.mock("./use-youtube-player", () => ({
   useYouTubePlayer: () => ({
     ...player,
-    nowMs: 0,
-    playing: false,
+    ...clock,
     ready: true,
-    durationMs: 60_000,
-    rate: 1,
+    availableRates: [0.5, 0.75, 1, 1.25],
     containerRef: frameRef.anchor,
     loadError: null,
   }),
@@ -76,6 +82,22 @@ async function check(assertion: () => void) {
 }
 beforeEach(() => {
   vi.clearAllMocks();
+  player.play.mockReset();
+  player.pause.mockReset();
+  player.seekToMs.mockReset();
+  Object.assign(clock, {
+    nowMs: 0,
+    durationMs: 60_000,
+    playing: false,
+    rate: 1,
+    state: "paused",
+  });
+  actions.saveWatchPosition.mockResolvedValue({ ok: true });
+  vi.stubGlobal("matchMedia", () => ({
+    matches: true,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
   frameRef.fixture.current = null;
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.stubGlobal("crypto", webcrypto);
@@ -89,6 +111,7 @@ afterEach(async () => {
   await act(async () => root.unmount());
   container.remove();
   frameRef.fixture.current?.remove();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 describe("opening a video automatically", () => {
@@ -106,7 +129,9 @@ describe("opening a video automatically", () => {
       ).toHaveTextContent("Tôi làm việc ở đây."),
     );
     expect(actions.fetchVideoCaptions).toHaveBeenCalledTimes(1);
-    expect(container.querySelector("select")).toHaveValue("bilingual");
+    expect(
+      container.querySelector('select[aria-label="Hiển thị phụ đề"]'),
+    ).toHaveValue("bilingual");
     expect(
       container.querySelector('[data-testid="automatic-vocabulary"]'),
     ).toHaveTextContent("làm việc / công việc");
@@ -202,6 +227,90 @@ describe("opening a video automatically", () => {
       ).not.toBeNull(),
     );
     expect(actions.fetchVideoCaptions).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("account position confirmation", () => {
+  const human: LoadedTranscript = {
+    ...transcript,
+    sentences: [{ ...transcript.sentences[0], vi: "Tôi làm việc ở đây." }],
+  };
+  const button = (label: string) =>
+    container.querySelector<HTMLButtonElement>(
+      `button[aria-label="${label}"]`,
+    )!;
+  it("saves each 15 seconds across pause/play changes, on a manual stop, and surfaces a failed acknowledgement", async () => {
+    vi.useFakeTimers();
+    Object.assign(clock, { nowMs: 1000, playing: true, state: "playing" });
+    await act(async () => render(human, true));
+    await act(async () => vi.advanceTimersByTimeAsync(10_000));
+    // Native pause/resume must not restart the periodic-save deadline.
+    Object.assign(clock, { playing: false, state: "paused" });
+    await act(async () => render(human, true));
+    expect(actions.saveWatchPosition).toHaveBeenCalledTimes(1);
+    Object.assign(clock, { nowMs: 2000, playing: true, state: "playing" });
+    await act(async () => render(human, true));
+    await act(async () => vi.advanceTimersByTimeAsync(5000));
+    expect(actions.saveWatchPosition).toHaveBeenLastCalledWith(
+      "dQw4w9WgXcQ",
+      2000,
+    );
+    expect(actions.saveWatchPosition).toHaveBeenCalledTimes(2);
+    actions.saveWatchPosition.mockResolvedValueOnce({
+      ok: false,
+      error: "not_saved",
+    });
+    clock.nowMs = 2600;
+    await act(async () => button("Dừng video").click());
+    expect(actions.saveWatchPosition).toHaveBeenCalledTimes(3);
+    expect(container.textContent).toContain("Chưa lưu được vị trí xem");
+  });
+  it("does not save during each repeat gap, but does save a deliberate stop in a gap", async () => {
+    vi.useFakeTimers();
+    player.pause.mockImplementation(() => {
+      clock.playing = false;
+      clock.state = "paused";
+    });
+    player.play.mockImplementation(() => {
+      clock.playing = true;
+      clock.state = "playing";
+    });
+    player.seekToMs.mockImplementation((ms: number) => {
+      clock.nowMs = ms;
+    });
+    const loopSource = {
+      ...human,
+      sentences: [{ ...human.sentences[0], end_ms: 1000 }],
+    };
+    await act(async () => render(loopSource, true));
+    const repeat = container.querySelector<HTMLSelectElement>(
+      'select[aria-label="Lặp câu"]',
+    )!;
+    await act(async () => {
+      repeat.value = "three";
+      repeat.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    Object.assign(clock, { nowMs: 900, playing: true, state: "playing" });
+    await act(async () => render(loopSource, true));
+    clock.nowMs = 1100;
+    await act(async () => vi.advanceTimersByTimeAsync(110));
+    expect(container.textContent).toContain("1 / 3");
+    expect(actions.saveWatchPosition).not.toHaveBeenCalled();
+    await act(async () => button("Dừng video").click());
+    expect(actions.saveWatchPosition).toHaveBeenCalledTimes(1);
+    await act(async () => vi.advanceTimersByTimeAsync(1000));
+    expect(player.play).toHaveBeenCalledTimes(1);
+    player.pause.mockReset();
+    player.play.mockReset();
+    player.seekToMs.mockReset();
+  });
+  it("never attempts a position write for a guest", async () => {
+    vi.useFakeTimers();
+    Object.assign(clock, { nowMs: 1200, playing: true, state: "playing" });
+    await act(async () => render(human));
+    await act(async () => button("Dừng video").click());
+    await act(async () => vi.advanceTimersByTimeAsync(30_000));
+    expect(actions.saveWatchPosition).not.toHaveBeenCalled();
   });
 });
 

@@ -38,6 +38,21 @@ function loadYouTubeApi(): Promise<void> {
   return apiLoading;
 }
 
+export interface PlayerClock {
+  nowMs: number;
+  durationMs: number;
+  playing: boolean;
+  rate: number;
+  state: "unstarted" | "playing" | "paused" | "buffering" | "ended" | "cued";
+}
+const PLAYER_STATES: Record<number, PlayerClock["state"]> = {
+  [-1]: "unstarted",
+  0: "ended",
+  1: "playing",
+  2: "paused",
+  3: "buffering",
+  5: "cued",
+};
 export interface PlayerControls {
   ready: boolean;
   playing: boolean;
@@ -51,6 +66,9 @@ export interface PlayerControls {
   seekToMs: (ms: number) => void;
   setRate: (rate: number) => void;
   rate: number;
+  state: PlayerClock["state"];
+  availableRates: number[];
+  readClock: () => PlayerClock;
 }
 
 /**
@@ -63,19 +81,24 @@ export function useYouTubePlayer(
 ): { containerRef: React.RefObject<HTMLDivElement | null> } & PlayerControls {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YTPlayer | null>(null);
+  const playerReadyRef = useRef(false);
   const startAtRef = useRef(startAtMs);
-  const [ready, setReady] = useState(false);
+  const [readyVideoId, setReadyVideoId] = useState<string | null>(null);
+  const ready = readyVideoId === videoId;
   const [playing, setPlaying] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [nowMs, setNowMs] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [rate, setRateState] = useState(1);
+  const [state, setState] = useState<PlayerClock["state"]>("unstarted");
+  const [availableRates, setAvailableRates] = useState<number[]>([1]);
 
   useEffect(() => {
     startAtRef.current = startAtMs;
   }, [startAtMs]);
 
   useEffect(() => {
+    playerReadyRef.current = false;
     let cancelled = false;
     let player: YTPlayer | null = null;
     let mountEl: HTMLDivElement | null = null;
@@ -105,8 +128,11 @@ export function useYouTubePlayer(
           events: {
             onReady: (e) => {
               if (cancelled) return;
-              setReady(true);
+              playerReadyRef.current = true;
+              setReadyVideoId(videoId);
               setDurationMs(e.target.getDuration() * 1000);
+              setAvailableRates(e.target.getAvailablePlaybackRates());
+              setRateState(e.target.getPlaybackRate());
               if (startAtRef.current && startAtRef.current > 0) {
                 e.target.seekTo(startAtRef.current / 1000, true);
               }
@@ -114,7 +140,11 @@ export function useYouTubePlayer(
             onStateChange: (e) => {
               if (cancelled || !window.YT) return;
               setPlaying(e.data === window.YT.PlayerState.PLAYING);
+              setState(PLAYER_STATES[e.data] ?? "unstarted");
               setDurationMs(e.target.getDuration() * 1000);
+            },
+            onPlaybackRateChange: (e) => {
+              if (!cancelled) setRateState(e.target.getPlaybackRate());
             },
           },
         });
@@ -127,6 +157,7 @@ export function useYouTubePlayer(
     return () => {
       cancelled = true;
       player?.destroy();
+      playerReadyRef.current = false;
       playerRef.current = null;
       // No-op once YT.Player has replaced mountEl with the iframe; removes
       // the child if the constructor never ran or threw.
@@ -137,25 +168,45 @@ export function useYouTubePlayer(
   useEffect(() => {
     const t = setInterval(() => {
       const p = playerRef.current;
-      if (!p) return;
-      try {
-        setNowMs(p.getCurrentTime() * 1000);
-      } catch {
-        // player not ready yet
-      }
+      if (!p || !playerReadyRef.current) return;
+      setNowMs(p.getCurrentTime() * 1000);
     }, SYNC_INTERVAL_MS);
     return () => clearInterval(t);
   }, []);
 
-  const play = useCallback(() => playerRef.current?.playVideo(), []);
-  const pause = useCallback(() => playerRef.current?.pauseVideo(), []);
+  const play = useCallback(() => {
+    if (playerReadyRef.current) playerRef.current?.playVideo();
+  }, []);
+  const pause = useCallback(() => {
+    if (playerReadyRef.current) playerRef.current?.pauseVideo();
+  }, []);
   const seekToMs = useCallback((ms: number) => {
+    if (!playerReadyRef.current) return;
     playerRef.current?.seekTo(ms / 1000, true);
     setNowMs(ms);
   }, []);
   const setRate = useCallback((r: number) => {
-    playerRef.current?.setPlaybackRate(r);
-    setRateState(r);
+    if (playerReadyRef.current) playerRef.current?.setPlaybackRate(r);
+  }, []);
+  const readClock = useCallback((): PlayerClock => {
+    const p = playerRef.current;
+    // Official IFrame adds clock/transport methods only after onReady.
+    if (!p || !playerReadyRef.current)
+      return {
+        nowMs: 0,
+        durationMs: 0,
+        rate: 1,
+        playing: false,
+        state: "unstarted",
+      };
+    const state = PLAYER_STATES[p.getPlayerState()] ?? "unstarted";
+    return {
+      nowMs: p.getCurrentTime() * 1000,
+      durationMs: p.getDuration() * 1000,
+      rate: p.getPlaybackRate(),
+      playing: state === "playing",
+      state,
+    };
   }, []);
 
   return {
@@ -170,5 +221,8 @@ export function useYouTubePlayer(
     seekToMs,
     setRate,
     rate,
+    state,
+    availableRates,
+    readClock,
   };
 }

@@ -41,6 +41,7 @@ const PLAYER_STUB_SOURCE = `(() => {
     this._cfg = cfg || {};
     this._rate = 1;
     this._state = PlayerState.UNSTARTED;
+    window.__player = this;
     var self = this;
     setTimeout(function () {
       var onReady = self._cfg.events && self._cfg.events.onReady;
@@ -65,7 +66,12 @@ const PLAYER_STUB_SOURCE = `(() => {
   FakePlayer.prototype.getCurrentTime = function () { return window.__t; };
   FakePlayer.prototype.getDuration = function () { return window.__duration; };
   FakePlayer.prototype.getPlayerState = function () { return this._state; };
-  FakePlayer.prototype.setPlaybackRate = function (rate) { this._rate = rate; };
+  FakePlayer.prototype.setPlaybackRate = function (rate) {
+    this._rate = rate;
+    var changed = this._cfg.events && this._cfg.events.onPlaybackRateChange;
+    if (changed) changed({ target: this, data: rate });
+  };
+  FakePlayer.prototype.getAvailablePlaybackRates = function () { return [0.5, 0.75, 1, 1.25]; };
   FakePlayer.prototype.getPlaybackRate = function () { return this._rate; };
   FakePlayer.prototype.destroy = function () { this.el.remove(); };
   window.YT = { Player: FakePlayer, PlayerState: PlayerState };
@@ -100,6 +106,19 @@ async function stubYouTubePlayer(page: Page): Promise<void> {
     }),
   );
   await page.addInitScript({ content: PLAYER_STUB_SOURCE });
+  await page.addInitScript(() => {
+    // Keep fixture translators (plain objects); never activate Chrome's real
+    // native model in a deterministic playback test, regardless of init order.
+    if (
+      typeof (window as unknown as { Translator?: unknown }).Translator ===
+      "function"
+    )
+      Object.defineProperty(window, "Translator", {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+  });
 }
 
 function getSeeks(page: Page): Promise<SeekRecord[]> {
@@ -109,11 +128,30 @@ function getSeeks(page: Page): Promise<SeekRecord[]> {
 }
 
 async function pasteTranscript(page: Page, raw: string): Promise<void> {
+  // SSR paints intake controls before React hydrates. The fake player's onReady
+  // is a client-effect signal, so a reload cannot lose the first click.
+  await expect(
+    page.getByText("Đang tải trình phát", { exact: false }),
+  ).toBeHidden();
   await page.getByRole("button", { name: "Dán hoặc tải phụ đề" }).click();
   await page
     .getByRole("textbox", { name: "Nội dung phụ đề", exact: true })
     .fill(raw);
   await page.getByRole("button", { name: "Dùng phụ đề này" }).click();
+}
+
+/** Upload the large fixture through the same supported parser; avoid measuring
+ * Chromium textarea insertion time as part of the virtual-list regression. */
+async function uploadTranscript(page: Page, raw: string): Promise<void> {
+  await expect(
+    page.getByText("Đang tải trình phát", { exact: false }),
+  ).toBeHidden();
+  await page.getByRole("button", { name: "Dán hoặc tải phụ đề" }).click();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "fixture.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from(raw),
+  });
 }
 
 // Two timed cues → two sentences (i=0: 1.0–3.0s, i=1: 3.5–5.0s).
@@ -220,8 +258,9 @@ test.describe("/watch/[videoId]", () => {
       .poll(() => getSeeks(page))
       .toEqual([{ seconds: 3.5, allowSeekAhead: true }]);
     // Clicked line becomes active (clock now sits inside its cue).
-    await expect(rail.locator('[data-sentence="1"]')).toHaveClass(
-      /bg-\[#f5b50a\]\/10/,
+    await expect(rail.locator('[data-sentence="1"]')).toHaveAttribute(
+      "aria-current",
+      "true",
     );
     // Caption strip under the player mirrors the active sentence.
     await expect(
@@ -249,16 +288,18 @@ test.describe("/watch/[videoId]", () => {
     await expect
       .poll(async () => (await getSeeks(page)).map((s) => s.seconds))
       .toEqual([1, 3.5]);
-    await expect(rail.locator('[data-sentence="1"]')).toHaveClass(
-      /bg-\[#f5b50a\]\/10/,
+    await expect(rail.locator('[data-sentence="1"]')).toHaveAttribute(
+      "aria-current",
+      "true",
     );
 
     await page.keyboard.press("a");
     await expect
       .poll(async () => (await getSeeks(page)).map((s) => s.seconds))
       .toEqual([1, 3.5, 1]);
-    await expect(rail.locator('[data-sentence="0"]')).toHaveClass(
-      /bg-\[#f5b50a\]\/10/,
+    await expect(rail.locator('[data-sentence="0"]')).toHaveAttribute(
+      "aria-current",
+      "true",
     );
 
     // "?" toggles the shortcut help panel.
@@ -407,8 +448,9 @@ test.describe("/watch/[videoId]", () => {
       await page.evaluate(() => {
         (window as unknown as { __t: number }).__t = 0;
       });
-      await expect(rail.locator('[data-sentence="0"]')).toHaveClass(
-        /bg-\[#f5b50a\]\/10/,
+      await expect(rail.locator('[data-sentence="0"]')).toHaveAttribute(
+        "aria-current",
+        "true",
       );
       expect(await rail.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
       await resume.click();
@@ -459,6 +501,11 @@ test.describe("/watch/[videoId]", () => {
     await page.keyboard.press("d");
     expect((await getSeeks(page)).map((s) => s.seconds)).toEqual([1]);
     await page.getByRole("button", { name: "Chế độ đọc" }).click();
+    if (page.viewportSize()!.width < 640) {
+      await page
+        .getByRole("button", { name: "Điều khiển", exact: true })
+        .click();
+    }
     await expect(page.getByText("0:01 / 3:32")).toBeVisible();
     await page.getByRole("button", { name: "Chế độ rạp" }).click();
     await expect(page.getByText("0:01 / 3:32")).toBeVisible();
@@ -666,6 +713,38 @@ test.describe("/watch/[videoId]", () => {
     ).toContainText("Chọn cụm ngắn hơn");
     await expect(panel).toBeHidden();
     expect(await getSeeks(page)).toHaveLength(0);
+
+    // The paste parser accepts long cues, but the canonical segment validator
+    // caps text at 2,000 chars. Preserve the full source instead of crashing or
+    // inventing replay for a rejected segment; valid neighbours still play.
+    const oversized = "word ".repeat(401) + ".";
+    await page.goto(`/watch/${VIDEO_ID}`);
+    await pasteTranscript(
+      page,
+      [
+        "1",
+        "00:00:00,000 --> 00:00:01,000",
+        oversized,
+        "",
+        "2",
+        "00:00:01,000 --> 00:00:02,000",
+        "Still playable.",
+      ].join("\n"),
+    );
+    const oversizedRow = rail.locator('[data-sentence="0"]');
+    await expect(oversizedRow.getByTestId("sentence-text")).toHaveText(
+      oversized,
+    );
+    await expect(
+      oversizedRow.getByRole("button", { name: /^Nghe câu/ }),
+    ).toHaveCount(0);
+    await rail
+      .locator('[data-sentence="1"]')
+      .getByRole("button", { name: "Nghe câu 0:01", exact: true })
+      .click();
+    await expect(
+      page.getByTestId("active-caption").getByTestId("sentence-text"),
+    ).toHaveText("Still playable.");
   });
 
   test("invalid video id renders the 404 page", async ({ page }) => {
@@ -852,26 +931,28 @@ test.describe("free subtitle translation", () => {
     );
     // One DOM snapshot: mobile scroll anchoring can move the page between
     // separate boundingBox calls when asynchronous Vietnamese text arrives.
-    const { bounds, content, controls } = await strip.evaluate((el) => {
-      const rect = (node: Element) => {
-        const box = node.getBoundingClientRect();
-        return { y: box.y, height: box.height };
-      };
-      return {
-        bounds: rect(el),
-        content: rect(el.querySelector(":scope > div")!),
-        controls: rect(
-          document.querySelector('[aria-label="Vị trí phát video"]')!,
-        ),
-      };
-    });
+    const { bounds, content, controls, frame, english } = await strip.evaluate(
+      (el) => {
+        const rect = (node: Element) => {
+          const box = node.getBoundingClientRect();
+          return { y: box.y, height: box.height };
+        };
+        return {
+          bounds: rect(el),
+          content: rect(el.querySelector(":scope > div")!),
+          frame: rect(document.querySelector('[data-testid="video-frame"]')!),
+          english: rect(el.querySelector("[lang=en]")!),
+          controls: rect(
+            document.querySelector('[aria-label="Vị trí phát video"]')!,
+          ),
+        };
+      },
+    );
     expect(content!.y).toBeGreaterThanOrEqual(bounds!.y);
     expect(content!.y + content!.height).toBeLessThanOrEqual(
       bounds!.y + bounds!.height,
     );
     expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(controls!.y);
-    const frame = await page.getByTestId("video-frame").boundingBox();
-    const english = await strip.locator("[lang=en]").boundingBox();
     // Keep the active text near the picture; do not leave a large empty band
     // between the grid's vertically centered video and the caption below it.
     expect(english!.y - frame!.y - frame!.height).toBeLessThanOrEqual(56);
@@ -899,18 +980,19 @@ test.describe("free subtitle translation", () => {
           horizontalOverflow:
             document.documentElement.scrollWidth > window.innerWidth,
           captionScroll: el.scrollHeight > el.clientHeight,
+          captionBottom: box.bottom,
+          sliderTop: document
+            .querySelector('[aria-label="Vị trí phát video"]')!
+            .getBoundingClientRect().top,
         };
       });
-      expect(layout).toEqual({
+      expect(layout).toMatchObject({
         inside: true,
         horizontalOverflow: false,
         captionScroll: false,
       });
-      const caption = await strip.boundingBox();
-      const slider = await page
-        .getByRole("slider", { name: "Vị trí phát video" })
-        .boundingBox();
-      expect(caption!.y + caption!.height).toBeLessThanOrEqual(slider!.y);
+      // One snapshot also covers mobile smooth-scroll/anchor movement.
+      expect(layout.captionBottom).toBeLessThanOrEqual(layout.sliderTop);
       if (page.viewportSize()!.width >= 1024) {
         expect(
           await page.evaluate(
@@ -927,7 +1009,9 @@ test.describe("free subtitle translation", () => {
         english: parseFloat(en.fontSize),
         vietnamese: parseFloat(vi.fontSize),
         lineSpacing: parseFloat(en.lineHeight) / parseFloat(en.fontSize),
-        wordPadding: Array.from(el.querySelectorAll("button")).some((word) => {
+        wordPadding: Array.from(
+          el.querySelectorAll('[data-testid="sentence-text"] button'),
+        ).some((word) => {
           const css = getComputedStyle(word);
           return parseFloat(css.paddingLeft) + parseFloat(css.paddingRight) > 0;
         }),
@@ -1335,5 +1419,273 @@ test.describe("transcript navigation", () => {
       () => document.documentElement.scrollWidth > innerWidth,
     );
     expect(overflow).toBe(false);
+  });
+  test("ATO-WATCH-01 limits 3000 watch rows, finds the last cue, and keeps Read mode complete", async ({
+    page,
+  }) => {
+    await page.goto(`/watch/${VIDEO_ID}`);
+    const source = Array.from(
+      { length: 3000 },
+      (_, i) =>
+        `[${Math.floor(i / 60)}:${String(i % 60).padStart(2, "0")}] Fixture sentence ${i}.`,
+    ).join("\n");
+    await uploadTranscript(page, source);
+    const rail = page.getByTestId("transcript-rail");
+    await expect(page.getByTestId("virtual-transcript")).toBeVisible();
+    await expect
+      .poll(() => rail.locator("[data-sentence]").count())
+      .toBeLessThan(80);
+    await page
+      .getByRole("button", { name: "Tìm trong phụ đề", exact: true })
+      .click();
+    const input = page.getByRole("searchbox", { name: "Tìm câu trong phụ đề" });
+    await input.fill("Fixture sentence 2999");
+    await input.press("Enter");
+    await expect(rail.locator('[data-sentence="2999"]')).toBeInViewport();
+    await expect(input).toBeFocused();
+    expect(await getSeeks(page)).toEqual([]);
+    await expect
+      .poll(() => rail.locator("[data-sentence]").count())
+      .toBeLessThan(80);
+    await input.press("Escape");
+    await page.getByRole("button", { name: "Chế độ đọc", exact: true }).click();
+    await expect(rail.locator("[data-sentence]")).toHaveCount(3000);
+    await expect(rail.locator('[data-sentence="0"]')).toHaveCSS(
+      "content-visibility",
+      "auto",
+    );
+    await expect(page.getByTestId("virtual-transcript")).toHaveCount(0);
+    // Full source text remains in the document for selection and browser Ctrl+F.
+    await expect(rail).toContainText("Fixture sentence 2999.");
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+    ).toBe(false);
+  });
+
+  test("ATO-WATCH-01 pins dictionary return focus while a virtual cue is scrolled away", async ({
+    page,
+  }) => {
+    await page.goto(`/watch/${VIDEO_ID}`);
+    await uploadTranscript(
+      page,
+      Array.from(
+        { length: 3000 },
+        (_, i) =>
+          `[${Math.floor(i / 60)}:${String(i % 60).padStart(2, "0")}] I work here fixture ${i}.`,
+      ).join("\n"),
+    );
+    const rail = page.getByTestId("transcript-rail");
+    await page
+      .getByRole("button", { name: "Tìm trong phụ đề", exact: true })
+      .click();
+    const input = page.getByRole("searchbox", { name: "Tìm câu trong phụ đề" });
+    await input.fill("fixture 1500");
+    await input.press("Enter");
+    const trigger = rail
+      .locator('[data-sentence="1500"]')
+      .getByRole("button", { name: "Tra từ “work”", exact: true });
+    await trigger.click();
+    const panel = page.getByRole("dialog", { name: "Tra từ", exact: true });
+    await expect(panel).toBeVisible();
+    // Simulate a resize/scroll underneath the modal; the original button must survive.
+    await rail.evaluate((element) => {
+      element.scrollTop = 0;
+      window.scrollTo(0, 0);
+    });
+    await expect(trigger).toHaveCount(1);
+    await panel
+      .getByRole("button", { name: "Đóng tra từ", exact: true })
+      .click();
+    await expect(trigger).toBeFocused();
+    await expect
+      .poll(() => rail.locator("[data-sentence]").count())
+      .toBeLessThan(80);
+    expect(await getSeeks(page)).toEqual([]);
+  });
+
+  test("ATO-WATCH-01 keeps a manual reading anchor when a preceding translation arrives late", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const testWindow = window as unknown as {
+        __finishTranslation: () => void;
+        __duration: number;
+      };
+      testWindow.__duration = 1000;
+      Object.defineProperty(window, "Translator", {
+        configurable: true,
+        value: {
+          availability: async () => "available",
+          create: async () => ({
+            destroy() {},
+            translate: (text: string) =>
+              text.includes("Fixture sentence 198.")
+                ? new Promise<string>((resolve) => {
+                    testWindow.__finishTranslation = () =>
+                      resolve(
+                        "Bản dịch fixture dài để kiểm tra thay đổi chiều cao. ".repeat(
+                          12,
+                        ),
+                      );
+                  })
+                : Promise.resolve("Bản dịch fixture."),
+          }),
+        },
+      });
+    });
+    await page.goto(`/watch/${VIDEO_ID}`);
+    await uploadTranscript(
+      page,
+      Array.from(
+        { length: 250 },
+        (_, i) =>
+          `[${Math.floor(i / 60)}:${String(i % 60).padStart(2, "0")}] Fixture sentence ${i}.`,
+      ).join("\n"),
+    );
+    const rail = page.getByTestId("transcript-rail");
+    await page
+      .getByRole("button", { name: "Tìm trong phụ đề", exact: true })
+      .click();
+    const input = page.getByRole("searchbox", { name: "Tìm câu trong phụ đề" });
+    await input.fill("Fixture sentence 198.");
+    await input.press("Enter");
+    await rail
+      .locator('[data-sentence="198"]')
+      .getByRole("button", { name: "Nghe câu 3:18", exact: true })
+      .click();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            typeof (window as unknown as { __finishTranslation: unknown })
+              .__finishTranslation,
+        ),
+      )
+      .toBe("function");
+    await input.fill("Fixture sentence 200.");
+    await input.press("Enter");
+    const anchor = rail.locator('[data-sentence="200"]');
+    await expect(anchor).toBeInViewport();
+    const top = await anchor.evaluate((element) => {
+      // Force the native-scroll/cache race in the same task as translation.
+      // A small manual move must stay authoritative even before its scroll event.
+      const MANUAL_READ_SCROLL_PX = 10;
+      if (matchMedia("(max-width: 1023px)").matches) {
+        window.dispatchEvent(
+          new WheelEvent("wheel", { deltaY: -MANUAL_READ_SCROLL_PX }),
+        );
+        window.scrollTo({
+          top: scrollY - MANUAL_READ_SCROLL_PX,
+          behavior: "instant",
+        });
+      }
+      const position = element.getBoundingClientRect().top;
+      (
+        window as unknown as { __finishTranslation: () => void }
+      ).__finishTranslation();
+      return position;
+    });
+    await expect(
+      rail.locator('[data-sentence="198"]').getByTestId("translated-sentence"),
+    ).toContainText("Bản dịch fixture dài");
+    await expect
+      .poll(async () =>
+        Math.abs(
+          (await anchor.evaluate(
+            (element) => element.getBoundingClientRect().top,
+          )) - top,
+        ),
+      )
+      .toBeLessThan(4);
+    await expect(input).toBeFocused();
+    await expect(
+      page.getByRole("button", { name: "Theo câu đang phát", exact: true }),
+    ).toHaveAttribute("aria-pressed", "false");
+    await expect(
+      page.getByTestId("active-caption").getByTestId("sentence-text"),
+    ).toHaveText("Fixture sentence 198.");
+    expect(await getSeeks(page)).toHaveLength(1);
+  });
+
+  test("ATO-WATCH-01 keeps one cursor across Focus/transcript, counts three turns, and cancels replay on pause", async ({
+    page,
+  }) => {
+    await page.goto(`/watch/${VIDEO_ID}`);
+    await pasteTranscript(
+      page,
+      "1\n00:00:00,000 --> 00:00:01,000\nFirst fixture.\n\n2\n00:00:01,000 --> 00:00:02,000\nNext fixture.",
+    );
+    await page.getByLabel("Lặp câu", { exact: true }).selectOption("three");
+    for (let turn = 1; turn <= 3; turn++) {
+      await page.evaluate(() => {
+        (window as unknown as { __t: number }).__t = 0.9;
+      });
+      await expect(
+        page.getByText("0:00 / 3:32", { exact: true }),
+      ).toBeVisible();
+      await page.waitForTimeout(210); // Allow one adapter clock sample before the overshoot.
+      await page.evaluate(() => {
+        (window as unknown as { __t: number }).__t = 1.1;
+      });
+      await expect(page.getByTestId("repeat-count")).toHaveText(`${turn} / 3`);
+      await expect(
+        page.getByTestId("active-caption").getByTestId("sentence-text"),
+      ).toHaveText("First fixture.");
+      await expect(
+        page.getByTestId("transcript-rail").locator('[aria-current="true"]'),
+      ).toHaveAttribute("data-sentence", "0");
+      if (turn < 3)
+        await expect
+          .poll(async () => (await getSeeks(page)).length)
+          .toBe(turn + 1);
+    }
+    await expect(
+      page.getByRole("button", { name: "Phát video", exact: true }),
+    ).toBeVisible();
+    await page.waitForTimeout(450);
+    expect(await getSeeks(page)).toHaveLength(3);
+    // Retarget resets the count; stopping a gap cannot restart playback.
+    await page
+      .getByLabel("Lặp câu", { exact: true })
+      .selectOption("continuous");
+    await page.evaluate(() => {
+      (window as unknown as { __t: number }).__t = 0.9;
+    });
+    await page.waitForTimeout(210);
+    await page.evaluate(() => {
+      (window as unknown as { __t: number }).__t = 1.1;
+    });
+    await expect(page.getByTestId("repeat-count")).toHaveText("1 lượt");
+    await page.getByRole("button", { name: "Dừng video", exact: true }).click();
+    const count = (await getSeeks(page)).length;
+    await page.waitForTimeout(450);
+    expect(await getSeeks(page)).toHaveLength(count);
+  });
+
+  test("ATO-WATCH-01 uses confirmed speed options, preserves slider state, and restores deep links", async ({
+    page,
+  }) => {
+    await page.goto(`/watch/${VIDEO_ID}?t=3500`);
+    await pasteTranscript(page, SRT);
+    await expect.poll(async () => (await getSeeks(page))[0]?.seconds).toBe(3.5);
+    const speed = page.getByRole("combobox", { name: /^Tốc độ phát/ });
+    await speed.selectOption("0.75");
+    await expect(speed).toHaveAttribute("aria-label", "Tốc độ phát 0.75×");
+    const slider = page.getByRole("slider", { name: "Vị trí phát video" });
+    await slider.fill("1000");
+    await expect(
+      page.getByRole("button", { name: "Phát video", exact: true }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/t=1000/);
+    await slider.focus();
+    const count = (await getSeeks(page)).length;
+    await page.keyboard.press("ArrowRight"); // Native range step, never the global +5s handler.
+    expect((await getSeeks(page)).length).toBeLessThanOrEqual(count + 1);
+    await page.reload();
+    await expect
+      .poll(async () => (await getSeeks(page))[0]?.seconds)
+      .toBeGreaterThanOrEqual(1);
   });
 });

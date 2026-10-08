@@ -1,0 +1,74 @@
+[
+  {
+    "id": "UF8uR6Z6KLc",
+    "t": 24,
+    "label": "before",
+    "initial": {
+      "time": 24,
+      "state": 2,
+      "duration": 905,
+      "rates": [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+    },
+    "captionSource": "Synthetic UI/boundary fixture; actual YouTube media"
+  },
+  {
+    "id": "UF8uR6Z6KLc",
+    "t": 24,
+    "label": "after",
+    "initial": {
+      "time": 24,
+      "state": 2,
+      "duration": 905,
+      "rates": [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+    },
+    "captionSource": "Synthetic UI/boundary fixture; actual YouTube media"
+  },
+  {
+    "id": "dQw4w9WgXcQ",
+    "t": 4,
+    "label": "before",
+    "initial": {
+      "time": 4,
+      "state": 2,
+      "duration": 214,
+      "rates": [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+    },
+    "captionSource": "Synthetic UI/boundary fixture; actual YouTube media"
+  },
+  {
+    "id": "dQw4w9WgXcQ",
+    "t": 4,
+    "label": "after",
+    "initial": {
+      "time": 4,
+      "state": 2,
+      "duration": 214,
+      "rates": [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+    },
+    "captionSource": "Synthetic UI/boundary fixture; actual YouTube media"
+  },
+  {
+    "id": "oyRxhiAC9u8",
+    "t": 64,
+    "label": "before",
+    "initial": {
+      "time": 64,
+      "state": 2,
+      "duration": 1248,
+      "rates": [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+    },
+    "captionSource": "Synthetic UI/boundary fixture; actual YouTube media"
+  },
+  {
+    "id": "oyRxhiAC9u8",
+    "t": 64,
+    "label": "after",
+    "initial": {
+      "time": 64,
+      "state": 2,
+      "duration": 1248,
+      "rates": [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+    },
+    "captionSource": "Synthetic UI/boundary fixture; actual YouTube media"
+  }
+]

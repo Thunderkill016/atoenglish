@@ -209,3 +209,59 @@ export function segmentsToSentences(segments: TranscriptSegment[]): Sentence[] {
     text: s.text,
   }));
 }
+
+/** A playback projection, never a replacement for the original caption rows. */
+export interface PlaybackTimeline {
+  segments: TranscriptSegment[];
+  sentenceById: ReadonlyMap<string, Sentence>;
+  idBySentence: ReadonlyMap<number, string>;
+}
+
+export function buildPlaybackTimeline(
+  sentences: readonly Sentence[],
+): PlaybackTimeline {
+  const valid = sentences.filter(
+    (s) =>
+      s.start_ms != null &&
+      s.end_ms != null &&
+      Number.isFinite(s.start_ms) &&
+      Number.isFinite(s.end_ms) &&
+      s.start_ms >= 0 &&
+      s.end_ms > s.start_ms &&
+      s.text.trim() &&
+      // Canonical validation rejects oversized text. Leave such source rows
+      // readable rather than throwing during the watch render or truncating them.
+      s.text.trim().length <= SEGMENT_TEXT_MAX,
+  );
+  const segments = valid.length
+    ? normalizeSegments(sentencesToSegments(valid))
+    : [];
+  const source = new Map(valid.map((s) => [`seg-${s.i}`, s]));
+  const sentenceById = new Map<string, Sentence>();
+  const idBySentence = new Map<number, string>();
+  for (const segment of segments) {
+    const sentence = source.get(segment.id);
+    if (!sentence) continue;
+    sentenceById.set(segment.id, sentence);
+    idBySentence.set(sentence.i, segment.id);
+  }
+  return { segments, sentenceById, idBySentence };
+}
+
+/** Last begun cue stays readable in a caption gap; boundaries use endMs separately. */
+export function segmentAtTime(
+  segments: readonly TranscriptSegment[],
+  ms: number,
+): string | null {
+  let low = 0;
+  let high = segments.length - 1;
+  let found = -1;
+  while (low <= high) {
+    const middle = (low + high) >>> 1;
+    if (segments[middle].startMs <= ms) {
+      found = middle;
+      low = middle + 1;
+    } else high = middle - 1;
+  }
+  return found < 0 ? null : segments[found].id;
+}

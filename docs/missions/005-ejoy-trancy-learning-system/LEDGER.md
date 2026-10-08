@@ -559,3 +559,196 @@ legitimately untokenized.
 Validation: prettier, eslint, tsc (stale `.next/types` from the concurrent
 deploy regenerated clean), 321/321 unit tests, production build. Deployed
 in the same push as the `?t=` deep-link change.
+
+## ATO-WATCH-01 — sentence playback controller — 07/10/2026
+
+Owner approved the ATO-WATCH-01 contract in TASK_CONTRACT.md. Work began as a
+stacked change from draft #235 (`docs/005-ejoy-trancy-system`), initially verified
+at `8b0b88079d460a63b69ee309342a900497146781`, then updated to `394d8028`.
+On 08/10, #235 was verified merged at main `5f263ce54fb330fbced2a484cd65d329bcc558a8`
+(head `b3c000065f95530a77c18f050559b0dd471b63d6`). The unpublished slice was
+rebased onto that main commit, so the next draft targets main and contains only
+ATO-WATCH-01. Baseline Android, server fallback and persisted translation-cache
+changes remain intact and are outside this diff. The original checkout and
+uncommitted work remain preserved. No merge or deployment of this slice.
+
+### Implementation
+
+- One sentence controller supplies the active segment ID to Focus Sentence,
+  transcript, existing dictionary/vocabulary and translation. Normalization
+  orders playable cues and resolves overlaps while preserving original Sentence
+  references, text, Vietnamese, provenance and word timings. Untimed text remains
+  readable without invented replay controls.
+- Repeat locks the cue boundary before playback. One bounded replay, three total
+  turns or continuous repeat use 400ms gaps. Manual/native pause and dictionary
+  cancel the next turn; free seek exits repeat. Buffering/rate changes recheck the
+  actual clock. Auto-pause holds the cue and Play continues to the next one.
+- Official YouTube IFrame stays mounted across watch/Read. Transport/clock calls
+  wait for onReady, which a real-video test exposed as necessary: the constructor
+  initially returns a partial object. Speed displays the confirmed native value.
+- Focus controls sit below the complete bilingual text, keeping English near the
+  picture. Transcript search/read position is separate from playback/follow.
+- More than 200 watch cues use TanStack Virtual 3.14.13, dynamic measurement,
+  overscan eight, stable cue keys and pinned dictionary/focus rows. Desktop uses
+  the rail; mobile uses document scrolling. Read keeps all 3,000 fixture rows for
+  copy and browser Find. Late translations compensate row/stage height changes.
+- Translation prioritizes active, next five and previous two cues. Device tasks
+  serialize and background work yields to a new selection; server requests stay
+  near playback. Existing Vietnamese/cache/provenance win. Background rendering
+  is throttled and the last completed cache update is flushed.
+- Account position writes every 15 seconds of listening and on a deliberate
+  pause/completed finite session, never each repeat gap. Server acknowledgments
+  distinguish missing records and errors. Deep-link time still wins restoration;
+  guests gain no database writes or new sync/schema.
+
+### Verification and evidence boundary — 07/10/2026 (before rebase)
+
+- Formatter: cached Prettier 3.6.2; diff whitespace and source-of-truth checks pass.
+- Unit: 36 files, 389 tests pass; typecheck (`tsc --noEmit`) passes.
+- Lint: zero errors, one disclosed React Compiler/TanStack Virtual warning. The
+  rail opts out of compiler memoization because its virtualizer instance is mutable.
+- Browser: the complete 150-case guest fixture matrix yielded 149 passes and one
+  mobile geometry-measurement failure. The failing assertion sampled caption and
+  slider at separate scrolling frames, comparing coordinates from different times.
+  An atomic DOM snapshot preserves all overlap/readability/spacing constraints;
+  the corrected caption test passes at all five viewports (5/5). Together, every
+  one of the 150 case/viewport combinations has passing coverage on the pre-rebase
+  implementation. No overlap/readability or timing threshold was relaxed.
+- Viewports: desktop 1854×950, short desktop 1440×640, tablet 1024×768, mobile
+  393×851 and 320×720. The five new ATO-WATCH-01 cases each pass at all five sizes.
+  Real-media runs used an isolated Chrome profile; fixture runs used the same
+  browser executable, local test servers with loopback stub data/auth and no auth global setup.
+- Next production build and vinext/Cloudflare bundle build both pass on the
+  pre-rebase implementation. vinext reports its existing bundle-splitting and
+  static route-classification limitations; neither build deployed anything.
+
+Real YouTube media was tested through the official API using synthetic two-second
+boundary cues, **not** the video's authentic caption timing. Vietnamese in the
+comparison images is deliberately labelled fixture output. These tests establish
+transport/clock behavior, not provider translation quality or learning outcomes.
+
+| Video                          | Start / locked end | Observed paused endpoints | Final             |
+| ------------------------------ | ------------------ | ------------------------- | ----------------- |
+| Steve Jobs `UF8uR6Z6KLc`       | 24 / 26 s          | 26.163–26.256 s           | third turn paused |
+| Short video `dQw4w9WgXcQ`      | 4 / 6 s            | 6.093–6.133 s             | third turn paused |
+| Trancy reference `oyRxhiAC9u8` | 64 / 66 s          | 66.077–66.111 s           | third turn paused |
+
+Sampling was every 200ms on a loaded local machine; paused observations can miss
+a short gap. Maximum measured overshoot was approximately 256ms in these runs.
+The trace contains buffering and confirms three turns end paused. It does not
+prove sample-accurate audio cuts. **Human listening at authentic cue boundaries
+remains an external review gate**, including keyframe/seek behavior and low-power
+or background-tab devices. Native iframe scrubs below the controller's 1,000ms
+clock-discontinuity threshold cannot be distinguished reliably without a seek
+notification; the app slider and five-second keys always use explicit seek.
+
+Paired screenshots are at the same paused timestamps, 1854 × 950, before the
+slice at `8b0b8807` and after its implementation. They use real media with synthetic
+caption/translation fixtures, not an authenticated Trancy inspection:
+
+- Steve Jobs: [before](evidence/ato-watch-01/UF8uR6Z6KLc-before.png),
+  [after](evidence/ato-watch-01/UF8uR6Z6KLc-after.png), 0:24.
+- Short video: [before](evidence/ato-watch-01/dQw4w9WgXcQ-before.png),
+  [after](evidence/ato-watch-01/dQw4w9WgXcQ-after.png), 0:04.
+- Reference video: [before](evidence/ato-watch-01/oyRxhiAC9u8-before.png),
+  [after](evidence/ato-watch-01/oyRxhiAC9u8-after.png), 1:04.
+- [Real-clock trace](evidence/ato-watch-01/real-clock-and-fixture-labels.json)
+  and [paired-image clock/provenance](evidence/ato-watch-01/paired-layout-clocks.json).
+
+Fixture/browser servers use loopback stub data/auth, disable provider credentials
+and block caption server-action POSTs during real-media comparisons. No production
+DB was written. Browser/provider fixtures are not production extension validation;
+the owner's earlier report that automatic English/Vietnamese appeared is separate.
+No dictation, shadowing, tutor, new dictionary, scoring or whole-page redesign.
+
+### Base reconciliation — 08/10/2026
+
+The merged baseline adds the Android ML Kit bridge and automatic free server
+fallback/cache. The near-cue priority and device background scheduler now use the
+resolved provider: device/shell may finish the remainder, while server stays
+within active → next five → previous two. A priority abort is checked before
+provider failure handling and never causes an unintended server step-down.
+Shell calls serialize even after cancellation: the bridge cannot cancel native
+work, so its eventual callback releases the barrier before another native call.
+Cancelled results cannot update the current transcript. Native-device latency
+and missing native callbacks remain a physical-device review limitation; the
+new shell test is a bridge fixture, not an Android runtime pass.
+
+Intake edge case: the subtitle parser can accept a single timed cue above the
+existing canonical 2,000-character limit. The playback projection now excludes
+that rejected segment without throwing or truncating its source text. It remains
+fully readable/lookup-capable in the transcript; valid neighbours still play.
+The canonical limit and storage schema are unchanged. Unit and an expanded
+browser regression cover this read-only recovery.
+
+Type generation recovery: Next and vinext both generate route types in `.next`.
+Running `tsc` immediately after vinext can read Next's validator with vinext's
+route exports (TS2305). Regenerate with `next typegen`, then run `tsc --noEmit`;
+this uses generated types without suppressing diagnostics or hand-editing cache.
+
+Post-rebase unit coverage: 36 files, **410/410 tests pass**, including server
+fallback/parked pending states from the baseline and the new priority/native
+serialization regression. Typecheck and source-of-truth checks pass; lint has
+zero errors and the same single TanStack Virtual warning. Browser/build rerun
+results are recorded below after completion.
+
+### Mobile reading correction — 08/10/2026
+
+The integrated browser run initially passed 148/150 cases. Both remaining cases
+were real late-translation anchor drift on 393/320px, not weaker readability
+thresholds. Frame traces identified two writes: row resize compensation used a
+cached scroll offset before a native scroll event; pending measured-search
+reconciliation could then restore the old reading target. Relative compensation
+now starts from the actual window position. Manual wheel/touch/page-key gestures
+disable pending absolute navigation until the next explicit search/follow command.
+No library internals are modified.
+
+The regression triggers a manual gesture/native scroll and releases the gated
+translation in the same DOM task, keeping the under-4px anchor tolerance. All
+five viewports pass the focused regression (5/5), including 320px. An intermediate
+full run was intentionally interrupted when this source changed; it is not final
+coverage. The complete final-source matrix and build results follow below.
+
+Control Tower reconciliation: existing PRODUCT TRUTH / CURRENT STATE were read
+and found to retain 07/10 PR #235-open/WIP references. GitHub confirms #235
+merged at `5f263ce54fb330fbced2a484cd65d329bcc558a8`. Plate tools became
+unavailable before the final state write; no board update is claimed. The draft
+PR and this ledger are the exact handoff references for the pending mirror.
+
+### Full-source browser follow-up — 08/10/2026
+
+At `e3e0e085`, the two-worker matrix completed with 147/150 passes. Three
+30-second total test-budget timeouts occurred in tablet manual-search/Read and
+tablet/mobile 3,000-cue full Read rendering. Single-worker diagnosis passed
+manual-search on desktop, short desktop, tablet and mobile, but 3,000-cue Read
+still exceeded the budget on tablet/mobile. Reducing workers alone was not a fix.
+The failing point was full-DOM Read rendering/count verification, after watch's
+bounded rows and last-cue search had succeeded.
+
+Read rows now retain their complete text, buttons and paired translations in the
+DOM while `content-visibility: auto` defers offscreen layout/paint. The intrinsic
+size reuses the existing named row estimate; it does not truncate or virtualize
+Read content. The 3,000-cue regression also checks this browser rendering contract.
+The tablet diagnosis passes at the unchanged 30-second budget. All affected
+Read/search/follow/anchor cases are rerun across five sizes on `65d8c3fb`; final
+results follow below. No assertion or test timeout was relaxed.
+
+Final browser coverage on `65d8c3fb`: **30/30 affected Read/search/follow/anchor
+cases pass** across all five viewports, single worker, unchanged 30-second test
+budget and unchanged behavior/geometry assertions. These include all three
+previous timeout combinations. The 3,000-cue Read cases complete in 6.9s on
+tablet, 9.5s on 393px and 9.3s on 320px in this run (machine-specific timings,
+not a performance guarantee). Combined with the preceding 147-pass matrix,
+every one of the 150 case/viewport combinations has passing coverage; this is
+not represented as one uninterrupted 150/150 run. Final Read rows are all in the
+DOM; copy/search source text, bounded watch DOM, dictionary return and under-4px
+late-translation anchor checks remain intact.
+
+Final checks on production source `65d8c3fb`: Vitest **36 files, 410/410 pass**;
+ESLint **zero errors, one disclosed TanStack Virtual/React Compiler warning**;
+Next production build and vinext/Cloudflare bundle build both pass. Builds use
+credentials-disabled local environments and do not deploy. vinext retains its
+bundle-splitting/static-route-classification warnings. After both builds, Next
+route types are regenerated with `next typegen` before the final `tsc --noEmit`.
+Formatter, whitespace and source-of-truth checks are rerun for the handoff.
+The only remaining worktree changes are these evidence notes, not source.
