@@ -19,19 +19,217 @@ import type { Json3Event, Sentence, SentenceWord } from "./types";
 
 /**
  * Bump on every rule change — stored in `content_transcripts.segmentation_version`.
+ * v3: unpunctuated run-ons (ASR output, lyric tracks) now split at
+ * capital-letter sentence boundaries instead of growing into blob sentences.
  */
-export const SEGMENTATION_VERSION = 2;
+export const SEGMENTATION_VERSION = 3;
+
+/**
+ * True when a persisted YouTube transcript was segmented under older rules.
+ * YouTube rows are refetchable, so readers may attempt an upgrade instead
+ * of serving blob sentences forever; learner-authored origins have no
+ * upstream and are never stale.
+ */
+export function isStaleSegmentation(
+  origin: string,
+  version: number | undefined,
+): boolean {
+  return (
+    (origin === "youtube_manual" || origin === "youtube_asr") &&
+    (version ?? 0) < SEGMENTATION_VERSION
+  );
+}
 
 /** Estimated duration of the stream-final word when no next offset exists. */
 export const WORD_END_ESTIMATE_MS = 200;
 /** Silence at a word boundary that forces a sentence break. Starting value — tune on fixtures. */
 export const SILENCE_SPLIT_MS = 700;
+/**
+ * Word-start gap that lets a *non-starter* capitalized word open a new
+ * sentence on `asr` tracks — the pause marks the boundary YouTube's casing
+ * alone can't prove.
+ */
+export const CAPITAL_GAP_SPLIT_MS = 400;
+/**
+ * Merged cue blobs longer than this get rescanned for capital-letter
+ * boundaries; short fragments stay untouched.
+ */
+export const RUNON_SPLIT_MIN_WORDS = 8;
 /** Hard caps for `asr` sentences. Starting values — tune on fixtures. */
 export const ASR_MAX_WORDS = 25;
 export const ASR_MAX_DURATION_MS = 12_000;
 /** Hard caps for merged manual cues. */
 export const CUE_MAX_WORDS = 40;
 export const CUE_MAX_DURATION_MS = 12_000;
+
+/**
+ * Function/discourse words that commonly open sentences and are almost
+ * never capitalized mid-sentence (Trancy-style run-on splitting needs no
+ * punctuation — YouTube ASR already capitalizes sentence-initial words).
+ * Proper-noun starters like "Drinking" deliberately stay out: without a
+ * timing gap they can't be told apart from names ("New York").
+ */
+const SENTENCE_STARTERS = new Set([
+  "and",
+  "but",
+  "or",
+  "so",
+  "yet",
+  "nor",
+  "if",
+  "when",
+  "while",
+  "because",
+  "cause",
+  "though",
+  "although",
+  "until",
+  "unless",
+  "what",
+  "who",
+  "where",
+  "why",
+  "how",
+  "which",
+  "whose",
+  "there",
+  "here",
+  "now",
+  "then",
+  "well",
+  "yes",
+  "yeah",
+  "no",
+  "oh",
+  "hey",
+  "ok",
+  "okay",
+  "right",
+  "alright",
+  "look",
+  "listen",
+  "see",
+  "come",
+  "let",
+  "do",
+  "does",
+  "did",
+  "don't",
+  "doesn't",
+  "didn't",
+  "can",
+  "can't",
+  "could",
+  "will",
+  "won't",
+  "would",
+  "should",
+  "shall",
+  "must",
+  "might",
+  "may",
+  "is",
+  "isn't",
+  "are",
+  "aren't",
+  "was",
+  "wasn't",
+  "were",
+  "weren't",
+  "this",
+  "that",
+  "these",
+  "those",
+  "it",
+  "its",
+  "he",
+  "she",
+  "they",
+  "we",
+  "you",
+  "your",
+  "my",
+  "our",
+  "his",
+  "her",
+  "their",
+  "me",
+  "us",
+  "him",
+  "them",
+  "the",
+  "a",
+  "an",
+  "it's",
+  "he's",
+  "she's",
+  "that's",
+  "there's",
+  "here's",
+  "we're",
+  "we've",
+  "they're",
+  "they've",
+  "you're",
+  "you've",
+  "let's",
+  "ain't",
+  "am",
+  "in",
+  "on",
+  "at",
+  "for",
+  "with",
+  "from",
+  "by",
+  "to",
+  "about",
+  "after",
+  "before",
+  "into",
+  "over",
+  "under",
+  "out",
+  "up",
+  "down",
+  "off",
+  "all",
+  "every",
+  "some",
+  "any",
+  "everyone",
+  "everybody",
+  "someone",
+  "somebody",
+  "nobody",
+  "anyone",
+  "one",
+  "once",
+  "just",
+  "like",
+  "baby",
+]);
+
+/** Always-capitalized words that carry no boundary signal at all. */
+const NEVER_SENTENCE_START = new Set(["i", "i'm", "i'll", "i'd", "i've"]);
+
+/** Strip leading/trailing punctuation and lowercase for word matching. */
+function normWord(w: string): string {
+  return w.replace(/^["'“‘(\[♪🎵]+|["'”’)\].,!?:;♪🎵]+$/g, "").toLowerCase();
+}
+
+/**
+ * True when `cur` starts a likely new sentence after `prev`: the next word
+ * is capitalized (after any opening quotes) while the previous word ends in
+ * a lowercase letter — the casing boundary YouTube ASR leaves at sentence
+ * starts. Never fires on "I"-family words.
+ */
+function isCapitalBoundary(cur: string, prev: string): boolean {
+  const c = cur.replace(/^["'“‘(\[♪🎵\s]+/, "");
+  const p = prev.replace(/["'”’)\].,!?:;♪🎵\s]+$/, "");
+  if (!/^[A-Z]/.test(c) || !/[a-z]$/.test(p)) return false;
+  return !NEVER_SENTENCE_START.has(normWord(c));
+}
 
 const TERMINAL_PUNCT_RE = /[.!?]["'”’)\]]*\s*$/;
 
@@ -67,7 +265,9 @@ function asrWordStream(events: Json3Event[]): StreamWord[] {
   for (const event of events) {
     if (event.aAppend || !event.segs) continue;
     const eventEndMs =
-      event.dDurationMs != null ? event.tStartMs + event.dDurationMs : undefined;
+      event.dDurationMs != null
+        ? event.tStartMs + event.dDurationMs
+        : undefined;
     const usable = event.segs.filter((seg) => cleanText(seg.utf8) !== "");
     usable.forEach((seg, idx) => {
       const text = cleanText(seg.utf8);
@@ -91,7 +291,11 @@ function asrWordStream(events: Json3Event[]): StreamWord[] {
       // Event-final segs use the spec formula; mid-event words end where the
       // next word starts.
       w.end_ms = w.eventFinal
-        ? Math.max(w.start_ms + WORD_END_ESTIMATE_MS, w.eventEndMs ?? 0, next.start_ms)
+        ? Math.max(
+            w.start_ms + WORD_END_ESTIMATE_MS,
+            w.eventEndMs ?? 0,
+            next.start_ms,
+          )
         : next.start_ms;
     } else {
       w.end_ms = w.eventEndMs
@@ -139,7 +343,13 @@ export function segmentAsrEvents(events: Json3Event[]): Sentence[] {
       const tooLong =
         cur.length >= ASR_MAX_WORDS ||
         w.start_ms - cur[0].start_ms >= ASR_MAX_DURATION_MS;
-      if (pendingSplit || gapMs >= SILENCE_SPLIT_MS || tooLong) {
+      // YouTube ASR capitalizes sentence-initial words; on unpunctuated
+      // streams a starter word (or any capital after a pause) is the only
+      // boundary signal that keeps sentences Trancy-sized instead of blobs.
+      const capBoundary =
+        isCapitalBoundary(w.w, prev.w) &&
+        (SENTENCE_STARTERS.has(normWord(w.w)) || gapMs >= CAPITAL_GAP_SPLIT_MS);
+      if (pendingSplit || gapMs >= SILENCE_SPLIT_MS || tooLong || capBoundary) {
         flush(w.start_ms);
       }
     }
@@ -173,9 +383,46 @@ const NOTE_WRAPPED_NOISE_RE =
   /^[♪🎵🎶\s]*(?:music|instrumental|applause|laughter|cheering)[♪🎵🎶\s]*$/i;
 
 /**
+ * Post-split a merged blob that ran past `RUNON_SPLIT_MIN_WORDS` without a
+ * terminal-punctuation flush: cut before starter words the source
+ * capitalized (lyric/manual cues carry casing but no dots, and one cue can
+ * hold several sentences — "...lover So the bar..."). Timing is
+ * interpolated linearly by word share; cue rows have no per-word timing.
+ */
+function splitRunOn(s: Omit<Sentence, "i">): Omit<Sentence, "i">[] {
+  if (s.noise || s.start_ms == null || s.end_ms == null) return [s];
+  const tokens = s.text.split(" ");
+  if (tokens.length <= RUNON_SPLIT_MIN_WORDS) return [s];
+  const cuts: number[] = [];
+  for (let t = 1; t < tokens.length; t++) {
+    if (
+      isCapitalBoundary(tokens[t], tokens[t - 1]) &&
+      SENTENCE_STARTERS.has(normWord(tokens[t]))
+    ) {
+      cuts.push(t);
+    }
+  }
+  if (cuts.length === 0) return [s];
+  const span = s.end_ms - s.start_ms;
+  const out: Omit<Sentence, "i">[] = [];
+  let prev = 0;
+  for (const cut of [...cuts, tokens.length]) {
+    out.push({
+      ...s,
+      start_ms: Math.round(s.start_ms + (prev / tokens.length) * span),
+      end_ms: Math.round(s.start_ms + (cut / tokens.length) * span),
+      text: tokens.slice(prev, cut).join(" "),
+    });
+    prev = cut;
+  }
+  return out;
+}
+
+/**
  * Segment uploader-authored cues (manual `json3` events or parsed
  * .srt/.vtt): merge consecutive cues until the accumulated text ends with
  * terminal punctuation, capped at CUE_MAX_WORDS / CUE_MAX_DURATION_MS.
+ * Run-on blobs are then post-split at capital-letter boundaries.
  * Music-only cues stay visible but are flagged `noise` (excluded from practice).
  */
 export function segmentCues(cues: Cue[]): Sentence[] {
@@ -184,10 +431,14 @@ export function segmentCues(cues: Cue[]): Sentence[] {
   let endMs: number | null = null;
   let parts: string[] = [];
 
+  const emit = (s: Omit<Sentence, "i">) => {
+    for (const sub of splitRunOn(s)) {
+      sentences.push({ ...sub, i: sentences.length });
+    }
+  };
   const flush = () => {
     if (startMs == null || parts.length === 0) return;
-    sentences.push({
-      i: sentences.length,
+    emit({
       start_ms: startMs,
       end_ms: endMs,
       text: parts.join(" "),
@@ -207,8 +458,7 @@ export function segmentCues(cues: Cue[]): Sentence[] {
       NOTE_WRAPPED_NOISE_RE.test(rawText)
     ) {
       flush();
-      sentences.push({
-        i: sentences.length,
+      emit({
         start_ms: cue.start_ms,
         end_ms: cue.end_ms,
         text: rawText,
@@ -240,7 +490,10 @@ export function cuesFromJson3(events: Json3Event[]): Cue[] {
   const cues: Cue[] = [];
   for (const event of events) {
     if (event.aAppend || !event.segs) continue;
-    const text = event.segs.map((s) => s.utf8).join("").replace(/\n/g, " ");
+    const text = event.segs
+      .map((s) => s.utf8)
+      .join("")
+      .replace(/\n/g, " ");
     if (cleanText(text) === "") continue;
     cues.push({
       start_ms: event.tStartMs,
@@ -264,7 +517,12 @@ export function segmentPlainText(text: string): Sentence[] {
   for (const part of parts) {
     const t = part.trim();
     if (!t) continue;
-    sentences.push({ i: sentences.length, start_ms: null, end_ms: null, text: t });
+    sentences.push({
+      i: sentences.length,
+      start_ms: null,
+      end_ms: null,
+      text: t,
+    });
   }
   return sentences;
 }

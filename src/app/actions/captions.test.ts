@@ -21,6 +21,7 @@ import {
   saveLearnerTranscript,
   saveWatchPosition,
 } from "./captions";
+import { SEGMENTATION_VERSION } from "@/lib/video/segment";
 
 // ─── Hoisted test doubles ────────────────────────────────────────────────────
 // Everything the vi.mock factories share must exist before they run.
@@ -238,7 +239,7 @@ function stubWritableDb() {
 }
 
 /** A stored transcript already exists for USER + VIDEO_ID. */
-function stubStoredTranscript() {
+function stubStoredTranscript(segmentationVersion = SEGMENTATION_VERSION) {
   h.tableHandlers.set("content_sources", (steps) =>
     steps.some((s) => s.method === "select")
       ? {
@@ -257,6 +258,7 @@ function stubStoredTranscript() {
       origin: "youtube_manual",
       language: "en",
       sentences: STORED_SENTENCES,
+      segmentation_version: segmentationVersion,
     },
     error: null,
   }));
@@ -380,6 +382,93 @@ describe("fetchVideoCaptions", () => {
     expect(h.fetchYoutubeCaptions).not.toHaveBeenCalled();
     expect(callsFor("content_sources", "upsert")).toEqual([]);
     expect(callsFor("content_transcripts", "upsert")).toEqual([]);
+  });
+
+  it("logged-in: a stale stored transcript triggers a refetch and returns the upgrade", async () => {
+    asLoggedIn();
+    stubStoredTranscript(SEGMENTATION_VERSION - 1);
+
+    const res = await fetchVideoCaptions(VIDEO_ID);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+
+    expect(h.fetchYoutubeCaptions).toHaveBeenCalledTimes(1);
+    // The freshly segmented transcript replaces the blob-era copy.
+    expect(res.stale).toBeUndefined();
+    expect(res.sentences[0].text).toBe(
+      "Never gonna give you up, never gonna let you down.",
+    );
+    expect(callsFor("content_transcripts", "upsert")).toHaveLength(1);
+  });
+
+  it("logged-in: upstream failure while upgrading still serves the stale copy", async () => {
+    asLoggedIn();
+    stubStoredTranscript(SEGMENTATION_VERSION - 1);
+    h.fetchYoutubeCaptions.mockResolvedValue({ ok: false, error: "blocked" });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const res = await fetchVideoCaptions(VIDEO_ID);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.stale).toBe(true);
+    expect(res.sentences).toEqual(STORED_SENTENCES);
+    expect(res.title).toBe("Stored T");
+    // The failed upgrade is still logged — silent degradation hides drift.
+    expect(warn).toHaveBeenCalledWith(
+      "caption_fetch_failed",
+      expect.objectContaining({ videoId: VIDEO_ID }),
+    );
+    warn.mockRestore();
+  });
+
+  it("logged-in: a fresh shared row beats a stale private copy without refetching", async () => {
+    asLoggedIn();
+    stubStoredTranscript(SEGMENTATION_VERSION - 1);
+    h.tableHandlers.set("shared_transcripts", () => ({
+      data: {
+        origin: "youtube_manual",
+        language: "en",
+        sentences: STORED_SENTENCES,
+        segmentation_version: SEGMENTATION_VERSION,
+        title: "Shared T",
+        channel: "Shared C",
+        duration_ms: 60_000,
+      },
+      error: null,
+    }));
+
+    const res = await fetchVideoCaptions(VIDEO_ID);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(h.fetchYoutubeCaptions).not.toHaveBeenCalled();
+    expect(res.title).toBe("Shared T");
+  });
+
+  it("guest: a stale shared row refetches, and failure still serves it", async () => {
+    h.tableHandlers.set("shared_transcripts", () => ({
+      data: {
+        origin: "youtube_asr",
+        language: "en",
+        sentences: STORED_SENTENCES,
+        segmentation_version: SEGMENTATION_VERSION - 1,
+      },
+      error: null,
+    }));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    h.fetchYoutubeCaptions.mockResolvedValue(CAPTIONS_OK);
+    const upgraded = await fetchVideoCaptions(VIDEO_ID);
+    expect(h.fetchYoutubeCaptions).toHaveBeenCalledTimes(1);
+    expect(upgraded.ok && upgraded.stale).toBeFalsy();
+
+    h.fetchYoutubeCaptions.mockResolvedValue({ ok: false, error: "blocked" });
+    const degraded = await fetchVideoCaptions(VIDEO_ID);
+    expect(degraded.ok).toBe(true);
+    if (degraded.ok) {
+      expect(degraded.stale).toBe(true);
+      expect(degraded.sentences).toEqual(STORED_SENTENCES);
+    }
+    warn.mockRestore();
   });
 
   it.each([
@@ -619,7 +708,7 @@ describe("caption cache and provenance", () => {
         origin: "youtube_manual",
         language: "en",
         sentences: STORED_SENTENCES,
-        segmentation_version: 1,
+        segmentation_version: SEGMENTATION_VERSION,
         title: "Shared title",
       },
       error: null,

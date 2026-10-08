@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SEGMENTATION_VERSION } from "./segment";
 import { resolveTranscript, type TranscriptStore } from "./transcript-resolver";
 
 const VIDEO = "abcdefghijk";
@@ -46,7 +47,7 @@ const ACCOUNT_ROW = {
   origin: "youtube_manual",
   language: "en",
   sentences: SENTENCES,
-  segmentation_version: 3,
+  segmentation_version: SEGMENTATION_VERSION,
 };
 
 const LIBRARY_ROW = {
@@ -54,7 +55,7 @@ const LIBRARY_ROW = {
   origin: "youtube_asr",
   language: "en",
   sentences: SENTENCES,
-  segmentation_version: 3,
+  segmentation_version: SEGMENTATION_VERSION,
   title: "Shared",
   channel: "Ch",
   duration_ms: 60000,
@@ -146,5 +147,41 @@ describe("resolveTranscript", () => {
     });
     const r = await resolveTranscript(store, VIDEO, null);
     expect(r.status).toBe("not_available");
+  });
+
+  it("marks YouTube rows segmented under older rules as stale", async () => {
+    const store = fakeStore({
+      content_sources: [SOURCE],
+      content_transcripts: [
+        { ...ACCOUNT_ROW, segmentation_version: SEGMENTATION_VERSION - 1 },
+      ],
+    });
+    const r = await resolveTranscript(store, VIDEO, "u1");
+    expect(r.status).toBe("found");
+    if (r.status === "found") expect(r.transcript.stale).toBe(true);
+  });
+
+  it("does not flag current-version or learner-authored rows", async () => {
+    const fresh = await resolveTranscript(
+      fakeStore({
+        content_sources: [SOURCE],
+        content_transcripts: [ACCOUNT_ROW],
+      }),
+      VIDEO,
+      "u1",
+    );
+    expect(fresh.status === "found" && fresh.transcript.stale).toBeFalsy();
+    // Learner uploads carry no upstream — an old version is not refetchable.
+    const learner = await resolveTranscript(
+      fakeStore({
+        content_sources: [SOURCE],
+        content_transcripts: [
+          { ...ACCOUNT_ROW, origin: "learner_upload", segmentation_version: 1 },
+        ],
+      }),
+      VIDEO,
+      "u1",
+    );
+    expect(learner.status === "found" && learner.transcript.stale).toBeFalsy();
   });
 });
