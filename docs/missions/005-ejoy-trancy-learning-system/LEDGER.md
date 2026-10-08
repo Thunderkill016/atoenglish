@@ -601,7 +601,7 @@ uncommitted work remain preserved. No merge or deployment of this slice.
   distinguish missing records and errors. Deep-link time still wins restoration;
   guests gain no database writes or new sync/schema.
 
-### Verification and evidence boundary
+### Verification and evidence boundary — 07/10/2026 (before rebase)
 
 - Formatter: cached Prettier 3.6.2; diff whitespace and source-of-truth checks pass.
 - Unit: 36 files, 389 tests pass; typecheck (`tsc --noEmit`) passes.
@@ -612,14 +612,14 @@ uncommitted work remain preserved. No merge or deployment of this slice.
   slider at separate scrolling frames, comparing coordinates from different times.
   An atomic DOM snapshot preserves all overlap/readability/spacing constraints;
   the corrected caption test passes at all five viewports (5/5). Together, every
-  one of the 150 case/viewport combinations has passing coverage on the final
-  production source. No overlap/readability or timing threshold was relaxed.
+  one of the 150 case/viewport combinations has passing coverage on the pre-rebase
+  implementation. No overlap/readability or timing threshold was relaxed.
 - Viewports: desktop 1854×950, short desktop 1440×640, tablet 1024×768, mobile
   393×851 and 320×720. The five new ATO-WATCH-01 cases each pass at all five sizes.
   Real-media runs used an isolated Chrome profile; fixture runs used the same
   browser executable, local test servers with loopback stub data/auth and no auth global setup.
 - Next production build and vinext/Cloudflare bundle build both pass on the
-  final production source. vinext reports its existing bundle-splitting and
+  pre-rebase implementation. vinext reports its existing bundle-splitting and
   static route-classification limitations; neither build deployed anything.
 
 Real YouTube media was tested through the official API using synthetic two-second
@@ -691,3 +691,64 @@ fallback/parked pending states from the baseline and the new priority/native
 serialization regression. Typecheck and source-of-truth checks pass; lint has
 zero errors and the same single TanStack Virtual warning. Browser/build rerun
 results are recorded below after completion.
+
+### Mobile reading correction — 08/10/2026
+
+The integrated browser run initially passed 148/150 cases. Both remaining cases
+were real late-translation anchor drift on 393/320px, not weaker readability
+thresholds. Frame traces identified two writes: row resize compensation used a
+cached scroll offset before a native scroll event; pending measured-search
+reconciliation could then restore the old reading target. Relative compensation
+now starts from the actual window position. Manual wheel/touch/page-key gestures
+disable pending absolute navigation until the next explicit search/follow command.
+No library internals are modified.
+
+The regression triggers a manual gesture/native scroll and releases the gated
+translation in the same DOM task, keeping the under-4px anchor tolerance. All
+five viewports pass the focused regression (5/5), including 320px. An intermediate
+full run was intentionally interrupted when this source changed; it is not final
+coverage. The complete final-source matrix and build results follow below.
+
+Control Tower reconciliation: existing PRODUCT TRUTH / CURRENT STATE were read
+and found to retain 07/10 PR #235-open/WIP references. GitHub confirms #235
+merged at `5f263ce54fb330fbced2a484cd65d329bcc558a8`. Plate tools became
+unavailable before the final state write; no board update is claimed. The draft
+PR and this ledger are the exact handoff references for the pending mirror.
+
+### Full-source browser follow-up — 08/10/2026
+
+At `e3e0e085`, the two-worker matrix completed with 147/150 passes. Three
+30-second total test-budget timeouts occurred in tablet manual-search/Read and
+tablet/mobile 3,000-cue full Read rendering. Single-worker diagnosis passed
+manual-search on desktop, short desktop, tablet and mobile, but 3,000-cue Read
+still exceeded the budget on tablet/mobile. Reducing workers alone was not a fix.
+The failing point was full-DOM Read rendering/count verification, after watch's
+bounded rows and last-cue search had succeeded.
+
+Read rows now retain their complete text, buttons and paired translations in the
+DOM while `content-visibility: auto` defers offscreen layout/paint. The intrinsic
+size reuses the existing named row estimate; it does not truncate or virtualize
+Read content. The 3,000-cue regression also checks this browser rendering contract.
+The tablet diagnosis passes at the unchanged 30-second budget. All affected
+Read/search/follow/anchor cases are rerun across five sizes on `65d8c3fb`; final
+results follow below. No assertion or test timeout was relaxed.
+
+Final browser coverage on `65d8c3fb`: **30/30 affected Read/search/follow/anchor
+cases pass** across all five viewports, single worker, unchanged 30-second test
+budget and unchanged behavior/geometry assertions. These include all three
+previous timeout combinations. The 3,000-cue Read cases complete in 6.9s on
+tablet, 9.5s on 393px and 9.3s on 320px in this run (machine-specific timings,
+not a performance guarantee). Combined with the preceding 147-pass matrix,
+every one of the 150 case/viewport combinations has passing coverage; this is
+not represented as one uninterrupted 150/150 run. Final Read rows are all in the
+DOM; copy/search source text, bounded watch DOM, dictionary return and under-4px
+late-translation anchor checks remain intact.
+
+Final checks on production source `65d8c3fb`: Vitest **36 files, 410/410 pass**;
+ESLint **zero errors, one disclosed TanStack Virtual/React Compiler warning**;
+Next production build and vinext/Cloudflare bundle build both pass. Builds use
+credentials-disabled local environments and do not deploy. vinext retains its
+bundle-splitting/static-route-classification warnings. After both builds, Next
+route types are regenerated with `next typegen` before the final `tsc --noEmit`.
+Formatter, whitespace and source-of-truth checks are rerun for the handoff.
+The only remaining worktree changes are these evidence notes, not source.
