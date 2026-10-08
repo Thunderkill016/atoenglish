@@ -205,6 +205,9 @@ behaviour where inconsistent, without activating another mission or later slices
 
 Delivery: dedicated branch from verified draft PR #235, stacked draft targeting
 its base branch, formatter/typecheck/lint/unit/Playwright/Next+vinext/docs checks.
+Delivery reconciliation 2026-10-08: #235 merged at main `5f263ce5` during this
+slice. The unpublished branch is rebased onto that verified merge and the draft
+now targets main, preserving the requested ATO-WATCH-01-only review diff.
 Separate fixtures, browser UI and real YouTube/audio evidence. Stop at external
 review: no merge/deploy, dictation, shadowing, Q&A, scoring, dictionary replacement,
 study-card writes or whole-page redesign. Real acoustic boundary verification is

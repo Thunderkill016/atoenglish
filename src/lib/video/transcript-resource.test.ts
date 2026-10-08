@@ -194,6 +194,32 @@ describe("sentence/segment mapping", () => {
     expect(source[1]).toBe(untimed);
     expect(timeline.idBySentence.has(102)).toBe(false);
   });
+  it("keeps a caption rejected by canonical text validation readable without crashing playback", () => {
+    // Existing canonical limit is 2,000 characters; the source parser can accept
+    // a single longer timed cue, which must not crash the whole watch page.
+    const oversized = {
+      i: 7,
+      start_ms: 0,
+      end_ms: 1000,
+      text: "word ".repeat(401),
+    };
+    const playable = {
+      i: 9,
+      start_ms: 1000,
+      end_ms: 2000,
+      text: "Still playable.",
+    };
+    const source = [oversized, playable];
+    expect(() => normalizeSegments(sentencesToSegments([oversized]))).toThrow(
+      TranscriptValidationError,
+    );
+    const timeline = buildPlaybackTimeline(source);
+    expect(timeline.segments.map((segment) => segment.id)).toEqual(["seg-9"]);
+    expect(timeline.idBySentence.has(7)).toBe(false);
+    expect(timeline.sentenceById.get("seg-9")).toBe(playable);
+    expect(source[0].text).toBe("word ".repeat(401));
+    expect(buildPlaybackTimeline([oversized]).segments).toEqual([]);
+  });
   it("round-trips losslessly", () => {
     const sentences = [
       { i: 0, start_ms: 0, end_ms: 1200, text: "Hello" },

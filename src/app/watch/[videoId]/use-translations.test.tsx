@@ -291,15 +291,9 @@ describe("device translation scheduling", () => {
       availability: async () => "available",
       create: async () => ({ translate, destroy: vi.fn() }),
     });
-    await act(async () =>
-      root.render(
-        <Harness
-          automatic
-          source={source}
-          model={{ ...engine, kind: "gemini" }}
-        />,
-      ),
-    );
+    const cloud = vi.fn();
+    vi.stubGlobal("fetch", cloud);
+    await act(async () => root.render(<Harness automatic source={source} />));
     await check(() => expect(backgroundSignal).toBeDefined());
     expect(translate.mock.calls.map(([text]) => text)).toEqual(
       Array.from({ length: 7 }, (_, i) => `Cue ${i}.`),
@@ -309,6 +303,8 @@ describe("device translation scheduling", () => {
     );
     await check(() => expect(translate.mock.calls.at(-1)?.[0]).toBe("Cue 20."));
     expect(backgroundSignal!.aborted).toBe(true);
+    expect(current.provider).toBe("device");
+    expect(cloud).not.toHaveBeenCalled();
     expect(peak).toBe(1);
     expect(current.error).toBeNull();
     expect(current.lines[21]).toBe("Tiếng Việt có sẵn.");
@@ -638,6 +634,55 @@ describe("native shell translation bridge (mission 007)", () => {
       2: `Vỏ: ${sentences[1].text}`,
     });
     // Neither the cloud API nor Chrome's Translator was needed.
+    expect(cloud).not.toHaveBeenCalled();
+  });
+
+  it("waits for an uncancellable native task on seek, discards its old result and keeps shell priority", async () => {
+    const source = Array.from({ length: 30 }, (_, i) => ({
+      i,
+      text: `Shell cue ${i}.`,
+      start_ms: i * 1000,
+      end_ms: i * 1000 + 900,
+      ...(i === 21 ? { vi: "Tiếng Việt có sẵn." } : {}),
+    }));
+    const g = globalThis as typeof globalThis & {
+      __atoShellTranslateResult?: (id: number, vi: string | null) => void;
+    };
+    let backgroundId: number | undefined;
+    let activeId: number | undefined;
+    const translate = vi.fn((id: number, text: string) => {
+      if (text === "Shell cue 6.") backgroundId = id;
+      else if (text === "Shell cue 20.") activeId = id;
+      else
+        setTimeout(() => g.__atoShellTranslateResult?.(id, `Vỏ: ${text}`), 0);
+    });
+    vi.stubGlobal("AtoTranslate", { translate });
+    const cloud = vi.fn();
+    vi.stubGlobal("fetch", cloud);
+    await act(async () => root.render(<Harness automatic source={source} />));
+    await check(() => expect(backgroundId).toBeDefined());
+    expect(translate.mock.calls.map(([, text]) => text)).toEqual(
+      Array.from({ length: 7 }, (_, i) => `Shell cue ${i}.`),
+    );
+    await act(async () =>
+      root.render(<Harness automatic source={source} activeIndex={20} />),
+    );
+    expect(translate).toHaveBeenCalledTimes(7);
+    await act(async () =>
+      g.__atoShellTranslateResult?.(backgroundId!, "Kết quả cũ."),
+    );
+    await check(() => expect(activeId).toBeDefined());
+    expect(current.lines[6]).toBeUndefined();
+    expect(current.provider).toBe("shell");
+    expect(current.error).toBeNull();
+    expect(current.lines[21]).toBe("Tiếng Việt có sẵn.");
+    expect(cloud).not.toHaveBeenCalled();
+    // Settle the active task after unmount: no stale state or old result survives.
+    await act(async () => root.unmount());
+    root = createRoot(container);
+    await act(async () =>
+      g.__atoShellTranslateResult?.(activeId!, "Nguồn đã đóng."),
+    );
     expect(cloud).not.toHaveBeenCalled();
   });
 

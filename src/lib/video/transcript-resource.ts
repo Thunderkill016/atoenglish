@@ -228,7 +228,10 @@ export function buildPlaybackTimeline(
       Number.isFinite(s.end_ms) &&
       s.start_ms >= 0 &&
       s.end_ms > s.start_ms &&
-      s.text.trim(),
+      s.text.trim() &&
+      // Canonical validation rejects oversized text. Leave such source rows
+      // readable rather than throwing during the watch render or truncating them.
+      s.text.trim().length <= SEGMENT_TEXT_MAX,
   );
   const segments = valid.length
     ? normalizeSegments(sentencesToSegments(valid))

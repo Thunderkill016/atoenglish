@@ -106,6 +106,19 @@ async function stubYouTubePlayer(page: Page): Promise<void> {
     }),
   );
   await page.addInitScript({ content: PLAYER_STUB_SOURCE });
+  await page.addInitScript(() => {
+    // Keep fixture translators (plain objects); never activate Chrome's real
+    // native model in a deterministic playback test, regardless of init order.
+    if (
+      typeof (window as unknown as { Translator?: unknown }).Translator ===
+      "function"
+    )
+      Object.defineProperty(window, "Translator", {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+  });
 }
 
 function getSeeks(page: Page): Promise<SeekRecord[]> {
@@ -115,6 +128,11 @@ function getSeeks(page: Page): Promise<SeekRecord[]> {
 }
 
 async function pasteTranscript(page: Page, raw: string): Promise<void> {
+  // SSR paints intake controls before React hydrates. The fake player's onReady
+  // is a client-effect signal, so a reload cannot lose the first click.
+  await expect(
+    page.getByText("Đang tải trình phát", { exact: false }),
+  ).toBeHidden();
   await page.getByRole("button", { name: "Dán hoặc tải phụ đề" }).click();
   await page
     .getByRole("textbox", { name: "Nội dung phụ đề", exact: true })
@@ -125,6 +143,9 @@ async function pasteTranscript(page: Page, raw: string): Promise<void> {
 /** Upload the large fixture through the same supported parser; avoid measuring
  * Chromium textarea insertion time as part of the virtual-list regression. */
 async function uploadTranscript(page: Page, raw: string): Promise<void> {
+  await expect(
+    page.getByText("Đang tải trình phát", { exact: false }),
+  ).toBeHidden();
   await page.getByRole("button", { name: "Dán hoặc tải phụ đề" }).click();
   await page.locator('input[type="file"]').setInputFiles({
     name: "fixture.txt",
@@ -692,6 +713,38 @@ test.describe("/watch/[videoId]", () => {
     ).toContainText("Chọn cụm ngắn hơn");
     await expect(panel).toBeHidden();
     expect(await getSeeks(page)).toHaveLength(0);
+
+    // The paste parser accepts long cues, but the canonical segment validator
+    // caps text at 2,000 chars. Preserve the full source instead of crashing or
+    // inventing replay for a rejected segment; valid neighbours still play.
+    const oversized = "word ".repeat(401) + ".";
+    await page.goto(`/watch/${VIDEO_ID}`);
+    await pasteTranscript(
+      page,
+      [
+        "1",
+        "00:00:00,000 --> 00:00:01,000",
+        oversized,
+        "",
+        "2",
+        "00:00:01,000 --> 00:00:02,000",
+        "Still playable.",
+      ].join("\n"),
+    );
+    const oversizedRow = rail.locator('[data-sentence="0"]');
+    await expect(oversizedRow.getByTestId("sentence-text")).toHaveText(
+      oversized,
+    );
+    await expect(
+      oversizedRow.getByRole("button", { name: /^Nghe câu/ }),
+    ).toHaveCount(0);
+    await rail
+      .locator('[data-sentence="1"]')
+      .getByRole("button", { name: "Nghe câu 0:01", exact: true })
+      .click();
+    await expect(
+      page.getByTestId("active-caption").getByTestId("sentence-text"),
+    ).toHaveText("Still playable.");
   });
 
   test("invalid video id renders the 404 page", async ({ page }) => {

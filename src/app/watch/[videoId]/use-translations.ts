@@ -65,6 +65,9 @@ type ShellBridge = { translate: (id: number, text: string) => void };
 // remounts; a late result must never be attributed to another sentence.
 const shellPending = new Map<number, (vi: string | null) => void>();
 let shellNextId = 0;
+// The bridge has no native cancel API; serialize ML Kit calls even after a
+// caller aborts or a component remounts. Aborts still settle the UI promptly.
+let shellIdle: Promise<void> = Promise.resolve();
 /**
  * ML Kit bridge inside the Android WebView shell (mission 007). Presents the
  * same DeviceTranslator surface as Chrome's Translator API — free, on-device,
@@ -84,30 +87,35 @@ function shellAPI(): DeviceTranslator | undefined {
     settle?.(vi);
   };
   return {
-    translate: (text, { signal }) =>
-      new Promise<string>((resolve, reject) => {
+    translate: async (text, { signal }) => {
+      await shellIdle;
+      if (signal.aborted) throw signal.reason;
+      return new Promise<string>((resolve, reject) => {
         const id = ++shellNextId;
-        const onAbort = () => {
-          if (shellPending.delete(id))
-            reject(new DOMException("Aborted", "AbortError"));
-        };
-        if (signal.aborted) {
-          reject(new DOMException("Aborted", "AbortError"));
-          return;
-        }
+        let settleNative!: () => void;
+        shellIdle = new Promise<void>((done) => {
+          settleNative = done;
+        });
+        const onAbort = () => reject(signal.reason);
+        // An abort cancels the caller's result, not ML Kit's in-flight work.
+        // Retain the native callback to release the barrier before another call.
         shellPending.set(id, (vi) => {
+          settleNative();
           signal.removeEventListener("abort", onAbort);
-          resolve(vi ?? "");
+          if (signal.aborted) reject(signal.reason);
+          else resolve(vi ?? "");
         });
         signal.addEventListener("abort", onAbort, { once: true });
         try {
           bridge.translate(id, text);
         } catch (cause) {
           shellPending.delete(id);
+          settleNative();
           signal.removeEventListener("abort", onAbort);
           reject(cause instanceof Error ? cause : new Error(String(cause)));
         }
-      }),
+      });
+    },
     destroy: () => {},
   };
 }

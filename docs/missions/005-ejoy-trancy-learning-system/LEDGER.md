@@ -562,12 +562,15 @@ in the same push as the `?t=` deep-link change.
 
 ## ATO-WATCH-01 — sentence playback controller — 07/10/2026
 
-Owner approved the ATO-WATCH-01 contract in TASK_CONTRACT.md. This is a stacked
-change from draft #235 (`docs/005-ejoy-trancy-system`), initially verified at
-`8b0b88079d460a63b69ee309342a900497146781` and rebased onto its verified
-`394d802818f16b8bb6f79d01ff86c5dc9683e001` head. The intervening base commits
-only changed Android. The original checkout and its uncommitted work were
-preserved. Only this slice belongs in the next draft PR; no merge or deploy.
+Owner approved the ATO-WATCH-01 contract in TASK_CONTRACT.md. Work began as a
+stacked change from draft #235 (`docs/005-ejoy-trancy-system`), initially verified
+at `8b0b88079d460a63b69ee309342a900497146781`, then updated to `394d8028`.
+On 08/10, #235 was verified merged at main `5f263ce54fb330fbced2a484cd65d329bcc558a8`
+(head `b3c000065f95530a77c18f050559b0dd471b63d6`). The unpublished slice was
+rebased onto that main commit, so the next draft targets main and contains only
+ATO-WATCH-01. Baseline Android, server fallback and persisted translation-cache
+changes remain intact and are outside this diff. The original checkout and
+uncommitted work remain preserved. No merge or deployment of this slice.
 
 ### Implementation
 
@@ -657,3 +660,34 @@ and block caption server-action POSTs during real-media comparisons. No producti
 DB was written. Browser/provider fixtures are not production extension validation;
 the owner's earlier report that automatic English/Vietnamese appeared is separate.
 No dictation, shadowing, tutor, new dictionary, scoring or whole-page redesign.
+
+### Base reconciliation — 08/10/2026
+
+The merged baseline adds the Android ML Kit bridge and automatic free server
+fallback/cache. The near-cue priority and device background scheduler now use the
+resolved provider: device/shell may finish the remainder, while server stays
+within active → next five → previous two. A priority abort is checked before
+provider failure handling and never causes an unintended server step-down.
+Shell calls serialize even after cancellation: the bridge cannot cancel native
+work, so its eventual callback releases the barrier before another native call.
+Cancelled results cannot update the current transcript. Native-device latency
+and missing native callbacks remain a physical-device review limitation; the
+new shell test is a bridge fixture, not an Android runtime pass.
+
+Intake edge case: the subtitle parser can accept a single timed cue above the
+existing canonical 2,000-character limit. The playback projection now excludes
+that rejected segment without throwing or truncating its source text. It remains
+fully readable/lookup-capable in the transcript; valid neighbours still play.
+The canonical limit and storage schema are unchanged. Unit and an expanded
+browser regression cover this read-only recovery.
+
+Type generation recovery: Next and vinext both generate route types in `.next`.
+Running `tsc` immediately after vinext can read Next's validator with vinext's
+route exports (TS2305). Regenerate with `next typegen`, then run `tsc --noEmit`;
+this uses generated types without suppressing diagnostics or hand-editing cache.
+
+Post-rebase unit coverage: 36 files, **410/410 tests pass**, including server
+fallback/parked pending states from the baseline and the new priority/native
+serialization regression. Typecheck and source-of-truth checks pass; lint has
+zero errors and the same single TanStack Virtual warning. Browser/build rerun
+results are recorded below after completion.
