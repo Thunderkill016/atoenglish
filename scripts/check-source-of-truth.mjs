@@ -68,11 +68,14 @@ function readFileNames(directory) {
 export function inspectSourceOfTruth(baseDir = root) {
   const problems = [];
   for (const relativePath of requiredPaths) {
-    if (!existsSync(path.join(baseDir, relativePath))) problems.push(`missing-required:${relativePath}`);
+    if (!existsSync(path.join(baseDir, relativePath)))
+      problems.push(`missing-required:${relativePath}`);
   }
   problems.push(
     ...detectRetiredAuthority(
-      retiredAuthorityPaths.filter((relativePath) => existsSync(path.join(baseDir, relativePath))),
+      retiredAuthorityPaths.filter((relativePath) =>
+        existsSync(path.join(baseDir, relativePath)),
+      ),
     ),
   );
 
@@ -82,7 +85,10 @@ export function inspectSourceOfTruth(baseDir = root) {
     }
   }
 
-  const constitutionPath = path.join(baseDir, ".specify/memory/constitution.md");
+  const constitutionPath = path.join(
+    baseDir,
+    ".specify/memory/constitution.md",
+  );
   if (existsSync(constitutionPath)) {
     problems.push("unauthorized-constitution:.specify/memory/constitution.md");
   }
@@ -100,15 +106,21 @@ export function inspectSourceOfTruth(baseDir = root) {
     for (const match of document.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
       const target = match[1].split("#", 1)[0];
       if (!target || /^(?:https?:|mailto:)/.test(target)) continue;
-      const resolved = path.resolve(path.dirname(absolutePath), decodeURIComponent(target));
-      if (!existsSync(resolved)) problems.push(`broken-markdown-link:${relativePath}->${target}`);
+      const resolved = path.resolve(
+        path.dirname(absolutePath),
+        decodeURIComponent(target),
+      );
+      if (!existsSync(resolved))
+        problems.push(`broken-markdown-link:${relativePath}->${target}`);
     }
   }
   return problems;
 }
 
 export function runSelfTest() {
-  const missing = inspectSourceOfTruth(path.join(root, "scripts", "fixtures", "missing-governance"));
+  const missing = inspectSourceOfTruth(
+    path.join(root, "scripts", "fixtures", "missing-governance"),
+  );
   if (!missing.some((problem) => problem.startsWith("missing-required:"))) {
     throw new Error("self-test did not detect missing governance");
   }

@@ -252,6 +252,101 @@ export type Database = {
           },
         ];
       };
+      content_sources: {
+        Row: {
+          id: number;
+          user_id: string;
+          kind: string;
+          external_id: string;
+          title: string | null;
+          channel: string | null;
+          duration_ms: number | null;
+          last_position_ms: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          user_id: string;
+          kind: string;
+          external_id: string;
+          title?: string | null;
+          channel?: string | null;
+          duration_ms?: number | null;
+          last_position_ms?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          user_id?: string;
+          kind?: string;
+          external_id?: string;
+          title?: string | null;
+          channel?: string | null;
+          duration_ms?: number | null;
+          last_position_ms?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "content_sources_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      content_transcripts: {
+        Row: {
+          id: number;
+          source_id: number;
+          user_id: string;
+          origin: string;
+          language: string;
+          segmentation_version: number;
+          sentences: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          source_id: number;
+          user_id: string;
+          origin: string;
+          language: string;
+          segmentation_version: number;
+          sentences: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          source_id?: number;
+          user_id?: string;
+          origin?: string;
+          language?: string;
+          segmentation_version?: number;
+          sentences?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "content_transcripts_source_id_fkey";
+            columns: ["source_id"];
+            isOneToOne: false;
+            referencedRelation: "content_sources";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_transcripts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       league_memberships: {
         Row: {
           user_id: string;
@@ -822,6 +917,45 @@ export type Database = {
           },
         ];
       };
+      shared_transcripts: {
+        Row: {
+          video_id: string;
+          origin: string;
+          language: string;
+          segmentation_version: number;
+          sentences: Json;
+          title: string | null;
+          channel: string | null;
+          duration_ms: number | null;
+          fetched_at: string;
+          imported_via: string;
+        };
+        Insert: {
+          video_id: string;
+          origin: string;
+          language: string;
+          segmentation_version: number;
+          sentences: Json;
+          title?: string | null;
+          channel?: string | null;
+          duration_ms?: number | null;
+          fetched_at?: string;
+          imported_via?: string;
+        };
+        Update: {
+          video_id?: string;
+          origin?: string;
+          language?: string;
+          segmentation_version?: number;
+          sentences?: Json;
+          title?: string | null;
+          channel?: string | null;
+          duration_ms?: number | null;
+          fetched_at?: string;
+          imported_via?: string;
+        };
+        Relationships: [];
+      };
       speaking_sessions: {
         Row: {
           id: string;
@@ -856,6 +990,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "speaking_sessions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      subtitle_translations: {
+        Row: {
+          user_id: string;
+          video_id: string;
+          profile: string;
+          line_i: number;
+          text_hash: string;
+          vi: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          video_id: string;
+          profile: string;
+          line_i: number;
+          text_hash: string;
+          vi: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          video_id?: string;
+          profile?: string;
+          line_i?: number;
+          text_hash?: string;
+          vi?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "subtitle_translations_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "user";
@@ -1803,6 +1978,20 @@ export type Database = {
       update_unit_content_updated_at: {
         Args: {};
         Returns: string;
+      };
+      upsert_shared_transcript: {
+        Args: {
+          p_video_id: string;
+          p_origin: string;
+          p_language: string;
+          p_segmentation_version: number;
+          p_sentences: Json;
+          p_title?: string;
+          p_channel?: string;
+          p_duration_ms?: number;
+          p_imported_via?: string;
+        };
+        Returns: undefined;
       };
       use_streak_freeze: {
         Args: { p_user_id: string };

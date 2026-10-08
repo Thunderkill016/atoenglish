@@ -1,5 +1,7 @@
 # Development Ledger — 004-video-learning-loop
 
+> **Superseded 2026-10-06** by `docs/missions/005-ejoy-trancy-learning-system/` (owner: eJOY + Trancy as the product standard, new spec instead of amending 004). This document is historical reference only and does not authorize work.
+
 > The Lead maintains this. Append entries; do not rewrite history.
 
 ## MISSION

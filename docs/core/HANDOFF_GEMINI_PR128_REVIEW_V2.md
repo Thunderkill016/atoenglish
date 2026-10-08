@@ -1,8 +1,8 @@
 # Gemini / Antigravity Handoff — PR #128 Adversarial Review v2
 
-
 > **Document status:** reference
 > **Governing authority:** [SOURCE_OF_TRUTH](../project/SOURCE_OF_TRUTH.md)
+
 ```text
 TASK_ID: CORE-128-ADVERSARIAL-V2
 REPO: Thunderkill016/AtoEnglish

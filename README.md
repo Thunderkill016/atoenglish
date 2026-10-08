@@ -59,11 +59,9 @@ npm run dev
 npx tsc --noEmit
 npm run lint
 npm run test
-npm run test:content-standard
 npm run test:integration
 npm run e2e
 npm run build
-npm run audit
 npm run inventory
 ```
 
@@ -72,7 +70,7 @@ Không ghi số lượng test cố định vào tài liệu; output CI/test runn
 ## Source kỹ thuật
 
 - Runtime: `src/`
-- Curriculum đang tồn tại: `src/lib/data/units/`
+- Từ điển curated (tách khỏi giáo trình cũ): `src/lib/dict/vocabulary.ts`
 - Database migrations: `supabase/migrations/`
 - Generated DB types: `src/types/supabase.ts`
 - CI chính: `.github/workflows/verify.yml`

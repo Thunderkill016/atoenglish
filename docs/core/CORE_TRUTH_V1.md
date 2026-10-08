@@ -96,23 +96,29 @@ FSRS/DSR where valid       latency/fluency/automaticity
 ## The ten core subsystems
 
 ### 1. Source and provenance
+
 Every external paper, corpus, lexicon, model, benchmark and rule has a source record, license classification, version/fingerprint and allowed-use status. Unknown licensing is research-blocked, not production-safe.
 
 ### 2. English knowledge graph
+
 A canonical, versioned graph describes learnable constructs and communicative capabilities. Nodes may be atomic or composite. Dependency edges must be acyclic; associative edges such as confusion/contrast may be cyclic.
 
 ### 3. Task graph
+
 Knowledge is never equated with exposure. A task declares the target construct, communication activity, context, support, response modality, **epistemic evidence role**, scoring contract and transfer distance. Communication channel and evidence role are separate ontologies.
 
 ### 4. Linguistic and speech intelligence
+
 Deterministic analyzers and self-hosted models emit bounded, discriminated diagnostic payloads. They never write mastery directly. Speech and text models are replaceable adapters behind artifact-fingerprinted contracts. Unstructured `Record<string, unknown>` payloads are not a production core contract.
 
 ### 5. Evidence, calibration and psychometric measurement
+
 Evidence records what was actually observed and what construct a task is allowed to support. Model calibration is never global: it is scoped to model fingerprint, construct, activity, learner population and relevant runtime conditions such as SNR/noise/device. Item difficulty and discrimination must be modeled when assessment claims depend on heterogeneous tasks; raw success counts are not latent ability.
 
 IRT/MIRT/CDM are measurement tools, not automatic truth. A model is promoted only after item fit, reliability, invariance/fairness and held-out population checks are acceptable for the decision being made.
 
 ### 6. Learner model
+
 State is uncertainty-aware and evidence-backed. Unknown is not zero. Recognition is not production. Reading is not listening. Rehearsed performance is not transfer. Recent supported success does not imply durable independent mastery.
 
 The learner model is **bifurcated**:
@@ -123,17 +129,21 @@ The learner model is **bifurcated**:
 No multidimensional performance is collapsed into one FSRS card rating.
 
 ### 7. Memory and retention
+
 Reuse existing FSRS/retrieval infrastructure only for constructs/tasks that satisfy the assumptions of declarative retrieval scheduling. FSRS is a scheduler for a bounded memory trace, not the definition of language mastery and not the default model for phonology, syntax processing, fluency or interaction.
 
 Procedural learning requires separate models of accuracy, latency, stability across contexts and delayed transfer. Candidate practice-curve models (power, exponential or mixed) must be compared empirically instead of hard-coded as universal laws.
 
 ### 8. Error memory and diagnosis
+
 Errors are hypotheses with evidence, recurrence, context, confidence and remediation history. The system distinguishes slips, knowledge gaps, processing failures, acoustic uncertainty, task misunderstanding and plausible L1-transfer patterns only where evidence permits. L1-transfer labels are hypotheses, not stereotypes or learner traits.
 
 ### 9. Adaptive planning and pedagogy
+
 The planner chooses the next best task from learner state, prerequisites, uncertainty, due declarative retrieval, procedural practice needs, transfer needs, error memory, item information, task value and cognitive load. Pedagogical policy controls scaffolding, feedback, retry, fading, interleaving and later retrieval; model scores do not control pedagogy directly.
 
 ### 10. Benchmark and experiment system
+
 Every promoted algorithm/model has a frozen evaluation set, baseline, metric, confidence interval, artifact fingerprint and decision. Research may move quickly; learner-facing authority moves slowly. Disagreements between models/agents are resolved by preregistered experiments whenever feasible, not by model consensus.
 
 ## Non-negotiable invariants

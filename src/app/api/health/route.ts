@@ -45,7 +45,7 @@ export async function GET() {
           latency_ms: Date.now() - start,
           timestamp: new Date().toISOString(),
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -62,7 +62,7 @@ export async function GET() {
         headers: {
           "Cache-Control": "no-store, no-cache",
         },
-      }
+      },
     );
   } catch (err) {
     return NextResponse.json(
@@ -72,7 +72,7 @@ export async function GET() {
         latency_ms: Date.now() - start,
         timestamp: new Date().toISOString(),
       },
-      { status: 503 }
+      { status: 503 },
     );
   }
 }

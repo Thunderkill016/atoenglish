@@ -22,7 +22,7 @@ export default defineConfig(({ command }) => {
         if (!code.includes(needle)) return;
         return code.replace(
           needle,
-          'const CURRENT_TAB_CLIENT_ID = typeof window === "undefined" ? "worker" : crypto.randomUUID()'
+          'const CURRENT_TAB_CLIENT_ID = typeof window === "undefined" ? "worker" : crypto.randomUUID()',
         );
       },
     },
@@ -77,7 +77,9 @@ export default defineConfig(({ command }) => {
     css: {
       modules: {
         generateScopedName(name: string, filename: string) {
-          const relativePath = path.relative(import.meta.dirname, filename.replace(/\?.*$/, "")).replaceAll("\\", "/");
+          const relativePath = path
+            .relative(import.meta.dirname, filename.replace(/\?.*$/, ""))
+            .replaceAll("\\", "/");
           return `_${name}_${createHash("sha256").update(relativePath).digest("hex").slice(0, 7)}`;
         },
       },

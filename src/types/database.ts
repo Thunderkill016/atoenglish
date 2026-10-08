@@ -103,36 +103,57 @@ export type CardInsert = Omit<Card, "id" | "created_at" | "updated_at"> & {
   created_at?: string;
   updated_at?: string;
 };
-export type CardUpdate = Partial<Omit<Card, "id" | "user_id" | "created_at" | "updated_at">>;
+export type CardUpdate = Partial<
+  Omit<Card, "id" | "user_id" | "created_at" | "updated_at">
+>;
 
 export type UserInsert = Omit<User, "created_at" | "updated_at"> & {
   created_at?: string;
   updated_at?: string;
 };
-export type UserUpdate = Partial<Omit<User, "id" | "created_at" | "updated_at">>;
+export type UserUpdate = Partial<
+  Omit<User, "id" | "created_at" | "updated_at">
+>;
 
-export type UserProgressInsert = Partial<Omit<UserProgress, "user_id">> & { user_id: string };
-export type UserProgressUpdate = Partial<Omit<UserProgress, "user_id" | "created_at" | "updated_at">>;
+export type UserProgressInsert = Partial<Omit<UserProgress, "user_id">> & {
+  user_id: string;
+};
+export type UserProgressUpdate = Partial<
+  Omit<UserProgress, "user_id" | "created_at" | "updated_at">
+>;
 
 export type LessonHistoryInsert = Omit<LessonHistory, "id" | "created_at"> & {
   id?: string;
   created_at?: string;
 };
-export type LessonHistoryUpdate = Partial<Omit<LessonHistory, "id" | "user_id" | "created_at">>;
+export type LessonHistoryUpdate = Partial<
+  Omit<LessonHistory, "id" | "user_id" | "created_at">
+>;
 
-export type UserSentenceInsert = Omit<UserSentence, "id" | "created_at" | "updated_at"> & {
+export type UserSentenceInsert = Omit<
+  UserSentence,
+  "id" | "created_at" | "updated_at"
+> & {
   id?: string;
   created_at?: string;
   updated_at?: string;
 };
-export type UserSentenceUpdate = Partial<Omit<UserSentence, "id" | "user_id" | "created_at" | "updated_at">>;
+export type UserSentenceUpdate = Partial<
+  Omit<UserSentence, "id" | "user_id" | "created_at" | "updated_at">
+>;
 
-export type UserLessonProgressInsert = Omit<UserLessonProgress, "id" | "created_at"> & {
+export type UserLessonProgressInsert = Omit<
+  UserLessonProgress,
+  "id" | "created_at"
+> & {
   id?: string;
   created_at?: string;
 };
 
-export type SpeakingSessionInsert = Omit<SpeakingSession, "id" | "created_at"> & {
+export type SpeakingSessionInsert = Omit<
+  SpeakingSession,
+  "id" | "created_at"
+> & {
   id?: string;
   created_at?: string;
 };

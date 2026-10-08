@@ -26,18 +26,18 @@ patterns actually found in this repo:
 
 ## 2. Relevant Devin capabilities (verified, not assumed)
 
-| Capability | Status in this environment | AtoEnglish equivalent |
-| ---------- | -------------------------- | --------------------- |
-| Subagents (parallel/sequential, explore read-only vs general write) | **SUPPORTED** — `run_subagent`, foreground/background | Specialist sessions |
-| Custom agent profiles `.devin/agents/*.md` | **SUPPORTED** — created `ato-researcher`, `ato-qa` | Named reusable roles |
-| Skills `.devin/skills/*/SKILL.md` (invocable via `/name`) | **SUPPORTED** — 5 playbooks created | "Playbooks" |
-| Rules / always-on knowledge | **SUPPORTED** — `AGENTS.md`, `.devin/rules/` | Durable Knowledge |
-| Hooks (JSON, `before_tool_call` guard) | **SUPPORTED** — `.devin/hooks.v1.json` push-to-main guard | Automation |
-| Sessions (parallel, batch) | **SUPPORTED** — Devin web app; CLI = subagents | Parallelism where it helps |
-| Handoffs `/handoff` | SUPPORTED — CLI | Stage handoff |
-| Session analysis / `/stats`, `/insights` | SUPPORTED — CLI | Cost/evidence observation |
-| Cloud Knowledge / Playbooks macros / Advanced Mode | SUPPORTED — Devin web app; not CLI primitives | Replaced by repo artifacts above |
-| Independent verification | **POSSIBLE THROUGH PROCESS** — separate session + contract | ato-qa pattern |
+| Capability                                                          | Status in this environment                                 | AtoEnglish equivalent            |
+| ------------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------- |
+| Subagents (parallel/sequential, explore read-only vs general write) | **SUPPORTED** — `run_subagent`, foreground/background      | Specialist sessions              |
+| Custom agent profiles `.devin/agents/*.md`                          | **SUPPORTED** — created `ato-researcher`, `ato-qa`         | Named reusable roles             |
+| Skills `.devin/skills/*/SKILL.md` (invocable via `/name`)           | **SUPPORTED** — 5 playbooks created                        | "Playbooks"                      |
+| Rules / always-on knowledge                                         | **SUPPORTED** — `AGENTS.md`, `.devin/rules/`               | Durable Knowledge                |
+| Hooks (JSON, `before_tool_call` guard)                              | **SUPPORTED** — `.devin/hooks.v1.json` push-to-main guard  | Automation                       |
+| Sessions (parallel, batch)                                          | **SUPPORTED** — Devin web app; CLI = subagents             | Parallelism where it helps       |
+| Handoffs `/handoff`                                                 | SUPPORTED — CLI                                            | Stage handoff                    |
+| Session analysis / `/stats`, `/insights`                            | SUPPORTED — CLI                                            | Cost/evidence observation        |
+| Cloud Knowledge / Playbooks macros / Advanced Mode                  | SUPPORTED — Devin web app; not CLI primitives              | Replaced by repo artifacts above |
+| Independent verification                                            | **POSSIBLE THROUGH PROCESS** — separate session + contract | ato-qa pattern                   |
 
 ## 3. Proposed organization
 
@@ -53,23 +53,23 @@ patterns actually found in this repo:
 
 ## 4. Role definitions
 
-| Role | Writes code? | Reads prod? | Output contract |
-| ---- | ------------ | ----------- | --------------- |
-| Lead | only glue/acceptance fixes | yes | contract, ledger, verdict |
-| Researcher | no | no | evidence report w/ confidence |
-| Implementer | yes (bounded files) | no | diff + verification commands run |
-| QA | no | yes (read-only queries) | PASS/FAIL + blocking findings + evidence |
+| Role        | Writes code?               | Reads prod?             | Output contract                          |
+| ----------- | -------------------------- | ----------------------- | ---------------------------------------- |
+| Lead        | only glue/acceptance fixes | yes                     | contract, ledger, verdict                |
+| Researcher  | no                         | no                      | evidence report w/ confidence            |
+| Implementer | yes (bounded files)        | no                      | diff + verification commands run         |
+| QA          | no                         | yes (read-only queries) | PASS/FAIL + blocking findings + evidence |
 
 ## 5. Task-routing policy (what we actually run)
 
-| Task type | Route |
-| --------- | ----- |
-| Trivial bug/typo/lint | `IMPLEMENT → TEST` (single session, no subagent) |
-| Medium feature | `CONTRACT → IMPLEMENT → ato-qa` |
-| UI change | `+ BROWSER QA` (browser_preview evidence) |
-| Learning-engine / assessment change | `ato-researcher → PRODUCT SPEC → ARCH → IMPLEMENT → ato-qa → ato-verify` |
-| Competing approaches (≥2 real hypotheses) | parallel explores, same acceptance criteria |
-| Anything touching migrations/RLS | `+ migration lint + pgTAP gate` |
+| Task type                                 | Route                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------ |
+| Trivial bug/typo/lint                     | `IMPLEMENT → TEST` (single session, no subagent)                         |
+| Medium feature                            | `CONTRACT → IMPLEMENT → ato-qa`                                          |
+| UI change                                 | `+ BROWSER QA` (browser_preview evidence)                                |
+| Learning-engine / assessment change       | `ato-researcher → PRODUCT SPEC → ARCH → IMPLEMENT → ato-qa → ato-verify` |
+| Competing approaches (≥2 real hypotheses) | parallel explores, same acceptance criteria                              |
+| Anything touching migrations/RLS          | `+ migration lint + pgTAP gate`                                          |
 
 Do not spin up a role "because it exists." The pilot used 3 sessions, not 6.
 
@@ -84,12 +84,12 @@ Do not spin up a role "because it exists." The pilot used 3 sessions, not 6.
 
 ## 7. Shared Knowledge strategy
 
-| Layer | Location | Content |
-| ----- | -------- | ------- |
-| Always-on rules | `AGENTS.md`, `docs/project/PROJECT_STATE.md`, `docs/project/SOURCE_OF_TRUTH.md` | product vision, learner, invariants, DoD, frozen surfaces, rejected approaches |
-| Procedural | `.devin/skills/` | repeatable workflows |
-| Roles | `.devin/agents/` | specialist contracts |
-| Per-mission state | `docs/missions/NNN-*/` | contracts + ledgers — **NOT** permanent knowledge |
+| Layer             | Location                                                                        | Content                                                                        |
+| ----------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Always-on rules   | `AGENTS.md`, `docs/project/PROJECT_STATE.md`, `docs/project/SOURCE_OF_TRUTH.md` | product vision, learner, invariants, DoD, frozen surfaces, rejected approaches |
+| Procedural        | `.devin/skills/`                                                                | repeatable workflows                                                           |
+| Roles             | `.devin/agents/`                                                                | specialist contracts                                                           |
+| Per-mission state | `docs/missions/NNN-*/`                                                          | contracts + ledgers — **NOT** permanent knowledge                              |
 
 Do not dump the repo into Knowledge. Only durable, high-value,
 unlikely-to-mislead facts. Temporary task state lives in the mission folder.
@@ -107,26 +107,26 @@ never substitute for enforcement.
 
 ## 9. Handoff contracts
 
-| Edge | Minimum payload |
-| ---- | --------------- |
-| Research → Lead/Product | findings tagged fact/obs/inference/rec, confidence, sources, open questions |
-| Product → Architecture | behavioral requirements, constraints, acceptance criteria |
-| Architecture → Implementer | approved interfaces, affected components, migration impact, non-goals |
-| Implementer → QA | spec, diff, verification commands run, known limits, attack surfaces |
-| QA → Lead | VERDICT + blocking/non-blocking findings + evidence + unverified items |
+| Edge                       | Minimum payload                                                             |
+| -------------------------- | --------------------------------------------------------------------------- |
+| Research → Lead/Product    | findings tagged fact/obs/inference/rec, confidence, sources, open questions |
+| Product → Architecture     | behavioral requirements, constraints, acceptance criteria                   |
+| Architecture → Implementer | approved interfaces, affected components, migration impact, non-goals       |
+| Implementer → QA           | spec, diff, verification commands run, known limits, attack surfaces        |
+| QA → Lead                  | VERDICT + blocking/non-blocking findings + evidence + unverified items      |
 
 `Done.` is never a valid handoff. Every report must carry runnable evidence
 or explicitly mark items UNVERIFIED.
 
 ## 10. Quality-gate matrix
 
-| Task | Required gates |
-| ---- | -------------- |
-| CSS/copy fix | lint, visual check |
-| Server action / DB-touching | tsc, lint, unit tests, ato-qa |
-| Auth/RLS/migration | + migration lint, pgTAP, security review |
-| Learning/assessment logic | + learning-validity review, content-standard, behavioral tests |
-| Anything merging to deploy path | `ato-release-check` (exact-head, health, smoke) |
+| Task                            | Required gates                                                 |
+| ------------------------------- | -------------------------------------------------------------- |
+| CSS/copy fix                    | lint, visual check                                             |
+| Server action / DB-touching     | tsc, lint, unit tests, ato-qa                                  |
+| Auth/RLS/migration              | + migration lint, pgTAP, security review                       |
+| Learning/assessment logic       | + learning-validity review, content-standard, behavioral tests |
+| Anything merging to deploy path | `ato-release-check` (exact-head, health, smoke)                |
 
 Not every task needs every gate — the contract names the required subset.
 
@@ -142,17 +142,17 @@ mission — not permanent documentation.
 Mission: `001-worker-pending-writes` (durable flashcard streak write via
 `after()`). Commit `1feafbc2`.
 
-| Metric | Result |
-| ------ | ------ |
-| Sessions actually useful | 3 subagent + Lead |
-| Parallel work used | no — task was sequential by nature (spec→impl→QA) |
-| Duplication | none observed; each stage produced distinct output |
-| Incorrect conclusions caught | QA caught N1 (wholesale `next/server` mock footgun) — implementer missed it |
-| Bugs caught pre-acceptance | 1 real (N1 fixed before commit) + 5 documented caveats folded into comments/ledger |
-| Unnecessary repeated context | low — each session got only its contract slice |
-| Human intervention | none required until acceptance decision |
-| Overhead | ledger + contract ≈ 15 min; offset by Lead not re-investigating mechanism |
-| Gates honestly reported | QA correctly marked commands UNVERIFIED (no exec) instead of claiming them |
+| Metric                       | Result                                                                             |
+| ---------------------------- | ---------------------------------------------------------------------------------- |
+| Sessions actually useful     | 3 subagent + Lead                                                                  |
+| Parallel work used           | no — task was sequential by nature (spec→impl→QA)                                  |
+| Duplication                  | none observed; each stage produced distinct output                                 |
+| Incorrect conclusions caught | QA caught N1 (wholesale `next/server` mock footgun) — implementer missed it        |
+| Bugs caught pre-acceptance   | 1 real (N1 fixed before commit) + 5 documented caveats folded into comments/ledger |
+| Unnecessary repeated context | low — each session got only its contract slice                                     |
+| Human intervention           | none required until acceptance decision                                            |
+| Overhead                     | ledger + contract ≈ 15 min; offset by Lead not re-investigating mechanism          |
+| Gates honestly reported      | QA correctly marked commands UNVERIFIED (no exec) instead of claiming them         |
 
 ## 13. Single-session comparison
 
@@ -162,7 +162,7 @@ single session would have written it. What the structure contributed:
 
 - Researcher's independent mechanism trace (vinext `after()` → `waitUntil`,
   NeonQueryPromise laziness) without Lead-context cost.
-- A *different context* reviewed the diff — caught the mock footgun the author
+- A _different context_ reviewed the diff — caught the mock footgun the author
   normalized. This is the pattern that kept the original fire-and-forget bug
   alive for months: author reviews own work.
 - Contract forced explicit scope/non-goals — implementer did not expand the

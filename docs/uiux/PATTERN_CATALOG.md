@@ -10,7 +10,7 @@ App nav should be a small, fixed set (≤5) of top-level destinations with a
 persistent position per viewport: top bar on desktop, bottom tab bar on
 mobile. The current 4-item set (Học / Ôn / Lộ trình / Tôi) already matches.
 — Jakob's Law (S8), M3 bottom nav (S5), HIG tab bar (S6).
-*Rule: never grow the tab set; new surfaces hang under the four sections.*
+_Rule: never grow the tab set; new surfaces hang under the four sections._
 
 **N2. Current location is always visible.**
 Active nav item uses `aria-current="page"` + distinct visual state.
@@ -47,8 +47,9 @@ supporting line + trailing affordance. No nested clickables inside rows.
 
 **L4. Locked vs unlocked must be scannable at a glance.**
 Availability state needs more than a chevron difference: muted content
-+ lock icon + reason on demand ("hoàn thành Bài X trước").
-— S7 error prevention, S3 "check a service is suitable" pattern.
+
+- lock icon + reason on demand ("hoàn thành Bài X trước").
+  — S7 error prevention, S3 "check a service is suitable" pattern.
 
 ## 3. Lesson & practice delivery
 
@@ -166,7 +167,7 @@ chosen right. — S5 responsive, S10.
 ## 8. Language-product specifics
 
 **P1. Can-do framing on every surface.**
-Unit cards and progress show what the learner *can do* ("Giới thiệu bản
+Unit cards and progress show what the learner _can do_ ("Giới thiệu bản
 thân", "Mua đồ và thanh toán") — already partially true; make it the
 primary label, with unit numbers secondary. — S11 CEFR, S12.
 

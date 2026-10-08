@@ -29,6 +29,7 @@ This prevents invalid shortcuts such as treating a vocabulary multiple-choice an
 ## Language-system families
 
 ### Sound system
+
 - acoustic/phonetic perception;
 - articulation;
 - phoneme categories and contrasts;
@@ -41,6 +42,7 @@ This prevents invalid shortcuts such as treating a vocabulary multiple-choice an
 - intelligibility and comprehensibility.
 
 ### Writing system
+
 - grapheme/phoneme mapping;
 - spelling;
 - capitalization;
@@ -48,6 +50,7 @@ This prevents invalid shortcuts such as treating a vocabulary multiple-choice an
 - typography conventions.
 
 ### Morphology
+
 - inflection;
 - derivation;
 - compounding;
@@ -55,6 +58,7 @@ This prevents invalid shortcuts such as treating a vocabulary multiple-choice an
 - morphosyntactic features.
 
 ### Lexis and phraseology
+
 - lemma/form;
 - sense;
 - receptive vs productive knowledge;
@@ -70,6 +74,7 @@ This prevents invalid shortcuts such as treating a vocabulary multiple-choice an
 - synonym/antonym/hypernym relations.
 
 ### Grammar and syntax
+
 - phrase structure;
 - clause structure;
 - argument structure;
@@ -88,6 +93,7 @@ This prevents invalid shortcuts such as treating a vocabulary multiple-choice an
 - grammatical constructions as form-meaning pairings.
 
 ### Semantics
+
 - lexical meaning;
 - compositional meaning;
 - ambiguity;
@@ -99,6 +105,7 @@ This prevents invalid shortcuts such as treating a vocabulary multiple-choice an
 - semantic roles.
 
 ### Pragmatics and sociolinguistics
+
 - speech acts;
 - implicature;
 - presupposition;
@@ -113,6 +120,7 @@ This prevents invalid shortcuts such as treating a vocabulary multiple-choice an
 - appropriateness for relationship, power and situation.
 
 ### Discourse and genre
+
 - cohesion;
 - coherence;
 - reference chains;
@@ -127,6 +135,7 @@ This prevents invalid shortcuts such as treating a vocabulary multiple-choice an
 - source integration.
 
 ### Processing and strategic competence
+
 - lexical access speed;
 - parsing efficiency;
 - working-memory demand;

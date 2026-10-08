@@ -58,15 +58,19 @@ Use precision/recall/F1 or task-appropriate metrics. Learner-facing error accusa
 ## Speech
 
 ### Audio quality/VAD
+
 Evaluate false speech/non-speech decisions, boundary quality and robustness by device/noise class.
 
 ### ASR
+
 WER/CER can validate transcript support, but ASR accuracy cannot validate pronunciation diagnosis.
 
 ### Forced alignment
+
 Alignment quality is evaluated against human/reference boundaries where the use case depends on timing. Good alignment does not by itself validate pronunciation quality or error diagnosis.
 
 ### Pronunciation / MDD
+
 Evaluate each promoted target/context with blind human labels:
 
 - precision/positive predictive value;
@@ -82,6 +86,7 @@ Evaluate each promoted target/context with blind human labels:
 Initial learner-facing corrective hints remain precision-first. A working target can be >= 0.90 held-out precision and >= 0.60 useful recall, with confidence intervals, until product evidence justifies changing the gate. This is a Nếp product safety threshold, not a claim of phonetic truth.
 
 ### Fluency/prosody
+
 Compare automatic features/scores with multi-rater human judgments. Report inter-rater reliability before claiming model validity. Accuracy and fluency are different constructs and may trade off within a task.
 
 ## Reading and listening

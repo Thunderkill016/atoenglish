@@ -1,36 +1,44 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function ThemeToggle() {
+/**
+ * Light/dark toggle for the app shell (next-themes, storageKey "ato-ui-white",
+ * ThemeProvider mounted in the root layout). Lives at the right edge of the
+ * masthead.
+ */
+export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  // Avoid hydration mismatch: the server render assumes the light default;
+  // the real theme is only known once mounted. useSyncExternalStore is the
+  // lint-clean way to detect "we are on the client now" — no effect needed.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="icon" aria-label="Toggle theme">
-        <Sun className="size-4" />
-      </Button>
-    );
-  }
-
-  const isDark = resolvedTheme === "dark";
+  const isDark = mounted && resolvedTheme === "dark";
+  const label = isDark
+    ? "Chuyển sang giao diện sáng"
+    : "Chuyển sang giao diện tối";
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+    <button
+      type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label={label}
+      title={label}
+      className={cn(
+        "flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+        className,
+      )}
     >
-      {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-    </Button>
+      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+    </button>
   );
 }

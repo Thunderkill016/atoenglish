@@ -88,47 +88,12 @@ export async function ensureE2ETestUser(): Promise<string> {
   return user.id;
 }
 
-/** Reset placement state so each test starts from A0 / unit 1. */
-export async function resetE2EPlacementState(userId: string): Promise<void> {
-  const today = new Date().toISOString().split("T")[0];
-  await db()`
-    INSERT INTO user_progress (user_id, current_level, starting_unit_index, placement_completed_at, total_xp, streak, last_active_date)
-    VALUES (${userId}, 'A0', 0, NULL, 0, 0, ${today})
-    ON CONFLICT (user_id) DO UPDATE SET
-      current_level = 'A0',
-      starting_unit_index = 0,
-      placement_completed_at = NULL,
-      total_xp = 0,
-      streak = 0,
-      last_active_date = ${today}
-  `;
-}
-
-/** Set user to B1+ so /learn/unit-19 is in unlocked range (UI + for test realism). */
-export async function setE2EStartingUnit(
-  userId: string,
-  startingIndex: number,
-  level = "B1",
-): Promise<void> {
-  const today = new Date().toISOString().split("T")[0];
-  await db()`
-    INSERT INTO user_progress (user_id, current_level, starting_unit_index, total_xp, streak, last_active_date)
-    VALUES (${userId}, ${level}, ${startingIndex}, 300, 1, ${today})
-    ON CONFLICT (user_id) DO UPDATE SET
-      current_level = ${level},
-      starting_unit_index = ${startingIndex},
-      total_xp = 300,
-      streak = 1,
-      last_active_date = ${today}
-  `;
-}
-
 export async function loginAsE2ETestUser(page: Page): Promise<void> {
   await page.goto("/login?mode=login");
   await page.getByLabel("Email").fill(E2E_TEST_EMAIL);
   await page.getByLabel("Mật khẩu").fill(E2E_TEST_PASSWORD);
   await page.getByRole("button", { name: /Đăng nhập bằng Email/i }).click();
-  await page.waitForURL(/\/learn/, { timeout: 20_000 });
+  await page.waitForURL(/\/discover/, { timeout: 20_000 });
 }
 
 /** Find user id by email (for post-signup verification). */
@@ -156,6 +121,27 @@ export async function forceConfirmE2EUserEmail(userId: string): Promise<void> {
   `;
 }
 
+/** Seed a youtube content_sources row with a resume position (idempotent). */
+export async function seedWatchedSource(
+  userId: string,
+  externalId: string,
+  title: string,
+): Promise<void> {
+  await db()`
+    insert into public.content_sources
+      (user_id, kind, external_id, title, channel, duration_ms, last_position_ms)
+    values
+      (${userId}, 'youtube', ${externalId}, ${title}, 'E2E Channel', 600000, 65000)
+    on conflict (user_id, kind, external_id)
+    do update set
+      last_position_ms = 65000,
+      title = excluded.title,
+      channel = excluded.channel,
+      duration_ms = excluded.duration_ms,
+      updated_at = now()
+  `;
+}
+
 /** Delete a temp E2E signup user (cascades to neon_auth session/account rows). */
 export async function deleteE2EUserByEmail(email: string): Promise<void> {
   const user = await findUserByEmail(email);
@@ -166,71 +152,4 @@ export async function deleteE2EUserByEmail(email: string): Promise<void> {
   await db()`DELETE FROM user_onboarding_profile WHERE user_id = ${user.id}`;
   await db()`DELETE FROM user_progress WHERE user_id = ${user.id}`;
   await db()`DELETE FROM neon_auth."user" WHERE id = ${user.id}`;
-}
-
-/** Verify the persisted values from signup flow. */
-export async function verifyOnboardingPersistence(
-  userId: string,
-  expected: {
-    goal: string;
-    obstacle: string;
-    daily_minutes: number;
-    daily_xp_goal: number;
-  },
-): Promise<void> {
-  const profiles = await db()`
-    SELECT goal, obstacle, daily_minutes FROM user_onboarding_profile WHERE user_id = ${userId}
-  `;
-  const profile = profiles[0] as
-    | { goal: string; obstacle: string; daily_minutes: number }
-    | undefined;
-  if (!profile) {
-    throw new Error("user_onboarding_profile not found");
-  }
-  if (
-    profile.goal !== expected.goal ||
-    profile.obstacle !== expected.obstacle ||
-    profile.daily_minutes !== expected.daily_minutes
-  ) {
-    throw new Error(
-      `profile mismatch: got ${JSON.stringify(profile)} want ${JSON.stringify(expected)}`,
-    );
-  }
-
-  const rows = await db()`
-    SELECT daily_xp_goal FROM user_progress WHERE user_id = ${userId}
-  `;
-  const progress = rows[0] as { daily_xp_goal: number } | undefined;
-  if (!progress) {
-    throw new Error("user_progress not found");
-  }
-  if (progress.daily_xp_goal !== expected.daily_xp_goal) {
-    throw new Error(
-      `daily_xp_goal mismatch: got ${progress.daily_xp_goal} want ${expected.daily_xp_goal}`,
-    );
-  }
-}
-
-/** Simulate the persist side-effect that /auth/callback performs for new onboarding signups. */
-export async function simulateCallbackOnboardingPersist(
-  userId: string,
-  target: string,
-  obstacle: string,
-  dailyMinutes: number,
-  dailyXpGoal: number,
-  mappedLevel = "A0",
-): Promise<void> {
-  const sql = db();
-  await sql`DELETE FROM user_onboarding_profile WHERE user_id = ${userId}`;
-  await sql`DELETE FROM user_progress WHERE user_id = ${userId}`;
-  await sql`
-    INSERT INTO user_progress (user_id, current_level, starting_unit_index, streak, total_xp, daily_xp_goal)
-    VALUES (${userId}, ${mappedLevel}, 0, 0, 0, ${dailyXpGoal})
-    ON CONFLICT (user_id) DO NOTHING
-  `;
-  await sql`
-    INSERT INTO user_onboarding_profile (user_id, goal, obstacle, daily_minutes)
-    VALUES (${userId}, ${target}, ${obstacle}, ${dailyMinutes})
-    ON CONFLICT (user_id) DO NOTHING
-  `;
 }

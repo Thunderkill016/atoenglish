@@ -7,15 +7,15 @@ request path.
 
 ## Stack mapping
 
-| Concern | Old | Current |
-| --- | --- | --- |
-| Hosting / SSR | Vercel | Cloudflare Workers (`atoenglish`) |
-| Build | `next build` | `npm run build:vinext` (vite → workerd) |
-| Postgres | Supabase | Neon branch `production` (`weathered-haze-10487148`) |
-| Auth | Supabase Auth | Neon Managed Better Auth (`/api/auth/*` proxy) |
-| Data API | Supabase PostgREST | Neon Data API (`NEON_DATA_API_URL`) |
-| Service writes | `SUPABASE_SERVICE_ROLE_KEY` | `DATABASE_URL` (`neondb_owner`) via `rpcService` |
-| Version check | `check-vercel-deploy.sh` | `npm run check-deploy` (`scripts/check-cf-deploy.sh`) |
+| Concern        | Old                         | Current                                               |
+| -------------- | --------------------------- | ----------------------------------------------------- |
+| Hosting / SSR  | Vercel                      | Cloudflare Workers (`atoenglish`)                     |
+| Build          | `next build`                | `npm run build:vinext` (vite → workerd)               |
+| Postgres       | Supabase                    | Neon branch `production` (`weathered-haze-10487148`)  |
+| Auth           | Supabase Auth               | Neon Managed Better Auth (`/api/auth/*` proxy)        |
+| Data API       | Supabase PostgREST          | Neon Data API (`NEON_DATA_API_URL`)                   |
+| Service writes | `SUPABASE_SERVICE_ROLE_KEY` | `DATABASE_URL` (`neondb_owner`) via `rpcService`      |
+| Version check  | `check-vercel-deploy.sh`    | `npm run check-deploy` (`scripts/check-cf-deploy.sh`) |
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ worker: defineWorker({
   name: "atoenglish",
   entrypoint: "vinext/server/fetch-handler",
   compatibilityFlags: ["nodejs_compat"],
-})
+});
 ```
 
 ## Environment variables
@@ -39,14 +39,14 @@ worker: defineWorker({
 Set on the Worker (dashboard or `cf`/wrangler secrets) — same names as
 `.env.example`:
 
-| Var | Secret? | Purpose |
-| --- | --- | --- |
-| `DATABASE_URL` | yes | owner connection — service RPCs (`rpcService`) |
-| `NEON_AUTH_BASE_URL` | no | Managed Better Auth endpoint |
-| `NEON_AUTH_COOKIE_SECRET` | yes | signs the session cookie |
-| `NEON_DATA_API_URL` | no | PostgREST endpoint (server clients) |
-| `NEXT_PUBLIC_NEON_DATA_API_URL` | no | same endpoint for the browser bundle |
-| `NEXT_PUBLIC_SITE_URL` | no | canonical origin for metadata/sitemap |
+| Var                             | Secret? | Purpose                                        |
+| ------------------------------- | ------- | ---------------------------------------------- |
+| `DATABASE_URL`                  | yes     | owner connection — service RPCs (`rpcService`) |
+| `NEON_AUTH_BASE_URL`            | no      | Managed Better Auth endpoint                   |
+| `NEON_AUTH_COOKIE_SECRET`       | yes     | signs the session cookie                       |
+| `NEON_DATA_API_URL`             | no      | PostgREST endpoint (server clients)            |
+| `NEXT_PUBLIC_NEON_DATA_API_URL` | no      | same endpoint for the browser bundle           |
+| `NEXT_PUBLIC_SITE_URL`          | no      | canonical origin for metadata/sitemap          |
 
 Do **not** set `DATABASE_URL_UNPOOLED` on the Worker — pooled connections
 are required on Workers (`DATABASE_URL` is already pooled).
@@ -74,10 +74,11 @@ CF_HEALTH_URL=https://atoenglish.<subdomain>.workers.dev/api/health \
   npm run check-deploy
 ```
 
-Smoke the deployed app:
+Smoke the deployed app — poll health until the deployment is live:
 
 ```bash
-SMOKE_URL=https://atoenglish.<subdomain>.workers.dev npm run smoke:learn
+CF_HEALTH_URL=https://atoenglish.<subdomain>.workers.dev/api/health \
+  npm run check-deploy
 ```
 
 ## Database migrations

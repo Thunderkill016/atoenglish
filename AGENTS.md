@@ -108,7 +108,6 @@ Common checks:
 npx tsc --noEmit
 npm run lint
 npm run test
-npm run test:content-standard
 npm run build
 ```
 

@@ -10,24 +10,31 @@
 ## Accepted findings
 
 ### 1. Communication activity and evidence role were conflated
+
 Accepted. `listening`/`reading`/`spoken-production` describe what the learner does. `recognition`/`recall`/`production`/`transfer` describe the epistemic role a task may support. Core now owns a separate `CoreEvidenceRole` ontology and does not reuse legacy `EvidenceType` as domain semantics.
 
 ### 2. Unstructured observation payloads were not a real type boundary
+
 Accepted. `Record<string, unknown>` is removed from the default core observation contract. Model families must cross the core boundary through discriminated diagnostic payloads. Adding a new model family requires adding an explicit contract member.
 
 ### 3. Calibration cannot be global
+
 Accepted. The core no longer treats a string such as `calibrated` as global authority. A calibration profile is scoped by model fingerprint, construct, communication activity, learner-population tags and relevant runtime conditions such as SNR/noise/device/prompt context. Out-of-envelope observations fail closed.
 
 ### 4. Dependency graph cycles were not rejected
+
 Accepted. `prerequisite-of`, `component-of` and `enables` are now treated as acyclic dependency relations and validated with directed cycle detection. Associative relations such as `confusable-with` may still cycle.
 
 ### 5. FSRS must not stand in for all language learning
+
 Accepted with correction. FSRS remains useful for bounded declarative retrieval scheduling where its assumptions fit. It is not the default model for phonology, syntax processing, fluency, interaction or integrated performance. Core truth now separates declarative memory from procedural repertoire and requires procedural practice-curve models to be empirically compared.
 
 ### 6. Psychometrics was missing
+
 Accepted. The core now includes bounded 2PL reference utilities and explicitly requires item difficulty/discrimination and uncertainty for heterogeneous assessment claims. These utilities do not yet grant learner authority; item calibration, fit, invariance and held-out validation remain separate gates. MIRT/CDM are future challengers, not repository claims.
 
 ### 7. OpenPronounce should not be privileged
+
 Accepted. OpenPronounce is demoted to a lightweight baseline. It can be useful as a falsifiable comparison target but cannot define Nếp pronunciation architecture or learner truth.
 
 ## Primary-source corrections to the review
@@ -92,7 +99,7 @@ Decision: SpeechOcean762 may enter rights-reviewed research/training experiments
 
 ## Experiment 1 — pronunciation challenger tournament
 
-Question: which self-hosted pipeline most reliably identifies a *specific* Vietnamese-English pronunciation error without falsely accusing acceptable productions?
+Question: which self-hosted pipeline most reliably identifies a _specific_ Vietnamese-English pronunciation error without falsely accusing acceptable productions?
 
 Initial challengers:
 

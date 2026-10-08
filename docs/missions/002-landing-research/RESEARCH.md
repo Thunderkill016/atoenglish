@@ -8,6 +8,7 @@ teardown / repo capability) · Lead synthesis at bottom.
 ## A. What "beautiful & modern" means in late-2025/2026 (design stream)
 
 FACTS:
+
 - Product-first heroes are the consensus: show a working/animated slice of
   the product, not a screenshot or illustration (Linear, Notion, Preply).
 - Typography is the hero: oversized display `clamp(48px,8vw,96px)`, editorial
@@ -34,18 +35,19 @@ speak.com, praktika.ai.
 
 ## B. What competitors actually do (teardown stream)
 
-| Product | Core mechanic | Dishonesty we must NOT copy |
-|---|---|---|
-| ELSA | **Free CEFR-ish assessment as the funnel** ("Kiểm tra trình độ miễn phí"); founder story; stat wall | "#1", asterisked 90%/68% claims |
-| Duolingo | **Lesson-before-signup** (~5min value before identity); "5 min/day" | streak = attendance not learning (documented critique) |
-| Babbel | Named method ("Babbel Method") + quiz funnel + real (asterisked) studies | perpetual "save 60%" |
-| Busuu | "22h Premium = 1 semester" — outcome in a known currency | survey-soft percentages |
+| Product                                         | Core mechanic                                                                                            | Dishonesty we must NOT copy                                    |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| ELSA                                            | **Free CEFR-ish assessment as the funnel** ("Kiểm tra trình độ miễn phí"); founder story; stat wall      | "#1", asterisked 90%/68% claims                                |
+| Duolingo                                        | **Lesson-before-signup** (~5min value before identity); "5 min/day"                                      | streak = attendance not learning (documented critique)         |
+| Babbel                                          | Named method ("Babbel Method") + quiz funnel + real (asterisked) studies                                 | perpetual "save 60%"                                           |
+| Busuu                                           | "22h Premium = 1 semester" — outcome in a known currency                                                 | survey-soft percentages                                        |
 | VN local (MochiTalk, EnglishVui, Babilala, TFY) | Pain-mirroring headlines ("HỌC LÂU VẪN KHÔNG NÓI ĐƯỢC?"), "10 phút/ngày", cam kết "Nói được sau 30 ngày" | **cam kết theater** — VN consumers burned; exposé genre exists |
 
 Whitespace findings (the opportunity):
+
 1. **Nobody shows the receipt.** Every competitor promises; none publishes
-   what the promised days actually buy. "28 ngày → X" as a *scoped, honest
-   CEFR outcome* is un-copyable positioning.
+   what the promised days actually buy. "28 ngày → X" as a _scoped, honest
+   CEFR outcome_ is un-copyable positioning.
 2. **The anti-claim lane is empty in VN.** Open by stating what we DON'T
    promise — exploits the exact distrust the cam kết exposés created.
 3. **Streak/XP honesty is free positioning** — "Chuỗi ngày chứng nhận bạn
@@ -53,7 +55,7 @@ Whitespace findings (the opportunity):
 4. **Diagnostic-first CTA is proven and unoccupied at the honest end** —
    a free placement that reports a real level with honest bounds.
 5. Awwwards-contrast products win with restraint (one claim, one CTA color,
-   real product imagery) — restraint is *on-message* for an honest brand.
+   real product imagery) — restraint is _on-message_ for an honest brand.
 
 ## C. What this repo can afford (capability stream)
 
@@ -106,6 +108,7 @@ Structure proposal (single scroll, ~6 sections):
 6. **FAQ → final CTA.**
 
 Design rules (from trends + VN constraints):
+
 - Light base (#f5f5f7 canvas already in tokens), green primary accent, one
   dark contrast band max. No gradients-as-wallpaper, no glassmorphism, no
   purple AI mesh.

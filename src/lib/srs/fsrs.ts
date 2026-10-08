@@ -13,7 +13,9 @@ export const fsrsInstance = fsrs({
  */
 export function mapDbCardToFSRSCard(dbCard: DbCard): FSRSCard {
   return {
-    due: dbCard.next_review ? new Date(dbCard.next_review) : new Date(dbCard.due_date),
+    due: dbCard.next_review
+      ? new Date(dbCard.next_review)
+      : new Date(dbCard.due_date),
     stability: dbCard.stability || 0,
     difficulty: dbCard.difficulty || 0,
     elapsed_days: Math.max(0, dbCard.elapsed_days || 0),
@@ -30,7 +32,7 @@ export function mapDbCardToFSRSCard(dbCard: DbCard): FSRSCard {
 export function reviewCardFSRS(
   dbCard: DbCard,
   rating: "Again" | "Hard" | "Good" | "Easy",
-  retentionRate?: number
+  retentionRate?: number,
 ) {
   const fsrsCard = mapDbCardToFSRSCard(dbCard);
   const now = new Date();

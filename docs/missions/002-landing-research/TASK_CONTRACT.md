@@ -1,10 +1,10 @@
 # Task Contract — 002-landing-research
 
-| Field | Value |
-| ----- | ----- |
+| Field  | Value      |
+| ------ | ---------- |
 | Status | `ACCEPTED` |
-| Owner | Lead Devin |
-| Date | 2026-10-05 |
+| Owner  | Lead Devin |
+| Date   | 2026-10-05 |
 
 ## MISSION
 

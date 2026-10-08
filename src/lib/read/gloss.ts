@@ -1,7 +1,7 @@
 /**
  * Vietnamese gloss dictionary for the reading surface.
  *
- * Seeded from `UNIT_VOCABULARY` — the repo's curated learner vocabulary —
+ * Seeded from `VOCABULARY_ENTRIES` — the repo's curated learner vocabulary —
  * rather than an external dictionary. That makes the dictionary small and
  * honest: misses return `null` and the UI shows "chưa có nghĩa" instead of a
  * fabricated meaning (contract invariant 1).
@@ -9,7 +9,8 @@
  * Inflected forms resolve only through the explicit suffix rules in
  * `lookupGloss` — no morphological guessing.
  */
-import { UNIT_VOCABULARY } from "@/lib/constants/vocabulary";
+import { VOCABULARY_ENTRIES } from "@/lib/dict/vocabulary";
+import { tokenizeText } from "./tokenize";
 
 export type GlossEntry = {
   /** The normalized headword as stored in the dictionary. */
@@ -21,17 +22,13 @@ export type GlossEntry = {
 
 const dictionary = new Map<string, GlossEntry>();
 
-for (const items of Object.values(UNIT_VOCABULARY)) {
-  for (const item of items) {
-    const key = item.word.trim().toLowerCase();
-    if (key.length === 0 || dictionary.has(key)) continue;
-    dictionary.set(key, {
-      word: key,
-      meaning_vn: item.meaning_vn,
-      phonetic: item.phonetic || undefined,
-      example_en: item.example_en || undefined,
-    });
-  }
+for (const item of VOCABULARY_ENTRIES) {
+  dictionary.set(item.word, {
+    word: item.word,
+    meaning_vn: item.meaning_vn,
+    phonetic: item.phonetic || undefined,
+    example_en: item.example_en || undefined,
+  });
 }
 
 export const GLOSS_SIZE = dictionary.size;
@@ -55,7 +52,11 @@ function inflectionCandidates(normalized: string): string[] {
   if (normalized.endsWith("es") && normalized.length > 2) {
     candidates.push(normalized.slice(0, -2)); // watches → watch
   }
-  if (normalized.endsWith("s") && !normalized.endsWith("ss") && normalized.length > 1) {
+  if (
+    normalized.endsWith("s") &&
+    !normalized.endsWith("ss") &&
+    normalized.length > 1
+  ) {
     candidates.push(normalized.slice(0, -1)); // works → work
   }
   if (normalized.endsWith("ed") && normalized.length > 2) {
@@ -97,4 +98,53 @@ export function lookupGloss(normalizedWord: string): GlossEntry | null {
     if (entry) return entry;
   }
   return null;
+}
+
+// Three glosses keep the active cue readable on narrow screens; not a proficiency score.
+export const ACTIVE_CUE_GLOSS_LIMIT = 3;
+const MAX_GLOSS_WORDS = Math.max(
+  ...VOCABULARY_ENTRIES.map((entry) => entry.word.split(" ").length),
+);
+export type SentenceGloss = GlossEntry & { readonly surface: string };
+/** Curated meanings, not model-generated/context-verified senses. Honest misses stay absent. */
+export function sentenceGlosses(text: string): SentenceGloss[] {
+  const tokens = tokenizeText(text);
+  const seen = new Set<string>();
+  const result: SentenceGloss[] = [];
+  for (
+    let i = 0;
+    i < tokens.length && result.length < ACTIVE_CUE_GLOSS_LIMIT;
+    i++
+  ) {
+    if (tokens[i].type !== "word") continue;
+    const words: string[] = [];
+    const surfaces: string[] = [];
+    let match: SentenceGloss | null = null;
+    let last = i;
+    for (
+      let j = i;
+      j < tokens.length && words.length < MAX_GLOSS_WORDS;
+      j += 2
+    ) {
+      const token = tokens[j];
+      if (token.type !== "word" || (j > i && tokens[j - 1].type !== "space"))
+        break;
+      words.push(token.normalized);
+      surfaces.push(token.text);
+      const entry =
+        words.length === 1
+          ? lookupGloss(words[0])
+          : dictionary.get(words.join(" "));
+      if (entry) {
+        match = { ...entry, surface: surfaces.join(" ") };
+        last = j;
+      }
+    }
+    if (!match) continue;
+    i = last;
+    if (seen.has(match.word)) continue;
+    seen.add(match.word);
+    result.push(match);
+  }
+  return result;
 }

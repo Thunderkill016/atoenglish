@@ -1,10 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -22,14 +18,9 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
-    "types": [
-      "dom-speech-recognition",
-      "vitest/globals"
-    ],
+    "types": ["dom-speech-recognition", "vitest/globals"],
     "target": "ES2022"
   },
   "include": [
@@ -41,10 +32,5 @@
     ".next/dev/types/**/*.ts",
     ".next-dev/dev/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "supabase/functions",
-    "scripts",
-    "research"
-  ]
+  "exclude": ["node_modules", "supabase/functions", "scripts", "research"]
 }

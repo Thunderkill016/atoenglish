@@ -21,34 +21,34 @@ When primary sources disagree with an internal report, this registry records the
 
 ## Standards and competency references
 
-| Source | Use | Status | Notes |
-| --- | --- | --- | --- |
-| CEFR / Companion Volume | communication modes, competence taxonomy, external crosswalk | reference-only | Council of Europe material is copyrighted; cite concepts, do not copy a descriptor corpus into Nếp without rights review. |
-| ACTFL Proficiency Guidelines 2024 | external proficiency comparison and assessment research | reference-only | Do not copy/derive an internal descriptor corpus without explicit rights review. |
+| Source                            | Use                                                          | Status         | Notes                                                                                                                     |
+| --------------------------------- | ------------------------------------------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| CEFR / Companion Volume           | communication modes, competence taxonomy, external crosswalk | reference-only | Council of Europe material is copyrighted; cite concepts, do not copy a descriptor corpus into Nếp without rights review. |
+| ACTFL Proficiency Guidelines 2024 | external proficiency comparison and assessment research      | reference-only | Do not copy/derive an internal descriptor corpus without explicit rights review.                                          |
 
 Nếp owns its ontology and descriptors. External standards may later receive empirically validated mappings.
 
 ## Open linguistic resources
 
-| Artifact | Candidate use | License/status |
-| --- | --- | --- |
-| CMU Pronouncing Dictionary | US-English pronunciation lexicon / ARPAbet seeds | candidate-production; preserve required notices/acknowledgement |
-| Princeton WordNet 3.0 | sense relations, synonymy/hypernymy and lexical semantics | candidate-production; preserve WordNet license notices |
-| Universal Dependencies English EWT | syntax/morphology parser evaluation/training | candidate-production only after share-alike/derivative-model review; dataset CC BY-SA 4.0 |
-| Universal Dependencies English ESLSpok | spoken L2 syntax research | artifact-specific rights review required |
-| UD English ESL | learner syntax research | annotations and underlying learner text must be reviewed separately |
+| Artifact                               | Candidate use                                             | License/status                                                                            |
+| -------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| CMU Pronouncing Dictionary             | US-English pronunciation lexicon / ARPAbet seeds          | candidate-production; preserve required notices/acknowledgement                           |
+| Princeton WordNet 3.0                  | sense relations, synonymy/hypernymy and lexical semantics | candidate-production; preserve WordNet license notices                                    |
+| Universal Dependencies English EWT     | syntax/morphology parser evaluation/training              | candidate-production only after share-alike/derivative-model review; dataset CC BY-SA 4.0 |
+| Universal Dependencies English ESLSpok | spoken L2 syntax research                                 | artifact-specific rights review required                                                  |
+| UD English ESL                         | learner syntax research                                   | annotations and underlying learner text must be reviewed separately                       |
 
 Do not mix NonCommercial corpora into production-training weights.
 
 ## Deterministic / NLP stack candidates
 
-| Artifact | Role | Status |
-| --- | --- | --- |
-| Stanford Stanza | tokenizer/POS/lemma/dependency framework | candidate-production framework; Apache-2.0 code; model/treebank provenance reviewed separately |
-| GECToR | sequence-tagging grammatical-error-correction challenger | challenger; official Grammarly code Apache-2.0; exact pretrained weights and training corpora require separate provenance review |
-| LanguageTool core | grammar/style deterministic rules and baseline | adapter-only; LGPL core, isolate/review distribution obligations |
-| ERRANT | grammatical error extraction/classification/evaluation | adapter-only pending exact version/license and label-policy review |
-| sentence-transformers | embedding/reranking framework | adapter-only; Apache-2.0 library, model-specific licenses |
+| Artifact              | Role                                                     | Status                                                                                                                           |
+| --------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Stanford Stanza       | tokenizer/POS/lemma/dependency framework                 | candidate-production framework; Apache-2.0 code; model/treebank provenance reviewed separately                                   |
+| GECToR                | sequence-tagging grammatical-error-correction challenger | challenger; official Grammarly code Apache-2.0; exact pretrained weights and training corpora require separate provenance review |
+| LanguageTool core     | grammar/style deterministic rules and baseline           | adapter-only; LGPL core, isolate/review distribution obligations                                                                 |
+| ERRANT                | grammatical error extraction/classification/evaluation   | adapter-only pending exact version/license and label-policy review                                                               |
+| sentence-transformers | embedding/reranking framework                            | adapter-only; Apache-2.0 library, model-specific licenses                                                                        |
 
 ### Verified GECToR benchmark note
 
@@ -59,15 +59,15 @@ Official implementation: https://github.com/grammarly/gector
 
 ## Speech stack candidates
 
-| Artifact | Role | Status |
-| --- | --- | --- |
-| Silero VAD | speech segmentation / quality gate | candidate-production; exact release/model fingerprint required |
-| OpenAI Whisper | self-hosted transcript support / content tooling | candidate-production; transcript is not pronunciation ground truth |
-| WavLM | shared speech representation / future pronunciation and fluency heads | candidate-production research; review exact checkpoint and training-data provenance at adoption |
-| Montreal Forced Aligner (MFA) | offline/reference forced alignment and alignment benchmark | challenger/tooling; MIT code; exact acoustic model/dictionary artifacts reviewed separately; alignment is not pronunciation scoring |
-| GOPT | pronunciation-assessment research challenger using GOP features | challenger, not gold standard; BSD-3-Clause code; official benchmark is SpeechOcean762 and own-data inference path has a documented bug |
-| OpenPronounce | lightweight existing pronunciation baseline | baseline-only; useful to falsify/compare, never authoritative without Vietnamese-English human calibration |
-| Kokoro / Piper-family local TTS | listening/reference audio candidates | adapter-only; code, phonemizer, voices and model weights require separate license/provenance review |
+| Artifact                        | Role                                                                  | Status                                                                                                                                  |
+| ------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Silero VAD                      | speech segmentation / quality gate                                    | candidate-production; exact release/model fingerprint required                                                                          |
+| OpenAI Whisper                  | self-hosted transcript support / content tooling                      | candidate-production; transcript is not pronunciation ground truth                                                                      |
+| WavLM                           | shared speech representation / future pronunciation and fluency heads | candidate-production research; review exact checkpoint and training-data provenance at adoption                                         |
+| Montreal Forced Aligner (MFA)   | offline/reference forced alignment and alignment benchmark            | challenger/tooling; MIT code; exact acoustic model/dictionary artifacts reviewed separately; alignment is not pronunciation scoring     |
+| GOPT                            | pronunciation-assessment research challenger using GOP features       | challenger, not gold standard; BSD-3-Clause code; official benchmark is SpeechOcean762 and own-data inference path has a documented bug |
+| OpenPronounce                   | lightweight existing pronunciation baseline                           | baseline-only; useful to falsify/compare, never authoritative without Vietnamese-English human calibration                              |
+| Kokoro / Piper-family local TTS | listening/reference audio candidates                                  | adapter-only; code, phonemizer, voices and model weights require separate license/provenance review                                     |
 
 ### Verified GOPT benchmark note
 
@@ -93,21 +93,21 @@ Official code license: MIT.
 
 ## Pronunciation datasets
 
-| Dataset | Role | Status |
-| --- | --- | --- |
-| SpeechOcean762 | open non-native English pronunciation assessment benchmark | candidate research/evaluation and potentially commercial use; paper states free commercial/non-commercial use; freeze exact OpenSLR artifact/license before training |
-| L2-ARCTIC | L2 speech research including Vietnamese speakers | **research-only**; CC BY-NC 4.0; forbidden as a production-training dependency unless separate rights are obtained |
-| Nếp Vietnamese-English Corpus | target production calibration/training asset | must be consented, speaker-disjoint, rights-cleared and versioned; does not exist merely because a schema exists |
+| Dataset                       | Role                                                       | Status                                                                                                                                                               |
+| ----------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SpeechOcean762                | open non-native English pronunciation assessment benchmark | candidate research/evaluation and potentially commercial use; paper states free commercial/non-commercial use; freeze exact OpenSLR artifact/license before training |
+| L2-ARCTIC                     | L2 speech research including Vietnamese speakers           | **research-only**; CC BY-NC 4.0; forbidden as a production-training dependency unless separate rights are obtained                                                   |
+| Nếp Vietnamese-English Corpus | target production calibration/training asset               | must be consented, speaker-disjoint, rights-cleared and versioned; does not exist merely because a schema exists                                                     |
 
 SpeechOcean762 primary paper: https://www.isca-archive.org/interspeech_2021/zhang21x_interspeech.html
 L2-ARCTIC official corpus/license page: https://psi.engr.tamu.edu/l2-arctic-corpus/
 
 ## Local generative intelligence
 
-| Artifact | Role | Status |
-| --- | --- | --- |
+| Artifact                         | Role                                          | Status                                                                  |
+| -------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------- |
 | Qwen-family local instruct model | semantic/pragmatic/writing candidate analysis | adapter-only until exact model/version/license and benchmark are frozen |
-| llama.cpp | local/portable LLM inference runtime | candidate-production framework; exact model license remains separate |
+| llama.cpp                        | local/portable LLM inference runtime          | candidate-production framework; exact model license remains separate    |
 
 No LLM may directly mutate mastery or publish curriculum. It can propose structured observations, candidates, explanations or task drafts which pass deterministic schemas and domain gates.
 

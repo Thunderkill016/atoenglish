@@ -8,11 +8,11 @@ authorized implementation ("Duyệt — implement luôn").
 
 ## WORKSTREAMS
 
-| Stream | Session | Result |
-| ------ | ------- | ------ |
+| Stream                | Session                      | Result                                                                                                      |
+| --------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | Design trends 2025–26 | research subagent (parallel) | light-first, product-first hero, restrained motion; banned: purple AI gradients, glassmorphism, equal bento |
-| Competitor teardown | research subagent (parallel) | ELSA funnel test, Duolingo learn-before-signup, VN "30 ngày" claim fatigue → whitespace = show the receipt |
-| Repo capability | research subagent (parallel) | tokens/framer-motion/analytics present; found `--font-sans-var` never defined; CSP blocks remote images |
+| Competitor teardown   | research subagent (parallel) | ELSA funnel test, Duolingo learn-before-signup, VN "30 ngày" claim fatigue → whitespace = show the receipt  |
+| Repo capability       | research subagent (parallel) | tokens/framer-motion/analytics present; found `--font-sans-var` never defined; CSP blocks remote images     |
 
 ## DECISIONS
 

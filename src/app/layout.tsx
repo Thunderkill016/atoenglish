@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import { MotionProvider } from "@/components/providers/motion-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -8,16 +8,17 @@ import { SITE_URL } from "@/lib/site";
 
 import "./globals.css";
 
-const sansFont = Plus_Jakarta_Sans({
+const sansFont = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
-  variable: "--font-jakarta",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-be-vietnam",
   display: "swap",
 });
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+    { media: "(prefers-color-scheme: light)", color: "#fdfdfb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f0f10" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -27,20 +28,18 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "AtoEnglish — Luyện IELTS từ nền tảng",
+    default: "AtoEnglish — Học tiếng Anh qua video",
     template: "%s | AtoEnglish",
   },
   description:
-    "Lộ trình IELTS 0→9.0 cho người Việt: nền tảng tiếng Anh trước, format đề sau — mỗi giai đoạn đo được theo band descriptors chính thức.",
+    "Học tiếng Anh qua video YouTube tự chọn: phụ đề song ngữ từng câu, tra từ theo ngữ cảnh, lưu và ôn lại bằng lặp lại ngắt quãng — miễn phí, cho người Việt tự học.",
   keywords: [
-    "luyện IELTS",
-    "IELTS cho người mất gốc",
-    "học IELTS từ đầu",
-    "học tiếng Anh",
+    "học tiếng Anh qua video",
+    "phụ đề song ngữ",
+    "YouTube subtitles",
+    "tra từ vựng",
     "FSRS",
     "spaced repetition",
-    "CEFR",
-    "band descriptors",
     "AtoEnglish",
   ],
   authors: [{ name: "AtoEnglish Team" }],
@@ -71,23 +70,23 @@ export const metadata: Metadata = {
     locale: "vi_VN",
     url: SITE_URL,
     siteName: "AtoEnglish",
-    title: "AtoEnglish — Luyện IELTS từ nền tảng, cho người Việt",
+    title: "AtoEnglish — Học tiếng Anh qua video bạn tự chọn",
     description:
-      "Lộ trình IELTS 0→9.0: nền tảng trước, format đề sau — tiến bộ đo bằng bằng chứng, không bằng lời hứa.",
+      "Phụ đề song ngữ từng câu, tra từ theo ngữ cảnh, ôn tập thông minh — miễn phí.",
     images: [
       {
         url: `${SITE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "AtoEnglish — Luyện IELTS từ nền tảng",
+        alt: "AtoEnglish — Học tiếng Anh qua video",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AtoEnglish — Luyện IELTS từ nền tảng",
+    title: "AtoEnglish — Học tiếng Anh qua video",
     description:
-      "4 giai đoạn từ A0 đến band mục tiêu — mỗi bước đo được, không hứa ảo.",
+      "Biến video YouTube bạn thích thành bài học — miễn phí, không quảng cáo.",
     creator: "@atoenglish",
     images: [`${SITE_URL}/og-image.png`],
   },
@@ -124,13 +123,13 @@ export default function RootLayout({
       <body className="min-h-screen">
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-white focus:font-bold focus:text-sm focus:shadow-lg"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:font-bold focus:text-sm focus:shadow-lg"
         >
           Chuyển đến nội dung chính
         </a>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
           enableSystem={false}
           storageKey="ato-ui-white"
           disableTransitionOnChange

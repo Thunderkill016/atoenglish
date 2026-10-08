@@ -59,10 +59,10 @@ follow-up.
 ## ACCEPTANCE CRITERIA
 
 - [ ] Every unawaited async write in actions is either registered with the
-  runtime's pending-work mechanism or explicitly documented as accepted-loss
-  — verified by code inspection + grep for the pattern.
+      runtime's pending-work mechanism or explicitly documented as accepted-loss
+      — verified by code inspection + grep for the pattern.
 - [ ] The streak sync in flashcard-stats cannot be dropped silently —
-  verified by review + any testable assertion.
+      verified by review + any testable assertion.
 - [ ] tsc + eslint + vitest green.
 - [ ] No blocking of the response path added beyond what existed.
 

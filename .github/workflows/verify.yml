@@ -51,6 +51,3 @@ jobs:
 
       - name: Unit tests
         run: npm run test
-
-      - name: Content standards
-        run: npm run test:content-standard

@@ -12,17 +12,21 @@
  */
 
 export type ReadToken =
-  | { readonly type: "word"; readonly text: string; readonly normalized: string }
+  | {
+      readonly type: "word";
+      readonly text: string;
+      readonly normalized: string;
+    }
   | { readonly type: "space" | "punct" | "other"; readonly text: string };
 
 // A word is an ASCII-letter run with an optional internal apostrophe tail.
-const WORD_RE = /[A-Za-z]+(?:'[A-Za-z]+)*/y;
+const WORD_RE = /[A-Za-z]+(?:['’][A-Za-z]+)*/y;
 const SPACE_RE = /\s+/y;
 const PUNCT_RE = /[\p{P}\p{S}\d_]+/uy;
 
 /** Normalize a surface form to the storage join key. */
 export function normalizeWord(text: string): string {
-  return text.toLowerCase();
+  return text.toLowerCase().replaceAll("’", "'");
 }
 
 /**
@@ -37,7 +41,11 @@ export function tokenizeText(text: string): ReadToken[] {
     WORD_RE.lastIndex = pos;
     let match = WORD_RE.exec(text);
     if (match) {
-      tokens.push({ type: "word", text: match[0], normalized: normalizeWord(match[0]) });
+      tokens.push({
+        type: "word",
+        text: match[0],
+        normalized: normalizeWord(match[0]),
+      });
       pos += match[0].length;
       continue;
     }
@@ -68,4 +76,31 @@ export function distinctWords(text: string): string[] {
     if (token.type === "word") words.add(token.normalized);
   }
   return [...words];
+}
+
+/** A phrase stays within one sentence and retains intervening punctuation/spacing. */
+export function phraseFromTokens(
+  tokens: ReadToken[],
+  first: number,
+  last: number,
+): string | null {
+  if (
+    !Number.isInteger(first) ||
+    !Number.isInteger(last) ||
+    first < 0 ||
+    last < 0 ||
+    first >= tokens.length ||
+    last >= tokens.length
+  )
+    return null;
+  if (tokens[first].type !== "word" || tokens[last].type !== "word")
+    return null;
+  const start = Math.min(first, last);
+  const end = Math.max(first, last);
+  return tokens
+    .slice(start, end + 1)
+    .map((token) => token.text)
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
 }

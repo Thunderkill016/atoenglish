@@ -8,6 +8,7 @@
 In Nếp English Intelligence Engine, durable learner assessment cannot be minted by an evaluator, task context, or observation. PR #131 established the first executable capability slice and introduced `CalibrationAuthorityGrant` as a typed boundary. However, it intentionally left one residual: `CalibrationAuthorityGrant` was only a typed shape, allowing ad-hoc object literals to be passed without verifying independent provenance.
 
 **GEMINI-PROVENANCE-001** closes this residual by introducing **Provenance Authority Registry V1**:
+
 - An independent, persistence-neutral registry of evaluation artifacts and authority grants.
 - A pure, deterministic, fail-closed resolver:
   ```text
@@ -23,7 +24,8 @@ In Nếp English Intelligence Engine, durable learner assessment cannot be minte
 To design the provenance registry on sound foundations, we reviewed core provenance, measurement, and AI governance frameworks.
 
 ### 2.1 W3C PROV-DM & PROV-O (Recommendation 2013)
-- **Citation**: World Wide Web Consortium (W3C), *PROV-DM: The PROV Data Model*, W3C Recommendation 30 April 2013. [https://www.w3.org/TR/prov-dm/](https://www.w3.org/TR/prov-dm/)
+
+- **Citation**: World Wide Web Consortium (W3C), _PROV-DM: The PROV Data Model_, W3C Recommendation 30 April 2013. [https://www.w3.org/TR/prov-dm/](https://www.w3.org/TR/prov-dm/)
 - **Concepts Applied**:
   - `Entity`: Immutable benchmark datasets and model weight checkpoints.
   - `Activity`: Calibration trials and empirical evaluations.
@@ -32,20 +34,23 @@ To design the provenance registry on sound foundations, we reviewed core provena
 - **Nếp Design Decision**: In Nếp, changing any evaluated artifact (model weights, preprocessing pipeline, runtime container) or the underlying benchmark dataset creates a distinct entity and invalidates the provenance link unless explicitly re-evaluated and registered.
 
 ### 2.2 NIST AI Risk Management Framework 1.0 (NIST AI 100-1)
-- **Citation**: National Institute of Standards and Technology (NIST), *Artificial Intelligence Risk Management Framework (AI RMF 1.0)*, NIST AI 100-1, January 2023. [https://nvlpubs.nist.gov/nistpubs/ai/nist.ai.100-1.pdf](https://nvlpubs.nist.gov/nistpubs/ai/nist.ai.100-1.pdf)
+
+- **Citation**: National Institute of Standards and Technology (NIST), _Artificial Intelligence Risk Management Framework (AI RMF 1.0)_, NIST AI 100-1, January 2023. [https://nvlpubs.nist.gov/nistpubs/ai/nist.ai.100-1.pdf](https://nvlpubs.nist.gov/nistpubs/ai/nist.ai.100-1.pdf)
 - **Concepts Applied**:
   - Section 1.2 & MEASURE Function: AI measurement validity and reliability are context-bounded. Metrics measured under clean acoustic conditions or specific adult L1 populations do not generalize to noisy mobile environments or other populations.
 - **Nếp Design Decision**: Scoped authority matching enforces that `requiredPopulationTags`, `allowedNoiseClasses`, `minimumSnrDb`, and `allowedPromptContexts` must encompass the observation context before authority can resolve.
 
 ### 2.3 Standards for Educational and Psychological Testing
-- **Citation**: American Educational Research Association (AERA), American Psychological Association (APA), National Council on Measurement in Education (NCME), *Standards for Educational and Psychological Testing*, 2014.
+
+- **Citation**: American Educational Research Association (AERA), American Psychological Association (APA), National Council on Measurement in Education (NCME), _Standards for Educational and Psychological Testing_, 2014.
 - **Concepts Applied**:
   - Validity is not a global property of an instrument, but of the specific interpretations and decisions for specified uses (Standard 1.1).
   - Formative diagnostic feedback ("hint-only" / formative "assessment") requires different evidentiary thresholds than summative certification ("mastery").
 - **Nếp Design Decision**: Grants explicitly distinguish `decision: "assessment"` vs `decision: "mastery"` and `authority: "assessment-candidate"` vs `authority: "mastery-candidate"`.
 
 ### 2.4 SLSA Provenance Specification (v1.0)
-- **Citation**: Supply-chain Levels for Software Artifacts (SLSA), *SLSA Provenance v1.0*, 2023. [https://slsa.dev/spec/v1.0/provenance](https://slsa.dev/spec/v1.0/provenance)
+
+- **Citation**: Supply-chain Levels for Software Artifacts (SLSA), _SLSA Provenance v1.0_, 2023. [https://slsa.dev/spec/v1.0/provenance](https://slsa.dev/spec/v1.0/provenance)
 - **Concepts Applied**: Cryptographic digest binding over inputs, recipes, and artifacts.
 - **Nếp Design Decision**: Evaluator bindings require immutable SHA-256 digests of model weights and runtime environments.
 
@@ -150,37 +155,37 @@ export function isResolvedCalibrationAuthority(
 
 ## 5. Reason Codes Dictionary
 
-| Reason Code | Trigger Condition |
-|---|---|
-| `grant-not-found` | The requested `grantId` is absent from the registry. |
-| `grant-inactive-revoked` | The grant has been explicitly revoked (e.g., due to data contamination). |
-| `grant-inactive-superseded` | The grant has been replaced by a newer grant version. |
-| `grant-inactive-expired` | The current timestamp is past `validUntil` or status is `expired`. |
-| `grant-not-yet-valid` | The current timestamp precedes `validFrom`. |
-| `grant-ineligible-for-production-authority` | Grant is marked `productionAuthorityEligible: false` while resolving under production authority. |
-| `grant-malformed-timestamps` | Grant contains unparseable ISO 8601 timestamps or `validUntil <= validFrom`. |
-| `grant-lifecycle-incoherent` | Grant status is revoked without revocation metadata, or superseded without successor. |
-| `benchmark-not-found` | The referenced benchmark artifact is missing from the registry (cannot be self-registered). |
-| `benchmark-fingerprint-mismatch` | The registered benchmark's SHA-256 fingerprint differs from expected value in grant. |
-| `benchmark-version-mismatch` | The registered benchmark's version differs from expected value in grant. |
+| Reason Code                                     | Trigger Condition                                                                                    |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `grant-not-found`                               | The requested `grantId` is absent from the registry.                                                 |
+| `grant-inactive-revoked`                        | The grant has been explicitly revoked (e.g., due to data contamination).                             |
+| `grant-inactive-superseded`                     | The grant has been replaced by a newer grant version.                                                |
+| `grant-inactive-expired`                        | The current timestamp is past `validUntil` or status is `expired`.                                   |
+| `grant-not-yet-valid`                           | The current timestamp precedes `validFrom`.                                                          |
+| `grant-ineligible-for-production-authority`     | Grant is marked `productionAuthorityEligible: false` while resolving under production authority.     |
+| `grant-malformed-timestamps`                    | Grant contains unparseable ISO 8601 timestamps or `validUntil <= validFrom`.                         |
+| `grant-lifecycle-incoherent`                    | Grant status is revoked without revocation metadata, or superseded without successor.                |
+| `benchmark-not-found`                           | The referenced benchmark artifact is missing from the registry (cannot be self-registered).          |
+| `benchmark-fingerprint-mismatch`                | The registered benchmark's SHA-256 fingerprint differs from expected value in grant.                 |
+| `benchmark-version-mismatch`                    | The registered benchmark's version differs from expected value in grant.                             |
 | `benchmark-ineligible-for-production-authority` | Benchmark is marked `productionAuthorityEligible: false` while resolving under production authority. |
-| `evaluator-identity-mismatch` | Observation `provenance.evaluator` does not match grant `evaluatorBinding.evaluatorId`. |
-| `evaluator-kind-mismatch` | Observation `provenance.evaluatorKind` differs from grant binding. |
-| `evaluator-configuration-mismatch` | Evaluator artifact configuration differs from grant binding `configurationId`. |
-| `model-fingerprint-mismatch` | Observation model checkpoint SHA-256 differs from registered binding. |
-| `runtime-fingerprint-mismatch` | Canonical runtime environment (`artifact.runtime`) differs from registered binding. |
-| `activity-scope-mismatch` | Task or observation `activity` does not match grant scope. |
-| `construct-scope-mismatch` | Observation construct does not match grant scope. |
-| `population-scope-mismatch` | Required population tags in grant are missing from learner context. |
-| `noise-class-unsupported` | Observation acoustic noise class is not in `allowedNoiseClasses`. |
-| `snr-below-minimum` | Observation SNR (dB) is below the grant's calibrated `minimumSnrDb`. |
-| `device-class-unsupported` | Learner device is outside the calibrated device envelope. |
-| `prompt-context-unsupported` | Task prompt context is outside `allowedPromptContexts`. |
-| `decision-mismatch` | Observation decision differs from grant `decision`. |
-| `authority-mismatch` | Observation authority differs from grant `authority`. |
-| `observation-not-authoritative` | `canAffectDurableAssessment(observation)` evaluates to `false`. |
-| `unvalidated-reference-cannot-claim-authority` | Observation in `unvalidated` or `authority: "none"` attempts durable resolution. |
-| `request-timestamp-invalid` | Evaluation timestamp is missing or not a valid parseable ISO 8601 string. |
+| `evaluator-identity-mismatch`                   | Observation `provenance.evaluator` does not match grant `evaluatorBinding.evaluatorId`.              |
+| `evaluator-kind-mismatch`                       | Observation `provenance.evaluatorKind` differs from grant binding.                                   |
+| `evaluator-configuration-mismatch`              | Evaluator artifact configuration differs from grant binding `configurationId`.                       |
+| `model-fingerprint-mismatch`                    | Observation model checkpoint SHA-256 differs from registered binding.                                |
+| `runtime-fingerprint-mismatch`                  | Canonical runtime environment (`artifact.runtime`) differs from registered binding.                  |
+| `activity-scope-mismatch`                       | Task or observation `activity` does not match grant scope.                                           |
+| `construct-scope-mismatch`                      | Observation construct does not match grant scope.                                                    |
+| `population-scope-mismatch`                     | Required population tags in grant are missing from learner context.                                  |
+| `noise-class-unsupported`                       | Observation acoustic noise class is not in `allowedNoiseClasses`.                                    |
+| `snr-below-minimum`                             | Observation SNR (dB) is below the grant's calibrated `minimumSnrDb`.                                 |
+| `device-class-unsupported`                      | Learner device is outside the calibrated device envelope.                                            |
+| `prompt-context-unsupported`                    | Task prompt context is outside `allowedPromptContexts`.                                              |
+| `decision-mismatch`                             | Observation decision differs from grant `decision`.                                                  |
+| `authority-mismatch`                            | Observation authority differs from grant `authority`.                                                |
+| `observation-not-authoritative`                 | `canAffectDurableAssessment(observation)` evaluates to `false`.                                      |
+| `unvalidated-reference-cannot-claim-authority`  | Observation in `unvalidated` or `authority: "none"` attempts durable resolution.                     |
+| `request-timestamp-invalid`                     | Evaluation timestamp is missing or not a valid parseable ISO 8601 string.                            |
 
 ---
 

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Screen, LargeTitle, Prose } from "@/components/design-system";
 
 export const metadata: Metadata = {
   title: "Điều khoản Sử dụng | AtoEnglish",
@@ -9,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <Screen narrow>
+    <div className="mx-auto w-full max-w-3xl px-4 py-10">
       <main id="main-content">
         <Link
           href="/"
@@ -18,11 +17,16 @@ export default function TermsPage() {
           ← Trang chủ
         </Link>
 
-        <LargeTitle subtitle="Cập nhật lần cuối: Tháng 6 năm 2025">
-          Điều khoản Sử dụng
-        </LargeTitle>
+        <div className="mb-8 space-y-1">
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            Điều khoản Sử dụng
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Cập nhật lần cuối: Tháng 6 năm 2025
+          </p>
+        </div>
 
-        <Prose>
+        <div className="space-y-8">
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold">
               1. Chấp nhận Điều khoản
@@ -118,7 +122,7 @@ export default function TermsPage() {
               </a>
             </p>
           </section>
-        </Prose>
+        </div>
 
         <div className="pt-8 border-t border-border/40 flex gap-4 text-sm">
           <Link
@@ -135,6 +139,6 @@ export default function TermsPage() {
           </Link>
         </div>
       </main>
-    </Screen>
+    </div>
   );
 }

@@ -12,7 +12,9 @@ describe("getNativeSpeechRecognitionConstructor", () => {
     class NativeRecognition {}
 
     expect(
-      getNativeSpeechRecognitionConstructor({ SpeechRecognition: NativeRecognition })
+      getNativeSpeechRecognitionConstructor({
+        SpeechRecognition: NativeRecognition,
+      }),
     ).toBe(NativeRecognition);
   });
 
@@ -20,7 +22,9 @@ describe("getNativeSpeechRecognitionConstructor", () => {
     class WebkitRecognition {}
 
     expect(
-      getNativeSpeechRecognitionConstructor({ webkitSpeechRecognition: WebkitRecognition })
+      getNativeSpeechRecognitionConstructor({
+        webkitSpeechRecognition: WebkitRecognition,
+      }),
     ).toBe(WebkitRecognition);
   });
 });
