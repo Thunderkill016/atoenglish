@@ -1564,14 +1564,25 @@ test.describe("transcript navigation", () => {
     await input.press("Enter");
     const anchor = rail.locator('[data-sentence="200"]');
     await expect(anchor).toBeInViewport();
-    const top = await anchor.evaluate(
-      (element) => element.getBoundingClientRect().top,
-    );
-    await page.evaluate(() =>
+    const top = await anchor.evaluate((element) => {
+      // Force the native-scroll/cache race in the same task as translation.
+      // A small manual move must stay authoritative even before its scroll event.
+      const MANUAL_READ_SCROLL_PX = 10;
+      if (matchMedia("(max-width: 1023px)").matches) {
+        window.dispatchEvent(
+          new WheelEvent("wheel", { deltaY: -MANUAL_READ_SCROLL_PX }),
+        );
+        window.scrollTo({
+          top: scrollY - MANUAL_READ_SCROLL_PX,
+          behavior: "instant",
+        });
+      }
+      const position = element.getBoundingClientRect().top;
       (
         window as unknown as { __finishTranslation: () => void }
-      ).__finishTranslation(),
-    );
+      ).__finishTranslation();
+      return position;
+    });
     await expect(
       rail.locator('[data-sentence="198"]').getByTestId("translated-sentence"),
     ).toContainText("Bản dịch fixture dài");

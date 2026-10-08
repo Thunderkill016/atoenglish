@@ -266,6 +266,7 @@ export function TranscriptRail({
   const virtual = !prose && sentences.length > TRANSCRIPT_VIRTUAL_THRESHOLD;
   const [scrollMargin, setScrollMargin] = useState(0);
   const marginRef = useRef<number | null>(null);
+  const pageNavigationAllowed = useRef(true);
   const [focusedId, setFocusedId] = useState<number | null>(null);
   const [lookupId, setLookupId] = useState<number | null>(null);
   const indexById = useMemo(
@@ -303,11 +304,22 @@ export function TranscriptRail({
     enabled: virtual && !desktop,
     // The site's html has smooth scrolling. Each dynamic measurement would
     // restart that animation, so a distant search never reaches its cue.
-    scrollToFn: (offset, { adjustments }, instance) =>
+    scrollToFn: (offset, { adjustments }, instance) => {
+      // A pending measured search may reconcile after the learner scrolls.
+      // Ignore those absolute writes until another explicit navigation command;
+      // relative resize compensation still preserves the manual reading anchor.
+      if (adjustments == null && !pageNavigationAllowed.current) return;
       instance.scrollElement?.scrollTo({
-        top: offset + (adjustments ?? 0),
+        // Native/manual scrolling or the caption-stage compensation can move
+        // the DOM before TanStack receives its scroll event. Resize adjustments
+        // are relative to that actual position, not a stale cached offset.
+        top:
+          adjustments == null
+            ? offset
+            : (instance.scrollElement?.scrollY ?? offset) + adjustments,
         behavior: "instant",
-      }),
+      });
+    },
   });
   const virtualizer = desktop ? railVirtualizer : pageVirtualizer;
   useEffect(() => {
@@ -341,6 +353,7 @@ export function TranscriptRail({
   }, [virtual, desktop]);
   const locateSentence = (id: number, explicit: boolean) => {
     if (!desktop && !explicit) return; // Playback never scrolls the mobile document.
+    if (!desktop) pageNavigationAllowed.current = true;
     const index = indexById.get(id);
     if (virtual && index != null)
       virtualizer.scrollToIndex(index, { align: "auto" });
@@ -354,6 +367,36 @@ export function TranscriptRail({
       }
     : undefined;
   const [following, setFollowing] = useState(true);
+  useEffect(() => {
+    if (!virtual || desktop) return;
+    const stopNavigation = () => {
+      pageNavigationAllowed.current = false;
+      setFollowing(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest(
+          "input, textarea, select, [contenteditable], [role=slider]",
+        )
+      )
+        return;
+      if (
+        ["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End"].includes(
+          event.key,
+        )
+      )
+        stopNavigation();
+    };
+    window.addEventListener("wheel", stopNavigation, { passive: true });
+    window.addEventListener("touchmove", stopNavigation, { passive: true });
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("wheel", stopNavigation);
+      window.removeEventListener("touchmove", stopNavigation);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [virtual, desktop]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
   const searchId = useId();
