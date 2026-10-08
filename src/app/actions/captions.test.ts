@@ -390,6 +390,7 @@ describe("fetchVideoCaptions", () => {
   ] as const)(
     "maps upstream failure $upstream to $expected",
     async ({ upstream, expected }) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       h.fetchYoutubeCaptions.mockResolvedValue({ ok: false, error: upstream });
       const res = await fetchVideoCaptions(VIDEO_ID);
       expect(res).toEqual({ ok: false, error: expected });
@@ -398,6 +399,12 @@ describe("fetchVideoCaptions", () => {
         event_name: "caption_fetch_failed",
         unit_id: VIDEO_ID,
       });
+      // Route-level refusal detail goes to Worker logs for diagnosis.
+      expect(warn).toHaveBeenCalledWith(
+        "caption_fetch_failed",
+        expect.objectContaining({ videoId: VIDEO_ID, error: upstream }),
+      );
+      warn.mockRestore();
     },
   );
 
