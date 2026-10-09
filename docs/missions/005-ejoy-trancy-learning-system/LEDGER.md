@@ -752,3 +752,29 @@ bundle-splitting/static-route-classification warnings. After both builds, Next
 route types are regenerated with `next typegen` before the final `tsc --noEmit`.
 Formatter, whitespace and source-of-truth checks are rerun for the handoff.
 The only remaining worktree changes are these evidence notes, not source.
+
+### Slice 6 close + remote search activation — 09/10/2026
+
+Curated catalog landed on `main` via PR #246 (`a0067cf1`): `videos.json` +
+Zod `schema.ts`, 39 verified videos across 6 topics, `captions`/`addedAt`
+metadata, `scripts/catalog-verify.ts` replaying the app's own caption chain
+(39/39 pass). Discover filter/channel-picker e2e updated and green.
+
+Opt-in remote search landed via PR #247 (`13f16791`): `searchYoutube` server
+action over YouTube Data API `search.list`, `search:`-namespaced rate limit
+(10/h per identity), quota→honest UI mapping, hidden-without-key contract
+covered by unit/component tests.
+
+2026-10-09: owner supplied a YouTube Data API v3 key (GCP project
+`835558717175`; first candidate was a Firebase-restricted key rejected with
+`API_KEY_SERVICE_BLOCKED`, replaced by a server-restricted key verified via
+`videos.list`). Secret set on production Worker `atoenglish` (account
+`6b09234492f82347abfe983b158626b2`) through the Cloudflare API
+`PUT /workers/scripts/atoenglish/secrets` — verified bound. Production
+`/discover` verified end-to-end with Playwright: curated results plus
+"8 kết quả trên YouTube" remote section linking to `/watch/{id}`.
+
+Ops hazard found and fixed in `CLOUDFLARE_DEPLOY.md`: local `wrangler` was
+logged into a different account (`ff67dcd…`, subdomain `hoangn36th3a`);
+`wrangler secret put` silently created a stub Worker there instead of
+failing. Stub deleted; doc now requires `wrangler whoami` account check.

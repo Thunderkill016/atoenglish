@@ -47,12 +47,22 @@ Set on the Worker (dashboard or `cf`/wrangler secrets) — same names as
 | `NEON_DATA_API_URL`             | no      | PostgREST endpoint (server clients)            |
 | `NEXT_PUBLIC_NEON_DATA_API_URL` | no      | same endpoint for the browser bundle           |
 | `NEXT_PUBLIC_SITE_URL`          | no      | canonical origin for metadata/sitemap          |
+| `YOUTUBE_DATA_API_KEY`          | yes     | enables remote `search.list` on `/discover`    |
 
 Do **not** set `DATABASE_URL_UNPOOLED` on the Worker — pooled connections
 are required on Workers (`DATABASE_URL` is already pooled).
 
+> **Account check before `secret put`.** The production Worker lives on
+> account `6b09234492f82347abfe983b158626b2` (workers.dev subdomain
+> `thunderkill016`). A local `wrangler` login bound to a different account
+> does **not** fail on `wrangler secret put` — it silently creates a stub
+> Worker on the wrong account and writes the secret there while production
+> stays unchanged. Run `npx wrangler whoami` and compare the account id
+> before every secret write, or set secrets on the dashboard instead.
+
 ```bash
-# example — set secrets through wrangler
+# example — set secrets through wrangler (account-checked first)
+npx wrangler whoami
 echo "$DATABASE_URL" | npx wrangler secret put DATABASE_URL --name atoenglish
 echo "$NEON_AUTH_COOKIE_SECRET" | npx wrangler secret put NEON_AUTH_COOKIE_SECRET --name atoenglish
 ```
