@@ -71,14 +71,14 @@ test.describe("/discover", () => {
     await page.getByText("Mức độ", { exact: true }).click();
     await catalog.getByRole("button", { name: "Âm nhạc", exact: true }).click();
     await catalog.getByRole("button", { name: "Dễ", exact: true }).click();
-    await expect(catalog.getByRole("link")).toHaveCount(2);
+    await expect(catalog.getByRole("link")).toHaveCount(6);
     await expect(
       catalog.getByRole("link", { name: /Never Gonna Give You Up/ }),
     ).toHaveAttribute("href", `/watch/${VIDEO_ID}`);
     await catalog.getByRole("button", { name: "Tin tức", exact: true }).click();
     await expect(catalog.getByText("Không có video phù hợp")).toBeVisible();
     await catalog.getByRole("button", { name: "Xoá bộ lọc" }).click();
-    await expect(catalog.getByRole("link")).toHaveCount(18);
+    await expect(catalog.getByRole("link")).toHaveCount(39);
   });
 
   test("home has one document scroll and widgets move with the feed", async ({
@@ -242,7 +242,7 @@ test.describe("/discover", () => {
       .click();
     await search.fill("am nhac");
     await search.press("Escape");
-    await expect(catalog.getByRole("link")).toHaveCount(5);
+    await expect(catalog.getByRole("link")).toHaveCount(11);
     await catalog
       .getByRole("button", { name: "TED Talks", exact: true })
       .click();
@@ -254,14 +254,14 @@ test.describe("/discover", () => {
     await expect(
       catalog.getByRole("button", { name: "≤10 phút" }),
     ).toHaveAttribute("aria-pressed", "false");
-    await expect(catalog.getByRole("link")).toHaveCount(18);
-    await expect(catalog.getByRole("status")).toHaveText("18 video");
+    await expect(catalog.getByRole("link")).toHaveCount(39);
+    await expect(catalog.getByRole("status")).toHaveText("39 video");
     await page
       .getByRole("button", { name: "Tìm kiếm và khám phá", exact: true })
       .click();
     await search.fill("VLOG DOI SONG");
     await search.press("Escape");
-    await expect(catalog.getByRole("link")).toHaveCount(2);
+    await expect(catalog.getByRole("link")).toHaveCount(3);
   });
 
   test("all controls reflow at 320px without a second vertical scroller", async ({
@@ -333,24 +333,25 @@ test.describe("/discover", () => {
     await expect(page.getByRole("searchbox")).toHaveCount(1);
     await dialog.getByRole("button", { name: "Kênh", exact: true }).click();
     await dialog
-      .getByRole("button", { name: /TED.*video trong thư viện/ })
+      .getByRole("button", { name: / TED \d+ video trong thư viện$/ })
       .click();
     await expect(search).toHaveValue("TED");
-    await expect(dialog.getByRole("status")).toHaveText("5 video phù hợp");
-    await expect(dialog.getByRole("link")).toHaveCount(5);
+    await expect(dialog.getByRole("status")).toHaveText("10 video phù hợp");
+    // The picker caps its list at PICKER_RESULT_LIMIT; Enter applies all 10.
+    await expect(dialog.getByRole("link")).toHaveCount(6);
     await search.fill("");
     await expect(dialog.getByRole("status")).toHaveText(
-      "12 kênh trong thư viện",
+      "23 kênh trong thư viện",
     );
     await expect(dialog.getByRole("link")).toHaveCount(0);
     await dialog
-      .getByRole("button", { name: /TED.*video trong thư viện/ })
+      .getByRole("button", { name: / TED \d+ video trong thư viện$/ })
       .click();
     await expect(dialog.getByRole("link").first().locator("img")).toBeVisible();
     await search.press("Enter");
     await expect(
       page.getByRole("region", { name: "Thư viện chọn sẵn" }).getByRole("link"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
     await launcher.click();
     await search.fill("rick astley");
     await search.press("Escape");
@@ -422,7 +423,7 @@ test.describe("/discover", () => {
     await toggle.click();
     await catalog.getByRole("button", { name: "Xoá bộ lọc" }).click();
     await expect(toggle).toHaveAttribute("aria-pressed", "true");
-    await expect(catalog.getByRole("link")).toHaveCount(18);
+    await expect(catalog.getByRole("link")).toHaveCount(39);
     await expect(catalog.getByText(meaning, { exact: true })).toBeVisible();
     expect(translationRequests).toEqual([]);
   });

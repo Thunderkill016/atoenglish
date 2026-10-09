@@ -11,6 +11,7 @@
     "check:source-of-truth": "node scripts/check-source-of-truth.mjs",
     "check:source-of-truth:self-test": "node scripts/check-source-of-truth.mjs --self-test",
     "verify": "node scripts/verify-change.mjs",
+    "catalog:verify": "tsx scripts/catalog-verify.ts",
     "verify:fast": "node scripts/verify-change.mjs --fast",
     "verify:plan": "node scripts/verify-change.mjs --plan",
     "test": "vitest run",

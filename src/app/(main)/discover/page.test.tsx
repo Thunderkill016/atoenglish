@@ -1,6 +1,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createClient } from "@/lib/supabase/server";
+import { catalogTopics, getCatalog } from "@/content/catalog/videos";
 import DiscoverPage from "./page";
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
@@ -80,7 +81,7 @@ describe("home viewer states", () => {
     )!;
     expect(
       [...stats.querySelectorAll("dd")].map((item) => item.textContent),
-    ).toEqual(["18", "5"]);
+    ).toEqual([String(getCatalog().length), String(catalogTopics().length)]);
     expect(rail.textContent).not.toContain("—");
   });
 
