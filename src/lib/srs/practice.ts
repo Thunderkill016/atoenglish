@@ -1,4 +1,8 @@
-import { normalizeWord, tokenizeText, type ReadToken } from "@/lib/read/tokenize";
+import {
+  normalizeWord,
+  tokenizeText,
+  type ReadToken,
+} from "@/lib/read/tokenize";
 
 /**
  * Practice modes per SPEC 005 §8. One card has one FSRS schedule but several
@@ -34,7 +38,12 @@ const GRADED_MODES: ReadonlySet<PracticeMode> = new Set([
 export type StudyCardKind = "word" | "phrase" | "sentence";
 
 /** FSRS card states as persisted on study_cards.state. */
-export const CARD_STATE = { New: 0, Learning: 1, Review: 2, Relearning: 3 } as const;
+export const CARD_STATE = {
+  New: 0,
+  Learning: 1,
+  Review: 2,
+  Relearning: 3,
+} as const;
 
 /**
  * Which exercise a queued card gets. New/Learning cards always take the base
@@ -95,6 +104,110 @@ export function isGradedMode(mode: PracticeMode): boolean {
   return GRADED_MODES.has(mode);
 }
 
+/**
+ * One-way in-order subsequence match for speech similarity (spec §7): for
+ * each expected word, find it in the transcript at-or-after the previous hit.
+ * Deliberately NOT edit distance — word order and omission are what shadowing
+ * evidence measures. Returns the matched fraction of expected words.
+ */
+export function inOrderMatchRatio(
+  expected: string,
+  transcript: string,
+): number {
+  const want = tokenizeText(expected)
+    .filter((t) => t.type === "word")
+    .map((t) => t.normalized);
+  const got = tokenizeText(transcript)
+    .filter((t) => t.type === "word")
+    .map((t) => t.normalized);
+  if (!want.length) return 0;
+  let pos = 0;
+  let hits = 0;
+  for (const word of want) {
+    const at = got.indexOf(word, pos);
+    if (at === -1) continue;
+    hits += 1;
+    pos = at + 1;
+  }
+  return hits / want.length;
+}
+
+export type WordOp =
+  | { status: "correct"; word: string }
+  | { status: "wrong"; word: string; typed: string }
+  | { status: "missing"; word: string }
+  | { status: "extra"; word: string };
+
+/**
+ * Word-level diff for dictation display (spec §7 "đúng/sai/thiếu"): the same
+ * Levenshtein alignment as wordAccuracy, backtraced into per-word operations.
+ * `word` is the expected surface form; `typed` the learner's substitution.
+ * Extra typed words surface as "extra" so nothing the learner wrote is hidden.
+ */
+export function alignWords(expected: string, typed: string): WordOp[] {
+  const wantTokens = tokenizeText(expected).filter((t) => t.type === "word");
+  const gotTokens = tokenizeText(typed).filter((t) => t.type === "word");
+  const want = wantTokens.map((t) => t.normalized);
+  const got = gotTokens.map((t) => t.normalized);
+  // Display surface forms, compare normalized forms.
+  const wantText = wantTokens.map((t) => t.text);
+  const gotText = gotTokens.map((t) => t.text);
+  if (!want.length)
+    return gotText.map((word) => ({ status: "extra" as const, word }));
+
+  // Full DP table for backtrace — sentences are ≤2000 chars so this stays
+  // under a few hundred cells per side.
+  const rows = want.length + 1;
+  const cols = got.length + 1;
+  const dp = new Uint32Array(rows * cols);
+  for (let i = 0; i < rows; i += 1) dp[i * cols] = i;
+  for (let j = 0; j < cols; j += 1) dp[j] = j;
+  for (let i = 1; i < rows; i += 1) {
+    for (let j = 1; j < cols; j += 1) {
+      dp[i * cols + j] = Math.min(
+        dp[(i - 1) * cols + j] + 1,
+        dp[i * cols + j - 1] + 1,
+        dp[(i - 1) * cols + j - 1] + (want[i - 1] === got[j - 1] ? 0 : 1),
+      );
+    }
+  }
+
+  const ops: WordOp[] = [];
+  let i = want.length;
+  let j = got.length;
+  while (i > 0 && j > 0) {
+    const here = dp[i * cols + j];
+    if (want[i - 1] === got[j - 1] && here === dp[(i - 1) * cols + j - 1]) {
+      ops.unshift({ status: "correct", word: wantText[i - 1] });
+      i -= 1;
+      j -= 1;
+    } else if (here === dp[(i - 1) * cols + j - 1] + 1) {
+      ops.unshift({
+        status: "wrong",
+        word: wantText[i - 1],
+        typed: gotText[j - 1],
+      });
+      i -= 1;
+      j -= 1;
+    } else if (here === dp[(i - 1) * cols + j] + 1) {
+      ops.unshift({ status: "missing", word: wantText[i - 1] });
+      i -= 1;
+    } else {
+      ops.unshift({ status: "extra", word: gotText[j - 1] });
+      j -= 1;
+    }
+  }
+  while (i > 0) {
+    ops.unshift({ status: "missing", word: wantText[i - 1] });
+    i -= 1;
+  }
+  while (j > 0) {
+    ops.unshift({ status: "extra", word: gotText[j - 1] });
+    j -= 1;
+  }
+  return ops;
+}
+
 // Spec §8: dictation "≥ 90% không gợi ý → Good, có gợi ý → Hard, còn lại →
 // Again". Conservative by design — auto-grading never awards Easy and any
 // hint caps the outcome at Hard.
@@ -122,10 +235,17 @@ export function autoRating(
   return "Again";
 }
 
-const RATING_BY_VALUE = { 1: "Again", 2: "Hard", 3: "Good", 4: "Easy" } as const;
+const RATING_BY_VALUE = {
+  1: "Again",
+  2: "Hard",
+  3: "Good",
+  4: "Easy",
+} as const;
 export type RatingValue = keyof typeof RATING_BY_VALUE;
 
-export function ratingLabel(rating: number): "Again" | "Hard" | "Good" | "Easy" | null {
+export function ratingLabel(
+  rating: number,
+): "Again" | "Hard" | "Good" | "Easy" | null {
   return RATING_BY_VALUE[rating as RatingValue] ?? null;
 }
 
@@ -210,8 +330,11 @@ export function blankTargetInSentence(
       return span;
     })
     .filter(
-      (span): span is typeof span & { token: { type: "word"; text: string; normalized: string } } =>
-        span.token.type === "word",
+      (
+        span,
+      ): span is typeof span & {
+        token: { type: "word"; text: string; normalized: string };
+      } => span.token.type === "word",
     );
   const wanted = target
     .split(/\s+/)

@@ -16,6 +16,7 @@ import {
   ChevronFirst,
   ChevronLast,
   FastForward,
+  GraduationCap,
   Keyboard,
   Pause,
   Play,
@@ -63,6 +64,7 @@ import {
 } from "./transcript-rail";
 import { SentenceText } from "@/components/sentence-text";
 import { useYouTubePlayer } from "@/lib/video/use-youtube-player";
+import { PracticePanel } from "./practice-panel";
 import { useSentencePlayer, type RepeatMode } from "./use-sentence-player";
 import { useTranslations } from "./use-translations";
 import { SEGMENTATION_VERSION } from "@/lib/video/segment";
@@ -132,6 +134,9 @@ export function WatchClient({
   const [sentenceSaved, setSentenceSaved] = useState<
     number | "saving" | "error" | null
   >(null);
+  // Spec §7 "Luyện": swaps the caption block for the practice panel on the
+  // active timed sentence. Stays on while the learner navigates sentences.
+  const [practicing, setPracticing] = useState(false);
   // B2: "Phân tích" — the AI breakdown of the active sentence. Keyed by
   // sentence index so a stale panel never describes the wrong cue.
   const [analysis, setAnalysis] = useState<{
@@ -216,6 +221,15 @@ export function WatchClient({
       if (target) controller.selectSegment(target.id);
     },
     [controller, timeline],
+  );
+  // Practice panel nav moves the playhead without starting playback — audio
+  // only ever starts on the panel's deliberate "Nghe câu" (bounded replay).
+  const practiceNavigate = useCallback(
+    (ms: number) => {
+      controller.seek(ms);
+      controller.pause();
+    },
+    [controller],
   );
   const chooseRepeat = (mode: RepeatMode) => controller.setRepeat(mode);
   const toggleRepeat = () =>
@@ -829,244 +843,306 @@ export function WatchClient({
                       {/* A 60ch measure is a reading-layout choice, not a timed-caption
                           character limit. Keep the entire source and translation visible. */}
                       <div className="w-full max-w-[60ch] space-y-2 [overflow-wrap:anywhere]">
-                        <p lang="en" className="text-balance">
-                          {activeSentence && showEnglish ? (
-                            <SentenceText
-                              sentence={activeSentence}
-                              nowMs={nowMs}
-                              active
-                              onLookup={lookupWord}
-                              savedWords={savedWords ?? undefined}
-                            />
-                          ) : transcript &&
-                            !activeSentence &&
-                            subtitleMode !== "hidden" ? (
-                            "Chọn một câu để nghe lại."
-                          ) : (
-                            ""
-                          )}
-                        </p>
-                        {activeSentence &&
-                          showVietnamese &&
-                          (captionBlurred ? (
-                            <button
-                              type="button"
-                              data-testid="reveal-caption"
-                              onClick={() =>
-                                setCaptionRevealed(activeSentence.i)
-                              }
-                              aria-label="Hiện nghĩa tiếng Việt (V)"
-                              className="mx-auto block rounded-md focus-visible:outline-2 focus-visible:outline-ring"
-                            >
-                              <span
-                                aria-hidden
-                                className="block select-none text-balance text-[15px] font-normal leading-normal text-foreground/75 blur-[5px] sm:text-base"
-                              >
-                                {captionVi}
-                              </span>
-                            </button>
-                          ) : (
-                            <p
-                              lang="vi"
-                              className="text-balance text-[15px] font-normal leading-normal text-foreground/75 sm:text-base"
-                            >
-                              {captionVi ??
-                                (translation.pending
-                                  ? "Đang dịch…"
-                                  : "Chưa có bản dịch cho câu này.")}
+                        {practicing &&
+                        activeSentence &&
+                        timedIdxOfActive >= 0 ? (
+                          <PracticePanel
+                            key={activeSentence.i}
+                            videoId={videoId}
+                            sentence={activeSentence}
+                            index={timedIdxOfActive}
+                            total={timedSentences.length}
+                            prevStartMs={
+                              timedSentences[timedIdxOfActive - 1]?.startMs ??
+                              null
+                            }
+                            nextStartMs={
+                              timedSentences[timedIdxOfActive + 1]?.startMs ??
+                              null
+                            }
+                            loggedIn={loggedIn}
+                            ready={ready}
+                            playing={playing}
+                            rate={rate}
+                            onPlaySentence={replayCurrent}
+                            onNavigate={practiceNavigate}
+                            onRate={setRate}
+                            onSaveSentence={saveActiveSentence}
+                            saved={sentenceSaved === activeSentence.i}
+                            onExit={() => setPracticing(false)}
+                          />
+                        ) : (
+                          <>
+                            <p lang="en" className="text-balance">
+                              {activeSentence && showEnglish ? (
+                                <SentenceText
+                                  sentence={activeSentence}
+                                  nowMs={nowMs}
+                                  active
+                                  onLookup={lookupWord}
+                                  savedWords={savedWords ?? undefined}
+                                />
+                              ) : transcript &&
+                                !activeSentence &&
+                                subtitleMode !== "hidden" ? (
+                                "Chọn một câu để nghe lại."
+                              ) : (
+                                ""
+                              )}
                             </p>
-                          ))}
-                        {activeSentence &&
-                          timeline.idBySentence.has(activeSentence.i) && (
-                            <div
-                              className="flex flex-wrap items-center justify-center gap-2 text-xs font-normal text-muted-foreground"
-                              data-testid="focus-tools"
-                            >
-                              <span>
-                                {formatTimestamp(activeSentence.start_ms!)}
-                              </span>
-                              <button
-                                type="button"
-                                disabled={!ready}
-                                onClick={replayCurrent}
-                                aria-label="Nghe lại câu (Q)"
-                                className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring"
-                              >
-                                <RotateCcw aria-hidden className="size-4" />
-                                Nghe lại
-                              </button>
-                              <label className="inline-flex min-h-11 items-center gap-1">
-                                <span className="sr-only">Lặp câu</span>
-                                <select
-                                  disabled={!ready}
-                                  aria-label="Lặp câu"
-                                  value={sentenceState.repeatMode}
-                                  onChange={(e) =>
-                                    chooseRepeat(e.target.value as RepeatMode)
-                                  }
-                                  className="min-h-11 max-w-full rounded-lg bg-elevated px-2 text-foreground"
-                                >
-                                  <option value="once">Một lần</option>
-                                  <option value="three">Lặp ×3</option>
-                                  <option value="continuous">
-                                    Lặp liên tục
-                                  </option>
-                                </select>
-                              </label>
-                              {loopSentence && (
-                                <span role="status" data-testid="repeat-count">
-                                  {Math.min(
-                                    sentenceState.completed +
-                                      (sentenceState.phase === "segment"
-                                        ? 1
-                                        : 0),
-                                    sentenceState.repeatMode === "three"
-                                      ? 3
-                                      : Infinity,
-                                  )}
-                                  {sentenceState.repeatMode === "three"
-                                    ? " / 3"
-                                    : " lượt"}
-                                </span>
-                              )}
-                              {loggedIn && (
+                            {activeSentence &&
+                              showVietnamese &&
+                              (captionBlurred ? (
                                 <button
                                   type="button"
-                                  onClick={saveActiveSentence}
-                                  disabled={
-                                    sentenceSaved === "saving" ||
-                                    sentenceSaved === activeSentence.i
+                                  data-testid="reveal-caption"
+                                  onClick={() =>
+                                    setCaptionRevealed(activeSentence.i)
                                   }
-                                  aria-label="Lưu câu để ôn tập"
-                                  title={
-                                    sentenceSaved === "error"
-                                      ? "Chưa lưu được — thử lại"
-                                      : "Lưu câu vào bộ ôn tập"
-                                  }
-                                  className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+                                  aria-label="Hiện nghĩa tiếng Việt (V)"
+                                  className="mx-auto block rounded-md focus-visible:outline-2 focus-visible:outline-ring"
                                 >
-                                  <BookmarkPlus
+                                  <span
                                     aria-hidden
-                                    className={cn(
-                                      "size-4",
-                                      sentenceSaved === activeSentence.i &&
-                                        "text-primary",
-                                    )}
-                                  />
-                                  {sentenceSaved === "saving"
-                                    ? "Đang lưu…"
-                                    : sentenceSaved === activeSentence.i
-                                      ? "Đã lưu"
-                                      : sentenceSaved === "error"
-                                        ? "Thử lại"
-                                        : "Lưu câu"}
+                                    className="block select-none text-balance text-[15px] font-normal leading-normal text-foreground/75 blur-[5px] sm:text-base"
+                                  >
+                                    {captionVi}
+                                  </span>
                                 </button>
-                              )}
-                              {loggedIn && (
-                                <button
-                                  type="button"
-                                  onClick={analyzeActiveSentence}
-                                  disabled={
-                                    analysis?.i === activeSentence.i &&
-                                    analysis.state === "loading"
-                                  }
-                                  aria-label="Phân tích câu bằng AI"
-                                  title="Phân tích ngữ pháp câu này bằng AI"
-                                  className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+                              ) : (
+                                <p
+                                  lang="vi"
+                                  className="text-balance text-[15px] font-normal leading-normal text-foreground/75 sm:text-base"
                                 >
-                                  <Sparkles aria-hidden className="size-4" />
-                                  {analysis?.i === activeSentence.i &&
-                                  analysis.state === "loading"
-                                    ? "Đang phân tích…"
-                                    : "Phân tích"}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        {loggedIn &&
-                          analysis &&
-                          analysis.i === activeSentence?.i && (
-                            <div
-                              data-testid="sentence-analysis"
-                              className="mx-auto mt-2 max-w-md rounded-xl border border-border bg-card p-3 text-left text-sm"
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                                  Phân tích AI
-                                </span>
-                                <button
-                                  type="button"
-                                  aria-label="Đóng phân tích"
-                                  onClick={() => setAnalysis(null)}
-                                  className="rounded-md px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent"
+                                  {captionVi ??
+                                    (translation.pending
+                                      ? "Đang dịch…"
+                                      : "Chưa có bản dịch cho câu này.")}
+                                </p>
+                              ))}
+                            {activeSentence &&
+                              timeline.idBySentence.has(activeSentence.i) && (
+                                <div
+                                  className="flex flex-wrap items-center justify-center gap-2 text-xs font-normal text-muted-foreground"
+                                  data-testid="focus-tools"
                                 >
-                                  Đóng
-                                </button>
-                              </div>
-                              {analysis.state === "loading" && (
-                                <p className="mt-2 text-muted-foreground">
-                                  Đang phân tích…
-                                </p>
-                              )}
-                              {analysis.state === "error" && (
-                                <p className="mt-2 text-muted-foreground">
-                                  Phân tích AI hiện không khả dụng — xem và lưu
-                                  câu vẫn bình thường.
-                                </p>
-                              )}
-                              {analysis.state === "done" && analysis.data && (
-                                <div className="mt-2 space-y-2">
-                                  <p lang="vi">
-                                    {analysis.data.translation_vi}
-                                  </p>
-                                  <dl className="space-y-0.5 text-xs text-muted-foreground">
-                                    <div>
-                                      <dt className="inline font-medium text-foreground">
-                                        Chủ ngữ:{" "}
-                                      </dt>
-                                      <dd className="inline">
-                                        {analysis.data.structure.subject}
-                                      </dd>
-                                    </div>
-                                    <div>
-                                      <dt className="inline font-medium text-foreground">
-                                        Động từ chính:{" "}
-                                      </dt>
-                                      <dd className="inline" lang="en">
-                                        {analysis.data.structure.main_verb}
-                                      </dd>
-                                    </div>
-                                    {analysis.data.structure.clauses.map(
-                                      (clause, idx) => (
-                                        <div key={idx}>
-                                          <dt className="inline font-medium text-foreground">
-                                            Mệnh đề:{" "}
-                                          </dt>
-                                          <dd className="inline">{clause}</dd>
-                                        </div>
-                                      ),
-                                    )}
-                                  </dl>
-                                  <ul className="space-y-0.5 text-xs">
-                                    {analysis.data.phrases.map((p) => (
-                                      <li key={p.text}>
-                                        <span lang="en" className="font-medium">
-                                          {p.text}
-                                        </span>
-                                        <span className="text-muted-foreground">
-                                          {" "}
-                                          — {p.meaning_vi}
-                                        </span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                  <p className="text-xs text-muted-foreground">
-                                    {analysis.data.grammar_point}
-                                  </p>
+                                  <span>
+                                    {formatTimestamp(activeSentence.start_ms!)}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    disabled={!ready}
+                                    onClick={replayCurrent}
+                                    aria-label="Nghe lại câu (Q)"
+                                    className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring"
+                                  >
+                                    <RotateCcw aria-hidden className="size-4" />
+                                    Nghe lại
+                                  </button>
+                                  <label className="inline-flex min-h-11 items-center gap-1">
+                                    <span className="sr-only">Lặp câu</span>
+                                    <select
+                                      disabled={!ready}
+                                      aria-label="Lặp câu"
+                                      value={sentenceState.repeatMode}
+                                      onChange={(e) =>
+                                        chooseRepeat(
+                                          e.target.value as RepeatMode,
+                                        )
+                                      }
+                                      className="min-h-11 max-w-full rounded-lg bg-elevated px-2 text-foreground"
+                                    >
+                                      <option value="once">Một lần</option>
+                                      <option value="three">Lặp ×3</option>
+                                      <option value="continuous">
+                                        Lặp liên tục
+                                      </option>
+                                    </select>
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => setPracticing(true)}
+                                    aria-label="Luyện câu này"
+                                    title="Luyện chép chính tả / shadowing trên câu này"
+                                    className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 font-medium text-primary hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring"
+                                  >
+                                    <GraduationCap
+                                      aria-hidden
+                                      className="size-4"
+                                    />
+                                    Luyện
+                                  </button>
+                                  {loopSentence && (
+                                    <span
+                                      role="status"
+                                      data-testid="repeat-count"
+                                    >
+                                      {Math.min(
+                                        sentenceState.completed +
+                                          (sentenceState.phase === "segment"
+                                            ? 1
+                                            : 0),
+                                        sentenceState.repeatMode === "three"
+                                          ? 3
+                                          : Infinity,
+                                      )}
+                                      {sentenceState.repeatMode === "three"
+                                        ? " / 3"
+                                        : " lượt"}
+                                    </span>
+                                  )}
+                                  {loggedIn && (
+                                    <button
+                                      type="button"
+                                      onClick={saveActiveSentence}
+                                      disabled={
+                                        sentenceSaved === "saving" ||
+                                        sentenceSaved === activeSentence.i
+                                      }
+                                      aria-label="Lưu câu để ôn tập"
+                                      title={
+                                        sentenceSaved === "error"
+                                          ? "Chưa lưu được — thử lại"
+                                          : "Lưu câu vào bộ ôn tập"
+                                      }
+                                      className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+                                    >
+                                      <BookmarkPlus
+                                        aria-hidden
+                                        className={cn(
+                                          "size-4",
+                                          sentenceSaved === activeSentence.i &&
+                                            "text-primary",
+                                        )}
+                                      />
+                                      {sentenceSaved === "saving"
+                                        ? "Đang lưu…"
+                                        : sentenceSaved === activeSentence.i
+                                          ? "Đã lưu"
+                                          : sentenceSaved === "error"
+                                            ? "Thử lại"
+                                            : "Lưu câu"}
+                                    </button>
+                                  )}
+                                  {loggedIn && (
+                                    <button
+                                      type="button"
+                                      onClick={analyzeActiveSentence}
+                                      disabled={
+                                        analysis?.i === activeSentence.i &&
+                                        analysis.state === "loading"
+                                      }
+                                      aria-label="Phân tích câu bằng AI"
+                                      title="Phân tích ngữ pháp câu này bằng AI"
+                                      className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+                                    >
+                                      <Sparkles
+                                        aria-hidden
+                                        className="size-4"
+                                      />
+                                      {analysis?.i === activeSentence.i &&
+                                      analysis.state === "loading"
+                                        ? "Đang phân tích…"
+                                        : "Phân tích"}
+                                    </button>
+                                  )}
                                 </div>
                               )}
-                            </div>
-                          )}
+                            {loggedIn &&
+                              analysis &&
+                              analysis.i === activeSentence?.i && (
+                                <div
+                                  data-testid="sentence-analysis"
+                                  className="mx-auto mt-2 max-w-md rounded-xl border border-border bg-card p-3 text-left text-sm"
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                                      Phân tích AI
+                                    </span>
+                                    <button
+                                      type="button"
+                                      aria-label="Đóng phân tích"
+                                      onClick={() => setAnalysis(null)}
+                                      className="rounded-md px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent"
+                                    >
+                                      Đóng
+                                    </button>
+                                  </div>
+                                  {analysis.state === "loading" && (
+                                    <p className="mt-2 text-muted-foreground">
+                                      Đang phân tích…
+                                    </p>
+                                  )}
+                                  {analysis.state === "error" && (
+                                    <p className="mt-2 text-muted-foreground">
+                                      Phân tích AI hiện không khả dụng — xem và
+                                      lưu câu vẫn bình thường.
+                                    </p>
+                                  )}
+                                  {analysis.state === "done" &&
+                                    analysis.data && (
+                                      <div className="mt-2 space-y-2">
+                                        <p lang="vi">
+                                          {analysis.data.translation_vi}
+                                        </p>
+                                        <dl className="space-y-0.5 text-xs text-muted-foreground">
+                                          <div>
+                                            <dt className="inline font-medium text-foreground">
+                                              Chủ ngữ:{" "}
+                                            </dt>
+                                            <dd className="inline">
+                                              {analysis.data.structure.subject}
+                                            </dd>
+                                          </div>
+                                          <div>
+                                            <dt className="inline font-medium text-foreground">
+                                              Động từ chính:{" "}
+                                            </dt>
+                                            <dd className="inline" lang="en">
+                                              {
+                                                analysis.data.structure
+                                                  .main_verb
+                                              }
+                                            </dd>
+                                          </div>
+                                          {analysis.data.structure.clauses.map(
+                                            (clause, idx) => (
+                                              <div key={idx}>
+                                                <dt className="inline font-medium text-foreground">
+                                                  Mệnh đề:{" "}
+                                                </dt>
+                                                <dd className="inline">
+                                                  {clause}
+                                                </dd>
+                                              </div>
+                                            ),
+                                          )}
+                                        </dl>
+                                        <ul className="space-y-0.5 text-xs">
+                                          {analysis.data.phrases.map((p) => (
+                                            <li key={p.text}>
+                                              <span
+                                                lang="en"
+                                                className="font-medium"
+                                              >
+                                                {p.text}
+                                              </span>
+                                              <span className="text-muted-foreground">
+                                                {" "}
+                                                — {p.meaning_vi}
+                                              </span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                        <p className="text-xs text-muted-foreground">
+                                          {analysis.data.grammar_point}
+                                        </p>
+                                      </div>
+                                    )}
+                                </div>
+                              )}
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
