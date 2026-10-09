@@ -15,6 +15,7 @@ import { BookOpen, X, Sparkles, Volume2, Loader2, Play } from "lucide-react";
 import { lookupGloss, GLOSS_SIZE } from "@/lib/read/gloss";
 import { trapDialogFocus } from "@/lib/utils";
 import { speakEnglish } from "@/lib/speech";
+import { saveStudyItem } from "@/app/actions/study";
 import type { GlossEntry } from "@/lib/read/gloss";
 import { normalizeWord } from "@/lib/read/tokenize";
 
@@ -55,6 +56,12 @@ export interface DictionarySelection {
     sentence: string;
     timestamp: string | null;
     replay?: () => void;
+    // Source anchors for context-linked saves (saveStudyItem / card_contexts).
+    video_id?: string;
+    sentence_index?: number;
+    sentence_vi?: string;
+    start_ms?: number;
+    end_ms?: number;
   };
 }
 type LookupSelection = (selection: DictionarySelection) => void;
@@ -98,6 +105,7 @@ export function DictionaryPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsLogin, setNeedsLogin] = useState(false);
+  const [saved, setSaved] = useState<false | "saving" | "saved">(false);
   const show = useCallback(
     (origin?: HTMLElement) => {
       if (document.querySelector("dialog[open]") && !dialog.current?.open)
@@ -151,6 +159,7 @@ export function DictionaryPanel({
     setError(null);
     setNeedsLogin(false);
     setResult(null);
+    setSaved(false);
   };
   // Tier-1 curated map misses → the API's dictionary_entries lookup
   // (Kaikki/viwiktionary, wide coverage). No auth needed; plain DB read.
@@ -244,6 +253,43 @@ export function DictionaryPanel({
     }
   };
 
+  // C2: save the looked-up item as a study card anchored to this context.
+  const saveResult = async () => {
+    if (!result?.entry || saved) return;
+    setSaved("saving");
+    const normalized = normalizeWord(result.term);
+    const response = await saveStudyItem({
+      kind: normalized.includes(" ") ? "phrase" : "word",
+      // Inflected forms key on the resolved lemma so children/mice merge
+      // into one card; display keeps the surface form the learner saw.
+      key: result.entry.lemma ?? normalized,
+      display: result.term,
+      meaning_vi: result.entry.meaning_vn,
+      meaning_origin: result.source === "ai" ? "ai" : "dictionary",
+      context: {
+        video_id: source?.video_id,
+        sentence_index: source?.sentence_index ?? 0,
+        sentence_text:
+          source?.sentence || context || result.entry.example_en || result.term,
+        sentence_vi: source?.sentence_vi,
+        start_ms: source?.start_ms,
+        end_ms: source?.end_ms,
+        origin: source?.video_id ? "watch_lookup" : "manual",
+      },
+    });
+    if (response.ok) {
+      setSaved("saved");
+      return;
+    }
+    setSaved(false);
+    if (response.error === "unauthorized") {
+      setNeedsLogin(true);
+      setError("Đăng nhập để lưu từ vào bộ sưu tập.");
+    } else {
+      setError("Chưa lưu được. Thử lại sau.");
+    }
+  };
+
   const lookupSelection = (selection: DictionarySelection) => {
     if (document.querySelector("dialog[open]") && !dialog.current?.open) return;
     resetPending();
@@ -328,6 +374,20 @@ export function DictionaryPanel({
                 : `Tra dạng gốc của “${result.term}”.`}
             </p>
           )}
+          <button
+            type="button"
+            onClick={saveResult}
+            disabled={saved !== false}
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            {saved === "saved"
+              ? "Đã lưu vào bộ sưu tập"
+              : saved === "saving"
+                ? "Đang lưu…"
+                : result.term.includes(" ")
+                  ? "Lưu cụm này"
+                  : "Lưu từ này"}
+          </button>
         </>
       ) : (
         <p className="rounded-xl bg-muted p-4 text-sm leading-6 text-muted-foreground">

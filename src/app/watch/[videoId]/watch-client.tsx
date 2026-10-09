@@ -621,6 +621,10 @@ export function WatchClient({
                   sentence.start_ms == null
                     ? null
                     : formatTimestamp(sentence.start_ms),
+                video_id: videoId,
+                sentence_index: sentence.i,
+                start_ms: sentence.start_ms ?? undefined,
+                end_ms: sentence.end_ms ?? undefined,
                 replay: !timeline.idBySentence.has(sentence.i)
                   ? undefined
                   : () => seekWithDeepLink(sentence.start_ms!),
