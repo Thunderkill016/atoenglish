@@ -25,6 +25,11 @@ import {
   TOPIC_LABELS,
   type CatalogTopic,
 } from "@/content/catalog/videos";
+import {
+  searchYoutube,
+  type YoutubeSearchError,
+  type YoutubeSearchVideo,
+} from "@/app/actions/youtube-search";
 import { parseYoutubeUrl } from "@/lib/video/youtube-url";
 import { formatTimestamp } from "@/lib/format";
 import { normalizeSearchText, trapDialogFocus } from "@/lib/utils";
@@ -42,6 +47,21 @@ const SearchContext = createContext<{
 } | null>(null);
 // Preview six videos; a text action reveals the full filtered catalog.
 const PICKER_RESULT_LIMIT = 6;
+
+/** Remote YouTube search runs once per explicit click — each call costs
+ * ~1% of the app's shared daily Data API quota, so it is never debounced. */
+type RemoteSearch =
+  | { query: string; state: "loading" }
+  | { query: string; state: "done"; videos: YoutubeSearchVideo[] }
+  | { query: string; state: "error"; error: YoutubeSearchError };
+
+const REMOTE_ERROR_TEXT: Record<YoutubeSearchError, string> = {
+  unavailable: "Tìm kiếm YouTube chưa được bật.",
+  invalid_query: "Nhập ít nhất 2 ký tự để tìm trên YouTube.",
+  rate_limited: "Bạn đã tìm quá nhanh — thử lại sau ít phút.",
+  quota: "Lượt tìm YouTube hôm nay đã hết — dán link trực tiếp nhé.",
+  upstream: "Không kết nối được YouTube lúc này — thử lại sau.",
+};
 
 export function DiscoverSearchProvider({ children }: { children: ReactNode }) {
   const [showTitleVi, setShowTitleVi] = useState(false);
@@ -104,8 +124,15 @@ export function TitleTranslationToggle({
 
 export const normalizeDiscoverQuery = normalizeSearchText;
 
-/** Compact launcher, one input in a native modal; no remote YouTube search is implied. */
-export function DiscoverSearch() {
+/** Compact launcher, one input in a native modal. Remote YouTube search is
+ * only rendered when the server passes `youtubeSearchEnabled` — i.e. a
+ * `YOUTUBE_DATA_API_KEY` exists; without it the capability does not exist
+ * in the UI at all (SPEC §10 contract). */
+export function DiscoverSearch({
+  youtubeSearchEnabled = false,
+}: {
+  youtubeSearchEnabled?: boolean;
+}) {
   const { showTitleVi, query, setQuery, channel, setChannel, topic, setTopic } =
     useDiscoverQuery();
   const router = useRouter();
@@ -117,6 +144,7 @@ export function DiscoverSearch() {
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"videos" | "channels">("channels");
   const [open, setOpen] = useState(false);
+  const [remote, setRemote] = useState<RemoteSearch | null>(null);
   const catalog = getCatalog();
   const key = normalizeDiscoverQuery(query);
   const filtered = catalog.filter(
@@ -177,6 +205,20 @@ export function DiscoverSearch() {
       close();
     }
   };
+
+  const runRemote = async () => {
+    const q = query.trim();
+    if (!q || remote?.state === "loading") return;
+    setRemote({ query: q, state: "loading" });
+    const result = await searchYoutube(q);
+    setRemote(
+      result.ok
+        ? { query: q, state: "done", videos: result.videos }
+        : { query: q, state: "error", error: result.error },
+    );
+  };
+
+  const remoteStale = !remote || remote.query !== query.trim();
 
   return (
     <>
@@ -457,6 +499,74 @@ export function DiscoverSearch() {
                 <p className="px-2 py-5 text-sm text-muted-foreground">
                   Không có kết quả. Thử từ khóa khác hoặc dán link YouTube.
                 </p>
+              )}
+              {view === "videos" && youtubeSearchEnabled && key && (
+                <div className="mt-3 border-t border-border px-2 pt-3">
+                  {remoteStale ? (
+                    <button
+                      type="button"
+                      onClick={runRemote}
+                      className="inline-flex min-h-11 items-center gap-2 text-xs font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                    >
+                      Tìm trên YouTube{" "}
+                      <ArrowRight aria-hidden className="size-3.5" />
+                    </button>
+                  ) : remote.state === "loading" ? (
+                    <p
+                      role="status"
+                      className="py-2 text-xs text-muted-foreground"
+                    >
+                      Đang tìm trên YouTube…
+                    </p>
+                  ) : remote.state === "error" ? (
+                    <p
+                      role="alert"
+                      className="py-2 text-xs text-muted-foreground"
+                    >
+                      {REMOTE_ERROR_TEXT[remote.error]}
+                    </p>
+                  ) : remote.videos.length === 0 ? (
+                    <p className="py-2 text-xs text-muted-foreground">
+                      YouTube không có kết quả phù hợp cho từ khóa này.
+                    </p>
+                  ) : (
+                    <>
+                      <p
+                        role="status"
+                        className="mb-1 text-xs text-muted-foreground"
+                      >
+                        {remote.videos.length} kết quả trên YouTube
+                      </p>
+                      <ul>
+                        {remote.videos.map((video) => (
+                          <li key={video.id}>
+                            <Link
+                              href={`/watch/${video.id}`}
+                              onClick={close}
+                              className="flex min-h-18 items-center gap-3 rounded-lg p-2 hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={`https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`}
+                                alt=""
+                                loading="lazy"
+                                className="aspect-video w-20 shrink-0 rounded-md bg-muted object-cover sm:w-24"
+                              />
+                              <span className="min-w-0 flex-1">
+                                <span className="block line-clamp-2 text-sm font-medium leading-snug">
+                                  {video.title}
+                                </span>
+                                <span className="mt-1 block text-xs text-muted-foreground">
+                                  {video.channel}
+                                </span>
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
               )}
               {view === "videos" && filtered.length > PICKER_RESULT_LIMIT && (
                 <button
