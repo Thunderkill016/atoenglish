@@ -290,3 +290,75 @@ Note: manual's comparison table says free PDF = 50 pages/mo but the plan card sa
 - Two things they ship that we haven't: **Watch Later** (save-video queue — we have per-video save via library but no explicit "watch later" list semantics) and **channel subscriptions** (catalog push). Both are deferrable; current scope stays as-is per SPEC.
 - Word-list-from-video + saved-word highlighting shipped V7.9.4 — we already have saved-word highlighting (C4).
 - The pricing inconsistency in their own manual (50 vs 2.000 PDF pages) is a good reminder to keep our `/me` evidence copy honest and consistent.
+
+## 10. Authenticated Learning Center capture (09/10/2026, free account)
+
+Playwright persistent profile, Google OAuth login, headless crawl of 29 routes. Account: `premium:false`, `AIEngineActive:false`, JWT issued via `/1/user/profile`. Artifacts in `/tmp/trancy-research/live/` (ephemeral): per-route `text/*.txt`, `shots/*.png`, `network.jsonl` (260 API requests).
+
+### 10.1 Route map — what each page actually is
+
+| Route | Observed content |
+|---|---|
+| `/home` | Dashboard: YouTube feed + Podcast + AI Talk course cards + Premium upsell + **streak calendar + flashcard stats + activity heatmap + progress chart** |
+| `/youtube`, `/library` | Content catalog: duration, channel, age, category (Sports/News/Arts...), difficulty tier (`Advanced`/`B1`/`B2`); "Edit featured" |
+| `/youtube/recommendations` | **Discover Channels wizard**: 12 learning languages, vocab level (Beginner/Intermediate/Advanced), interest tags pick-1-8 (vlog/tech/ai/psychology/...), count selector |
+| `/podcast` | Empty + "Add subscription" + Favorites/History/Followed tabs |
+| `/movie` | Movie catalog: category list (Action→Western) + level filter — movies = sentence-list containers |
+| `/book-home` | **Trancy Reader shelf**: empty state "Upload book", daily 20-min reading goal, weekly stats |
+| `/sentence-shadowing` | AI Shadowing library: tabs YouTube/Podcasts/Sentence Packs/Movie; packs incl. "Everyday English 2000", Famous Quotes ×3 levels, Proverbs, slang |
+| `/assessment-home` | Same AI Shadowing grid — sentence packs per topic (hospital, airport, hotel, IELTS self-intro, TOEFL essays, slang...) w/ sentence counts |
+| `/talk-home` | AITalk course catalog: TOEFL mock (10), IELTS (8), workplace small talk, meetings, interviews, remote work... each with N courses |
+| `/vocab-mode` | **Immersive Vocab flashcard**: word + US IPA + POS sections + vi meanings + example sentences (EN+VI) + "Detailed Definition" + "Mastered" button + `M` hotkey |
+| `/flashcard-home` | Flashcard dashboard: Target 0/10, Learn/Review/Learning counters |
+| `/review-vocabulary` | Vocabulary list: Learning/All/Recent/Today's Review/By-date; "Choose a learning wordbook" |
+| `/wordbook-import` | Import UI: file drop `.txt/.csv`, words-only (sentences filtered), manual paste, preview → create wordbook |
+| `/word-clean` | Minimal "steal · Delete" — likely word cleanup tool |
+| `/topics` | "AI Tutor" default topic entries |
+| `/share` | Referral: invite link `trancy.org?referrer=<id>` → both sides get 10 days Premium; anti-bot rule |
+| `/history` | Watch history w/ "Clear" + per-item resume |
+| `/saved` | Saved videos (empty state) — Watch Later surface |
+| `/settings` | Account (email/membership/change-email/reset-pw/**delete-account**/logout), Language (UI/mother/learning), Preferences (theme, translation engine, TTS voice select, auto-pronounce, UI sounds, marketing emails) |
+| `/setup` | Onboarding: native language + learning language picker |
+| `/advanced-ai` (= `/ai-engine`) | Translation Engine Settings: Google built-in, **SiliconFlow FREE**, DeepSeek V4 Flash, GPT-5.6 Luna, GPT-5-mini/nano, Claude Haiku 4.5, Gemini 3 Flash + **Add Custom Engine (BYOK)**; applies to plugin translation/subtitle/PDF |
+| `/practice/{videoId}` | Bilingual transcript player: EN line + VI line per cue, timestamps, `Subtitles 63` count, `AB` loop control, `AI transcribe` button, "Install/Enable Extension" upsell for faster subtitles |
+
+### 10.2 API map (api.trancy.org)
+
+```
+/1/user/profile            → JWT, premium flags, target/native langs
+/1/meta                    → external-dictionary schemes (Oxford/Collins/Longman/Youdao URL templates, per-lang)
+/1/wordbooks               → CEFR/BEC wordbook catalog → static CDN JSON word lists
+/1/flashcard/settings      → { dailyWords:10, autoMeaning, autoPronunciation, typing }
+/1/tts/voices              → Azure neural voice catalog (displayName, locale, previewUrl)
+/1/shadowing/series        → AITalk course series (TOEFL/IELTS/workplace…, course_list ids)
+/1/sentence/groups         → sentence packs — each stores the AI GENERATION PROMPT
+/1/practice/sentence-lists → movies as sentence packs (metadata.level, category, featured)
+/1/practice/mistakes       → practice mistake log (paged)
+/1/conversations(+stats)   → AITalk convs + stats {talkDuration, convTotal, userTurns, streak, todaySentences}
+/1/materials  /2/materials → two catalogs: v1 ejoy/voicetube-sourced (level 3/4≈B1/B2),
+                             v2 cron-ingested (tier advanced, transcribedAt — transcription pipeline)
+/2/videos  /3/play-history → saved videos; history rows w/ progress fraction + position
+/3/youtube/captions/{id}   → cues: {start,end,text,sid,stared,tokens[{text,lemma,pos,dep,meta}]}
+/2/translator/engines      → engine list + quota {role:1=free(Google,SiliconFlow), role:2=premium}
+/4/words  /4/translations  → user words/sentences sync; /4/translations → 403 premium-gate on free
+/1/topics /1/topicMessages → AI Tutor topics
+/1/pdf/list  /1/reading    → PDF list / reading items (Reader)
+/1/shelf(+reading-stats)   → book shelf + daily reading minutes
+```
+
+### 10.3 Free-account observations
+
+- `/4/translations` returns `403 "AI cao cấp đã hết hạn, vui lòng nâng cấp."` — the premium gate is enforced server-side per endpoint.
+- Free translation engines visible: Google (built-in) + **SiliconFlow marked FREE**.
+- Practice page works fully on free: bilingual cues, AB loop, timestamps — premium layer adds AI transcribe/definitions.
+- Home dashboard ships **streak calendar + activity heatmap + progress chart** — engagement mechanics are central to their LC (we deliberately keep these out).
+- `sentence/groups` packs store the generation `prompt` field — AI-authored packs (e.g. "Big Bang long sentences for shadowing" written in zh prompt), localized via `locale:vi`.
+- Materials v2 rows carry `isTranscribed` + `transcribedAt` — server-side transcription pipeline pre-processes catalog items; users see ready subtitles instantly.
+- History rows carry `progress` fraction + `position` — resume support (heartbeat sync model confirmed earlier).
+
+### 10.4 Implications (read-only)
+
+- Their "free" tier: full subtitle/practice player works; the paywall sits on AI depth (definitions, translations v4, AITalk) + storage quotas — consistent with pricing.
+- `Discover Channels` wizard = language+level+interests → channel recommendations; our `/discover` curated catalog covers the same job without infra.
+- Reader (`book-home`) runs the same sentence-primitive with a **daily minutes goal** — yet another substrate of the same loop.
+- Sentence packs with stored prompts show how they mass-produce practice content cheaply — relevant if we ever add curated packs (defer).
