@@ -150,8 +150,8 @@ interface SentenceTextProps {
 function savedWordClass(state: number | null): string | null {
   if (state == null) return null;
   if (state === CARD_STATE.Review)
-    return "underline decoration-primary/50 decoration-2 underline-offset-4";
-  return "bg-amber-400/25 underline decoration-amber-500/60 decoration-2 underline-offset-4 rounded-sm";
+    return "underline decoration-state-known/50 decoration-2 underline-offset-4";
+  return "bg-state-learning/25 underline decoration-state-learning/60 decoration-2 underline-offset-4 rounded-sm";
 }
 
 /** Shared caption/rail text: timestamps seek; words look up, never seek. */
@@ -235,15 +235,14 @@ export function SentenceText({
           start != null &&
           nowMs >= start &&
           (end == null || nowMs < end);
-        const savedClass = savedMarks ? savedWordClass(savedMarks[index]) : null;
+        const savedClass = savedMarks
+          ? savedWordClass(savedMarks[index])
+          : null;
         if (token.type !== "word" || !onLookup)
           return (
             <span
               key={index}
-              className={cn(
-                highlighted && "rounded bg-primary/25",
-                savedClass,
-              )}
+              className={cn(highlighted && "rounded bg-primary/25", savedClass)}
             >
               {token.text}
             </span>
