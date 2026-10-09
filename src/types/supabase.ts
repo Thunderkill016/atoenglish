@@ -1864,6 +1864,10 @@ export type Database = {
         Args: {};
         Returns: string;
       };
+      delete_my_data: {
+        Args: {};
+        Returns: undefined;
+      };
       digest: {
         Args: {};
         Returns: string;
