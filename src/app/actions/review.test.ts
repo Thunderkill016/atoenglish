@@ -183,6 +183,12 @@ describe("recordPracticeAttempt", () => {
     ).toEqual({ ok: false, error: "invalid_input" });
   });
 
+  it("requires learner_text for write_reuse", async () => {
+    expect(
+      await recordPracticeAttempt({ card_id: 5, mode: "write_reuse" }),
+    ).toEqual({ ok: false, error: "invalid_input" });
+  });
+
   it("requires a signed-in learner", async () => {
     h.getUser.mockResolvedValue({ data: { user: null } });
     expect(

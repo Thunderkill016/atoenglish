@@ -1,16 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   BookOpenCheck,
   ChevronRight,
   Lightbulb,
+  Mic,
+  MicOff,
+  PenLine,
   PlayCircle,
   Volume2,
 } from "lucide-react";
 
-import { recordPracticeAttempt } from "@/app/actions/review";
+import { recordPracticeAttempt, requestReuseFeedback } from "@/app/actions/review";
 import type { ReviewQueueItem } from "@/app/actions/review";
 import {
   answersMatch,
@@ -20,6 +23,7 @@ import {
   type PracticeMode,
 } from "@/lib/srs/practice";
 import { useYouTubePlayer } from "@/lib/video/use-youtube-player";
+import { getNativeSpeechRecognitionConstructor } from "@/lib/utils/native-speech-recognition";
 import { EmptyState } from "@/components/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -156,6 +160,223 @@ interface CardProps {
   item: ReviewQueueItem;
   onDone: () => void;
   onError: () => void;
+}
+
+/**
+ * speak_repeat (spec §8 — evidence only, never touches FSRS): the learner
+ * repeats the source sentence aloud; the browser transcript is compared
+ * word-by-word. The number is labeled "độ khớp nhận dạng" — speech
+ * recognition agreement, never a pronunciation score.
+ */
+function SpeakRepeat({ item }: { item: ReviewQueueItem }) {
+  const [state, setState] = useState<
+    | { phase: "idle" }
+    | { phase: "listening" }
+    | { phase: "done"; transcript: string; similarity: number }
+    | { phase: "failed"; reason: "unsupported" | "error" }
+  >({ phase: "idle" });
+  const [logging, setLogging] = useState(false);
+  const logged = useRef(false);
+
+  const target = item.context?.sentence_text ?? item.display;
+  const speechWindow =
+    typeof window === "undefined"
+      ? null
+      : (window as unknown as Record<string, unknown>);
+  const supported = getNativeSpeechRecognitionConstructor(speechWindow) != null;
+
+  const begin = () => {
+    const Ctor =
+      getNativeSpeechRecognitionConstructor<SpeechRecognition>(speechWindow);
+    if (!Ctor) {
+      setState({ phase: "failed", reason: "unsupported" });
+      return;
+    }
+    const recognition = new Ctor();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    setState({ phase: "listening" });
+    recognition.onresult = (event) => {
+      const transcript =
+        event.results[0]?.[0]?.transcript?.trim() ?? "";
+      if (!transcript) {
+        setState({ phase: "failed", reason: "error" });
+        return;
+      }
+      const similarity = wordAccuracy(target, transcript);
+      setState({ phase: "done", transcript, similarity });
+      // Log once per card view — the attempt is evidence, not a schedule.
+      if (logged.current) return;
+      logged.current = true;
+      setLogging(true);
+      void recordPracticeAttempt({
+        card_id: item.card_id,
+        mode: "speak_repeat",
+        similarity,
+        learner_text: transcript,
+      }).finally(() => setLogging(false));
+    };
+    recognition.onerror = () => setState({ phase: "failed", reason: "error" });
+    recognition.onnomatch = () => setState({ phase: "failed", reason: "error" });
+    recognition.start();
+  };
+
+  return (
+    <div className="mt-4 border-t border-border pt-3" data-testid="speak-repeat">
+      {state.phase === "idle" && (
+        <button
+          type="button"
+          onClick={begin}
+          disabled={!supported}
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "min-h-11 gap-2",
+          )}
+        >
+          {supported ? (
+            <Mic className="h-4 w-4" aria-hidden />
+          ) : (
+            <MicOff className="h-4 w-4" aria-hidden />
+          )}
+          Nói lại câu này
+        </button>
+      )}
+      {state.phase === "listening" && (
+        <p className="text-sm text-muted-foreground">Đang nghe… nói câu gốc.</p>
+      )}
+      {state.phase === "done" && (
+        <div className="text-sm">
+          <p lang="en" className="[overflow-wrap:anywhere]">
+            Bạn nói: {state.transcript}
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            Độ khớp nhận dạng: {Math.round(state.similarity * 100)}%
+            {logging ? " · đang lưu…" : ""}
+          </p>
+        </div>
+      )}
+      {state.phase === "failed" && (
+        <p className="text-sm text-muted-foreground">
+          {state.reason === "unsupported"
+            ? "Trình duyệt này không hỗ trợ nhận dạng giọng nói."
+            : "Không nghe rõ — thử lại."}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * write_reuse (spec §8): once per session, word/phrase cards only — the
+ * learner writes a fresh sentence using the saved item; Gemini feedback is
+ * labeled AI and the attempt logs as evidence, never reschedules.
+ */
+function WriteReuse({
+  item,
+  onDone,
+}: {
+  item: ReviewQueueItem;
+  onDone: () => void;
+}) {
+  const [sentence, setSentence] = useState("");
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const submit = () => {
+    if (pending || !sentence.trim()) return;
+    startTransition(async () => {
+      // Evidence log first — a feedback outage must not lose the rep.
+      const attempt = await recordPracticeAttempt({
+        card_id: item.card_id,
+        mode: "write_reuse",
+        learner_text: sentence.trim(),
+      });
+      if (!attempt.ok) {
+        setNote("Chưa lưu được lượt viết. Thử lại.");
+        return;
+      }
+      const ai = await requestReuseFeedback({
+        target: item.display,
+        sentence: sentence.trim(),
+      });
+      setFeedback(ai.ok ? ai.feedback : null);
+      setNote(ai.ok ? null : "Câu đã lưu — phản hồi AI hiện không có.");
+    });
+  };
+
+  return (
+    <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-6 text-left">
+      <p className="text-sm font-medium">
+        Viết một câu mới dùng{" "}
+        <span lang="en" className="font-semibold text-primary">
+          {item.display}
+        </span>
+      </p>
+      {!feedback && !note?.startsWith("Câu đã lưu") ? (
+        <>
+          <textarea
+            value={sentence}
+            onChange={(e) => setSentence(e.target.value)}
+            lang="en"
+            rows={3}
+            placeholder="Ví dụ: She showed great resilience after the failure."
+            className="mt-3 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          {note && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {note}
+            </p>
+          )}
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={submit}
+              disabled={pending || !sentence.trim()}
+              className={cn(buttonVariants(), "min-h-11 flex-1")}
+            >
+              Gửi câu
+            </button>
+            <button
+              type="button"
+              onClick={onDone}
+              className={cn(buttonVariants({ variant: "outline" }), "min-h-11")}
+            >
+              Bỏ qua
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p lang="en" className="mt-3 [overflow-wrap:anywhere]">
+            {sentence}
+          </p>
+          {feedback && (
+            <p
+              lang="vi"
+              className="mt-3 rounded-lg bg-muted p-3 text-sm leading-relaxed"
+            >
+              {feedback}
+              <span className="mt-1 block text-[10px] uppercase tracking-wide text-muted-foreground">
+                Phản hồi AI
+              </span>
+            </p>
+          )}
+          {note && !feedback && (
+            <p className="mt-2 text-sm text-muted-foreground">{note}</p>
+          )}
+          <button
+            type="button"
+            onClick={onDone}
+            className={cn(buttonVariants({ size: "lg" }), "mt-4 w-full")}
+          >
+            Xong
+          </button>
+        </>
+      )}
+    </div>
+  );
 }
 
 /** listen_fill / sentence_dictation — auto-graded from typed evidence. */
@@ -302,6 +523,7 @@ function AudioCard({ item, onDone, onError }: CardProps) {
               Bạn gõ: {typed}
             </p>
           )}
+          <SpeakRepeat item={item} />
           <button
             type="button"
             onClick={onDone}
@@ -371,6 +593,7 @@ function SelfRatedCard({ item, onDone, onError }: CardProps) {
               {item.meaning_vi}
             </p>
           )}
+          <SpeakRepeat item={item} />
         </div>
       )}
 
@@ -418,6 +641,9 @@ export function ReviewSession({ items }: { items: ReviewQueueItem[] }) {
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState(0);
   const [failed, setFailed] = useState(false);
+  // write_reuse: "cuối phiên, tối đa một lượt" — one offer after the queue,
+  // on the first word/phrase card reviewed.
+  const [reuseStep, setReuseStep] = useState<"offered" | "done">("offered");
 
   const item = items[index];
   const finished = index >= items.length;
@@ -447,7 +673,10 @@ export function ReviewSession({ items }: { items: ReviewQueueItem[] }) {
     );
   }
 
+  const reuseCard = items.find((i) => i.kind !== "sentence");
+
   if (finished) {
+    const showReuse = reuseStep === "offered" && reuseCard;
     return (
       <div className="mx-auto flex max-w-xl flex-col items-center gap-4 px-4 py-16 text-center">
         <BookOpenCheck className="h-10 w-10 text-primary" aria-hidden />
@@ -456,6 +685,12 @@ export function ReviewSession({ items }: { items: ReviewQueueItem[] }) {
           Bạn đã ôn {done} thẻ trong phiên này. Lịch ôn tiếp theo được FSRS sắp
           lại theo kết quả từng thẻ.
         </p>
+        {showReuse && (
+          <WriteReuse
+            item={reuseCard}
+            onDone={() => setReuseStep("done")}
+          />
+        )}
         <Link href="/discover" className={cn(buttonVariants(), "mt-2")}>
           Xem video tiếp
           <ChevronRight className="h-4 w-4" aria-hidden />

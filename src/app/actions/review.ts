@@ -11,6 +11,8 @@ import {
   type PracticeMode,
 } from "@/lib/srs/practice";
 import { reviewStudyCard, type StudyCardSchedule } from "@/lib/srs/fsrs";
+import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
+import { createRateLimiter } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 // ─── C3: review queue + practice attempts ─────────────────────────────────────
@@ -200,6 +202,11 @@ const attemptSchema = z
     } else if (input.mode === "sentence_dictation") {
       if (input.word_accuracy == null)
         ctx.addIssue({ code: "custom", message: "word_accuracy required" });
+    } else if (input.mode === "write_reuse") {
+      // The written sentence is the whole evidence — a write_reuse log
+      // without it is empty.
+      if (!input.learner_text)
+        ctx.addIssue({ code: "custom", message: "learner_text required" });
     }
   });
 
@@ -306,4 +313,92 @@ export async function recordPracticeAttempt(
     due: outcome ? outcome.patch.due : card.due,
     state: outcome ? outcome.patch.state : card.state,
   };
+}
+
+// ─── write_reuse AI feedback ──────────────────────────────────────────────────
+// Spec §8: "Gemini phản hồi nếu có (nhãn AI)". One short note on the learner's
+// own sentence — the minimum payload rule (spec §13) means we send only the
+// target phrase + the sentence, never card lists or schedule data.
+const reuseLimiter = createRateLimiter(10, 60_000, "write-reuse");
+
+const reuseFeedbackSchema = z.object({
+  target: z.string().trim().min(1).max(200),
+  sentence: z.string().trim().min(1).max(2000),
+});
+
+export type ReuseFeedbackResult =
+  | { ok: true; feedback: string }
+  | { ok: false; error: "invalid_input" | "unauthorized" | "unavailable" | "rate_limited" };
+
+export async function requestReuseFeedback(
+  raw: unknown,
+): Promise<ReuseFeedbackResult> {
+  const parsed = reuseFeedbackSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "invalid_input" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "unauthorized" };
+  if (!(await reuseLimiter.check(`write-reuse:${user.id}`)).success)
+    return { ok: false, error: "rate_limited" };
+
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return { ok: false, error: "unavailable" };
+
+  try {
+    const response = await fetch(geminiGenerateUrl(GEMINI_MODEL, key), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(20_000),
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            {
+              text: "You are a supportive English-writing coach for a Vietnamese learner. The learner wrote a sentence trying to use a target word or phrase. Reply in Vietnamese, at most 3 short sentences: say whether the target is used naturally, correct the sentence only if needed, and give one concrete tip. Do not praise score or rate — no numbers.",
+            },
+          ],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: JSON.stringify({
+                  target: parsed.data.target,
+                  sentence: parsed.data.sentence,
+                }),
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: { feedback: { type: "STRING" } },
+            required: ["feedback"],
+          },
+        },
+      }),
+    });
+    if (!response.ok)
+      return { ok: false, error: response.status === 429 ? "rate_limited" : "unavailable" };
+    const payload = await response.json();
+    const candidate = payload.candidates?.[0];
+    if (candidate?.finishReason && candidate.finishReason !== "STOP")
+      return { ok: false, error: "unavailable" };
+    const text = candidate?.content?.parts
+      ?.filter((part: { thought?: boolean }) => !part.thought)
+      .map((part: { text?: string }) => part.text ?? "")
+      .join("");
+    if (!text) return { ok: false, error: "unavailable" };
+    const generated = JSON.parse(text) as { feedback?: unknown };
+    if (typeof generated.feedback !== "string" || !generated.feedback.trim())
+      return { ok: false, error: "unavailable" };
+    return { ok: true, feedback: generated.feedback.slice(0, 1000) };
+  } catch {
+    return { ok: false, error: "unavailable" };
+  }
 }
