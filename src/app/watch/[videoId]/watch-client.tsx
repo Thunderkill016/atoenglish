@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import {
   ArrowLeft,
+  BookmarkPlus,
   BookOpen,
   ChevronFirst,
   ChevronLast,
@@ -41,6 +42,7 @@ import {
   type CaptionActionResult,
   type LoadedTranscript,
 } from "@/app/actions/captions";
+import { saveStudyItem } from "@/app/actions/study";
 import {
   CAPTIONS_ACK_TYPE,
   CAPTIONS_MESSAGE_TYPE,
@@ -123,6 +125,10 @@ export function WatchClient({
   const [captionRevealed, setCaptionRevealed] = useState<number | null>(null);
   // Read mode on phones: transport cluster collapses behind this toggle.
   const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
+  // Sentence-level save state for the focus-tools "Lưu câu" button.
+  const [sentenceSaved, setSentenceSaved] = useState<
+    number | "saving" | "error" | null
+  >(null);
 
   // Marker for the mobile shell (mission 007): the native bridge relays
   // collected captions only while this stays false — a settled transcript
@@ -214,6 +220,31 @@ export function WatchClient({
     subtitleMode === "reveal" &&
     Boolean(captionVi) &&
     captionRevealed !== activeSentence?.i;
+
+  // C2/C3: save the focused sentence as a `sentence` card — the context row
+  // anchors the same video/segment so review can deep-link back here.
+  const saveActiveSentence = useCallback(async () => {
+    if (!activeSentence || !loggedIn || sentenceSaved === "saving") return;
+    setSentenceSaved("saving");
+    const result = await saveStudyItem({
+      kind: "sentence",
+      // study_cards.key caps at 200 chars; long sentences key on a prefix.
+      key: activeSentence.text.slice(0, 200),
+      display: activeSentence.text.slice(0, 300),
+      meaning_vi: captionVi,
+      meaning_origin: captionVi ? "youtube_vi" : undefined,
+      context: {
+        video_id: videoId,
+        sentence_index: activeSentence.i,
+        sentence_text: activeSentence.text,
+        sentence_vi: captionVi,
+        start_ms: activeSentence.start_ms ?? undefined,
+        end_ms: activeSentence.end_ms ?? undefined,
+        origin: "watch_lookup",
+      },
+    });
+    setSentenceSaved(result.ok ? activeSentence.i : "error");
+  }, [activeSentence, loggedIn, sentenceSaved, captionVi, videoId]);
 
   // ── Fetch / fallback flows ────────────────────────────────────────────────
   const requestVersion = useRef(0);
@@ -850,6 +881,39 @@ export function WatchClient({
                                     ? " / 3"
                                     : " lượt"}
                                 </span>
+                              )}
+                              {loggedIn && (
+                                <button
+                                  type="button"
+                                  onClick={saveActiveSentence}
+                                  disabled={
+                                    sentenceSaved === "saving" ||
+                                    sentenceSaved === activeSentence.i
+                                  }
+                                  aria-label="Lưu câu để ôn tập"
+                                  title={
+                                    sentenceSaved === "error"
+                                      ? "Chưa lưu được — thử lại"
+                                      : "Lưu câu vào bộ ôn tập"
+                                  }
+                                  className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+                                >
+                                  <BookmarkPlus
+                                    aria-hidden
+                                    className={cn(
+                                      "size-4",
+                                      sentenceSaved === activeSentence.i &&
+                                        "text-primary",
+                                    )}
+                                  />
+                                  {sentenceSaved === "saving"
+                                    ? "Đang lưu…"
+                                    : sentenceSaved === activeSentence.i
+                                      ? "Đã lưu"
+                                      : sentenceSaved === "error"
+                                        ? "Thử lại"
+                                        : "Lưu câu"}
+                                </button>
                               )}
                             </div>
                           )}

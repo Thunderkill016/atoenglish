@@ -107,6 +107,90 @@ export function reviewCardFSRS(
   };
 }
 
+/**
+ * study_cards scheduling columns (C1) — the learner-facing deck. Column names
+ * differ from legacy `cards` (`due`/`reps` vs `next_review`/`repetitions`), so
+ * it gets its own mapper instead of reusing mapDbCardToFSRSCard.
+ */
+// Type alias (not interface) so a schedule snapshot is assignable to the
+// generated `Json` column type for practice_attempts.fsrs_before/after.
+export type StudyCardSchedule = {
+  state: number;
+  stability: number;
+  difficulty: number;
+  elapsed_days: number;
+  scheduled_days: number;
+  learning_steps: number;
+  reps: number;
+  lapses: number;
+  due: string | null;
+  last_review: string | null;
+};
+
+export function mapStudyCardToFSRSCard(card: StudyCardSchedule): FSRSCard {
+  return {
+    // A null `due` means the card was saved but never scheduled — FSRS treats
+    // it as due now so it enters the review queue immediately.
+    due: card.due ? new Date(card.due) : new Date(),
+    stability: card.stability || 0,
+    difficulty: card.difficulty || 0,
+    elapsed_days: Math.max(0, card.elapsed_days || 0),
+    scheduled_days: Math.max(0, card.scheduled_days || 0),
+    reps: Math.max(0, card.reps || 0),
+    state: (card.state as State) ?? State.New,
+    last_review: card.last_review ? new Date(card.last_review) : undefined,
+    lapses: Math.max(0, card.lapses || 0),
+    learning_steps: Math.max(0, card.learning_steps || 0),
+  };
+}
+
+/**
+ * Apply an FSRS rating to a study_cards row. Returns the column patch plus the
+ * native ReviewLog so callers can persist fsrs_before/after audit snapshots.
+ */
+export function reviewStudyCard(
+  card: StudyCardSchedule,
+  rating: "Again" | "Hard" | "Good" | "Easy",
+  now = new Date(),
+): { patch: StudyCardSchedule; reviewLog: ReviewLogEntry } {
+  const fsrsCard = mapStudyCardToFSRSCard(card);
+  const ratingMap = {
+    Again: Rating.Again,
+    Hard: Rating.Hard,
+    Good: Rating.Good,
+    Easy: Rating.Easy,
+  } as const;
+  const scheduled = fsrsInstance.repeat(fsrsCard, now)[ratingMap[rating]];
+  const updated = scheduled.card;
+  const log = scheduled.log;
+
+  const patch: StudyCardSchedule = {
+    state: updated.state,
+    stability: updated.stability,
+    difficulty: updated.difficulty,
+    elapsed_days: updated.elapsed_days,
+    scheduled_days: updated.scheduled_days,
+    learning_steps: updated.learning_steps,
+    reps: updated.reps,
+    lapses: updated.lapses,
+    due: updated.due.toISOString(),
+    last_review: (updated.last_review ?? now).toISOString(),
+  };
+  const reviewLog: ReviewLogEntry = {
+    rating: log.rating,
+    state: log.state,
+    due: log.due.toISOString(),
+    stability: log.stability,
+    difficulty: log.difficulty,
+    elapsed_days: log.elapsed_days,
+    last_elapsed_days: log.last_elapsed_days,
+    scheduled_days: log.scheduled_days,
+    learning_steps: log.learning_steps,
+    review: log.review.toISOString(),
+  };
+  return { patch, reviewLog };
+}
+
 /** Native review event fields needed for rollback/rescheduling/optimization. */
 export interface ReviewLogEntry {
   rating: Rating;

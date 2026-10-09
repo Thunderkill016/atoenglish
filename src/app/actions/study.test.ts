@@ -86,6 +86,7 @@ function input(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.calls.length = 0;
   h.tableHandlers.clear();
   h.getUser.mockResolvedValue({ data: { user: USER } });
 });

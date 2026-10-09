@@ -1,4 +1,4 @@
-import { House, User } from "lucide-react";
+import { BookOpenCheck, House, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 /**
@@ -14,6 +14,7 @@ export interface NavItem {
 
 export const MAIN_NAV_ITEMS: NavItem[] = [
   { href: "/discover", label: "Khám phá", icon: House },
+  { href: "/review", label: "Ôn tập", icon: BookOpenCheck },
   { href: "/me", label: "Tôi", icon: User },
 ];
 
