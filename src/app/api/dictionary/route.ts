@@ -2,6 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { NEON_AUTH_SESSION_COOKIE_NAME } from "@neondatabase/auth/server";
 import { lookupGloss } from "@/lib/read/gloss";
+import {
+  lookupDictionary,
+  type DictionaryStore,
+} from "@/lib/dict/lookup";
 import { createClient } from "@/lib/supabase/server";
 import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
 import { createRateLimiter } from "@/lib/security/rate-limit";
@@ -64,9 +68,23 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return error("invalid_input", 400);
   const { term, context, mode } = parsed.data;
   if (mode === "curated") {
-    const entry = lookupGloss(term.toLowerCase());
+    const normalized = term.toLowerCase();
+    const curated = lookupGloss(normalized);
+    if (curated) {
+      return NextResponse.json(
+        { ok: true, source: "curated", entry: curated },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    // Wide-coverage tier: public dictionary_entries (Kaikki/viwiktionary).
+    // Anonymous reads are RLS-allowed, so guests get real dictionary hits too.
+    const client = await createClient();
+    const entry = await lookupDictionary(
+      normalized,
+      client as unknown as DictionaryStore,
+    );
     return NextResponse.json(
-      { ok: true, source: "curated", entry },
+      { ok: true, source: "dictionary", entry },
       { headers: { "Cache-Control": "no-store" } },
     );
   }
