@@ -38,23 +38,57 @@ export const CARD_STATE = { New: 0, Learning: 1, Review: 2, Relearning: 3 } as c
 
 /**
  * Which exercise a queued card gets. New/Learning cards always take the base
- * self-rated mode; Review-state cards may take the audio mode when their
- * context anchors to a playable video segment (the caller passes
- * `hasVideoSegment`). Audio modes are served only where the segment player
- * exists — until then pickPracticeMode returns the base modes, which remain
- * spec-legal at every state.
+ * self-rated mode; Review-state cards with a playable video segment
+ * interleave the audio mode (`listen_fill`/`sentence_dictation`) — "xen" in
+ * spec §8 is realised per-card via `reps` parity: each completed rep flips
+ * the parity, so a card alternates audio/self-rated across its reviews.
  */
 export function pickPracticeMode(
   kind: StudyCardKind,
   state: number,
   hasVideoSegment: boolean,
+  reps = 0,
 ): PracticeMode {
-  const reviewable = state === CARD_STATE.Review || state === CARD_STATE.Relearning;
+  const reviewable =
+    state === CARD_STATE.Review || state === CARD_STATE.Relearning;
+  const audioTurn = reviewable && hasVideoSegment && reps % 2 === 1;
   if (kind === "sentence")
-    return reviewable && hasVideoSegment
-      ? "sentence_dictation"
-      : "sentence_meaning";
-  return reviewable && hasVideoSegment ? "listen_fill" : "recall";
+    return audioTurn ? "sentence_dictation" : "sentence_meaning";
+  return audioTurn ? "listen_fill" : "recall";
+}
+
+/**
+ * Normalized word-level accuracy for dictation: Levenshtein distance over
+ * the tokenized word sequences, so a single missing/extra word only costs
+ * its own position, not everything after it. Returns 1 for identical input
+ * and 0 when the expected side is empty.
+ */
+export function wordAccuracy(expected: string, typed: string): number {
+  const want = tokenizeText(expected)
+    .filter((t) => t.type === "word")
+    .map((t) => t.normalized);
+  const got = tokenizeText(typed)
+    .filter((t) => t.type === "word")
+    .map((t) => t.normalized);
+  if (!want.length) return 0;
+  if (!got.length) return want.length ? 0 : 1;
+
+  // DP edit distance over words — bounded by the 2000-char sentence limit.
+  const prev = new Array<number>(got.length + 1);
+  const curr = new Array<number>(got.length + 1);
+  for (let j = 0; j <= got.length; j += 1) prev[j] = j;
+  for (let i = 1; i <= want.length; i += 1) {
+    curr[0] = i;
+    for (let j = 1; j <= got.length; j += 1) {
+      curr[j] = Math.min(
+        prev[j] + 1,
+        curr[j - 1] + 1,
+        prev[j - 1] + (want[i - 1] === got[j - 1] ? 0 : 1),
+      );
+    }
+    prev.splice(0, prev.length, ...curr);
+  }
+  return Math.max(0, 1 - prev[got.length] / want.length);
 }
 
 export function isGradedMode(mode: PracticeMode): boolean {
@@ -93,6 +127,27 @@ export type RatingValue = keyof typeof RATING_BY_VALUE;
 
 export function ratingLabel(rating: number): "Again" | "Hard" | "Good" | "Easy" | null {
   return RATING_BY_VALUE[rating as RatingValue] ?? null;
+}
+
+/** Word tokens of a sentence in surface form — the dictation hint scaffold. */
+export function tokenizeWords(text: string): string[] {
+  return tokenizeText(text)
+    .filter((t) => t.type === "word")
+    .map((t) => t.text);
+}
+
+/**
+ * listen_fill answer check: the typed text must match the card's surface
+ * form as a word sequence — case and surrounding punctuation ignored, and
+ * contractions compare after normalizeWord's curly→straight fold.
+ */
+export function answersMatch(typed: string, target: string): boolean {
+  const words = (s: string) =>
+    tokenizeText(s)
+      .filter((t) => t.type === "word")
+      .map((t) => t.normalized)
+      .join(" ");
+  return typed.trim() !== "" && words(typed) === words(target);
 }
 
 /**

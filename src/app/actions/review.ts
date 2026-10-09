@@ -155,9 +155,7 @@ export async function getReviewQueue(): Promise<ReviewQueueResult> {
       meaning_vi: card.meaning_vi,
       meaning_origin: card.meaning_origin,
       state: card.state,
-      // Audio modes land with the review segment player; until then every
-      // state takes the self-rated base mode (spec §8 keeps them valid).
-      mode: pickPracticeMode(card.kind, card.state, false),
+      mode: pickPracticeMode(card.kind, card.state, videoId != null, card.reps),
       context: context
         ? {
             sentence_text: context.sentence_text,

@@ -12,6 +12,28 @@ vi.mock("@/app/actions/review", async (importOriginal) => ({
   recordPracticeAttempt: actions.recordPracticeAttempt,
 }));
 
+// The review player is the official iframe API — swap it for a stub the same
+// way watch-client.test does; audio-mode cards only need play/seekToMs.
+const player = vi.hoisted(() => ({
+  containerRef: { current: null as HTMLDivElement | null },
+  ready: true,
+  playing: false,
+  loadError: false,
+  nowMs: 0,
+  durationMs: 60_000,
+  play: vi.fn(),
+  pause: vi.fn(),
+  seekToMs: vi.fn(),
+  setRate: vi.fn(),
+  rate: 1,
+  state: "paused",
+  availableRates: [1],
+  readClock: vi.fn(),
+}));
+vi.mock("@/lib/video/use-youtube-player", () => ({
+  useYouTubePlayer: () => player,
+}));
+
 if (!globalThis.crypto) {
   Object.defineProperty(globalThis, "crypto", { value: webcrypto });
 }
@@ -184,5 +206,107 @@ describe("ReviewSession", () => {
     );
     expect(container.textContent).toContain("Cần sự kiên cường để tiếp tục.");
     expect(container.textContent).toContain("Nhớ lại câu");
+  });
+
+  it("grades listen_fill from the typed answer and advances on Tiếp", async () => {
+    actions.recordPracticeAttempt.mockResolvedValue({
+      ok: true,
+      attempt_id: 7,
+      due: "2026-10-17T00:00:00Z",
+      state: 2,
+    });
+    await act(async () =>
+      root.render(
+        <ReviewSession items={[item({ mode: "listen_fill", state: 2, reps: 1 } as never)]} />,
+      ),
+    );
+
+    // Audio cue: play button + input instead of flip/rate.
+    expect(container.querySelector("[data-rating]")).toBeNull();
+    click(buttonByText("Nghe đoạn này"));
+    expect(player.seekToMs).toHaveBeenCalledWith(41000);
+    expect(player.play).toHaveBeenCalled();
+
+    const input = container.querySelector("input")!;
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )!.set!;
+      setter.call(input, "resilience");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      buttonByText("Kiểm tra")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
+    });
+
+    expect(actions.recordPracticeAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        card_id: 5,
+        mode: "listen_fill",
+        correct: true,
+        plays: 1,
+        learner_text: "resilience",
+      }),
+    );
+    // Result shown — rating never leaves the client verbatim for audio modes.
+    expect(container.textContent).toContain("Chính xác!");
+    expect(actions.recordPracticeAttempt.mock.calls[0][0]).not.toHaveProperty(
+      "rating",
+    );
+  });
+
+  it("records dictation accuracy and hint usage", async () => {
+    actions.recordPracticeAttempt.mockResolvedValue({
+      ok: true,
+      attempt_id: 8,
+      due: "2026-10-17T00:00:00Z",
+      state: 2,
+    });
+    await act(async () =>
+      root.render(
+        <ReviewSession
+          items={[
+            item({
+              kind: "sentence",
+              mode: "sentence_dictation",
+              state: 2,
+              display: "It takes resilience to keep going.",
+              key: "it takes resilience to keep going.",
+            } as never),
+          ]}
+        />,
+      ),
+    );
+
+    // The source sentence stays hidden until after the attempt.
+    expect(container.textContent).not.toContain("resilience to keep");
+    click(buttonByText("Gợi ý (0)"));
+    expect(container.textContent).toContain("Gợi ý (1)");
+
+    const input = container.querySelector("input")!;
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )!.set!;
+      setter.call(input, "it takes resilience to keep going");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      buttonByText("Kiểm tra")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
+    });
+
+    expect(actions.recordPracticeAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "sentence_dictation",
+        word_accuracy: 1,
+        hints_used: 1,
+      }),
+    );
   });
 });

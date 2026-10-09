@@ -41,7 +41,7 @@ const player = vi.hoisted(() => ({
   setRate: vi.fn(),
   readClock: vi.fn(() => ({ ...clock })),
 }));
-vi.mock("./use-youtube-player", () => ({
+vi.mock("@/lib/video/use-youtube-player", () => ({
   useYouTubePlayer: () => ({
     ...player,
     ...clock,

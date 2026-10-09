@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildPlaybackTimeline } from "@/lib/video/transcript-resource";
 import type { Sentence } from "@/lib/video/types";
-import type { PlayerClock } from "./use-youtube-player";
+import type { PlayerClock } from "@/lib/video/use-youtube-player";
 import { REPEAT_GAP_MS, SentencePlayer } from "./use-sentence-player";
 
 const source: Sentence[] = [

@@ -59,7 +59,7 @@ import {
   SentenceText,
   formatTimestamp,
 } from "./transcript-rail";
-import { useYouTubePlayer } from "./use-youtube-player";
+import { useYouTubePlayer } from "@/lib/video/use-youtube-player";
 import { useSentencePlayer, type RepeatMode } from "./use-sentence-player";
 import { useTranslations } from "./use-translations";
 import { SEGMENTATION_VERSION } from "@/lib/video/segment";
