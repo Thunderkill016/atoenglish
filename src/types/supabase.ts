@@ -65,6 +65,114 @@ export type Database = {
         };
         Relationships: [];
       };
+      ai_results: {
+        Row: {
+          id: number;
+          user_id: string;
+          kind: string;
+          input_hash: string;
+          model: string;
+          output: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          user_id: string;
+          kind: string;
+          input_hash: string;
+          model: string;
+          output: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          user_id?: string;
+          kind?: string;
+          input_hash?: string;
+          model?: string;
+          output?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_results_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      card_contexts: {
+        Row: {
+          id: number;
+          user_id: string;
+          card_id: number;
+          source_id: number | null;
+          sentence_index: number;
+          token_start: number | null;
+          token_count: number | null;
+          sentence_text: string;
+          sentence_vi: string | null;
+          start_ms: number | null;
+          end_ms: number | null;
+          context_origin: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          user_id: string;
+          card_id: number;
+          source_id?: number | null;
+          sentence_index: number;
+          token_start?: number | null;
+          token_count?: number | null;
+          sentence_text: string;
+          sentence_vi?: string | null;
+          start_ms?: number | null;
+          end_ms?: number | null;
+          context_origin: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          user_id?: string;
+          card_id?: number;
+          source_id?: number | null;
+          sentence_index?: number;
+          token_start?: number | null;
+          token_count?: number | null;
+          sentence_text?: string;
+          sentence_vi?: string | null;
+          start_ms?: number | null;
+          end_ms?: number | null;
+          context_origin?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "card_contexts_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "study_cards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "card_contexts_source_id_fkey";
+            columns: ["source_id"];
+            isOneToOne: false;
+            referencedRelation: "content_sources";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "card_contexts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       card_review_logs: {
         Row: {
           id: string;
@@ -832,6 +940,98 @@ export type Database = {
           },
         ];
       };
+      practice_attempts: {
+        Row: {
+          id: number;
+          user_id: string;
+          card_id: number | null;
+          source_id: number | null;
+          sentence_index: number | null;
+          mode: string;
+          rating: number | null;
+          correct: boolean | null;
+          word_accuracy: number | null;
+          hints_used: number;
+          plays: number;
+          similarity: number | null;
+          learner_text: string | null;
+          ai_result_id: number | null;
+          interval_days_before: number | null;
+          fsrs_before: Json | null;
+          fsrs_after: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          user_id: string;
+          card_id?: number | null;
+          source_id?: number | null;
+          sentence_index?: number | null;
+          mode: string;
+          rating?: number | null;
+          correct?: boolean | null;
+          word_accuracy?: number | null;
+          hints_used?: number;
+          plays?: number;
+          similarity?: number | null;
+          learner_text?: string | null;
+          ai_result_id?: number | null;
+          interval_days_before?: number | null;
+          fsrs_before?: Json | null;
+          fsrs_after?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          user_id?: string;
+          card_id?: number | null;
+          source_id?: number | null;
+          sentence_index?: number | null;
+          mode?: string;
+          rating?: number | null;
+          correct?: boolean | null;
+          word_accuracy?: number | null;
+          hints_used?: number;
+          plays?: number;
+          similarity?: number | null;
+          learner_text?: string | null;
+          ai_result_id?: number | null;
+          interval_days_before?: number | null;
+          fsrs_before?: Json | null;
+          fsrs_after?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "practice_attempts_ai_result_fkey";
+            columns: ["ai_result_id"];
+            isOneToOne: false;
+            referencedRelation: "ai_results";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "practice_attempts_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "study_cards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "practice_attempts_source_id_fkey";
+            columns: ["source_id"];
+            isOneToOne: false;
+            referencedRelation: "content_sources";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "practice_attempts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       project_memories: {
         Row: {
           id: number;
@@ -1020,6 +1220,80 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "speaking_sessions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      study_cards: {
+        Row: {
+          id: number;
+          user_id: string;
+          kind: string;
+          key: string;
+          display: string;
+          meaning_vi: string | null;
+          meaning_origin: string | null;
+          state: number;
+          stability: number;
+          difficulty: number;
+          elapsed_days: number;
+          scheduled_days: number;
+          learning_steps: number;
+          reps: number;
+          lapses: number;
+          due: string | null;
+          last_review: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          user_id: string;
+          kind: string;
+          key: string;
+          display: string;
+          meaning_vi?: string | null;
+          meaning_origin?: string | null;
+          state?: number;
+          stability?: number;
+          difficulty?: number;
+          elapsed_days?: number;
+          scheduled_days?: number;
+          learning_steps?: number;
+          reps?: number;
+          lapses?: number;
+          due?: string | null;
+          last_review?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          user_id?: string;
+          kind?: string;
+          key?: string;
+          display?: string;
+          meaning_vi?: string | null;
+          meaning_origin?: string | null;
+          state?: number;
+          stability?: number;
+          difficulty?: number;
+          elapsed_days?: number;
+          scheduled_days?: number;
+          learning_steps?: number;
+          reps?: number;
+          lapses?: number;
+          due?: string | null;
+          last_review?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "study_cards_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "user";

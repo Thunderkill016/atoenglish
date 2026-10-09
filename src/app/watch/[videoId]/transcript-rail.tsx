@@ -19,10 +19,9 @@ import {
 } from "@tanstack/react-virtual";
 import { ChevronDown, ChevronUp, Play, Search, X } from "lucide-react";
 import {
-  tokenizeText,
-  phraseFromTokens,
-  type ReadToken,
-} from "@/lib/read/tokenize";
+  SentenceText,
+  type PhraseStart,
+} from "@/components/sentence-text";
 import { cn, normalizeSearchText } from "@/lib/utils";
 import { sentenceGlosses } from "@/lib/read/gloss";
 import { formatTimestamp } from "@/lib/format";
@@ -53,6 +52,8 @@ interface TranscriptRailProps {
     sentence: Sentence,
     trigger: HTMLButtonElement,
   ) => void;
+  /** C4: normalized word/phrase card keys → FSRS state — paints saved items. */
+  savedWords?: ReadonlyMap<string, number>;
 }
 
 // Search is a word/phrase query, bounded like the existing dictionary intake.
@@ -126,119 +127,6 @@ function revealSentence(
     container.scrollTop += line.bottom - bounds.bottom;
 }
 
-type PhraseStart = { sentenceI: number; tokenIndex: number };
-interface SentenceTextProps {
-  sentence: Sentence;
-  nowMs: number;
-  active: boolean;
-  onLookup?: TranscriptRailProps["onLookup"];
-  phraseMode?: boolean;
-  phraseStart?: PhraseStart | null;
-  onPhraseStart?: (start: PhraseStart | null) => void;
-  onPhraseError?: (message: string | null) => void;
-}
-
-/** Shared caption/rail text: timestamps seek; words look up, never seek. */
-export function SentenceText({
-  sentence,
-  nowMs,
-  active,
-  onLookup,
-  phraseMode = false,
-  phraseStart,
-  onPhraseStart,
-  onPhraseError,
-}: SentenceTextProps) {
-  const tokens = useMemo(() => {
-    if (!sentence.words?.length)
-      return tokenizeText(sentence.text).map((token) => ({
-        token,
-        start: null as number | null,
-        end: null as number | null,
-      }));
-    return sentence.words.flatMap((word, i) => [
-      ...tokenizeText(word.w).map((token) => ({
-        token,
-        start: word.start_ms,
-        end: word.end_ms,
-      })),
-      ...(i < sentence.words!.length - 1
-        ? [
-            {
-              token: { type: "space", text: " " } as ReadToken,
-              start: null,
-              end: null,
-            },
-          ]
-        : []),
-    ]);
-  }, [sentence.text, sentence.words]);
-  const selectWord = (index: number, trigger: HTMLButtonElement) => {
-    const token = tokens[index].token;
-    if (token.type !== "word") return;
-    if (!phraseMode) {
-      onLookup?.(token.text, sentence, trigger);
-      return;
-    }
-    onPhraseError?.(null);
-    if (!phraseStart || phraseStart.sentenceI !== sentence.i) {
-      onPhraseStart?.({ sentenceI: sentence.i, tokenIndex: index });
-      return;
-    }
-    const phrase = phraseFromTokens(
-      tokens.map((item) => item.token),
-      phraseStart.tokenIndex,
-      index,
-    );
-    // Match the dictionary API's bounded one-term intake; never truncate a phrase silently.
-    if (!phrase || phrase.length > 120) {
-      onPhraseError?.("Chọn cụm ngắn hơn (tối đa 120 ký tự).");
-      return;
-    }
-    onPhraseStart?.(null);
-    onLookup?.(phrase, sentence, trigger);
-  };
-  if (sentence.noise) return <span>{sentence.text}</span>;
-  return (
-    <span data-testid="sentence-text" className="[overflow-wrap:anywhere]">
-      {tokens.map(({ token, start, end }, index) => {
-        const highlighted =
-          active &&
-          start != null &&
-          nowMs >= start &&
-          (end == null || nowMs < end);
-        if (token.type !== "word" || !onLookup)
-          return (
-            <span
-              key={index}
-              className={cn(highlighted && "rounded bg-primary/25")}
-            >
-              {token.text}
-            </span>
-          );
-        return (
-          <button
-            key={index}
-            type="button"
-            aria-label={`${phraseMode ? "Chọn từ" : "Tra từ"} “${token.text}”`}
-            onClick={(event) => selectWord(index, event.currentTarget)}
-            className={cn(
-              // Source whitespace sets word spacing; lookup highlights must not widen every word.
-              "inline max-w-full rounded p-0 align-baseline text-inherit [overflow-wrap:anywhere] hover:bg-primary/15 focus-visible:outline-2 focus-visible:outline-ring",
-              highlighted && "bg-primary/25",
-              phraseStart?.sentenceI === sentence.i &&
-                phraseStart.tokenIndex === index &&
-                "bg-primary/25 underline",
-            )}
-          >
-            {token.text}
-          </button>
-        );
-      })}
-    </span>
-  );
-}
-
 /**
  * Scrollable bilingual-ready transcript column (REDESIGN §5.2 T1).
  * Active line highlights gold and auto-scrolls into view.
@@ -255,6 +143,7 @@ export function TranscriptRail({
   playableIds,
   prose = false,
   onLookup,
+  savedWords,
 }: TranscriptRailProps) {
   "use no memo"; // TanStack Virtual exposes a mutable instance; do not compiler-cache its rows.
   const containerRef = useRef<HTMLDivElement>(null);
@@ -572,6 +461,7 @@ export function TranscriptRail({
               phraseStart={phraseStart}
               onPhraseStart={setPhraseStart}
               onPhraseError={setPhraseError}
+              savedWords={savedWords}
             />
           </p>
         )}

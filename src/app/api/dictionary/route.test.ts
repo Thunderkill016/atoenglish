@@ -4,14 +4,48 @@ import { NEON_AUTH_SESSION_COOKIE_NAME } from "@neondatabase/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { POST } from "./route";
 
-const { check, dictRows } = vi.hoisted(() => ({
+const { check, dictRows, aiRows, tableCalls } = vi.hoisted(() => ({
   check: vi.fn(),
   dictRows: { value: [] as unknown[] },
+  aiRows: { value: null as { output: unknown } | null },
+  tableCalls: [] as { table: string; method: string; args: unknown[] }[],
 }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 vi.mock("@/lib/security/rate-limit", () => ({
   createRateLimiter: () => ({ check }),
 }));
+function makeBuilder(table: string) {
+  const builder: Record<PropertyKey, unknown> = new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        if (prop === "then") {
+          return (
+            onFulfilled?: ((value: unknown) => unknown) | null,
+            onRejected?: ((reason: unknown) => unknown) | null,
+          ) => {
+            const data =
+              table === "dictionary_entries"
+                ? dictRows.value
+                : table === "ai_results"
+                  ? aiRows.value
+                  : null;
+            return Promise.resolve({ data, error: null }).then(
+              onFulfilled,
+              onRejected,
+            );
+          };
+        }
+        if (typeof prop === "symbol") return undefined;
+        return (...args: unknown[]) => {
+          tableCalls.push({ table, method: prop, args });
+          return builder;
+        };
+      },
+    },
+  );
+  return builder;
+}
 function request(body: unknown, origin = "http://localhost:3000") {
   return new NextRequest("http://localhost:3000/api/dictionary", {
     method: "POST",
@@ -31,9 +65,7 @@ function user(value: { id: string } | null, status = 401) {
         error: value ? null : { status },
       }),
     },
-    from: () => ({
-      select: () => ({ in: async () => ({ data: dictRows.value }) }),
-    }),
+    from: (table: string) => makeBuilder(table),
   } as unknown as Awaited<ReturnType<typeof createClient>>);
 }
 beforeEach(() => {
@@ -41,6 +73,8 @@ beforeEach(() => {
   vi.stubEnv("GEMINI_API_KEY", "test-only-key");
   check.mockResolvedValue({ success: true });
   dictRows.value = [];
+  aiRows.value = null;
+  tableCalls.length = 0;
   user({ id: "learner-a" });
 });
 afterEach(() => {
@@ -74,9 +108,7 @@ describe("quick dictionary", () => {
       {
         word: "serendipity",
         pos: "noun",
-        senses: [
-          { glosses: ["Khả năng cầu may."] },
-        ],
+        senses: [{ glosses: ["Khả năng cầu may."] }],
         ipa: null,
         audio_url: null,
       },
@@ -220,5 +252,67 @@ describe("quick dictionary", () => {
       vi.fn().mockRejectedValue(new DOMException("Timeout", "TimeoutError")),
     );
     expect((await POST(request({ term: "a", mode: "ai" }))).status).toBe(504);
+  });
+});
+
+describe("context_gloss cache (ai_results)", () => {
+  const CACHED_ENTRY = {
+    word: "bank",
+    meaning_vn: "bờ sông",
+  };
+  it("replays a cached gloss without calling Gemini", async () => {
+    aiRows.value = { output: { entry: CACHED_ENTRY } };
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    const res = await POST(request({ term: "bank", mode: "ai" }));
+    expect(await res.json()).toEqual({
+      ok: true,
+      source: "ai",
+      entry: CACHED_ENTRY,
+    });
+    expect(fetcher).not.toHaveBeenCalled();
+    // The cache read is scoped to the learner + kind + model.
+    const eqs = tableCalls
+      .filter((c) => c.table === "ai_results" && c.method === "eq")
+      .map((c) => c.args);
+    expect(eqs).toContainEqual(["kind", "context_gloss"]);
+    expect(eqs).toContainEqual(["model", "gemini-2.5-flash"]);
+    expect(eqs).toContainEqual(["user_id", "learner-a"]);
+  });
+
+  it("caches a fresh gloss into ai_results", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [{ text: JSON.stringify(CACHED_ENTRY) }],
+                },
+              },
+            ],
+          }),
+        ),
+      ),
+    );
+    const res = await POST(request({ term: "bank", mode: "ai" }));
+    expect(await res.json()).toMatchObject({
+      ok: true,
+      source: "ai",
+      entry: CACHED_ENTRY,
+    });
+    const insert = tableCalls.find(
+      (c) => c.table === "ai_results" && c.method === "insert",
+    );
+    expect(insert?.args[0]).toMatchObject({
+      kind: "context_gloss",
+      model: "gemini-2.5-flash",
+      output: { entry: CACHED_ENTRY },
+    });
+    expect((insert?.args[0] as { input_hash: string }).input_hash).toMatch(
+      /^[0-9a-f]{64}$/,
+    );
   });
 });

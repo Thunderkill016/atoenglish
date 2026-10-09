@@ -8,7 +8,7 @@ import {
   type TranscriptSegment,
 } from "@/lib/video/transcript-resource";
 import type { Sentence } from "@/lib/video/types";
-import type { PlayerClock, PlayerControls } from "./use-youtube-player";
+import type { PlayerClock, PlayerControls } from "@/lib/video/use-youtube-player";
 
 export type RepeatMode = "once" | "three" | "continuous";
 type PlaybackPhase = "watch" | "segment" | "gap" | "held" | "paused";
