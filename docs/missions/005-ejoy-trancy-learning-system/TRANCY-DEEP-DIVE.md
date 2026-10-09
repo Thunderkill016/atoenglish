@@ -225,3 +225,68 @@ New items surfaced by the live capture that should shape the MVP:
 - Chrome Web Store CRX `mjdbhokoopacimoekfgkcoogikbfgngb` v7.9.4 unpacked + prettified (`/tmp/trancy-research/extension/`).
 - `learn.trancy.org` — **authenticated full crawl**: ~900 logged requests (`/tmp/trancy-research/live/network.jsonl`), per-page innerText dumps, practice-player + dictionary-drawer text captures.
 - No official OSS repo exists (verified via GitHub search + org lookup). License: proprietary — we may take ideas/architecture, **not** code or assets.
+
+## 9. Public surface sweep (09/10/2026, Playwright unauthenticated)
+
+Re-captured all public surfaces via Playwright + direct fetches (`/tmp/trancy-research/` — ephemeral). Findings below.
+
+### 9.1 Per-page feature inventory (trancy.org/vi/*)
+
+| Page | Status | Features listed |
+|---|---|---|
+| `/` (vi) | 200 | Product pillars: bilingual subs (theater + read mode), AI word lookup, AI grammar analysis, NLP sentence segmentation, listen/speak practice, selective + full web translation, sentence/word translate, POS tagging, unfamiliar-word highlight, Watch Later, sentence library, speed control, font adjust, TTS, external dictionary links, keyboard shortcuts, speech recognition |
+| `/aichat` | 200 | AITalk: ChatGPT dialogue trainer, Microsoft speech assessment scoring, follow-up mode + free-dialogue mode, one-click smart tips, original-text translation, realistic + custom scenes |
+| `/ai-subtitle` | 200 | Whisper transcription pipeline: async 2–5 min, ~80% better segmentation claim, shared cache across users, Premium (40/day; 60/day on Premium+AI) — YouTube only |
+| `/pdf` | 200 | PDF AI translator: markdown extraction via AI, OCR for scanned PDFs, bilingual compare, parallel reading, screenshot Q&A, Alt shortcut, word highlight, phrase select, autoscroll |
+| `/trancy-air` | 200 | Desktop app (macOS/Windows): translate-in-place, double-tap Ctrl word lookup, sentence translate + grammar, compare 5 engines side-by-side, Compose window, screenshot OCR (local + Google), voice transcription + filler cleanup, pronunciation practice scored per word, collections sync → Learning Center FSRS |
+| `/mobile` | 200 | iOS/Android apps: YouTube channel sync/subscriptions, shadowing, AI video summaries, personalized settings; podcast live on iOS |
+| `/download` | 200 | Browser matrix: Chrome/Edge/Firefox/Safari/360/Brave/Arc/Others — extension is the main desktop surface |
+| `/pricing` | 200 | See 9.3 |
+| `/changelog` | 200 | Migrated from better.trancy.org/changelog — see 9.4 |
+| `learn.trancy.org/*` | login wall | All routes 200 + sign-in page unauthenticated (email/Google/Apple) |
+
+### 9.2 Manual facts (manual.trancy.org, 24 md pages)
+
+- **8 subtitle platforms**: YouTube (desktop+mobile, AI Subtitle too), Netflix, Disney+, Udemy, Coursera, TED, edX, HBO Max (desktop only).
+- **Three view modes**: Theater (video-centered, dimmed), Read (video aside, scrollable text — click line → play that line, save words/sentences), Practice (line-by-line exercises).
+- **Practice Mode methods**: Filling (fill-in-blank, accuracy+combo scored realtime), shadowing/oral, dictation, word-mastery retype; AI grammar analysis inside; Esc exits.
+- **Keyboard shortcuts** (verified ones): `Cmd/Ctrl+E` start, `J` auto-pause, `R` loop, `A/S/D` practice controls, `Esc` exit; configurable bindings; most others unverified.
+- **Subtitle export**: PDF or CSV — free; options for saved/highlighted words, timestamps, collected-only.
+- **Engines**: free = Google + Microsoft; Premium = DeepL + AI engines (GPT/Claude/Gemini/DeepSeek/Meta/Grok); BYOK custom API; OpenAI deliberately not used for subtitle translation (sentence-breaking quality issue).
+- **Learning Deck**: Watch Later (saved videos w/ word counts), Practice Sentence (sentence library w/ translation + context + audio), Practice Words (vocab w/ example sentence + learning/known lists + batch + manual add), Flashcard Practice = the one confirmed free LC feature; account settings; 6 devices per account.
+- **AITalk**: ChatGPT-based scenarios, Microsoft speech assessment multi-dimensional scoring, TTS replies, smart tips, custom scene creation guide (ChatGPT prompt walkthrough).
+- **Wordbook import**: vocabulary import is Premium ("Premium Wordbook").
+- **Storage quotas (free)**: 100 words, 50 sentences — enforced.
+
+### 9.3 Pricing (verified 09/10)
+
+| | Free | Premium | Premium + Advanced AI |
+|---|---|---|---|
+| Price (VN region) | — | 89.000₫/mo or 849.000₫/yr (~71k/mo) | 249.000₫/mo or 2.199.000₫/yr (~183k/mo) |
+| Saved words/sentences | 100 / 50 | Unlimited | Unlimited |
+| AI YouTube subs | No | 40/day | 60/day |
+| PDF pages | 50/mo | 2.000/mo | 4.000/mo |
+| AI video summaries | No | 10/day | 50/day |
+| AI word def / AI shadowing / AI assistant / pronunciation assessment / AITalk | No | Yes | Yes |
+| Advanced engines + ~20M tokens/mo | No | No | Yes |
+| 14-day refund | — | ✓ | ✓ |
+
+Note: manual's comparison table says free PDF = 50 pages/mo but the plan card says Premium 2.000 pages/mo — sources internally inconsistent; in-product behavior authoritative.
+
+### 9.4 Changelog timeline (trancy.org/changelog, newest→oldest)
+
+- **V7.9.4 (18/09/2026)**: Vimeo support, YouTube subtitle keyboard control (A prev / S replay / D next / Q pause-each-line / R loop), word-list-from-current-video + saved-word highlight, better word explanations via sentence+nearby-subtitle context.
+- **V7.9.3 (08/09/2026)**: Trancy Air 1.0.0 — full desktop feature set (translate-in-place, hotkey lookup, 5-engine compare, Compose window, screenshot OCR, voice + filler cleanup, per-word pronunciation practice, collections→LC FSRS sync).
+- **V7.9.0 (23/07/2026)**: hover word lookup, click for AI definitions, YouTube word-by-word highlighting.
+- **V7.8.9 (29/05/2026)**: Trancy Reader 1.0 — word+sentence translation, side-by-side, unfamiliar-word highlight for books/EPUB.
+- **V7.8.6 (17/04/2026)**: Learning Center 2.0 — bilingual player for YouTube/podcast/movies, 3 view modes, loop + auto-pause, shadowing + pronunciation assessment, AI subtitle transcription, multiple AI engines, subtitle export; NEW AITalk UI (role switching, difficulty, AI assessment report); channel subscriptions w/ realtime updates.
+- **V7.8.0 (05/03/2026)**: vocabulary batch delete/export, immersive word review page, AI word lookup on LC homepage, video resource library; iOS 2.8.0 podcast + channel search.
+- Older: Bilibili subs, Gemini 3 + GPT 5.2 engines, 700k users, LC 3.0 planned for 2026.
+
+### 9.5 Implications for AtoEnglish (read-only, no commitment)
+
+- Trancy keeps expanding the same primitive (content → sentences → tokens → practice) into new substrates: books (Reader), desktop (Air), PDF. Our text `/read` + video `/watch` already cover the two substrates most valuable to our users; PDF/desktop remain out of scope.
+- Their free tier is deliberately thin on the LC side (100 words / 50 sentences, flashcards only). Ours is unlimited-but-honest — that's a real differentiator, not a gap.
+- Two things they ship that we haven't: **Watch Later** (save-video queue — we have per-video save via library but no explicit "watch later" list semantics) and **channel subscriptions** (catalog push). Both are deferrable; current scope stays as-is per SPEC.
+- Word-list-from-video + saved-word highlighting shipped V7.9.4 — we already have saved-word highlighting (C4).
+- The pricing inconsistency in their own manual (50 vs 2.000 PDF pages) is a good reminder to keep our `/me` evidence copy honest and consistent.
