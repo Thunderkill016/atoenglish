@@ -82,12 +82,15 @@ interface DictionaryPanelProps {
   /** Contextual surfaces reuse the same panel instead of creating another dictionary. */
   children?: ReactNode;
   onOpen?: () => void;
+  /** C4: transcript highlight map refreshes right after a save lands. */
+  onSaved?: (key: string, state: number) => void;
 }
 
 /** Source-labelled quick/context dictionary; AI remains an explicit action. */
 export function DictionaryPanel({
   children,
   onOpen,
+  onSaved,
 }: DictionaryPanelProps = {}) {
   const launcher = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -279,6 +282,9 @@ export function DictionaryPanel({
     });
     if (response.ok) {
       setSaved("saved");
+      // A fresh card starts in New (0); existing cards keep their schedule —
+      // the caller's highlight map just needs the key present either way.
+      onSaved?.(result.entry.lemma ?? normalized, 0);
       return;
     }
     setSaved(false);

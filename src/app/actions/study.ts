@@ -206,3 +206,27 @@ export async function saveStudyItem(
     context_created: !contextDuplicate,
   };
 }
+
+// ─── C4: saved-word highlight map ────────────────────────────────────────────
+// One row per word/phrase card — the transcript rail paints saved items so
+// recognition is free while watching. Sentence cards are excluded: their keys
+// are whole sentences and never match a token run.
+export type SavedWordStatesResult =
+  | { ok: true; states: { key: string; state: number }[] }
+  | { ok: false; error: "unauthorized" | "load_failed" };
+
+export async function getSavedWordStates(): Promise<SavedWordStatesResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "unauthorized" };
+
+  const { data, error } = await supabase
+    .from("study_cards")
+    .select("key,state")
+    .eq("user_id", user.id)
+    .in("kind", ["word", "phrase"]);
+  if (error || !data) return { ok: false, error: "load_failed" };
+  return { ok: true, states: data as { key: string; state: number }[] };
+}

@@ -42,7 +42,7 @@ import {
   type CaptionActionResult,
   type LoadedTranscript,
 } from "@/app/actions/captions";
-import { saveStudyItem } from "@/app/actions/study";
+import { getSavedWordStates, saveStudyItem } from "@/app/actions/study";
 import {
   CAPTIONS_ACK_TYPE,
   CAPTIONS_MESSAGE_TYPE,
@@ -129,6 +129,23 @@ export function WatchClient({
   const [sentenceSaved, setSentenceSaved] = useState<
     number | "saving" | "error" | null
   >(null);
+  // C4: normalized word/phrase card keys → FSRS state — the transcript rail
+  // paints saved items so recognition is free while watching.
+  const [savedWords, setSavedWords] = useState<ReadonlyMap<
+    string,
+    number
+  > | null>(null);
+  useEffect(() => {
+    if (!loggedIn) return;
+    let disposed = false;
+    void getSavedWordStates().then((result) => {
+      if (disposed || !result.ok) return;
+      setSavedWords(new Map(result.states.map((s) => [s.key, s.state])));
+    });
+    return () => {
+      disposed = true;
+    };
+  }, [loggedIn]);
 
   // Marker for the mobile shell (mission 007): the native bridge relays
   // collected captions only while this stays false — a settled transcript
@@ -630,7 +647,12 @@ export function WatchClient({
   const hasTimedSentences = timedSentences.length > 0;
 
   return (
-    <DictionaryPanel onOpen={controller.pause}>
+    <DictionaryPanel
+      onOpen={controller.pause}
+      onSaved={(key, state) =>
+        setSavedWords((prev) => new Map(prev ?? []).set(key, state))
+      }
+    >
       <DictionaryContent>
         {(openLookup) => {
           const lookupWord = (
@@ -790,6 +812,7 @@ export function WatchClient({
                               nowMs={nowMs}
                               active
                               onLookup={lookupWord}
+                              savedWords={savedWords ?? undefined}
                             />
                           ) : transcript &&
                             !activeSentence &&
@@ -1267,6 +1290,7 @@ export function WatchClient({
                         playableIds={playableIds}
                         prose={viewMode === "read"}
                         onLookup={lookupWord}
+                        savedWords={savedWords ?? undefined}
                       />
                     </>
                   ) : (

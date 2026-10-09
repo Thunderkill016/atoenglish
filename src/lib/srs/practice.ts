@@ -1,4 +1,4 @@
-import { normalizeWord, tokenizeText } from "@/lib/read/tokenize";
+import { normalizeWord, tokenizeText, type ReadToken } from "@/lib/read/tokenize";
 
 /**
  * Practice modes per SPEC 005 §8. One card has one FSRS schedule but several
@@ -127,6 +127,45 @@ export type RatingValue = keyof typeof RATING_BY_VALUE;
 
 export function ratingLabel(rating: number): "Again" | "Hard" | "Good" | "Easy" | null {
   return RATING_BY_VALUE[rating as RatingValue] ?? null;
+}
+
+/**
+ * C4: mark transcript tokens covered by a saved card key. Longest match wins
+ * so a saved phrase marks its whole run instead of each word; the returned
+ * array is parallel to `tokens` and carries the card's FSRS state (null =
+ * not saved). Word tokens only — spaces and punctuation never match.
+ */
+export function markSavedTokens(
+  tokens: ReadToken[],
+  saved: ReadonlyMap<string, number>,
+): (number | null)[] {
+  const marks = new Array<number | null>(tokens.length).fill(null);
+  if (!saved.size) return marks;
+  const wordIdx: number[] = [];
+  for (const [i, token] of tokens.entries())
+    if (token.type === "word") wordIdx.push(i);
+  let maxLen = 1;
+  for (const key of saved.keys())
+    maxLen = Math.max(maxLen, key.split(" ").length);
+  for (let start = 0; start < wordIdx.length; start += 1) {
+    for (
+      let len = Math.min(maxLen, wordIdx.length - start);
+      len >= 1;
+      len -= 1
+    ) {
+      const run = wordIdx.slice(start, start + len);
+      const key = run
+        .map((i) => (tokens[i] as { normalized: string }).normalized)
+        .join(" ");
+      const state = saved.get(key);
+      if (state != null) {
+        for (const i of run) marks[i] = state;
+        start += len - 1; // a phrase marks once — words after it match fresh
+        break;
+      }
+    }
+  }
+  return marks;
 }
 
 /** Word tokens of a sentence in surface form — the dictation hint scaffold. */

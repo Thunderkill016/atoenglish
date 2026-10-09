@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { tokenizeText } from "@/lib/read/tokenize";
 import {
   answersMatch,
   autoRating,
   blankTargetInSentence,
+  markSavedTokens,
   pickPracticeMode,
   tokenizeWords,
   wordAccuracy,
@@ -91,6 +93,42 @@ describe("autoRating", () => {
     expect(
       autoRating("sentence_dictation", { word_accuracy: 0.5 }),
     ).toBe("Again");
+  });
+});
+
+describe("markSavedTokens", () => {
+  const tokens = tokenizeText("It takes resilience to keep going today.");
+
+  it("marks saved words by their card state and skips the rest", () => {
+    const marks = markSavedTokens(tokens, new Map([["resilience", 2]]));
+    expect(tokens[4].type).toBe("word");
+    expect(marks[4]).toBe(2); // "resilience"
+    expect(marks[0]).toBeNull(); // "It"
+    expect(marks[1]).toBeNull(); // space — never matches
+  });
+
+  it("longest match wins: a saved phrase marks its whole run", () => {
+    const saved = new Map([
+      ["keep", 0],
+      ["keep going", 2],
+    ]);
+    const marks = markSavedTokens(tokens, saved);
+    const keepIdx = tokens.findIndex((t) => t.text === "keep");
+    const goingIdx = tokens.findIndex((t) => t.text === "going");
+    expect(marks[keepIdx]).toBe(2);
+    expect(marks[goingIdx]).toBe(2); // belongs to the phrase, not unmatched
+  });
+
+  it("normalizes case and curly apostrophes like save keys", () => {
+    const curly = tokenizeText("It’s fine.");
+    const marks = markSavedTokens(curly, new Map([["it's", 1]]));
+    expect(marks[0]).toBe(1);
+  });
+
+  it("returns all null for an empty map", () => {
+    expect(
+      markSavedTokens(tokens, new Map()).every((m) => m === null),
+    ).toBe(true);
   });
 });
 

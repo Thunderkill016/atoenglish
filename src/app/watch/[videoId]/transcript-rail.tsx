@@ -23,6 +23,7 @@ import {
   phraseFromTokens,
   type ReadToken,
 } from "@/lib/read/tokenize";
+import { markSavedTokens, CARD_STATE } from "@/lib/srs/practice";
 import { cn, normalizeSearchText } from "@/lib/utils";
 import { sentenceGlosses } from "@/lib/read/gloss";
 import { formatTimestamp } from "@/lib/format";
@@ -53,6 +54,8 @@ interface TranscriptRailProps {
     sentence: Sentence,
     trigger: HTMLButtonElement,
   ) => void;
+  /** C4: normalized word/phrase card keys → FSRS state — paints saved items. */
+  savedWords?: ReadonlyMap<string, number>;
 }
 
 // Search is a word/phrase query, bounded like the existing dictionary intake.
@@ -136,6 +139,19 @@ interface SentenceTextProps {
   phraseStart?: PhraseStart | null;
   onPhraseStart?: (start: PhraseStart | null) => void;
   onPhraseError?: (message: string | null) => void;
+  savedWords?: ReadonlyMap<string, number>;
+}
+
+/**
+ * Saved-word paint (spec §8 C4): still learning → warm amber, stable in
+ * review → quiet underline. The word stays a lookup button — the class only
+ * re-skins it, so keyboard/click behavior is untouched.
+ */
+function savedWordClass(state: number | null): string | null {
+  if (state == null) return null;
+  if (state === CARD_STATE.Review)
+    return "underline decoration-primary/50 decoration-2 underline-offset-4";
+  return "bg-amber-400/25 underline decoration-amber-500/60 decoration-2 underline-offset-4 rounded-sm";
 }
 
 /** Shared caption/rail text: timestamps seek; words look up, never seek. */
@@ -148,6 +164,7 @@ export function SentenceText({
   phraseStart,
   onPhraseStart,
   onPhraseError,
+  savedWords,
 }: SentenceTextProps) {
   const tokens = useMemo(() => {
     if (!sentence.words?.length)
@@ -173,6 +190,17 @@ export function SentenceText({
         : []),
     ]);
   }, [sentence.text, sentence.words]);
+  // C4: saved word/phrase marks — one pass per sentence over the card map.
+  const savedMarks = useMemo(
+    () =>
+      savedWords?.size
+        ? markSavedTokens(
+            tokens.map((item) => item.token),
+            savedWords,
+          )
+        : null,
+    [tokens, savedWords],
+  );
   const selectWord = (index: number, trigger: HTMLButtonElement) => {
     const token = tokens[index].token;
     if (token.type !== "word") return;
@@ -207,11 +235,15 @@ export function SentenceText({
           start != null &&
           nowMs >= start &&
           (end == null || nowMs < end);
+        const savedClass = savedMarks ? savedWordClass(savedMarks[index]) : null;
         if (token.type !== "word" || !onLookup)
           return (
             <span
               key={index}
-              className={cn(highlighted && "rounded bg-primary/25")}
+              className={cn(
+                highlighted && "rounded bg-primary/25",
+                savedClass,
+              )}
             >
               {token.text}
             </span>
@@ -229,6 +261,7 @@ export function SentenceText({
               phraseStart?.sentenceI === sentence.i &&
                 phraseStart.tokenIndex === index &&
                 "bg-primary/25 underline",
+              savedClass,
             )}
           >
             {token.text}
@@ -255,6 +288,7 @@ export function TranscriptRail({
   playableIds,
   prose = false,
   onLookup,
+  savedWords,
 }: TranscriptRailProps) {
   "use no memo"; // TanStack Virtual exposes a mutable instance; do not compiler-cache its rows.
   const containerRef = useRef<HTMLDivElement>(null);
@@ -572,6 +606,7 @@ export function TranscriptRail({
               phraseStart={phraseStart}
               onPhraseStart={setPhraseStart}
               onPhraseError={setPhraseError}
+              savedWords={savedWords}
             />
           </p>
         )}

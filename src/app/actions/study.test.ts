@@ -7,7 +7,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { saveStudyItem } from "./study";
+import { getSavedWordStates, saveStudyItem } from "./study";
 
 const h = vi.hoisted(() => {
   interface QueryStep {
@@ -227,6 +227,38 @@ describe("saveStudyItem", () => {
       card_id: 6,
       card_created: false,
       context_created: true,
+    });
+  });
+});
+
+describe("getSavedWordStates", () => {
+  it("requires a signed-in learner", async () => {
+    h.getUser.mockResolvedValue({ data: { user: null } });
+    expect(await getSavedWordStates()).toEqual({
+      ok: false,
+      error: "unauthorized",
+    });
+  });
+
+  it("returns key/state for word+phrase cards only", async () => {
+    h.tableHandlers.set("study_cards", (steps) => {
+      const inArgs = steps.find((s) => s.method === "in")?.args[1];
+      expect(inArgs).toEqual(["word", "phrase"]);
+      return {
+        data: [
+          { key: "resilience", state: 2 },
+          { key: "keep going", state: 0 },
+        ],
+        error: null,
+      };
+    });
+    const result = await getSavedWordStates();
+    expect(result).toEqual({
+      ok: true,
+      states: [
+        { key: "resilience", state: 2 },
+        { key: "keep going", state: 0 },
+      ],
     });
   });
 });
