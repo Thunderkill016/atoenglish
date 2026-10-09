@@ -28,6 +28,7 @@ import type { ReviewQueueItem } from "@/app/actions/review";
 import {
   answersMatch,
   blankTargetInSentence,
+  inOrderMatchRatio,
   tokenizeWords,
   wordAccuracy,
   type PracticeMode,
@@ -216,7 +217,9 @@ function SpeakRepeat({ item }: { item: ReviewQueueItem }) {
         setState({ phase: "failed", reason: "error" });
         return;
       }
-      const similarity = wordAccuracy(target, transcript);
+      // Spec §8: "độ khớp nhận dạng có nhãn như mục 7" — same one-way
+      // in-order subsequence as shadowing, never edit distance.
+      const similarity = inOrderMatchRatio(target, transcript);
       setState({ phase: "done", transcript, similarity });
       // Log once per card view — the attempt is evidence, not a schedule.
       if (logged.current) return;

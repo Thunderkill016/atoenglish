@@ -15,6 +15,7 @@ import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
 import { hashAiInput } from "@/lib/ai/sentence-analysis";
 import { createRateLimiter } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+import { YOUTUBE_VIDEO_ID_RE } from "@/lib/video/youtube-url";
 
 // ─── C3: review queue + practice attempts ─────────────────────────────────────
 // getReviewQueue returns due study cards with their newest context (the cue
@@ -178,7 +179,11 @@ export async function getReviewQueue(): Promise<ReviewQueueResult> {
 
 const attemptSchema = z
   .object({
-    card_id: z.number().int().positive(),
+    // Card-backed reps reschedule through FSRS; card-less ones (free practice
+    // on a transcript sentence, spec §8) only append to the log — then the
+    // attempt must anchor to a (video_id | source_id) + sentence_index pair.
+    card_id: z.number().int().positive().optional(),
+    video_id: z.string().regex(YOUTUBE_VIDEO_ID_RE).optional(),
     mode: z.enum(PRACTICE_MODES),
     rating: z.number().int().min(1).max(4).optional(),
     correct: z.boolean().optional(),
@@ -209,10 +214,19 @@ const attemptSchema = z
       if (!input.learner_text)
         ctx.addIssue({ code: "custom", message: "learner_text required" });
     }
+    if (
+      input.card_id == null &&
+      (input.sentence_index == null ||
+        (input.video_id == null && input.source_id == null))
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "card-less attempt needs a source + sentence anchor",
+      });
   });
 
 export type RecordAttemptResult =
-  | { ok: true; attempt_id: number; due: string | null; state: number }
+  | { ok: true; attempt_id: number; due: string | null; state: number | null }
   | {
       ok: false;
       error: "invalid_input" | "unauthorized" | "not_found" | "save_failed";
@@ -231,14 +245,50 @@ export async function recordPracticeAttempt(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "unauthorized" };
 
-  const { data: cardRow } = await supabase
-    .from("study_cards")
-    .select(cardScheduleCols)
-    .eq("id", input.card_id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!cardRow) return { ok: false, error: "not_found" };
-  const card = cardRow as unknown as CardRow;
+  // Card-less free practice skips the schedule entirely — there is no card
+  // to reschedule, only the append-only log to fill.
+  let card: CardRow | null = null;
+  if (input.card_id != null) {
+    const { data: cardRow } = await supabase
+      .from("study_cards")
+      .select(cardScheduleCols)
+      .eq("id", input.card_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!cardRow) return { ok: false, error: "not_found" };
+    card = cardRow as unknown as CardRow;
+  }
+
+  // Resolve the source anchor. A caller-supplied source_id must belong to
+  // this learner (same rule as saveStudyItem — explicit check beats relying
+  // on RLS invisibility). video_id upserts the learner's own source row so
+  // the first practice on a not-yet-saved video still anchors correctly.
+  let sourceId = input.source_id ?? null;
+  if (input.video_id) {
+    const { data: source, error } = await supabase
+      .from("content_sources")
+      .upsert(
+        {
+          user_id: user.id,
+          kind: "youtube",
+          external_id: input.video_id,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,kind,external_id" },
+      )
+      .select("id")
+      .single();
+    if (error || !source) return { ok: false, error: "save_failed" };
+    sourceId = (source as { id: number }).id;
+  } else if (sourceId != null) {
+    const { data: owned } = await supabase
+      .from("content_sources")
+      .select("id")
+      .eq("id", sourceId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!owned) return { ok: false, error: "not_found" };
+  }
 
   // The rating comes from evidence, never verbatim: self-rated modes consume
   // the learner's 1–4 choice, auto-graded modes derive it server-side, and
@@ -260,27 +310,30 @@ export async function recordPracticeAttempt(
     ? { Again: 1, Hard: 2, Good: 3, Easy: 4 }[rating]
     : null;
 
-  const before: StudyCardSchedule = {
-    state: card.state,
-    stability: card.stability,
-    difficulty: card.difficulty,
-    elapsed_days: card.elapsed_days,
-    scheduled_days: card.scheduled_days,
-    learning_steps: card.learning_steps,
-    reps: card.reps,
-    lapses: card.lapses,
-    due: card.due,
-    last_review: card.last_review,
-  };
-  const graded = isGradedMode(input.mode) && rating != null;
-  const outcome = graded ? reviewStudyCard(before, rating!) : null;
+  let fsrsBefore: StudyCardSchedule | null = null;
+  let outcome: ReturnType<typeof reviewStudyCard> | null = null;
+  if (card && isGradedMode(input.mode) && rating != null) {
+    fsrsBefore = {
+      state: card.state,
+      stability: card.stability,
+      difficulty: card.difficulty,
+      elapsed_days: card.elapsed_days,
+      scheduled_days: card.scheduled_days,
+      learning_steps: card.learning_steps,
+      reps: card.reps,
+      lapses: card.lapses,
+      due: card.due,
+      last_review: card.last_review,
+    };
+    outcome = reviewStudyCard(fsrsBefore, rating);
+  }
 
   const { data: attempt, error: attemptError } = await supabase
     .from("practice_attempts")
     .insert({
       user_id: user.id,
-      card_id: card.id,
-      source_id: input.source_id ?? null,
+      card_id: card?.id ?? null,
+      source_id: sourceId,
       sentence_index: input.sentence_index ?? null,
       mode: input.mode,
       rating: ratingValue,
@@ -295,14 +348,14 @@ export async function recordPracticeAttempt(
       interval_days_before: outcome
         ? Math.max(0, Math.round(outcome.reviewLog.elapsed_days))
         : null,
-      fsrs_before: outcome ? before : null,
+      fsrs_before: outcome ? fsrsBefore : null,
       fsrs_after: outcome ? outcome.patch : null,
     })
     .select("id")
     .single();
   if (attemptError || !attempt) return { ok: false, error: "save_failed" };
 
-  if (outcome) {
+  if (outcome && card) {
     const { error: updateError } = await supabase
       .from("study_cards")
       .update({ ...outcome.patch, updated_at: new Date().toISOString() })
@@ -314,8 +367,8 @@ export async function recordPracticeAttempt(
   return {
     ok: true,
     attempt_id: (attempt as { id: number }).id,
-    due: outcome ? outcome.patch.due : card.due,
-    state: outcome ? outcome.patch.state : card.state,
+    due: outcome ? outcome.patch.due : (card?.due ?? null),
+    state: outcome ? outcome.patch.state : (card?.state ?? null),
   };
 }
 

@@ -330,6 +330,122 @@ describe("recordPracticeAttempt", () => {
       h.calls.some((c) => c.table === "study_cards" && c.method === "update"),
     ).toBe(false);
   });
+
+  // Spec §8: free practice on a transcript sentence without a saved card —
+  // the attempt anchors to (video_id | source_id) + sentence_index instead.
+  it("rejects a card-less attempt with no source/sentence anchor", async () => {
+    expect(
+      await recordPracticeAttempt({
+        mode: "sentence_dictation",
+        word_accuracy: 0.8,
+      }),
+    ).toEqual({ ok: false, error: "invalid_input" });
+    // video_id without sentence_index is also unanchored.
+    expect(
+      await recordPracticeAttempt({
+        video_id: "dQw4w9WgXcQ",
+        mode: "sentence_dictation",
+        word_accuracy: 0.8,
+      }),
+    ).toEqual({ ok: false, error: "invalid_input" });
+  });
+
+  it("logs a card-less dictation attempt anchored by video + sentence", async () => {
+    h.tableHandlers.set("content_sources", (steps) => {
+      if (steps.some((s) => s.method === "upsert"))
+        return { data: { id: 77 }, error: null };
+      return { data: null, error: null };
+    });
+    h.tableHandlers.set("practice_attempts", () => ({
+      data: { id: 46 },
+      error: null,
+    }));
+
+    const result = await recordPracticeAttempt({
+      video_id: "dQw4w9WgXcQ",
+      sentence_index: 12,
+      mode: "sentence_dictation",
+      word_accuracy: 0.83,
+      hints_used: 2,
+      plays: 3,
+      learner_text: "it take resilience to keep going",
+    });
+    expect(result).toEqual({
+      ok: true,
+      attempt_id: 46,
+      due: null,
+      state: null,
+    });
+
+    // The video upsert scopes to the learner and kind=youtube.
+    const upsert = h.calls.find(
+      (c) => c.table === "content_sources" && c.method === "upsert",
+    );
+    expect(upsert?.args[0]).toMatchObject({
+      user_id: USER.id,
+      kind: "youtube",
+      external_id: "dQw4w9WgXcQ",
+    });
+
+    // Card-less attempts never touch the schedule: no card read, no update,
+    // no fsrs payload — but the derived rating still lands as evidence.
+    expect(h.calls.some((c) => c.table === "study_cards")).toBe(false);
+    const insert = h.calls.find(
+      (c) => c.table === "practice_attempts" && c.method === "insert",
+    );
+    expect(insert?.args[0]).toMatchObject({
+      user_id: USER.id,
+      card_id: null,
+      source_id: 77,
+      sentence_index: 12,
+      mode: "sentence_dictation",
+      // <0.9 accuracy + hints → Again by the same rule a card-backed rep gets.
+      rating: 1,
+      word_accuracy: 0.83,
+      hints_used: 2,
+      plays: 3,
+      fsrs_before: null,
+      fsrs_after: null,
+    });
+  });
+
+  it("accepts an existing owned source_id without a video_id", async () => {
+    h.tableHandlers.set("content_sources", (steps) => {
+      if (steps.some((s) => s.method === "select"))
+        return { data: { id: 9 }, error: null };
+      return { data: null, error: null };
+    });
+    h.tableHandlers.set("practice_attempts", () => ({
+      data: { id: 47 },
+      error: null,
+    }));
+
+    const result = await recordPracticeAttempt({
+      source_id: 9,
+      sentence_index: 0,
+      mode: "speak_repeat",
+      similarity: 0.6,
+      learner_text: "some words",
+    });
+    expect(result.ok).toBe(true);
+    const insert = h.calls.find(
+      (c) => c.table === "practice_attempts" && c.method === "insert",
+    );
+    expect(insert?.args[0]).toMatchObject({ source_id: 9, card_id: null });
+  });
+
+  it("rejects a source_id the learner does not own", async () => {
+    h.tableHandlers.set("content_sources", () => ({ data: null, error: null }));
+    expect(
+      await recordPracticeAttempt({
+        source_id: 999,
+        sentence_index: 0,
+        mode: "speak_repeat",
+        similarity: 0.5,
+      }),
+    ).toEqual({ ok: false, error: "not_found" });
+    expect(h.calls.some((c) => c.table === "practice_attempts")).toBe(false);
+  });
 });
 
 describe("requestReuseFeedback cache + link (B2)", () => {

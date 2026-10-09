@@ -24,6 +24,18 @@ const analyzeActions = vi.hoisted(() => ({
   analyzeSentence: vi.fn(),
 }));
 vi.mock("@/app/actions/analyze", () => analyzeActions);
+const reviewActions = vi.hoisted(() => ({
+  recordPracticeAttempt: vi.fn(async () => ({
+    ok: true as const,
+    attempt_id: 1,
+    due: null,
+    state: null,
+  })),
+}));
+vi.mock("@/app/actions/review", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/app/actions/review")>()),
+  recordPracticeAttempt: reviewActions.recordPracticeAttempt,
+}));
 const frameRef = vi.hoisted(() => {
   const fixture = { current: null as HTMLDivElement | null };
   // The mocked player owns an independent iframe; React's anchor assignment
@@ -817,5 +829,61 @@ describe("B2 sentence analysis", () => {
       );
       expect(panel!.textContent).toContain("hiện không khả dụng");
     });
+  });
+
+  it("opens the Luyện panel on the active sentence and exits back", async () => {
+    await act(async () => render(transcript, true));
+    await check(() =>
+      expect(
+        container.querySelector("button[aria-label='Luyện câu này']"),
+      ).not.toBeNull(),
+    );
+    await act(async () => {
+      container
+        .querySelector("button[aria-label='Luyện câu này']")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await check(() => {
+      const panel = container.querySelector("[data-testid='practice-panel']");
+      expect(panel).not.toBeNull();
+      // Dictation hides the caption — the answer must not leak.
+      expect(panel!.textContent).not.toContain("I work here.");
+    });
+    // Dictation submits through the card-less attempt anchor.
+    const textarea = container.querySelector("textarea")!;
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        "value",
+      )!.set!;
+      setter.call(textarea, "i work here");
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      [...container.querySelectorAll("button")]
+        .find((b) => b.textContent === "Kiểm tra")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await check(() => {
+      expect(container.textContent).toContain("Độ chính xác: 100%");
+      expect(reviewActions.recordPracticeAttempt).toHaveBeenCalledWith(
+        expect.objectContaining({
+          video_id: "dQw4w9WgXcQ",
+          sentence_index: 0,
+          mode: "sentence_dictation",
+        }),
+      );
+    });
+    // Exit returns the normal caption.
+    await act(async () => {
+      container
+        .querySelector("button[aria-label='Thoát luyện tập']")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await check(() =>
+      expect(
+        container.querySelector("[data-testid='practice-panel']"),
+      ).toBeNull(),
+    );
   });
 });
