@@ -64,7 +64,9 @@ const MAX_EXAMPLE_LEN = 400;
 export function transformKaikkiEntry(raw: KaikkiRaw): DictionaryEntry | null {
   if (raw.lang_code !== "en" || !raw.word || !raw.pos) return null;
   const word = raw.word.toLowerCase();
-  if (word.length > 120 || !word.trim()) return null;
+  const pos = raw.pos.toLowerCase();
+  // dictionary_entries bounds: word 120, pos 30, ipa 100 chars.
+  if (word.length > 120 || !word.trim() || pos.length > 30) return null;
 
   const senses = (raw.senses ?? [])
     .map((sense) => {
@@ -91,14 +93,16 @@ export function transformKaikkiEntry(raw: KaikkiRaw): DictionaryEntry | null {
   if (senses.length === 0) return null;
 
   const sounds = raw.sounds ?? [];
-  const preferredIpa =
+  const rawIpa =
     sounds.find((s) => s.ipa && s.tags?.some((t) => /^(us|uk|rp)$/i.test(t)))?.ipa ??
     sounds.find((s) => s.ipa)?.ipa;
+  // ipa column caps at 100 chars; a handful of joke/constructed words exceed it.
+  const preferredIpa = rawIpa && rawIpa.length <= 100 ? rawIpa : undefined;
   const audioUrl = sounds.find((s) => s.mp3_url?.startsWith("https://"))?.mp3_url;
 
   return {
     word,
-    pos: raw.pos.toLowerCase(),
+    pos,
     senses,
     ...(preferredIpa ? { ipa: preferredIpa } : {}),
     ...(audioUrl ? { audio_url: audioUrl } : {}),
@@ -107,6 +111,39 @@ export function transformKaikkiEntry(raw: KaikkiRaw): DictionaryEntry | null {
 }
 
 const WRITE_BATCH = 200;
+
+/**
+ * Wiktionary emits one raw entry per etymology section, so the same
+ * (word, pos) can appear twice — e.g. "record" noun under Etymology 1 and 2.
+ * ON CONFLICT cannot touch a row twice in one batch, so merge duplicates:
+ * concatenate senses (deduped per gloss), keep the first ipa/audio found.
+ */
+export function dedupeEntries(entries: DictionaryEntry[]): DictionaryEntry[] {
+  const byKey = new Map<string, DictionaryEntry>();
+  for (const entry of entries) {
+    const key = `${entry.word}${entry.pos}`;
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, entry);
+      continue;
+    }
+    const seenGlosses = new Set(
+      existing.senses.flatMap((s) => s.glosses),
+    );
+    for (const sense of entry.senses) {
+      const freshGlosses = sense.glosses.filter((g) => !seenGlosses.has(g));
+      if (!freshGlosses.length && !sense.form_of?.length) continue;
+      // senses jsonb is capped at 256KB; a few hyper-polysemous headwords
+      // would exceed it after merging every etymology section.
+      if (JSON.stringify(existing.senses).length > 200_000) break;
+      freshGlosses.forEach((g) => seenGlosses.add(g));
+      existing.senses.push({ ...sense, glosses: freshGlosses });
+    }
+    existing.ipa ??= entry.ipa;
+    existing.audio_url ??= entry.audio_url;
+  }
+  return [...byKey.values()];
+}
 
 async function writeToDb(entries: DictionaryEntry[], url: string): Promise<number> {
   const { neon } = await import("@neondatabase/serverless");
@@ -167,22 +204,23 @@ async function main() {
     }
     kept.push(entry);
   }
+  const merged = dedupeEntries(kept);
 
-  const glosses = kept.reduce((n, e) => n + e.senses.reduce((m, s) => m + s.glosses.length, 0), 0);
+  const glosses = merged.reduce((n, e) => n + e.senses.reduce((m, s) => m + s.glosses.length, 0), 0);
   console.log(
-    `lines=${lines} en_entries=${enSeen} kept=${kept.length} dropped=${dropped} total_glosses=${glosses}`,
+    `lines=${lines} en_entries=${enSeen} kept=${merged.length} dup_merged=${kept.length - merged.length} dropped=${dropped} total_glosses=${glosses}`,
   );
   console.log(
-    `with_ipa=${kept.filter((e) => e.ipa).length} with_audio=${kept.filter((e) => e.audio_url).length}`,
+    `with_ipa=${merged.filter((e) => e.ipa).length} with_audio=${merged.filter((e) => e.audio_url).length}`,
   );
 
   if (outPath) {
     const { writeFileSync } = await import("node:fs");
-    writeFileSync(outPath, kept.map((e) => JSON.stringify(e)).join("\n") + "\n");
+    writeFileSync(outPath, merged.map((e) => JSON.stringify(e)).join("\n") + "\n");
     console.log(`wrote ${outPath}`);
   }
   if (write) {
-    const n = await writeToDb(kept, process.env.DATABASE_URL as string);
+    const n = await writeToDb(merged, process.env.DATABASE_URL as string);
     console.log(`inserted/updated ${n} rows`);
   }
 }

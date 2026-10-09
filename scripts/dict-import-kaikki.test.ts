@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanGloss, transformKaikkiEntry } from "./dict-import-kaikki";
+import { cleanGloss, dedupeEntries, transformKaikkiEntry } from "./dict-import-kaikki";
 
 describe("cleanGloss", () => {
   it("strips nested wikitext templates", () => {
@@ -85,5 +85,65 @@ describe("transformKaikkiEntry", () => {
     });
     expect(entry).not.toBeNull();
     expect(entry!.senses[0].form_of).toEqual(["mouse"]);
+  });
+});
+
+describe("dedupeEntries", () => {
+  const entry = (senses: object[], extra = {}) => ({
+    word: "record",
+    pos: "noun",
+    senses,
+    source: "viwiktionary" as const,
+    ...extra,
+  });
+
+  it("merges duplicate (word,pos) senses and prefers first ipa/audio", () => {
+    const a = entry([{ glosses: ["bản ghi"] }], { ipa: "ˈrɛkɔːd" });
+    const b = entry(
+      [
+        { glosses: ["bản ghi", "kỷ lục"] }, // duplicate gloss dropped
+        { glosses: ["hồ sơ"], form_of: ["x"] },
+      ],
+      { audio_url: "https://x.mp3" },
+    );
+    const out = dedupeEntries([a, b]);
+    expect(out).toHaveLength(1);
+    expect(out[0].senses.map((s) => s.glosses)).toEqual([
+      ["bản ghi"],
+      ["kỷ lục"],
+      ["hồ sơ"],
+    ]);
+    expect(out[0].ipa).toBe("ˈrɛkɔːd");
+    expect(out[0].audio_url).toBe("https://x.mp3");
+  });
+
+  it("keeps distinct (word,pos) rows apart", () => {
+    const noun = entry([{ glosses: ["kỷ lục"] }]);
+    const verb = { ...entry([{ glosses: ["ghi lại"] }]), pos: "verb" };
+    expect(dedupeEntries([noun, verb])).toHaveLength(2);
+  });
+});
+
+describe("constraint guards", () => {
+  it("drops ipa longer than the 100-char column bound", () => {
+    const entry = transformKaikkiEntry({
+      word: "longword",
+      pos: "noun",
+      lang_code: "en",
+      senses: [{ glosses: ["một nghĩa"] }],
+      sounds: [{ ipa: "/" + "x".repeat(120) + "/" }],
+    });
+    expect(entry!.ipa).toBeUndefined();
+  });
+
+  it("drops pos labels over the 30-char bound", () => {
+    expect(
+      transformKaikkiEntry({
+        word: "x",
+        pos: "p".repeat(31),
+        lang_code: "en",
+        senses: [{ glosses: ["nghĩa"] }],
+      }),
+    ).toBeNull();
   });
 });
