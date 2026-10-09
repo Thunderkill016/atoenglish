@@ -347,6 +347,36 @@ export type Database = {
           },
         ];
       };
+      dictionary_entries: {
+        Row: {
+          word: string;
+          pos: string;
+          senses: Json;
+          ipa: string | null;
+          audio_url: string | null;
+          source: string;
+          updated_at: string;
+        };
+        Insert: {
+          word: string;
+          pos: string;
+          senses: Json;
+          ipa?: string | null;
+          audio_url?: string | null;
+          source?: string;
+          updated_at?: string;
+        };
+        Update: {
+          word?: string;
+          pos?: string;
+          senses?: Json;
+          ipa?: string | null;
+          audio_url?: string | null;
+          source?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       league_memberships: {
         Row: {
           user_id: string;
