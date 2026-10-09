@@ -3,6 +3,7 @@ import { Eye, LifeBuoy, ShieldCheck, Timer, UserRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { getEvidence, type EvidenceData } from "@/app/actions/evidence";
+import { DeleteDataSection } from "@/app/(main)/me/delete-data-section";
 import { SignOutButton } from "@/app/(main)/me/sign-out-button";
 import { createClient } from "@/lib/supabase/server";
 
@@ -150,6 +151,9 @@ async function AccountFooter() {
       </div>
       <p className="text-sm text-muted-foreground">{user?.email}</p>
       <SignOutButton />
+      <div className="mt-6 w-full max-w-md">
+        <DeleteDataSection />
+      </div>
     </div>
   );
 }
