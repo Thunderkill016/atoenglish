@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { hashAiInput } from "@/lib/ai/sentence-analysis";
 import { YOUTUBE_VIDEO_ID_RE } from "@/lib/video/youtube-url";
 
 // ─── C2: idempotent save for word / phrase / sentence ─────────────────────────
@@ -205,6 +206,53 @@ export async function saveStudyItem(
     card_created: cardCreated,
     context_created: !contextDuplicate,
   };
+}
+
+// ─── /read: learner-pasted text sources ──────────────────────────────────────
+// A pasted text is keyed by sha256 of its normalized body, so re-reading the
+// same text re-anchors to the same content_sources row instead of duplicating.
+
+const textSourceSchema = z
+  .object({ text: z.string().min(1).max(40_000) })
+  .strict();
+
+export type SaveTextSourceResult =
+  | { ok: true; source_id: number }
+  | { ok: false; error: "invalid_input" | "unauthorized" | "save_failed" };
+
+export async function saveTextSource(
+  raw: unknown,
+): Promise<SaveTextSourceResult> {
+  const parsed = textSourceSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "invalid_input" };
+  const text = parsed.data.text.trim();
+  if (!text) return { ok: false, error: "invalid_input" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "unauthorized" };
+
+  // First ~12 words label the source in the library — the full text itself
+  // stays on the client; the row only anchors contexts to it.
+  const title = text.replace(/\s+/g, " ").split(" ").slice(0, 12).join(" ");
+  const { data: source, error } = await supabase
+    .from("content_sources")
+    .upsert(
+      {
+        user_id: user.id,
+        kind: "text",
+        external_id: await hashAiInput(text),
+        title,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,kind,external_id" },
+    )
+    .select("id")
+    .single();
+  if (error || !source) return { ok: false, error: "save_failed" };
+  return { ok: true, source_id: (source as { id: number }).id };
 }
 
 // ─── C4: saved-word highlight map ────────────────────────────────────────────

@@ -59,9 +59,9 @@ import { EmptyTranscript } from "./empty-transcript";
 import {
   TranscriptRail,
   TRANSCRIPT_VIRTUAL_THRESHOLD,
-  SentenceText,
   formatTimestamp,
 } from "./transcript-rail";
+import { SentenceText } from "@/components/sentence-text";
 import { useYouTubePlayer } from "@/lib/video/use-youtube-player";
 import { useSentencePlayer, type RepeatMode } from "./use-sentence-player";
 import { useTranslations } from "./use-translations";

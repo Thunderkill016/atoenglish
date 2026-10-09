@@ -56,8 +56,10 @@ export interface DictionarySelection {
     sentence: string;
     timestamp: string | null;
     replay?: () => void;
-    // Source anchors for context-linked saves (saveStudyItem / card_contexts).
+    // Source anchors for context-linked saves (saveStudyItem / card_contexts):
+    // a YouTube video_id upserts the source; a source_id anchors a /read text.
     video_id?: string;
+    source_id?: number;
     sentence_index?: number;
     sentence_vi?: string;
     start_ms?: number;
@@ -271,13 +273,18 @@ export function DictionaryPanel({
       meaning_origin: result.source === "ai" ? "ai" : "dictionary",
       context: {
         video_id: source?.video_id,
+        source_id: source?.source_id,
         sentence_index: source?.sentence_index ?? 0,
         sentence_text:
           source?.sentence || context || result.entry.example_en || result.term,
         sentence_vi: source?.sentence_vi,
         start_ms: source?.start_ms,
         end_ms: source?.end_ms,
-        origin: source?.video_id ? "watch_lookup" : "manual",
+        origin: source?.video_id
+          ? "watch_lookup"
+          : source?.source_id != null
+            ? "read_lookup"
+            : "manual",
       },
     });
     if (response.ok) {

@@ -7,7 +7,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getSavedWordStates, saveStudyItem } from "./study";
+import { getSavedWordStates, saveStudyItem, saveTextSource } from "./study";
 
 const h = vi.hoisted(() => {
   interface QueryStep {
@@ -259,6 +259,49 @@ describe("getSavedWordStates", () => {
         { key: "resilience", state: 2 },
         { key: "keep going", state: 0 },
       ],
+    });
+  });
+});
+
+describe("saveTextSource", () => {
+  it("rejects invalid input before touching auth", async () => {
+    expect(await saveTextSource({ text: 42 })).toEqual({
+      ok: false,
+      error: "invalid_input",
+    });
+    expect(await saveTextSource({ text: "   " })).toEqual({
+      ok: false,
+      error: "invalid_input",
+    });
+    expect(h.getUser).not.toHaveBeenCalled();
+  });
+
+  it("requires a signed-in learner", async () => {
+    h.getUser.mockResolvedValue({ data: { user: null } });
+    expect(await saveTextSource({ text: "Some text." })).toEqual({
+      ok: false,
+      error: "unauthorized",
+    });
+  });
+
+  it("upserts a kind=text source keyed by the text hash", async () => {
+    h.tableHandlers.set("content_sources", () => ({
+      data: { id: 31 },
+      error: null,
+    }));
+    const result = await saveTextSource({
+      text: "It takes resilience to keep going. Keep going anyway.",
+    });
+    expect(result).toEqual({ ok: true, source_id: 31 });
+    const upsertCall = h.calls.find(
+      (c) => c.table === "content_sources" && c.method === "upsert",
+    );
+    expect(upsertCall?.args[0]).toMatchObject({
+      user_id: USER.id,
+      kind: "text",
+      // sha256 hex — 64 chars, inside the external_id <= 64 constraint.
+      external_id: expect.stringMatching(/^[0-9a-f]{64}$/),
+      title: "It takes resilience to keep going. Keep going anyway.",
     });
   });
 });
