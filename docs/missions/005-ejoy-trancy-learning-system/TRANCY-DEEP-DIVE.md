@@ -362,3 +362,46 @@ Playwright persistent profile, Google OAuth login, headless crawl of 29 routes. 
 - `Discover Channels` wizard = language+level+interests → channel recommendations; our `/discover` curated catalog covers the same job without infra.
 - Reader (`book-home`) runs the same sentence-primitive with a **daily minutes goal** — yet another substrate of the same loop.
 - Sentence packs with stored prompts show how they mass-produce practice content cheaply — relevant if we ever add curated packs (defer).
+
+## 11. Authenticated interactive session capture (09/10/2026, free account)
+
+Deeper interactive pass on the same session: real clicks, real saves, one live AITalk turn. Artifacts `/tmp/trancy-research/live2/` (ephemeral). Mutations made: 1 saved video, 1 saved sentence, 1 AITalk conversation — all low-risk, reversible.
+
+### 11.1 Practice player internals (`/practice/{videoId}`)
+
+- **Word click** on `.subtitle-word` span opens drawer: `GET /2/words/{word}?target=en&native=vi` (static dict: `dict[]` vi terms w/ reverse_translation, `explains[]`, `inflections{NN,NNS}`, `phonetics[]` per-locale US/GB) + `POST /1/word/definition` SSE YAML card (`{text,target,native,useCache:true}`, cached `_id: en_vi_{word}_{date}`) + client-side `translate.googleapis.com` call to translate example sentences. Drawer free content: IPA US/GB, POS vi meanings + EN glosses + bilingual examples, plurals, etymology, phrases, synonyms, related words, **"Examples from the video · N"**; premium gate inline: "Upgrade to see precise definitions".
+- **Sidebar tabs**: `Subtitles` (63 cues), `Words` (Saved/Learning/All **210** — per-video word index), `Sentences` (saved-in-video), `Summary`.
+- **`POST /2/summary`** `{id, subtitle:[{text,start,end}…]}` → SSE YAML (summary + timestamped Key points). **Works on free account** — summary is generated client-requested, not premium-gated here.
+- **Settings panel**: Layout Default/Theater/**Focus**; Subtitle segmentation Default/Sentence/Phrase.
+- **Save video (watch later)**: bookmark icon → `POST /2/videos {id}` → record `{vid:"youtube:…", uid, author, channelId, duration, is_transcribed}`; `/saved` list reflects it.
+- **Save sentence**: per-cue heart icon → `POST /2/sentences {text,start,end,vid,url}` → `sid`=sha256; `GET /2/sentences?target=en&native=vi` lists user saves w/ `type:"user"`.
+- **Captions are an async pipeline**: `POST /2/youtube/captions {id,title,cover,duration,target,language,ipaddress}` → `{"data":"pending"}`; status via `/2/youtube/captions/{id}/status`; video meta `GET /3/youtube/videos/{id}`.
+- **AI transcribe button**: opens "AI Subtitle Transcription" dialog (1–5 min, better segmentation for speaking practice) — dialog visible on free; actual processing is premium-gated.
+
+### 11.2 AITalk — a full live turn on free tier
+
+- Course catalog → card click opens **modal** (not a route): lesson list (numbered 01–10) + lesson detail w/ description, **Roles swap** (AI ROLE Test Taker ↔ YOUR ROLE Examiner), **AI response difficulty** Beginner/Intermediate/Advanced, Optional Tasks (Shadowing 22 sentences / AI roleplay "Start").
+- "Start" → `POST /1/conversations {slug:"series:course", difficulty, role_id, target_language, native_language}` → **`/talk/{conversationId}`** — live session works on free tier.
+- Response carries the **literal system_prompt**: scene description, role split, difficulty rules (Beginner: <10 words, slow, no idioms, gently rephrase mistakes), rules (stay in character, English only, 1–3 sentences, drive forward).
+- Turn: `POST /1/conversations/{id}/messages {content, model:"gpt-4o"}` → AI replies in-role; `POST /4/translations {texts,from,to,model:"gpt-4.1-mini"}` auto-translates every bubble — **200 on free inside talk** (the same endpoint 403s elsewhere — gate is per-feature, not per-endpoint).
+- Session chrome: per-message icons (translate/audio/hide/heart), Text-mode input, big mic button (push-to-talk), "AI Assistant" hint button, session stats `0:15 Practiced · N Sentences`, **Optional Tasks checklist** (e.g. "state a clear preference", "two distinct reasons", "concrete example", "wrap up").
+- Exit telemetry: `POST /1/conversations/{id}/leave {duration, speech}`.
+- Stats surface: `/1/conversations/stats {talkDuration, convTotal, userTurns, streak, todaySentences}`.
+
+### 11.3 Sentence packs → shadowing session
+
+- `/sentence-shadowing` card → pack modal: description + numbered sections (e.g. "2000 Essential" → 10 topics × 200 sentences) each with "Practice".
+- Practice → **`/practice/sentences?list={id}&group={groupId}&title=…`** — session UI: current sentence prominent bilingual, `01/200` progress, `List` panel of all S1..S200 numbered pairs. Same "Install extension" upsell.
+
+### 11.4 Vocabulary surfaces
+
+- `/vocab-mode` "Immersive Vocab": card = word + US IPA + POS blocks w/ vi senses + EN example + vi translation + "Detailed Definition" link + **"Mastered" button (hotkey M)** — marks word learned, advances deck.
+- `/vocabulary`: Saved Words count + **Featured Learning** grid (BEC 2825, CEFR A1 1425, Beginner 5078, B1-B2 3571, B2 3728, C2…) — enable a wordbook to seed the deck; import `.txt/.csv` words-only.
+- `/1/flashcard/settings`: `{dailyWords:10, autoMeaning:true, autoPronunciation:true, typing:false}` — daily target + auto-lookup + typing-mode toggle.
+
+### 11.5 What this adds beyond the earlier capture
+
+- Save payloads are dead simple: `{text,start,end,vid,url}` / `{id}` — no token/span metadata; `sid` is a sha256 of content (dedupe by hash).
+- The **free/premium line in-product** ≠ marketing page: bilingual practice player, video summaries, AITalk sessions, sentence packs, per-video word index all work on free; the gates are AI-definition *depth*, `/4/translations` outside talk, storage quotas (100/50), AI-transcribe processing.
+- AITalk scenario model: `{series_slug, course_slug}` → server builds system prompt from stored scene+role+difficulty template — the pack/series catalog IS the prompt factory.
+- AITalk on free tier observed working (text mode at least); manual's "Premium-only" claim is looser than in-product reality — voice/mic or report may still be gated.
