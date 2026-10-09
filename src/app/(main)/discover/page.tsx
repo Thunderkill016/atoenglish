@@ -119,7 +119,11 @@ export default async function DiscoverPage() {
         <div className="flex min-w-0 flex-col gap-6 rounded-xl bg-background p-2 md:px-6 md:py-5">
           <header>
             <h1 className="sr-only">Khám phá</h1>
-            <DiscoverSearch />
+            {/* Remote YouTube search exists in the UI only when the server
+                holds the key — SPEC §10 hidden-without-key contract. */}
+            <DiscoverSearch
+              youtubeSearchEnabled={Boolean(process.env.YOUTUBE_DATA_API_KEY)}
+            />
           </header>
 
           {hero && (
