@@ -9,6 +9,9 @@
 # generated cleanup reports
 /reports/codebase-inventory.generated.md
 
+# transient catalog verification output
+/scripts/catalog-verify.report.json
+
 # testing
 /coverage
 
