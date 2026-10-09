@@ -5,7 +5,11 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getReviewQueue, recordPracticeAttempt } from "./review";
+import {
+  getReviewQueue,
+  recordPracticeAttempt,
+  requestReuseFeedback,
+} from "./review";
 
 const h = vi.hoisted(() => {
   interface QueryStep {
@@ -178,9 +182,9 @@ describe("recordPracticeAttempt", () => {
   });
 
   it("requires rating for self-rated modes", async () => {
-    expect(
-      await recordPracticeAttempt({ card_id: 5, mode: "recall" }),
-    ).toEqual({ ok: false, error: "invalid_input" });
+    expect(await recordPracticeAttempt({ card_id: 5, mode: "recall" })).toEqual(
+      { ok: false, error: "invalid_input" },
+    );
   });
 
   it("requires learner_text for write_reuse", async () => {
@@ -264,7 +268,10 @@ describe("recordPracticeAttempt", () => {
     const insert = h.calls.find(
       (c) => c.table === "practice_attempts" && c.method === "insert",
     );
-    expect(insert?.args[0]).toMatchObject({ rating: 2, mode: "sentence_dictation" });
+    expect(insert?.args[0]).toMatchObject({
+      rating: 2,
+      mode: "sentence_dictation",
+    });
   });
 
   it("never lets a client-supplied rating stick on an auto-graded mode", async () => {
@@ -320,9 +327,73 @@ describe("recordPracticeAttempt", () => {
       fsrs_after: null,
     });
     expect(
-      h.calls.some(
-        (c) => c.table === "study_cards" && c.method === "update",
-      ),
+      h.calls.some((c) => c.table === "study_cards" && c.method === "update"),
     ).toBe(false);
+  });
+});
+
+describe("requestReuseFeedback cache + link (B2)", () => {
+  it("replays cached write_feedback and still links the attempt", async () => {
+    h.tableHandlers.set("ai_results", () => ({
+      data: { id: 77, output: { feedback: "Tốt — dùng đúng cụm." } },
+      error: null,
+    }));
+    h.tableHandlers.set("practice_attempts", () => ({
+      data: null,
+      error: null,
+    }));
+    const result = await requestReuseFeedback({
+      target: "keep going",
+      sentence: "I keep going daily.",
+      attempt_id: 45,
+    });
+    expect(result).toEqual({ ok: true, feedback: "Tốt — dùng đúng cụm." });
+    const link = h.calls.find(
+      (c) => c.table === "practice_attempts" && c.method === "update",
+    );
+    expect(link?.args[0]).toEqual({ ai_result_id: 77 });
+  });
+
+  it("caches fresh feedback and links the attempt row", async () => {
+    h.tableHandlers.set("ai_results", (steps) => {
+      if (steps.some((s) => s.method === "insert"))
+        return { data: { id: 88 }, error: null };
+      return { data: null, error: null }; // cache miss
+    });
+    h.tableHandlers.set("practice_attempts", () => ({
+      data: null,
+      error: null,
+    }));
+    vi.stubEnv("GEMINI_API_KEY", "test-only");
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              finishReason: "STOP",
+              content: { parts: [{ text: '{"feedback":"OK"}' }] },
+            },
+          ],
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await requestReuseFeedback({
+      target: "resilience",
+      sentence: "She shows resilience.",
+      attempt_id: 45,
+    });
+    expect(result).toEqual({ ok: true, feedback: "OK" });
+    const insert = h.calls.find(
+      (c) => c.table === "ai_results" && c.method === "insert",
+    );
+    expect(insert?.args[0]).toMatchObject({
+      kind: "write_feedback",
+      model: "gemini-2.5-flash",
+    });
+    const link = h.calls.find(
+      (c) => c.table === "practice_attempts" && c.method === "update",
+    );
+    expect(link?.args[0]).toEqual({ ai_result_id: 88 });
   });
 });

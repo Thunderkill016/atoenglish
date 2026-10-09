@@ -12,6 +12,7 @@ import {
 } from "@/lib/srs/practice";
 import { reviewStudyCard, type StudyCardSchedule } from "@/lib/srs/fsrs";
 import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
+import { hashAiInput } from "@/lib/ai/sentence-analysis";
 import { createRateLimiter } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -248,7 +249,10 @@ export async function recordPracticeAttempt(
   if (input.mode === "recall" || input.mode === "sentence_meaning") {
     rating = ratingLabel(input.rating ?? -1);
     if (!rating) return { ok: false, error: "invalid_input" };
-  } else if (input.mode === "listen_fill" || input.mode === "sentence_dictation") {
+  } else if (
+    input.mode === "listen_fill" ||
+    input.mode === "sentence_dictation"
+  ) {
     rating = autoRating(input.mode, input);
     if (!rating) return { ok: false, error: "invalid_input" };
   }
@@ -321,14 +325,38 @@ export async function recordPracticeAttempt(
 // target phrase + the sentence, never card lists or schedule data.
 const reuseLimiter = createRateLimiter(10, 60_000, "write-reuse");
 
+type ActionClient = Awaited<ReturnType<typeof createClient>>;
+
+/** Point the attempt at its cached feedback row — best-effort: the log must
+ * never fail just because the audit link did. */
+async function linkFeedbackToAttempt(
+  supabase: ActionClient,
+  userId: string,
+  attemptId: number | undefined,
+  aiResultId: number,
+) {
+  if (attemptId == null) return;
+  await supabase
+    .from("practice_attempts")
+    .update({ ai_result_id: aiResultId })
+    .eq("id", attemptId)
+    .eq("user_id", userId);
+}
+
 const reuseFeedbackSchema = z.object({
   target: z.string().trim().min(1).max(200),
   sentence: z.string().trim().min(1).max(2000),
+  // The write_reuse attempt this feedback belongs to — filled by the client
+  // so the attempt row can point at the cached ai_results row (B2).
+  attempt_id: z.number().int().positive().optional(),
 });
 
 export type ReuseFeedbackResult =
   | { ok: true; feedback: string }
-  | { ok: false; error: "invalid_input" | "unauthorized" | "unavailable" | "rate_limited" };
+  | {
+      ok: false;
+      error: "invalid_input" | "unauthorized" | "unavailable" | "rate_limited";
+    };
 
 export async function requestReuseFeedback(
   raw: unknown,
@@ -341,6 +369,33 @@ export async function requestReuseFeedback(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "unauthorized" };
+
+  // Cache: same (target, sentence) pair replays the stored feedback instead
+  // of another paid call — keyed by hash so the learner's sentence is never
+  // persisted in ai_results (§13).
+  const inputHash = await hashAiInput(
+    `${parsed.data.target}\n${parsed.data.sentence}`,
+  );
+  const { data: cachedRow } = await supabase
+    .from("ai_results")
+    .select("id,output")
+    .eq("user_id", user.id)
+    .eq("kind", "write_feedback")
+    .eq("input_hash", inputHash)
+    .eq("model", GEMINI_MODEL)
+    .maybeSingle();
+  const cachedFeedback = (cachedRow?.output as { feedback?: unknown } | null)
+    ?.feedback;
+  if (typeof cachedFeedback === "string" && cachedFeedback.trim()) {
+    await linkFeedbackToAttempt(
+      supabase,
+      user.id,
+      parsed.data.attempt_id,
+      (cachedRow as { id: number }).id,
+    );
+    return { ok: true, feedback: cachedFeedback };
+  }
+
   if (!(await reuseLimiter.check(`write-reuse:${user.id}`)).success)
     return { ok: false, error: "rate_limited" };
 
@@ -384,7 +439,10 @@ export async function requestReuseFeedback(
       }),
     });
     if (!response.ok)
-      return { ok: false, error: response.status === 429 ? "rate_limited" : "unavailable" };
+      return {
+        ok: false,
+        error: response.status === 429 ? "rate_limited" : "unavailable",
+      };
     const payload = await response.json();
     const candidate = payload.candidates?.[0];
     if (candidate?.finishReason && candidate.finishReason !== "STOP")
@@ -397,7 +455,28 @@ export async function requestReuseFeedback(
     const generated = JSON.parse(text) as { feedback?: unknown };
     if (typeof generated.feedback !== "string" || !generated.feedback.trim())
       return { ok: false, error: "unavailable" };
-    return { ok: true, feedback: generated.feedback.slice(0, 1000) };
+    const feedback = generated.feedback.slice(0, 1000);
+
+    // Write the cache row first; linking the attempt to it is best-effort.
+    const { data: aiRow } = await supabase
+      .from("ai_results")
+      .insert({
+        user_id: user.id,
+        kind: "write_feedback",
+        input_hash: inputHash,
+        model: GEMINI_MODEL,
+        output: { feedback },
+      })
+      .select("id")
+      .single();
+    if (aiRow)
+      await linkFeedbackToAttempt(
+        supabase,
+        user.id,
+        parsed.data.attempt_id,
+        (aiRow as { id: number }).id,
+      );
+    return { ok: true, feedback };
   } catch {
     return { ok: false, error: "unavailable" };
   }

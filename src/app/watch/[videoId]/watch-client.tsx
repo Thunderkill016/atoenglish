@@ -22,6 +22,7 @@ import {
   Repeat,
   RotateCcw,
   Settings2,
+  Sparkles,
   Timer,
 } from "lucide-react";
 
@@ -43,6 +44,8 @@ import {
   type LoadedTranscript,
 } from "@/app/actions/captions";
 import { getSavedWordStates, saveStudyItem } from "@/app/actions/study";
+import { analyzeSentence } from "@/app/actions/analyze";
+import type { SentenceAnalysis } from "@/lib/ai/sentence-analysis";
 import {
   CAPTIONS_ACK_TYPE,
   CAPTIONS_MESSAGE_TYPE,
@@ -129,6 +132,13 @@ export function WatchClient({
   const [sentenceSaved, setSentenceSaved] = useState<
     number | "saving" | "error" | null
   >(null);
+  // B2: "Phân tích" — the AI breakdown of the active sentence. Keyed by
+  // sentence index so a stale panel never describes the wrong cue.
+  const [analysis, setAnalysis] = useState<{
+    i: number;
+    state: "loading" | "error" | "done";
+    data: SentenceAnalysis | null;
+  } | null>(null);
   // C4: normalized word/phrase card keys → FSRS state — the transcript rail
   // paints saved items so recognition is free while watching.
   const [savedWords, setSavedWords] = useState<ReadonlyMap<
@@ -262,6 +272,20 @@ export function WatchClient({
     });
     setSentenceSaved(result.ok ? activeSentence.i : "error");
   }, [activeSentence, loggedIn, sentenceSaved, captionVi, videoId]);
+
+  // B2: analyze the focused sentence with Gemini — cached per learner server
+  // side. Failure shows a notice inside the panel; watching/saving stay free.
+  const analyzeActiveSentence = useCallback(async () => {
+    if (!activeSentence || !loggedIn || analysis?.state === "loading") return;
+    const i = activeSentence.i;
+    setAnalysis({ i, state: "loading", data: null });
+    const result = await analyzeSentence({ sentence: activeSentence.text });
+    setAnalysis(
+      result.ok
+        ? { i, state: "done", data: result.analysis }
+        : { i, state: "error", data: null },
+    );
+  }, [activeSentence, loggedIn, analysis?.state]);
 
   // ── Fetch / fallback flows ────────────────────────────────────────────────
   const requestVersion = useRef(0);
@@ -937,6 +961,109 @@ export function WatchClient({
                                         ? "Thử lại"
                                         : "Lưu câu"}
                                 </button>
+                              )}
+                              {loggedIn && (
+                                <button
+                                  type="button"
+                                  onClick={analyzeActiveSentence}
+                                  disabled={
+                                    analysis?.i === activeSentence.i &&
+                                    analysis.state === "loading"
+                                  }
+                                  aria-label="Phân tích câu bằng AI"
+                                  title="Phân tích ngữ pháp câu này bằng AI"
+                                  className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+                                >
+                                  <Sparkles aria-hidden className="size-4" />
+                                  {analysis?.i === activeSentence.i &&
+                                  analysis.state === "loading"
+                                    ? "Đang phân tích…"
+                                    : "Phân tích"}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        {loggedIn &&
+                          analysis &&
+                          analysis.i === activeSentence?.i && (
+                            <div
+                              data-testid="sentence-analysis"
+                              className="mx-auto mt-2 max-w-md rounded-xl border border-border bg-card p-3 text-left text-sm"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                                  Phân tích AI
+                                </span>
+                                <button
+                                  type="button"
+                                  aria-label="Đóng phân tích"
+                                  onClick={() => setAnalysis(null)}
+                                  className="rounded-md px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent"
+                                >
+                                  Đóng
+                                </button>
+                              </div>
+                              {analysis.state === "loading" && (
+                                <p className="mt-2 text-muted-foreground">
+                                  Đang phân tích…
+                                </p>
+                              )}
+                              {analysis.state === "error" && (
+                                <p className="mt-2 text-muted-foreground">
+                                  Phân tích AI hiện không khả dụng — xem và lưu
+                                  câu vẫn bình thường.
+                                </p>
+                              )}
+                              {analysis.state === "done" && analysis.data && (
+                                <div className="mt-2 space-y-2">
+                                  <p lang="vi">
+                                    {analysis.data.translation_vi}
+                                  </p>
+                                  <dl className="space-y-0.5 text-xs text-muted-foreground">
+                                    <div>
+                                      <dt className="inline font-medium text-foreground">
+                                        Chủ ngữ:{" "}
+                                      </dt>
+                                      <dd className="inline">
+                                        {analysis.data.structure.subject}
+                                      </dd>
+                                    </div>
+                                    <div>
+                                      <dt className="inline font-medium text-foreground">
+                                        Động từ chính:{" "}
+                                      </dt>
+                                      <dd className="inline" lang="en">
+                                        {analysis.data.structure.main_verb}
+                                      </dd>
+                                    </div>
+                                    {analysis.data.structure.clauses.map(
+                                      (clause, idx) => (
+                                        <div key={idx}>
+                                          <dt className="inline font-medium text-foreground">
+                                            Mệnh đề:{" "}
+                                          </dt>
+                                          <dd className="inline">{clause}</dd>
+                                        </div>
+                                      ),
+                                    )}
+                                  </dl>
+                                  <ul className="space-y-0.5 text-xs">
+                                    {analysis.data.phrases.map((p) => (
+                                      <li key={p.text}>
+                                        <span lang="en" className="font-medium">
+                                          {p.text}
+                                        </span>
+                                        <span className="text-muted-foreground">
+                                          {" "}
+                                          — {p.meaning_vi}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                  <p className="text-xs text-muted-foreground">
+                                    {analysis.data.grammar_point}
+                                  </p>
+                                </div>
                               )}
                             </div>
                           )}

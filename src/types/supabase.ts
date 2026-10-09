@@ -65,6 +65,44 @@ export type Database = {
         };
         Relationships: [];
       };
+      ai_results: {
+        Row: {
+          id: number;
+          user_id: string;
+          kind: string;
+          input_hash: string;
+          model: string;
+          output: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          user_id: string;
+          kind: string;
+          input_hash: string;
+          model: string;
+          output: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          user_id?: string;
+          kind?: string;
+          input_hash?: string;
+          model?: string;
+          output?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_results_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       card_contexts: {
         Row: {
           id: number;
@@ -964,6 +1002,13 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "practice_attempts_ai_result_fkey";
+            columns: ["ai_result_id"];
+            isOneToOne: false;
+            referencedRelation: "ai_results";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "practice_attempts_card_id_fkey";
             columns: ["card_id"];

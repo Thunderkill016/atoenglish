@@ -15,6 +15,15 @@ const actions = vi.hoisted(() => ({
   saveWatchPosition: vi.fn(),
 }));
 vi.mock("@/app/actions/captions", () => actions);
+const studyActions = vi.hoisted(() => ({
+  getSavedWordStates: vi.fn(async () => ({ ok: true as const, states: [] })),
+  saveStudyItem: vi.fn(async () => ({ ok: true as const, card_id: 1 })),
+}));
+vi.mock("@/app/actions/study", () => studyActions);
+const analyzeActions = vi.hoisted(() => ({
+  analyzeSentence: vi.fn(),
+}));
+vi.mock("@/app/actions/analyze", () => analyzeActions);
 const frameRef = vi.hoisted(() => {
   const fixture = { current: null as HTMLDivElement | null };
   // The mocked player owns an independent iframe; React's anchor assignment
@@ -747,5 +756,66 @@ describe("transcript navigation", () => {
       within(container).queryByRole("button", { name: /Nghe câu|Nghe lại/ }),
     ).toBeNull();
     expect(seek).not.toHaveBeenCalled();
+  });
+});
+
+describe("B2 sentence analysis", () => {
+  it("analyzes the active sentence and shows the labeled AI panel", async () => {
+    analyzeActions.analyzeSentence.mockResolvedValue({
+      ok: true,
+      cached: false,
+      analysis: {
+        translation_vi: "Tôi làm việc ở đây.",
+        structure: {
+          subject: "I",
+          main_verb: "work",
+          clauses: ["here"],
+        },
+        phrases: [{ text: "work here", meaning_vi: "làm việc ở đây" }],
+        grammar_point: "Thì hiện tại đơn.",
+      },
+    });
+    await act(async () => render(transcript, true));
+    await check(() =>
+      expect(
+        container.querySelector("button[aria-label='Phân tích câu bằng AI']"),
+      ).not.toBeNull(),
+    );
+    await act(async () => {
+      container
+        .querySelector("button[aria-label='Phân tích câu bằng AI']")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await check(() => {
+      const panel = container.querySelector(
+        "[data-testid='sentence-analysis']",
+      );
+      expect(panel).not.toBeNull();
+      expect(panel!.textContent).toContain("Phân tích AI");
+      expect(panel!.textContent).toContain("Tôi làm việc ở đây.");
+      expect(panel!.textContent).toContain("Thì hiện tại đơn.");
+    });
+    expect(analyzeActions.analyzeSentence).toHaveBeenCalledWith({
+      sentence: "I work here.",
+    });
+  });
+
+  it("surfaces an honest notice when analysis fails", async () => {
+    analyzeActions.analyzeSentence.mockResolvedValue({
+      ok: false,
+      error: "unavailable",
+    });
+    await act(async () => render(transcript, true));
+    await act(async () => {
+      container
+        .querySelector("button[aria-label='Phân tích câu bằng AI']")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await check(() => {
+      const panel = container.querySelector(
+        "[data-testid='sentence-analysis']",
+      );
+      expect(panel!.textContent).toContain("hiện không khả dụng");
+    });
   });
 });

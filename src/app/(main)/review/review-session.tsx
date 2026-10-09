@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import Link from "next/link";
 import {
   BookOpenCheck,
@@ -13,7 +20,10 @@ import {
   Volume2,
 } from "lucide-react";
 
-import { recordPracticeAttempt, requestReuseFeedback } from "@/app/actions/review";
+import {
+  recordPracticeAttempt,
+  requestReuseFeedback,
+} from "@/app/actions/review";
 import type { ReviewQueueItem } from "@/app/actions/review";
 import {
   answersMatch,
@@ -72,7 +82,10 @@ function CueSentence({ item }: { item: ReviewQueueItem }) {
     const blank = blankTargetInSentence(text, item.display);
     if (blank) {
       return (
-        <p lang="en" className="text-lg leading-relaxed [overflow-wrap:anywhere]">
+        <p
+          lang="en"
+          className="text-lg leading-relaxed [overflow-wrap:anywhere]"
+        >
           {blank.before}
           <span
             aria-label={`Chỗ trống cho “${item.display}”`}
@@ -198,8 +211,7 @@ function SpeakRepeat({ item }: { item: ReviewQueueItem }) {
     recognition.maxAlternatives = 1;
     setState({ phase: "listening" });
     recognition.onresult = (event) => {
-      const transcript =
-        event.results[0]?.[0]?.transcript?.trim() ?? "";
+      const transcript = event.results[0]?.[0]?.transcript?.trim() ?? "";
       if (!transcript) {
         setState({ phase: "failed", reason: "error" });
         return;
@@ -218,12 +230,16 @@ function SpeakRepeat({ item }: { item: ReviewQueueItem }) {
       }).finally(() => setLogging(false));
     };
     recognition.onerror = () => setState({ phase: "failed", reason: "error" });
-    recognition.onnomatch = () => setState({ phase: "failed", reason: "error" });
+    recognition.onnomatch = () =>
+      setState({ phase: "failed", reason: "error" });
     recognition.start();
   };
 
   return (
-    <div className="mt-4 border-t border-border pt-3" data-testid="speak-repeat">
+    <div
+      className="mt-4 border-t border-border pt-3"
+      data-testid="speak-repeat"
+    >
       {state.phase === "idle" && (
         <button
           type="button"
@@ -300,6 +316,7 @@ function WriteReuse({
       const ai = await requestReuseFeedback({
         target: item.display,
         sentence: sentence.trim(),
+        attempt_id: attempt.attempt_id,
       });
       setFeedback(ai.ok ? ai.feedback : null);
       setNote(ai.ok ? null : "Câu đã lưu — phản hồi AI hiện không có.");
@@ -384,7 +401,10 @@ function AudioCard({ item, onDone, onError }: CardProps) {
   const [typed, setTyped] = useState("");
   const [hints, setHints] = useState(0);
   const [plays, setPlays] = useState(0);
-  const [result, setResult] = useState<{ correct: boolean; accuracy: number | null } | null>(null);
+  const [result, setResult] = useState<{
+    correct: boolean;
+    accuracy: number | null;
+  } | null>(null);
   const [pending, startTransition] = useTransition();
 
   const context = item.context;
@@ -405,7 +425,8 @@ function AudioCard({ item, onDone, onError }: CardProps) {
   const submit = () => {
     if (pending || result) return;
     const correct = isDictation ? null : answersMatch(typed, item.display);
-    const accuracy = isDictation && sentence ? wordAccuracy(sentence, typed) : null;
+    const accuracy =
+      isDictation && sentence ? wordAccuracy(sentence, typed) : null;
     startTransition(async () => {
       const outcome = await recordPracticeAttempt({
         card_id: item.card_id,
@@ -433,7 +454,10 @@ function AudioCard({ item, onDone, onError }: CardProps) {
         </p>
       )}
       {!isDictation && item.meaning_vi && (
-        <p lang="vi" className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        <p
+          lang="vi"
+          className="mt-3 text-sm leading-relaxed text-muted-foreground"
+        >
           {item.meaning_vi}
         </p>
       )}
@@ -568,12 +592,18 @@ function SelfRatedCard({ item, onDone, onError }: CardProps) {
       )}
 
       {item.mode === "sentence_meaning" && item.context?.sentence_vi && (
-        <p lang="vi" className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        <p
+          lang="vi"
+          className="mt-3 text-sm leading-relaxed text-muted-foreground"
+        >
           {item.context.sentence_vi}
         </p>
       )}
       {item.kind !== "sentence" && item.meaning_vi && (
-        <p lang="vi" className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        <p
+          lang="vi"
+          className="mt-3 text-sm leading-relaxed text-muted-foreground"
+        >
           {item.meaning_vi}
         </p>
       )}
@@ -584,7 +614,10 @@ function SelfRatedCard({ item, onDone, onError }: CardProps) {
             {item.display}
           </p>
           {item.context && item.kind === "sentence" && (
-            <p lang="en" className="mt-2 leading-relaxed [overflow-wrap:anywhere]">
+            <p
+              lang="en"
+              className="mt-2 leading-relaxed [overflow-wrap:anywhere]"
+            >
               {item.context.sentence_text}
             </p>
           )}
@@ -686,10 +719,7 @@ export function ReviewSession({ items }: { items: ReviewQueueItem[] }) {
           lại theo kết quả từng thẻ.
         </p>
         {showReuse && (
-          <WriteReuse
-            item={reuseCard}
-            onDone={() => setReuseStep("done")}
-          />
+          <WriteReuse item={reuseCard} onDone={() => setReuseStep("done")} />
         )}
         <Link href="/discover" className={cn(buttonVariants(), "mt-2")}>
           Xem video tiếp
