@@ -2,12 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { NEON_AUTH_SESSION_COOKIE_NAME } from "@neondatabase/auth/server";
 import { lookupGloss } from "@/lib/read/gloss";
-import {
-  lookupDictionary,
-  type DictionaryStore,
-} from "@/lib/dict/lookup";
+import { lookupDictionary, type DictionaryStore } from "@/lib/dict/lookup";
 import { createClient } from "@/lib/supabase/server";
 import { GEMINI_MODEL, geminiGenerateUrl } from "@/lib/ai/gemini";
+import { hashAiInput } from "@/lib/ai/sentence-analysis";
 import { createRateLimiter } from "@/lib/security/rate-limit";
 
 // Bound one-word/phrase requests and a short source sentence, not whole documents.
@@ -105,6 +103,32 @@ export async function POST(request: NextRequest) {
           : "unauthorized",
         authError && authError.status !== 401 ? 503 : 401,
       );
+    // Cache (spec §11): same (term, context) replays the stored gloss instead
+    // of another paid call — keyed by hash so the source sentence is never
+    // persisted in ai_results (§13). Hits skip the per-minute limiter.
+    const inputHash = await hashAiInput(`${term}\n${context}`);
+    const { data: cachedRow } = await client
+      .from("ai_results")
+      .select("output")
+      .eq("user_id", user.id)
+      .eq("kind", "context_gloss")
+      .eq("input_hash", inputHash)
+      .eq("model", GEMINI_MODEL)
+      .maybeSingle();
+    const cachedEntry = (cachedRow?.output as { entry?: unknown } | null)
+      ?.entry;
+    if (cachedRow && cachedEntry !== undefined) {
+      const cachedValidated = entrySchema.safeParse(cachedEntry);
+      return NextResponse.json(
+        {
+          ok: true,
+          source: "ai",
+          entry: cachedValidated.success ? cachedValidated.data : null,
+        },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
     const key = process.env.GEMINI_API_KEY;
     if (!key) return error("ai_unavailable", 503);
     const allowed = await limiter.check(`dictionary:${user.id}`);
@@ -144,13 +168,30 @@ export async function POST(request: NextRequest) {
     } catch {
       return error("ai_failed", 502);
     }
-    if (generated === null)
+    if (generated === null) {
+      // A defensible "not a recognisable term" is a cacheable answer too —
+      // the model key in the constraint means a model bump re-asks.
+      await client.from("ai_results").insert({
+        user_id: user.id,
+        kind: "context_gloss",
+        input_hash: inputHash,
+        model: GEMINI_MODEL,
+        output: { entry: null },
+      });
       return NextResponse.json(
         { ok: true, source: "ai", entry: null },
         { headers: { "Cache-Control": "no-store" } },
       );
+    }
     const entry = entrySchema.safeParse(generated);
     if (!entry.success) return error("ai_failed", 502);
+    await client.from("ai_results").insert({
+      user_id: user.id,
+      kind: "context_gloss",
+      input_hash: inputHash,
+      model: GEMINI_MODEL,
+      output: { entry: entry.data },
+    });
     return NextResponse.json(
       { ok: true, source: "ai", entry: entry.data },
       { headers: { "Cache-Control": "no-store" } },
