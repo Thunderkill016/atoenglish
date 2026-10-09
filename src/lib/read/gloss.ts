@@ -37,8 +37,10 @@ export const GLOSS_SIZE = dictionary.size;
  * Candidate base forms for an inflected surface form, most-specific first.
  * Each candidate is only used if it actually exists in the dictionary —
  * the rules propose, the dictionary disposes.
+ * Exported for the DB-backed dictionary lookup (src/lib/dict/lookup.ts),
+ * which applies the same rule set against `dictionary_entries`.
  */
-function inflectionCandidates(normalized: string): string[] {
+export function inflectionCandidates(normalized: string): string[] {
   const candidates: string[] = [];
   if (normalized.endsWith("'s") && normalized.length > 2) {
     candidates.push(normalized.slice(0, -2));

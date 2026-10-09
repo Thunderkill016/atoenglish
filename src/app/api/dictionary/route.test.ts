@@ -4,7 +4,10 @@ import { NEON_AUTH_SESSION_COOKIE_NAME } from "@neondatabase/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { POST } from "./route";
 
-const { check } = vi.hoisted(() => ({ check: vi.fn() }));
+const { check, dictRows } = vi.hoisted(() => ({
+  check: vi.fn(),
+  dictRows: { value: [] as unknown[] },
+}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 vi.mock("@/lib/security/rate-limit", () => ({
   createRateLimiter: () => ({ check }),
@@ -28,12 +31,16 @@ function user(value: { id: string } | null, status = 401) {
         error: value ? null : { status },
       }),
     },
+    from: () => ({
+      select: () => ({ in: async () => ({ data: dictRows.value }) }),
+    }),
   } as unknown as Awaited<ReturnType<typeof createClient>>);
 }
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("GEMINI_API_KEY", "test-only-key");
   check.mockResolvedValue({ success: true });
+  dictRows.value = [];
   user({ id: "learner-a" });
 });
 afterEach(() => {
@@ -53,12 +60,39 @@ describe("quick dictionary", () => {
     const miss = await POST(request({ term: "zzzzq" }));
     expect(await miss.json()).toEqual({
       ok: true,
-      source: "curated",
+      source: "dictionary",
       entry: null,
     });
-    expect(createClient).not.toHaveBeenCalled();
+    // The curated map answered the hit without a client; the miss consulted
+    // the wide-coverage dictionary table.
+    expect(createClient).toHaveBeenCalledTimes(1);
     expect(fetcher).not.toHaveBeenCalled();
     expect(hit.headers.get("cache-control")).toBe("no-store");
+  });
+  it("falls through curated misses to the shared dictionary table", async () => {
+    dictRows.value = [
+      {
+        word: "serendipity",
+        pos: "noun",
+        senses: [
+          { glosses: ["Khả năng cầu may."] },
+        ],
+        ipa: null,
+        audio_url: null,
+      },
+    ];
+    const response = await POST(request({ term: "serendipity" }));
+    const body = await response.json();
+    expect(body).toMatchObject({
+      ok: true,
+      source: "dictionary",
+      entry: {
+        word: "serendipity",
+        meaning_vn: "Khả năng cầu may.",
+        part_of_speech: "noun",
+      },
+    });
+    expect(createClient).toHaveBeenCalledTimes(1);
   });
   it.each([
     { term: "" },

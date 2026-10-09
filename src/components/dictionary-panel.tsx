@@ -22,16 +22,20 @@ type Definition = GlossEntry & {
   part_of_speech?: string;
   explanation_vn?: string;
   example_vn?: string;
+  lemma?: string;
+  audio_url?: string;
+  senses?: { pos: string; glosses: string[] }[];
 };
 type Result = {
   term: string;
-  source: "curated" | "ai";
+  source: "curated" | "dictionary" | "ai";
   entry: Definition | null;
 };
 // Same bounded intake as the API; context is an optional source sentence.
 const MAX_TERM_CHARS = 120;
 const MAX_CONTEXT_CHARS = 1000;
 const REQUEST_TIMEOUT_MS = 25_000; // Allow the API's 20s model timeout plus transport.
+const DICTIONARY_TIMEOUT_MS = 10_000; // DB-backed tier-1 lookup should resolve in ~100ms.
 const ERROR_MESSAGES: Record<string, string> = {
   unauthorized: "Đăng nhập để tra nghĩa bằng AI.",
   auth_unavailable: "Chưa kiểm tra được đăng nhập. Thử lại sau.",
@@ -148,6 +152,39 @@ export function DictionaryPanel({
     setNeedsLogin(false);
     setResult(null);
   };
+  // Tier-1 curated map misses → the API's dictionary_entries lookup
+  // (Kaikki/viwiktionary, wide coverage). No auth needed; plain DB read.
+  const lookupDictionaryRemote = async (value: string) => {
+    const controller = new AbortController();
+    requestRef.current = controller;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/dictionary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ term: value, mode: "curated" }),
+        signal: AbortSignal.any([
+          controller.signal,
+          AbortSignal.timeout(DICTIONARY_TIMEOUT_MS),
+        ]),
+      });
+      const data = await response.json();
+      if (requestRef.current !== controller) return;
+      if (!response.ok || !data.ok) {
+        setError("Chưa tra được từ điển mở rộng. Thử lại sau.");
+      } else {
+        setResult({ term: value, source: "dictionary", entry: data.entry });
+      }
+    } catch {
+      if (controller.signal.aborted || requestRef.current !== controller) return;
+      setError("Không kết nối được. Kiểm tra mạng và thử lại.");
+    } finally {
+      if (requestRef.current === controller) {
+        requestRef.current = null;
+        setBusy(false);
+      }
+    }
+  };
   const lookup = () => {
     resetPending();
     const value = normalizeWord(term.trim());
@@ -155,7 +192,13 @@ export function DictionaryPanel({
       setError("Nhập từ hoặc cụm từ bạn muốn tra.");
       return;
     }
-    setResult({ term: value, source: "curated", entry: lookupGloss(value) });
+    const curated = lookupGloss(value);
+    if (curated) {
+      setResult({ term: value, source: "curated", entry: curated });
+      return;
+    }
+    setResult(null);
+    void lookupDictionaryRemote(value);
   };
   const lookupAI = async () => {
     resetPending();
@@ -207,11 +250,15 @@ export function DictionaryPanel({
     setTerm(selection.term);
     setContext(selection.context.slice(0, MAX_CONTEXT_CHARS));
     setSource(selection.source);
-    setResult({
-      term: selection.term,
-      source: "curated",
-      entry: lookupGloss(normalizeWord(selection.term)),
-    });
+    const value = normalizeWord(selection.term);
+    const curated = lookupGloss(value);
+    if (curated) {
+      setResult({ term: selection.term, source: "curated", entry: curated });
+    } else {
+      // Open instantly, fill in from the wide-coverage dictionary next.
+      setResult(null);
+      void lookupDictionaryRemote(value);
+    }
     show(selection.returnFocus);
   };
 
@@ -221,9 +268,11 @@ export function DictionaryPanel({
         <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
           {result.source === "ai"
             ? "AI · cần kiểm tra theo ngữ cảnh"
-            : source
-              ? "Từ điển có sẵn · nghĩa chung"
-              : "Từ điển có sẵn"}
+            : result.source === "dictionary"
+              ? "Từ điển · nguồn Wiktionary VI (CC BY-SA)"
+              : source
+                ? "Từ điển có sẵn · nghĩa chung"
+                : "Từ điển có sẵn"}
         </span>
         <h3 className="mt-4 break-words text-2xl font-semibold">
           {result.entry?.word ?? result.term}
@@ -271,9 +320,12 @@ export function DictionaryPanel({
               </p>
             </blockquote>
           )}
-          {result.entry.word !== result.term.toLowerCase() && (
+          {(result.entry.word !== result.term.toLowerCase() ||
+            result.entry.lemma) && (
             <p className="text-xs text-muted-foreground">
-              Tra dạng gốc của “{result.term}”.
+              {result.entry.lemma
+                ? `Dạng gốc: “${result.entry.lemma}”.`
+                : `Tra dạng gốc của “${result.term}”.`}
             </p>
           )}
         </>
