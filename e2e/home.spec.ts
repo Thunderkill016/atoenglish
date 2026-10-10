@@ -197,7 +197,9 @@ test.describe("/discover", () => {
       rail.getByText("Video chọn sẵn", { exact: true }),
     ).toBeVisible();
     await expect(
-      rail.getByText("Chưa có dữ liệu tiến độ", { exact: true }),
+      rail.getByText("Đăng nhập để ghi lại tiến độ luyện tập.", {
+        exact: true,
+      }),
     ).toBeVisible();
     await expect(
       rail.getByRole("img", { name: /^Lịch hoạt động Th/ }),
@@ -205,13 +207,19 @@ test.describe("/discover", () => {
     for (const label of ["PDF", "Gợi ý video dễ"]) {
       await expect(rail.getByText(label, { exact: true })).toHaveCount(0);
     }
-    for (const href of ["/read", "/review", "/library", "/me"]) {
-      await expect(page.locator(`a[href="${href}"]`)).toHaveCount(0);
-    }
     const nav = page.getByRole("navigation", { name: "Điều hướng chính" });
-    await expect(
-      nav.getByRole("link", { name: "Ôn — sắp ra mắt", exact: true }).first(),
-    ).toHaveAttribute("aria-disabled", "true");
+    // All shipped surfaces are reachable nav entries — no "sắp ra mắt" stubs.
+    for (const [href, name] of [
+      ["/read", "Đọc"],
+      ["/review", "Ôn tập"],
+      ["/library", "Thư viện"],
+      ["/me", "Tôi"],
+    ] as const) {
+      await expect(
+        nav.getByRole("link", { name, exact: true }).first(),
+      ).toHaveAttribute("href", href);
+    }
+    await expect(nav.getByText(/sắp ra mắt/i)).toHaveCount(0);
   });
 
   test("title and channel search combine with topics, levels and short sessions", async ({
