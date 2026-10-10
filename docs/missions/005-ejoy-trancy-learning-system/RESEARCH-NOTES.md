@@ -665,3 +665,17 @@ Kaikki/viwiktionary **đủ tốt làm tier-1**: coverage ~100% từ thường n
 3. **Irregular forms thiếu entry** — bảng irregular nhỏ (~200 dạng) + `form_of` structured + gloss-pattern "quá khứ của X".
 
 Kích thước: 133k entries → lọc/compact còn ~40–60MB JSON; Postgres `dictionary_entries` (word + pos + senses jsonb + ipa + audio_url) thoải mái.
+
+### Mở rộng nghiên cứu đối thủ có đăng nhập — LR / LingQ / eJOY / LangHub / Dreaming — 10/10/2026
+
+Chi tiết đầy đủ: [`COMPETITORS-DEEP-DIVE.md`](./COMPETITORS-DEEP-DIVE.md). Phương pháp: Playwright + persistent profile, Google OAuth (`hoangn36th3a@gmail.com`) vào các sản phẩm có free tier. Raw capture ở `/tmp/competitor-research/`.
+
+Điểm chính [LIVE/API — capture thật]:
+
+- **Language Reactor**: Firebase Identity Toolkit → `diocoToken`; **auto 14-day Pro trial** cho mọi account mới; API `api-cdn.dioco.io` POST-everything; catalog filter `freq95` (word-frequency rank); PhrasePump + saved-items 3-state (biết/học/bỏ); player in-web không cần extension (vẫn nài cài); Aria trả lời song ngữ; Pro-gate: speech rec, Netflix MT, save, Aria sau trial.
+- **LingQ**: free tier **rất chặt** — 20 LingQs + 5 imported lessons; onboarding 5 bước (daily-goal coins → topics → accent → ép cài extension → paywall); card bài học hiển thị **"% new words" cá nhân hoá**; reader blue/yellow/known inline; click từ → POS + dict ngoài + "Traductions Populaires" community + "Phrases Connexes" n-gram; `POST /api/v3/en/cards/ {term,hints,fragment,tags,content}` tạo LingQ; hints prefetch cùng lesson; Lynx AI chạy được trên free, starters theo lesson vừa đọc, **"Importer comme Leçon"** chat→lesson; gamification nặng (coins/streak/badges — không copy).
+- **eJOY**: đối thủ VN gần nhất. Player = pipeline `Listen→Quiz→Write→Speak`; YouTube iframe chính thức; **"AI Sửa phụ đề"** toggle gốc/AI; `+` save per câu; streak+coin trong top bar; 6 exercise types standalone + movie-clip dictation; wordstore 30+ bộ từ trả phí (VocaEasy); pricing Pro Dict 53kđ / Pro Voca 153kđ / Pro Plus 300kđ mỗi tháng, AI bán theo **quota lượt query** (3k–5k/tháng); glotdojo.com là brand chị em.
+- **LangHub**: hoàn toàn client-side, không cần account; SRS 4 nút kiểu Anki; "Generate story" từ từ đã lưu; chỉ bán content packs + giọng ElevenLabs.
+- **Dreaming Spanish**: cực đoan CI-thuần (không sub/word tools — chủ đích); goal đo bằng **phút xem**; level 3 mức; một số video Premium-lock.
+
+Kết luận chung: mọi sản phẩm hội tụ cùng loop `video → câu → từ → lưu → SRS → practice`; paywall tập trung ở **độ sâu AI + lưu trữ unlimited**, không phải core loop (trừ LingQ cap 20 từ). AtoEnglish khác biệt đúng chỗ: free rộng nhất + evidence trung thực + Vietnamese-first. Ứng viên mượn (xếp theo fit): `% new words` trên card, đánh dấu từ 3 trạng thái, n-gram expansions, AI starters theo ngữ cảnh, chat→lesson, stepper Listen→Quiz→Write→Speak, sync tăng dần, dubbing.
