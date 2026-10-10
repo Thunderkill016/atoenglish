@@ -14,6 +14,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getCatalog } from "@/content/catalog/videos";
 import { VideoCard } from "@/components/video-card";
 import { RightRail, WidgetCard } from "@/components/right-rail";
+import {
+  ActivityGrid,
+  activityDayKey,
+  activityHistory,
+  activityWindowStart,
+} from "@/components/activity-grid";
+import { WeekStrip, currentWeekActivity } from "@/components/week-strip";
 import { formatRelativeAge, formatTimestamp } from "@/lib/format";
 import { DiscoverCatalog } from "./discover-catalog";
 import { DiscoverSearch, DiscoverSearchProvider } from "./discover-search";
@@ -33,10 +40,24 @@ interface SourceRow {
   updated_at: string;
 }
 
+interface LearningStats {
+  dueCards: number;
+  totalCards: number;
+  weekAttempts: number;
+  totalAttempts: number;
+  /** ISO timestamps of real learning events — practice attempts + card saves. */
+  activityDates: string[];
+}
+
 type ViewerData =
   | { status: "guest" }
   | { status: "unavailable" }
-  | { status: "ready"; continueWatching: SourceRow[]; totalSources: number };
+  | {
+      status: "ready";
+      continueWatching: SourceRow[];
+      totalSources: number;
+      learning: LearningStats;
+    };
 
 // Fetch a small recent-source window so completed videos do not crowd out resume slots.
 const RECENT_SOURCE_LIMIT = 30;
@@ -45,6 +66,8 @@ const CONTINUE_LIMIT = 7;
 const RESUME_MIN_MS = 30_000;
 const WATCHED_PCT = 0.95;
 const NO_SESSION_STATUS = 401;
+// Fetch bound for the activity heatmap — a query cap, not a product limit.
+const ACTIVITY_FETCH_LIMIT = 5000;
 
 function isResumable(s: SourceRow): boolean {
   return (
@@ -68,7 +91,17 @@ async function loadViewerData(): Promise<ViewerData> {
             : "unavailable",
       };
     }
-    const [sourcesResult, countResult] = await Promise.all([
+    const activitySince = activityWindowStart().toISOString();
+    const nowIso = new Date().toISOString();
+    const [
+      sourcesResult,
+      countResult,
+      dueResult,
+      cardsResult,
+      attemptsResult,
+      cardDatesResult,
+      totalAttemptsResult,
+    ] = await Promise.all([
       supabase
         .from("content_sources")
         .select(
@@ -84,18 +117,82 @@ async function loadViewerData(): Promise<ViewerData> {
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .eq("kind", "youtube"),
+      // Same due rule as getReviewQueue: unscheduled (null) or past-due cards.
+      supabase
+        .from("study_cards")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .or(`due.is.null,due.lte.${nowIso}`),
+      supabase
+        .from("study_cards")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id),
+      supabase
+        .from("practice_attempts")
+        .select("created_at")
+        .eq("user_id", user.id)
+        .gte("created_at", activitySince)
+        .order("created_at", { ascending: false })
+        .limit(ACTIVITY_FETCH_LIMIT),
+      // Real event timestamps only — resume snapshots (updated_at) cannot
+      // reconstruct a history and must not paint activity days.
+      supabase
+        .from("study_cards")
+        .select("created_at")
+        .eq("user_id", user.id)
+        .gte("created_at", activitySince),
+      supabase
+        .from("practice_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id),
     ]);
+    const results = [
+      sourcesResult,
+      countResult,
+      dueResult,
+      cardsResult,
+      attemptsResult,
+      cardDatesResult,
+      totalAttemptsResult,
+    ];
     // A failed read is not an empty library. Keep the public catalog usable.
-    if (sourcesResult.error || countResult.error || countResult.count == null) {
-      console.error("[discover] Could not load viewer sources");
+    if (
+      results.some((r) => r.error) ||
+      countResult.count == null ||
+      dueResult.count == null ||
+      cardsResult.count == null ||
+      totalAttemptsResult.count == null
+    ) {
+      console.error("[discover] Could not load viewer data");
       return { status: "unavailable" };
     }
+    const attemptDates = (
+      (attemptsResult.data ?? []) as {
+        created_at: string;
+      }[]
+    ).map((row) => row.created_at);
+    const weekStartKey = currentWeekActivity([]).weekStartKey;
+    const learning: LearningStats = {
+      dueCards: dueResult.count,
+      totalCards: cardsResult.count,
+      weekAttempts: attemptDates.filter(
+        (date) => activityDayKey(date) >= weekStartKey,
+      ).length,
+      totalAttempts: totalAttemptsResult.count,
+      activityDates: [
+        ...attemptDates,
+        ...((cardDatesResult.data ?? []) as { created_at: string }[]).map(
+          (row) => row.created_at,
+        ),
+      ],
+    };
     return {
       status: "ready",
       continueWatching: ((sourcesResult.data ?? []) as SourceRow[])
         .filter(isResumable)
         .slice(0, CONTINUE_LIMIT),
       totalSources: countResult.count,
+      learning,
     };
   } catch {
     // Isolate auth/Data API failures to the personal panel, without logging credentials.
@@ -110,6 +207,9 @@ export default async function DiscoverPage() {
     viewer.status === "ready" ? viewer.continueWatching : [];
   const hero = continueWatching[0] ?? null;
   const strip = continueWatching.slice(1);
+  const learning = viewer.status === "ready" ? viewer.learning : null;
+  const week = currentWeekActivity(learning?.activityDates ?? []);
+  const activity = activityHistory(learning?.activityDates ?? []);
   const catalog = getCatalog();
   const topicCount = new Set(catalog.map((video) => video.topic)).size;
 
@@ -199,6 +299,57 @@ export default async function DiscoverPage() {
         </div>
 
         <RightRail>
+          <WidgetCard title="Lịch tuần" className="bg-transparent p-0">
+            {viewer.status === "unavailable" ? (
+              <p className="px-3 pb-3 text-sm text-muted-foreground">
+                Chưa tải được lịch hoạt động.
+              </p>
+            ) : (
+              <WeekStrip
+                days={week.days}
+                activeDays={week.activeDays}
+                todayIndex={week.todayIndex}
+              />
+            )}
+          </WidgetCard>
+          <WidgetCard
+            title="Flashcard"
+            action={
+              learning ? (
+                <Link
+                  href="/review"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Ôn tập →
+                </Link>
+              ) : undefined
+            }
+          >
+            {learning ? (
+              <dl className="grid grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-xs text-muted-foreground">Cần ôn</dt>
+                  <dd className="mt-2 text-xl font-semibold tabular-nums">
+                    {learning.dueCards}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Đang học</dt>
+                  <dd className="mt-2 text-xl font-semibold tabular-nums">
+                    {learning.totalCards}
+                  </dd>
+                </div>
+              </dl>
+            ) : viewer.status === "unavailable" ? (
+              <p className="text-sm leading-6 text-muted-foreground">
+                Chưa tải được dữ liệu thẻ ôn tập.
+              </p>
+            ) : (
+              <p className="text-sm leading-6 text-muted-foreground">
+                Đăng nhập để lưu từ, câu và ôn tập theo lịch.
+              </p>
+            )}
+          </WidgetCard>
           <WidgetCard title="Thống kê" className="bg-transparent p-0">
             <dl className="grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-card p-3">
@@ -266,6 +417,43 @@ export default async function DiscoverPage() {
                     : "Chọn một video để bắt đầu. Vị trí xem sẽ được lưu khi bạn quay lại."}
                 </p>
               </>
+            )}
+          </WidgetCard>
+          <WidgetCard title="Activity" className="bg-transparent p-0">
+            {viewer.status === "unavailable" ? (
+              <p className="px-3 pb-3 text-sm text-muted-foreground">
+                Chưa tải được lịch hoạt động.
+              </p>
+            ) : (
+              <ActivityGrid activity={activity} />
+            )}
+          </WidgetCard>
+          <WidgetCard title="Progress">
+            {learning ? (
+              <dl className="grid grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-xs text-muted-foreground">Ôn tuần này</dt>
+                  <dd className="mt-2 text-xl font-semibold tabular-nums">
+                    {learning.weekAttempts}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">
+                    Tổng lượt ôn
+                  </dt>
+                  <dd className="mt-2 text-xl font-semibold tabular-nums">
+                    {learning.totalAttempts}
+                  </dd>
+                </div>
+              </dl>
+            ) : viewer.status === "unavailable" ? (
+              <p className="text-sm leading-6 text-muted-foreground">
+                Chưa tải được dữ liệu luyện tập.
+              </p>
+            ) : (
+              <p className="text-sm leading-6 text-muted-foreground">
+                Đăng nhập để ghi lại tiến độ luyện tập.
+              </p>
             )}
           </WidgetCard>
           <WidgetCard title="Học với video" className="bg-transparent p-0">
